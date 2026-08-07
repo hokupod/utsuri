@@ -17,9 +17,8 @@ export const captureCapabilities: Readonly<Record<CaptureMode, CaptureCapability
     requiresExplicitCommand: true
   }),
   container: Object.freeze({
-    supported: false,
+    supported: true,
     startsProjectCode: true,
-    requiresExplicitCommand: true,
-    availablePhase: 4
+    requiresExplicitCommand: true
   })
 });

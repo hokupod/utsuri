@@ -51,21 +51,84 @@ describe("capture configuration", () => {
     }
   });
 
-  test("publishes container mode as an unavailable machine capability", () => {
+  test("normalizes container mode with non-weakening isolation defaults", () => {
     const value = baseConfig();
     value.execution.mode = "container";
-    try {
-      normalizeCaptureConfig(value);
-      throw new Error("container unexpectedly succeeded");
-    } catch (error) {
-      expect(error).toMatchObject({
-        diagnosticId: "CAPTURE_MODE_UNAVAILABLE",
-        details: {
-          mode: "container",
-          capability: { supported: false, availablePhase: 4 }
-        }
-      });
-    }
+    value.execution.trust = "untrusted";
+    value.servers!.before = {
+      command: ["node", "server.mjs"],
+      cwd: "before",
+      readyUrl: "http://127.0.0.1:4173/"
+    };
+    value.servers!.after = {
+      command: ["node", "server.mjs"],
+      cwd: "after",
+      readyUrl: "http://127.0.0.1:4174/"
+    };
+    value.container = {
+      engine: "docker",
+      image: `example.invalid/utsuri@sha256:${"a".repeat(64)}`,
+      network: "none",
+      readOnlyRoot: true,
+      noNewPrivileges: true,
+      capDrop: ["ALL"],
+      mountProjectReadOnly: true
+    };
+    const normalized = normalizeCaptureConfig(value);
+    expect(normalized.mode).toBe("container");
+    expect(normalized.container).toMatchObject({ pidsLimit: 64, cpus: 1, tmpfsMiB: 64 });
+    expect(normalized.limits).toEqual({
+      maxDiffLines: 2_000_000,
+      maxImagePixels: 80_000_000,
+      maxTimeMs: 1000,
+      maxMemoryMiB: 512,
+      maxArtifactBytes: 16 * 1024 * 1024
+    });
+  });
+
+  test("rejects weakened container controls and host-side origins", () => {
+    const containerConfig = () => {
+      const value = baseConfig();
+      value.execution.mode = "container";
+      value.execution.trust = "untrusted";
+      value.servers!.before = {
+        command: ["node", "server.mjs"],
+        cwd: "before",
+        readyUrl: "http://127.0.0.1:4173/"
+      };
+      value.servers!.after = {
+        command: ["node", "server.mjs"],
+        cwd: "after",
+        readyUrl: "http://127.0.0.1:4174/"
+      };
+      value.container = {
+        engine: "docker",
+        image: `example.invalid/utsuri@sha256:${"a".repeat(64)}`,
+        network: "none",
+        readOnlyRoot: true,
+        noNewPrivileges: true,
+        capDrop: ["ALL"],
+        mountProjectReadOnly: true
+      };
+      return value;
+    };
+    const weakened = containerConfig();
+    weakened.container!.capDrop = [] as unknown as ["ALL"];
+    expect(() => normalizeCaptureConfig(weakened)).toThrow(
+      "container isolation controls cannot be weakened"
+    );
+
+    const withEnvironment = containerConfig();
+    withEnvironment.security = { envAllowlist: ["NODE_ENV"] };
+    expect(() => normalizeCaptureConfig(withEnvironment)).toThrow(
+      "never passes host environment allowlist"
+    );
+
+    const withHostOrigin = containerConfig();
+    withHostOrigin.network = { allowedOrigins: ["http://127.0.0.1:9999"] };
+    expect(() => normalizeCaptureConfig(withHostOrigin)).toThrow(
+      "only through its identity-bound proxy"
+    );
   });
 
   test("does not execute commands in dual-url mode", () => {
@@ -74,10 +137,12 @@ describe("capture configuration", () => {
     expect(() => normalizeCaptureConfig(value)).toThrow("dual-url never starts");
   });
 
-  test("limits untrusted input to static-fragment", () => {
+  test("limits untrusted input to isolated modes", () => {
     const value = baseConfig();
     value.execution.trust = "untrusted";
-    expect(() => normalizeCaptureConfig(value)).toThrow("untrusted capture is limited");
+    expect(() => normalizeCaptureConfig(value)).toThrow(
+      "untrusted capture requires static-fragment or container isolation"
+    );
   });
 
   test("rejects duplicate target viewports before capture", () => {

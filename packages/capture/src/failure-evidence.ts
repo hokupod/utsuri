@@ -1,6 +1,6 @@
 import { writeFile } from "node:fs/promises";
 import path from "node:path";
-import { UtsuriError } from "@utsu-ri/core";
+import { ExitCode, UtsuriError } from "@utsu-ri/core";
 import type { CaptureFailure } from "./types";
 import { redactUrlsInText } from "./redaction";
 
@@ -35,9 +35,18 @@ export function captureFailure(
 
 export async function writeFailureEvidence(
   directory: string,
-  failure: CaptureFailure
+  failure: CaptureFailure,
+  maximumBytes = 16 * 1024 * 1024
 ): Promise<string> {
   const filename = path.join(directory, "failure.json");
-  await writeFile(filename, `${JSON.stringify(failure, null, 2)}\n`, { flag: "wx" });
+  const content = `${JSON.stringify(failure, null, 2)}\n`;
+  if (Buffer.byteLength(content) > maximumBytes) {
+    throw new UtsuriError(
+      "CAPTURE_ARTIFACT_SIZE_LIMIT",
+      "failure.json exceeds the configured artifact byte limit",
+      ExitCode.Incomplete
+    );
+  }
+  await writeFile(filename, content, { flag: "wx" });
   return filename;
 }

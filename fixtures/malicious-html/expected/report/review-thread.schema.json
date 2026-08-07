@@ -1,0 +1,231 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://utsu-ri.dev/schemas/review-thread/v1",
+  "title": "ReviewThread",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "id",
+    "reportId",
+    "anchor",
+    "kind",
+    "state",
+    "messages",
+    "agentAttention",
+    "createdAt",
+    "updatedAt"
+  ],
+  "properties": {
+    "id": {
+      "type": "string",
+      "pattern": "^thread[-:]"
+    },
+    "reportId": {
+      "type": "string"
+    },
+    "anchor": {
+      "$ref": "#/$defs/reviewAnchor"
+    },
+    "kind": {
+      "enum": [
+        "note",
+        "question",
+        "finding",
+        "change-request"
+      ]
+    },
+    "state": {
+      "enum": [
+        "open",
+        "answered",
+        "resolved",
+        "stale",
+        "orphaned"
+      ]
+    },
+    "messages": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/message"
+      }
+    },
+    "agentAttention": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "state"
+      ],
+      "properties": {
+        "state": {
+          "enum": [
+            "none",
+            "requested",
+            "batched",
+            "submitted",
+            "acknowledged",
+            "answered",
+            "stale"
+          ]
+        },
+        "batchId": {
+          "type": "string"
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time"
+        }
+      }
+    },
+    "createdAt": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "updatedAt": {
+      "type": "string",
+      "format": "date-time"
+    }
+  },
+  "$defs": {
+    "reviewAnchor": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "type",
+        "ref",
+        "fingerprint"
+      ],
+      "properties": {
+        "type": {
+          "enum": [
+            "change",
+            "file",
+            "hunk",
+            "line-range",
+            "visual-target",
+            "visual-region",
+            "finding",
+            "verification-gap"
+          ]
+        },
+        "ref": {
+          "type": "string"
+        },
+        "path": {
+          "type": "string"
+        },
+        "side": {
+          "enum": [
+            "before",
+            "after",
+            "diff"
+          ]
+        },
+        "startLine": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "endLine": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "targetRef": {
+          "type": "string"
+        },
+        "region": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "x",
+            "y",
+            "width",
+            "height"
+          ],
+          "properties": {
+            "x": {
+              "type": "number",
+              "minimum": 0
+            },
+            "y": {
+              "type": "number",
+              "minimum": 0
+            },
+            "width": {
+              "type": "number",
+              "exclusiveMinimum": 0
+            },
+            "height": {
+              "type": "number",
+              "exclusiveMinimum": 0
+            }
+          }
+        },
+        "selectorHint": {
+          "type": "string"
+        },
+        "fingerprint": {
+          "type": "string",
+          "minLength": 8
+        }
+      }
+    },
+    "message": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "kind",
+        "author",
+        "body",
+        "createdAt"
+      ],
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "kind": {
+          "enum": [
+            "human-note",
+            "agent-answer",
+            "system"
+          ]
+        },
+        "author": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "type",
+            "label"
+          ],
+          "properties": {
+            "type": {
+              "enum": [
+                "human",
+                "agent",
+                "system"
+              ]
+            },
+            "label": {
+              "type": "string"
+            }
+          }
+        },
+        "body": {
+          "type": "string"
+        },
+        "feedbackItemId": {
+          "type": "string"
+        },
+        "evidenceRefs": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time"
+        }
+      }
+    }
+  }
+}

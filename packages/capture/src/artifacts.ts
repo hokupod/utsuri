@@ -1,6 +1,7 @@
-import { mkdir, readdir, readFile, rename, writeFile } from "node:fs/promises";
+import { mkdir, readdir, rename, writeFile } from "node:fs/promises";
 import path from "node:path";
-import { sha256, stableHash } from "@utsu-ri/core";
+import { ExitCode, sha256, stableHash, UtsuriError } from "@utsu-ri/core";
+import { readContainedRegularFile } from "@utsu-ri/security";
 
 export function targetDirectoryName(targetId: string): string {
   const readable = targetId.replace(/[^a-zA-Z0-9_-]+/gu, "-").slice(0, 48);
@@ -26,10 +27,19 @@ export async function createAttemptDirectory(
 export async function writeJsonArtifact(
   directory: string,
   name: string,
-  value: unknown
+  value: unknown,
+  maximumBytes = 16 * 1024 * 1024
 ): Promise<string> {
   const filename = path.join(directory, name);
-  await writeFile(filename, `${JSON.stringify(value, null, 2)}\n`, { flag: "wx" });
+  const content = `${JSON.stringify(value, null, 2)}\n`;
+  if (Buffer.byteLength(content) > maximumBytes) {
+    throw new UtsuriError(
+      "CAPTURE_ARTIFACT_SIZE_LIMIT",
+      `${name} exceeds the configured artifact byte limit`,
+      ExitCode.Incomplete
+    );
+  }
+  await writeFile(filename, content, { flag: "wx" });
   return filename;
 }
 
@@ -43,14 +53,18 @@ export function artifactReference(runDirectory: string, filename: string): strin
 
 export async function artifactDigests(
   runDirectory: string,
-  references: readonly string[]
+  references: readonly string[],
+  maximumBytes = 16 * 1024 * 1024
 ): Promise<Record<string, string>> {
   const entries = await Promise.all(
     [...new Set(references)]
       .sort()
       .map(
         async (reference) =>
-          [reference, sha256(await readFile(path.join(runDirectory, reference)))] as const
+          [
+            reference,
+            sha256(await readContainedRegularFile(runDirectory, reference, { maximumBytes }))
+          ] as const
       )
   );
   return Object.fromEntries(entries);

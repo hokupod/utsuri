@@ -1,0 +1,98 @@
+{
+  "schemaVersion": "1.1",
+  "dependencyBaselineSha256": "c527b4a9e44f8f5e70864160b5b6eb301c48adf3584e1f7ffe3ceb3c91f58bb5",
+  "lockfileSha256": "4d8c1cbc5c7cbbfd56f6bc9fc987d63e945492b8df577c23257305390b075f1e",
+  "packages": [
+    {
+      "checksum": "SHA256:a813b0ba6a1d1d345dfdb4fcfded6ce4e413e861350cc728a9fdc5c8f9da77fd",
+      "license": "AGPL-3.0-or-later",
+      "name": "utsuri-workspace",
+      "packageVerificationCode": null,
+      "version": "0.1.0"
+    },
+    {
+      "checksum": "SHA512:07f801b8d8394a2313acf902f80dbe716d11b33c316269fa558c41fe29e5052b52e67c7ac4722dfde84a46120c86abac97b6bc2e34286678c2b39be1c31390d6",
+      "license": "MIT",
+      "name": "ajv",
+      "packageVerificationCode": "3c926d19327f4135272d3a758b90689a5b40952c",
+      "version": "8.17.1"
+    },
+    {
+      "checksum": "SHA512:f2252a979d04511fae51c7514371c3a9ae84572a3776870bf20e5627714d7169aeeb621b90652e7bfa44c8b056f1518a2ae7133e0a9e92ce1f214d43038ca8c1",
+      "license": "MIT",
+      "name": "ajv-formats",
+      "packageVerificationCode": "10c29707282bc159f1c8261e00681eef880cd4d6",
+      "version": "3.0.1"
+    },
+    {
+      "checksum": "SHA512:5e6edba515e70d25f6604d9815f064d859c5d1ea7ab661bbc4f87c88779ef0c21cae0abbeb636471ef39e9d62d2582e4b88a1866f19f4ecfcf6d986275e4dc12",
+      "license": "MPL-2.0",
+      "name": "axe-core",
+      "packageVerificationCode": "040a8a755840d9df8acbf1730a3fb4e34483a8d9",
+      "version": "4.10.3"
+    },
+    {
+      "checksum": "SHA512:7f7a90f68432f63d808417bf1fd542f75c0b98a042094fe00ce9ca340606e61b303bb04b2a3d3d1dce4760dcfd70623efb19690c22200da8ad56cd3701347ce1",
+      "license": "MIT",
+      "name": "fast-deep-equal",
+      "packageVerificationCode": "765fba27abdad11c0d38d6211c8b642157af946b",
+      "version": "3.1.3"
+    },
+    {
+      "checksum": "SHA512:807c00d4ef4b0c870aba730a84e6d2fc78a6c2d7a13b59cf50408a02ee53a4a81a3b5f5f716125e1b96259ed635b1545bc85f3b498e34382fc5d0d4453d7fb27",
+      "license": "BSD-3-Clause",
+      "name": "fast-uri",
+      "packageVerificationCode": "25c40a2e0a03d80c7158ba2bba2ad1fb5473a87f",
+      "version": "3.1.5"
+    },
+    {
+      "checksum": "SHA512:70f254e3b39a02809b834a41bf3b20a533e19a1a88e5e26387f248bbcb4f8f9abe4fb88bbd6fc901852a984eca381e11d59c8487305a210a50a5aadd045e73f0",
+      "license": "MIT",
+      "name": "fflate",
+      "packageVerificationCode": "f0f54033c9dec196ee06e164d6da37f613956d5f",
+      "version": "0.8.2"
+    },
+    {
+      "checksum": "SHA512:34cf3f3fd9f75e35e12199f594b86415a0024ce5114178d6855e0103f4673aff31be0aadaa9017f483b89914314b1d51968e2dab37aa6f4b0e96bb9a3b2dddba",
+      "license": "MIT",
+      "name": "json-schema-traverse",
+      "packageVerificationCode": "fa754101884a041b574c6107d37d5479c44e156d",
+      "version": "1.0.0"
+    },
+    {
+      "checksum": "SHA512:d70ad5cc9d924eba6638d1ca072db6f0b3356fce26b170d4a00cd5125d11f0ccf809ee843ebf8856dc66f3ecafaea2d8307b3044492360568cc67c869da63736",
+      "license": "ISC",
+      "name": "pixelmatch",
+      "packageVerificationCode": "7ff702b22bee9ab27a9de21ed8db2a2a28b2eb2a",
+      "version": "7.1.0"
+    },
+    {
+      "checksum": "SHA512:87b425b7a9b8444a76e6abc876f6c3b55983e0ba955dfa51c61391bfd2f48f3113334e69e1fb8f27774acae4974310d26d79e64bbf470208bde7cf65192a4b92",
+      "license": "Apache-2.0",
+      "name": "playwright-core",
+      "packageVerificationCode": "fb137e0cd71afd1a5fdde351d87619852d31a649",
+      "version": "1.61.1"
+    },
+    {
+      "checksum": "SHA512:2ca5aa589461b2dc98a3da46be0a2bfe2be4db0f787928c4dd1195bb32c696bdcd983f1b7fb45c606cded6635d10744fe9344feab32e0c7939b78e219d3472a3",
+      "license": "MIT",
+      "name": "pngjs",
+      "packageVerificationCode": "fb6ca73f76a553af8a1bd637fef59250fe00faf4",
+      "version": "7.0.0"
+    },
+    {
+      "checksum": "SHA512:5dfd2759ee91b1ece214cbbe029f5b8a251b9a996ae92f7fa7eef0ed85cffc904786b5030d48706bebc0372b9bbaa7d9593bde53ffc36151ac0c6ed128bfef13",
+      "license": "MIT",
+      "name": "require-from-string",
+      "packageVerificationCode": "376512d3467526f7b9d0a6d46123a7b317af0e9c",
+      "version": "2.0.2"
+    },
+    {
+      "checksum": "SHA512:95c61c3315f63cef57306bc02642773ac34cc3effb14a7aceff8607ab1946162285aee63ffe610a9c66be499cf656cceb0406031b49b8924e7fddbffebd324a7",
+      "license": "ISC",
+      "name": "yaml",
+      "packageVerificationCode": "fa9e7c37079b73324ad5dae7e284c5e7c45d956e",
+      "version": "2.8.1"
+    }
+  ]
+}

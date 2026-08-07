@@ -18,9 +18,9 @@ Utsuriは、コード変更を、根拠と意図を伴う人間向けの視覚�
 
 ## 状態
 
-<!-- availability:phase-3-comparison-coverage -->
+<!-- availability:phase-4-security-hardening -->
 
-Phase 3のcomparison / coverage flowは、このsource checkoutで利用できます。code reviewと分離したbrowser captureに、target discovery、visual / structural / runtime comparison、明示的なcoverage gap、measured-evidence UIを組み合わせます。review stateの永続化、Agent feedback、container実行は未実装です。npm packageとPluginも未公開です。
+Phase 4のsecurity-hardened flowは、このsource checkoutで利用できます。code review、分離したbrowser capture、comparison / coverageに、強化したreport境界、resource limit、capability検査付きcontainer実行、自己完結ESM bundle、決定論的なsupply-chain metadataを組み合わせます。review stateの永続化とAgent feedbackは未実装です。npm packageとPluginも未公開です。
 
 <a id="capabilities"></a><!-- section:capabilities -->
 
@@ -40,8 +40,11 @@ Phase 3のcomparison / coverage flowは、このsource checkoutで利用でき�
 - Pixelmatch count / ratio、content-addressed diff image、changed region、normalized DOM / ARIA / style fingerprint
 - accessibility / runtime findingの`new` / `resolved` / `unchanged` / `incomplete`分類とoverflow / obstruction evidence
 - side-by-side、wipe、停止可能なblink、pixel diff、after-only、crop / full-page選択、sync scroll / zoom、region navigation、code / finding cross-link
+- static / interactive / iframe別のCSP、bounded JSON、empty-sandboxのsanitize済みpreview、PNG限定のvisual evidence、拡張privacy宣言、SHA-256によるstrict report検証
+- SHA-256 digest固定のlocal image、network none、read-only root / project mount、capability drop、non-root user、PID / CPU / memory / time / artifact limitを強制するDocker / Podman isolation
+- source / schema / UI hashと、決定論的なSPDX 2.3 / dependency license inventoryを含む単一Node 22 ESM CLI bundle
 
-後続Phaseで、container hardening、review stateの永続化、Origin Session feedbackを追加します。captureが完了してもdiscoveryとcomparison前は`UNCOVERED`です。証拠の欠落・不正、または片側失敗は`INCOMPLETE`のままです。分母が不明なら割合を表示せず、pixel差分だけで`REGRESSION`とは判定しません。
+後続Phaseで、review stateの永続化とOrigin Session feedbackを追加します。captureが完了してもdiscoveryとcomparison前は`UNCOVERED`です。証拠の欠落・不正、片側失敗、resource limit超過、container capability不足は`INCOMPLETE`のままです。分母が不明なら割合を表示せず、pixel差分だけで`REGRESSION`とは判定しません。
 
 <a id="quick-start"></a><!-- section:quick-start -->
 
@@ -153,17 +156,26 @@ Utsuriはrepository content、diff、HTML、SVG、comment、Context Pack、captu
 
 **セキュリティ警告:** production credential、production browser state、制限のないexternal network、推測したsetup command、親processの環境変数をcaptureへ渡さないでください。beforeとafterは別Browser Contextを使い、external requestとService Workerを既定でblockします。external HTTP redirectとWebSocket handshakeにも同じorigin policyを適用し、永続化するtext証跡ではabsolute / relative URLのcredential、query、fragmentを除去します。
 
-`dual-url`はproject codeを起動しません。`worktree`はtrusted input、before / afterそれぞれの明示argvと別working directory、利用者による`--allow-project-code` opt-inを必須とします。child environmentは最小baselineとallowlist済みの非secret名だけです。`static-fragment`はJavaScriptとHTTP requestを無効化し、active markupをsanitizeしますが、実application描画と同一ではありません。browser requestのblockはproject server processを隔離しないため、untrustedなserver実行はPhase 4のcontainer modeまで行いません。
+`dual-url`はproject codeを起動しません。`worktree`はtrusted input、before / afterそれぞれの明示argvと別working directory、利用者による`--allow-project-code` opt-inを必須とします。child environmentは最小baselineとallowlist済みの非secret名だけです。`static-fragment`はJavaScriptとHTTP requestを無効化し、active markupをsanitizeしてempty-sandbox iframeで表示しますが、実application描画と同一ではありません。
 
-生成済み`report/`はimmutableです。参照するcapture / comparison evidenceは独立してdigest検証し、report内部へcopyしてasset manifestのhash対象にします。discovery / comparison manifestは収集diff / capture hashへbindされ、差し替え・未列挙artifactはfinalizeで拒否します。finalizeは検証済みrun artifactとannotationsからreport全体を再構築し、正確なsource byte snapshot hashをmanifestへ記録し、immutable snapshotだけを公開します。stagingまたはreuse中のsource / evidenceの変化は拒否します。Utsuriは、通常fileかつsymlinkではないrun input、他のlocal principalから保護されたpublication path、stagingのstrict validation、OSのno-replace helperを必須とします。helperが存在しない、またはfilesystemが対応しない場合はfail closedとします。生成失敗時には診断用のprivate staging directoryが残る場合がありますが、自動削除はしません。人間のmutable review dataは`run/review/`へ分離します。static viewerは外部serviceへ通信しません。
+`container`は、SHA-256 digestで固定され、localに存在するDocker / Podman imageだけを受け付け、pullしません。imageはbounded request bridge用のNode 22を含む必要があります。serverはnetwork none、read-only root / project mount、no-new-privileges、全Linux capabilityのdrop、non-root user、PID / CPU / memory / tmpfs / time / artifact上限で起動します。すべてのrequestと削除操作をfull container IDへbindし、一時的な認証済みloopback proxyを使います。connection refusalを有界なreadiness中だけretryし、identity、response、originの失敗ではproxyを失効させます。応答可能なengineがimmutable IDの不存在を証明するまでcleanupを成功扱いにしません。untrusted contentをChromiumへ渡す前に、Linuxのwritable delegated cgroup v2でbrowser process tree全体へ`memory.max`を適用します。macOSまたはdelegationのないLinuxでは、project codeを起動する前にcapability不足として`INCOMPLETE`にします。host environment allowlist、secret mount、host socketは禁止です。
+
+すべてのbrowser launchにrandom process tokenを付与し、Chrome / Chromiumの親processが正確に1件だけ対応することを必須とします。launch失敗時とrun完了時には有界な終了処理とglobal token rescanを行い、tracking不可、ownershipの曖昧さ、または残存processを検出した場合はfail closedします。先行処理が失敗してもbrowser、cgroup、server / containerの全cleanup stepを実行します。captureの各sideは`maxTimeMs`をbrowser workとcontained-file readのhard deadlineとして適用します。
+
+生成済み`report/`はimmutableです。参照するcapture / comparison evidenceは独立してdigest検証し、画像を検証済みPNG byteに限定してreport内部へcopyし、asset manifestのhash対象にします。保存される`index.html`は常にoffline static CSPです。local interactive serverだけが、そのcanonical CSP境界をexact matchでinteractive CSPへ置換できます。static-fragment previewには別のno-script / no-connect CSPを適用します。strict validationはactive HTML、direct SVG、unsafeな参照、未列挙・欠落file、hash driftを拒否します。manifestはabsolute path、cookie、raw environment、raw DOM、raw header、traceを除外したことを宣言します。
+
+discovery / comparison manifestは収集diff / capture hashへbindされ、差し替え・未列挙artifactはfinalizeで拒否します。finalizeは検証済みrun artifactとannotationsからreport全体を再構築し、正確なsource byte snapshot hashをmanifestへ記録し、immutable snapshotだけを公開します。stagingまたはreuse中のsource / evidenceの変化は拒否します。Utsuriは、通常fileかつsymlinkではないrun input、canonicalなcontained path、安全なarchive inventory、他のlocal principalから保護されたpublication path、stagingのstrict validation、OSのno-replace helperを必須とします。helperが存在しない、またはfilesystemが対応しない場合はfail closedとします。生成失敗時には診断用のprivate staging directoryが残る場合がありますが、自動削除はしません。人間のmutable review dataは`run/review/`へ分離します。static viewerは外部serviceへ通信しません。
 
 code diff contentはstructured lineへparseし、textとしてだけrenderします。repositoryが制御するdiff textをHTMLとして挿入しません。
+
+build outputはexternal JavaScript runtime importを持たない単一のNode 22互換ESMです。captureに必要なpinned Playwright package metadataとbrowser registryを埋め込み、無関係なprojectからのsmoke testで`node_modules`やcheckout-relative runtime fileを読まずにcaptureできることを検証します。release verificationはbundleを独立して再buildし、実際にbundleした全third-party inputを、明示的に再生成してreviewするdependency baselineと照合します。build-manifest 1.1は各byte hash、SPDX 2.3はlockfile SHA-512 checksumとinstalled-package verification codeを記録し、同一metadataをCLI / Skill artifactへcopyします。
 
 <a id="documentation"></a><!-- section:documentation -->
 
 ## ドキュメント
 
 - [英語の詳細設計正本](https://github.com/hokupod/utsuri/blob/main/docs/design.md)
+- [Phase 4 threat model](https://github.com/hokupod/utsuri/blob/main/docs/threat-model.md)
 - [UI guidelineとHIG/WCAG traceability](https://github.com/hokupod/utsuri/blob/main/docs/ui-guidelines.md)
 - [Capture modeとruntime boundary](https://github.com/hokupod/utsuri/blob/main/skills/utsuri-review/references/capture-modes.md)
 - [CLI contract](https://github.com/hokupod/utsuri/blob/main/skills/utsuri-review/references/cli-contract.md)

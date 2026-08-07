@@ -1,0 +1,65 @@
+{
+  "schemaVersion": "1.0",
+  "input": {
+    "mode": "patch",
+    "base": null,
+    "head": null,
+    "mergeBase": null,
+    "patchPath": "fixture.patch"
+  },
+  "repository": { "fingerprint": "runtime-security-fixture" },
+  "sourceDigests": {
+    "patch": "0000000000000000000000000000000000000000000000000000000000000000",
+    "numstat": null,
+    "nameStatus": null,
+    "summary": null,
+    "raw": null,
+    "commits": null
+  },
+  "summary": {
+    "filesChanged": 1,
+    "additions": 3,
+    "deletions": 0,
+    "binaryFiles": 0,
+    "lowSignalFiles": 0
+  },
+  "files": [
+    {
+      "id": "file:large",
+      "status": "added",
+      "oldPath": null,
+      "newPath": "large.txt",
+      "additions": 3,
+      "deletions": 0,
+      "binary": false,
+      "submodule": false,
+      "oldMode": null,
+      "newMode": "100644",
+      "oldOid": null,
+      "newOid": null,
+      "similarity": null,
+      "lowSignal": false,
+      "lowSignalReasons": [],
+      "hunkRefs": ["hunk:large"]
+    }
+  ],
+  "hunks": [
+    {
+      "id": "hunk:large",
+      "path": "large.txt",
+      "oldPath": null,
+      "newPath": "large.txt",
+      "oldStart": 0,
+      "oldLines": 0,
+      "newStart": 1,
+      "newLines": 3,
+      "heading": "",
+      "lines": [
+        { "kind": "addition", "content": "one", "oldLine": null, "newLine": 1 },
+        { "kind": "addition", "content": "two", "oldLine": null, "newLine": 2 },
+        { "kind": "addition", "content": "three", "oldLine": null, "newLine": 3 }
+      ],
+      "lowSignal": false
+    }
+  ]
+}

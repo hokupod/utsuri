@@ -29,6 +29,29 @@ export interface UtsuriConfig {
     shell: false;
     timeoutMs: number;
   };
+  container?: {
+    engine: "docker" | "podman";
+    image: string;
+    network: "none";
+    readOnlyRoot: true;
+    noNewPrivileges: true;
+    /**
+     * @minItems 1
+     * @maxItems 1
+     */
+    capDrop: ["ALL"];
+    mountProjectReadOnly: true;
+    pidsLimit?: number;
+    cpus?: number;
+    tmpfsMiB?: number;
+  };
+  limits?: {
+    maxDiffLines?: number;
+    maxImagePixels?: number;
+    maxTimeMs?: number;
+    maxMemoryMiB?: number;
+    maxArtifactBytes?: number;
+  };
   servers?: {
     before?: Server;
     after?: Server;

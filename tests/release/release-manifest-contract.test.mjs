@@ -25,16 +25,7 @@ const validManifest = {
   bin: { utsuri: "dist/utsuri.mjs" },
   files: ["dist", "README.md", "LICENSE"],
   publishConfig: { access: "public" },
-  dependencies: {
-    "@utsu-ri/capture": "workspace:*",
-    "@utsu-ri/core": "workspace:*",
-    "@utsu-ri/git-collector": "workspace:*",
-    "@utsu-ri/report-builder": "workspace:*",
-    "@utsu-ri/report-model": "workspace:*",
-    "@utsu-ri/security": "workspace:*",
-    "playwright-core": "1.61.1",
-    yaml: "2.8.1"
-  }
+  dependencies: {}
 };
 
 describe("CLI release manifest contract", () => {

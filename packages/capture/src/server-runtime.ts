@@ -10,6 +10,9 @@ import type { ServerConfiguration } from "./types";
 
 export interface ServerHandle {
   pid: number;
+  readyUrl?: string;
+  requestHeaders?: Readonly<Record<string, string>>;
+  assertHealthy?(): void;
   stdout(): string;
   stderr(): string;
   stop(): Promise<void>;
@@ -133,6 +136,7 @@ export async function startConfiguredServer(
   let stopped = false;
   return {
     pid: child.pid,
+    readyUrl: configuration.readyUrl,
     stdout: () => stdout,
     stderr: () => stderr,
     stop: async () => {

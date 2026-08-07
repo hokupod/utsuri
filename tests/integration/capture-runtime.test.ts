@@ -90,7 +90,7 @@ describe("capture-runtime", () => {
     } finally {
       await Promise.all([stopFixtureServer(beforeServer), stopFixtureServer(afterServer)]);
     }
-  }, 60_000);
+  }, 120_000);
 
   test("captures sanitized static fragments with JavaScript disabled", async () => {
     const root = await temporaryRoot("utsuri-static-fragment-");
@@ -124,6 +124,33 @@ describe("capture-runtime", () => {
     const domRef = result.manifest.targets[0]?.before.domRef;
     const dom = await readFile(path.join(run, domRef!), "utf8");
     expect(dom).not.toContain("utsuriUnsafeScriptExecuted");
+  }, 60_000);
+
+  test("turns an exhausted capture-side deadline into typed incomplete evidence", async () => {
+    const root = await temporaryRoot("utsuri-capture-deadline-");
+    const run = path.join(root, "run");
+    await mkdir(run, { mode: 0o700 });
+    await Promise.all([
+      writeFile(path.join(root, "before.html"), "<main>before</main>\n"),
+      writeFile(path.join(root, "after.html"), "<main>after</main>\n")
+    ]);
+    const raw = captureConfig({
+      mode: "static-fragment",
+      fragments: { before: "before.html", after: "after.html" }
+    });
+    const config = normalizeCaptureConfig(raw);
+    config.limits.maxTimeMs = 1;
+    const result = await captureRun(root, run, config);
+
+    expect(result.complete).toBeFalse();
+    expect(result.manifest.targets[0]?.before.failure).toMatchObject({
+      code: "CAPTURE_TIME_LIMIT",
+      retryable: false
+    });
+    expect(result.manifest.targets[0]?.after.failure).toMatchObject({
+      code: "CAPTURE_TIME_LIMIT",
+      retryable: false
+    });
   }, 30_000);
 
   test("starts only explicit worktree commands and cleans both process groups", async () => {

@@ -16,31 +16,25 @@ import {
   type ReviewPlan,
   type UtsuriReport
 } from "@utsu-ri/report-model";
-import { resolveContainedPath } from "@utsu-ri/security";
+import {
+  assertPngBytes,
+  assertRasterImageReference,
+  assertSafeReportAssetReference,
+  interactiveReportCsp,
+  parseBoundedJson,
+  resolveContainedPath,
+  staticReportCsp
+} from "@utsu-ri/security";
 import { reportUiCss, reportUiJavaScript } from "./generated-ui-assets";
 import { publishDirectoryNoReplace } from "./native-publish";
 import { reportSchemaAssets, reportSchemaFiles } from "./schema-assets";
 
-export const reportCsp = [
-  "default-src 'none'",
-  "base-uri 'none'",
-  "connect-src 'self'",
-  "font-src 'self'",
-  "form-action 'none'",
-  "frame-ancestors 'none'",
-  "img-src 'self' data:",
-  "object-src 'none'",
-  "script-src 'self'",
-  "style-src 'self'"
-].join("; ");
-
-const statusIconSvg =
-  '<svg xmlns="http://www.w3.org/2000/svg"><symbol id="status" viewBox="0 0 16 16"><circle cx="8" cy="8" r="6" fill="currentColor"/></symbol></svg>\n';
+export const reportCsp = staticReportCsp;
+export { interactiveReportCsp, staticReportCsp };
 
 const reportArtifactPaths = new Set([
   "assets/app.css",
   "assets/app.js",
-  "assets/icons.svg",
   "context-pack.schema.json",
   "diagnostics/summary.json",
   "index.html",
@@ -80,8 +74,11 @@ export interface ReportManifest {
   assetHashes: Record<string, string>;
   privacy: {
     includesAbsolutePaths: false;
+    includesCookies: false;
     includesRawEnvironment: false;
     includesRawDom: false;
+    includesRawHeaders: false;
+    includesTraces: false;
   };
   incompleteReasons: string[];
 }
@@ -190,7 +187,10 @@ async function readOptionalJson(filename: string): Promise<unknown | null> {
   try {
     const content = await readRegularText(filename);
     try {
-      return JSON.parse(content) as unknown;
+      return parseBoundedJson(content, {
+        label: path.basename(filename),
+        maximumBytes: maximumArtifactBytes
+      });
     } catch {
       throw new UtsuriError(
         "ARTIFACT_JSON_INVALID",
@@ -211,7 +211,10 @@ async function readReportSourceSnapshot(runDirectory: string): Promise<ReportSou
         const bytes = await readRegularBytes(path.join(runDirectory, name));
         let value: unknown;
         try {
-          value = JSON.parse(bytes.toString("utf8")) as unknown;
+          value = parseBoundedJson(bytes.toString("utf8"), {
+            label: name,
+            maximumBytes: maximumArtifactBytes
+          });
         } catch {
           throw new UtsuriError(
             "ARTIFACT_JSON_INVALID",
@@ -391,6 +394,34 @@ function captureArtifactError(message: string): never {
   throw new UtsuriError("CAPTURE_ARTIFACT_INVALID", message, ExitCode.Artifact);
 }
 
+function validCaptureLimits(value: unknown): boolean {
+  if (
+    !isRecord(value) ||
+    !hasExactKeys(value, [
+      "maxDiffLines",
+      "maxImagePixels",
+      "maxTimeMs",
+      "maxMemoryMiB",
+      "maxArtifactBytes"
+    ])
+  ) {
+    return false;
+  }
+  return [
+    [value.maxDiffLines, 1, 2_000_000],
+    [value.maxImagePixels, 1, 100_000_000],
+    [value.maxTimeMs, 1, 900_000],
+    [value.maxMemoryMiB, 128, 4_096],
+    [value.maxArtifactBytes, 1_024, 67_108_864]
+  ].every(
+    ([candidate, minimum, maximum]) =>
+      typeof candidate === "number" &&
+      Number.isInteger(candidate) &&
+      (candidate as number) >= (minimum as number) &&
+      (candidate as number) <= (maximum as number)
+  );
+}
+
 async function validateCaptureArtifact(
   runDirectory: string,
   value: unknown
@@ -425,6 +456,39 @@ async function validateCaptureArtifact(
     !/^[a-f0-9]{64}$/u.test(value.captureHash)
   ) {
     return captureArtifactError("capture.json has invalid diagnostics or hash metadata");
+  }
+  if (!new Set(["dual-url", "static-fragment", "worktree", "container"]).has(String(value.mode))) {
+    return captureArtifactError("capture.json mode is invalid");
+  }
+  if (
+    !isRecord(value.capability) ||
+    !Object.keys(value.capability).every((key) =>
+      new Set([
+        "supported",
+        "startsProjectCode",
+        "requiresExplicitCommand",
+        "availablePhase",
+        "engine",
+        "reason"
+      ]).has(key)
+    ) ||
+    typeof value.capability.supported !== "boolean" ||
+    typeof value.capability.startsProjectCode !== "boolean" ||
+    typeof value.capability.requiresExplicitCommand !== "boolean" ||
+    (value.capability.engine !== undefined &&
+      !new Set(["docker", "podman"]).has(String(value.capability.engine))) ||
+    (value.capability.reason !== undefined && typeof value.capability.reason !== "string")
+  ) {
+    return captureArtifactError("capture.json capability is invalid");
+  }
+  if (
+    !isRecord(value.environment) ||
+    !hasExactKeys(value.environment, ["os", "arch", "limits"]) ||
+    typeof value.environment.os !== "string" ||
+    typeof value.environment.arch !== "string" ||
+    !validCaptureLimits(value.environment.limits)
+  ) {
+    return captureArtifactError("capture.json environment or limits are invalid");
   }
   const artifactDigests = value.artifactDigests as Record<string, unknown>;
   for (const [reference, digest] of Object.entries(artifactDigests)) {
@@ -971,9 +1035,8 @@ function reportCaptureTargets(
 }
 
 function reportArtifactReferences(report: UtsuriReport): string[] {
-  const references = report.targets.flatMap((target) =>
+  const captureReferences = report.targets.flatMap((target) =>
     ([target.before, target.after] as const).flatMap((result) => [
-      ...result.screenshotRefs,
       result.domRef,
       result.ariaRef,
       result.styleRef,
@@ -983,31 +1046,64 @@ function reportArtifactReferences(report: UtsuriReport): string[] {
       result.metadataRef
     ])
   );
-  references.push(
+  const rasterReferences = [
+    ...report.targets.flatMap((target) => [
+      ...target.before.screenshotRefs,
+      ...target.after.screenshotRefs
+    ]),
     ...report.comparisons.flatMap((comparison) =>
       comparison.images.flatMap((image) => [image.beforeRef, image.afterRef, image.diffRef])
     ),
     ...report.evidence
+      .filter((evidence) => evidence.type === "visual")
       .map((evidence) => evidence.path)
       .filter(
         (reference) => reference.startsWith("capture/") || reference.startsWith("comparison/")
       )
-  );
-  const normalized = references.filter((reference): reference is string => Boolean(reference));
-  for (const reference of normalized) {
-    if (
-      (!reference.startsWith("capture/") && !reference.startsWith("comparison/")) ||
-      reference.includes("\\") ||
-      path.posix.normalize(reference) !== reference
-    ) {
+  ];
+  const references = [
+    ...captureReferences,
+    ...rasterReferences,
+    ...report.evidence
+      .filter((evidence) => evidence.type !== "visual")
+      .map((evidence) => evidence.path)
+      .filter(
+        (reference) => reference.startsWith("capture/") || reference.startsWith("comparison/")
+      )
+  ].filter((reference): reference is string => Boolean(reference));
+  for (const reference of references) {
+    try {
+      if (rasterReferences.includes(reference)) assertRasterImageReference(reference);
+      else assertSafeReportAssetReference(reference);
+    } catch (error) {
       throw new UtsuriError(
         "REPORT_ARTIFACT_REFERENCE_INVALID",
-        `Report artifact reference is unsafe: ${reference}`,
+        error instanceof Error
+          ? error.message
+          : `Report artifact reference is unsafe: ${reference}`,
         ExitCode.Artifact
       );
     }
   }
-  return [...new Set(normalized)].sort();
+  return [...new Set(references)].sort();
+}
+
+function reportRasterReferences(report: UtsuriReport): Set<string> {
+  return new Set([
+    ...report.targets.flatMap((target) => [
+      ...target.before.screenshotRefs,
+      ...target.after.screenshotRefs
+    ]),
+    ...report.comparisons.flatMap((comparison) =>
+      comparison.images.flatMap((image) => [image.beforeRef, image.afterRef, image.diffRef])
+    ),
+    ...report.evidence
+      .filter((evidence) => evidence.type === "visual")
+      .map((evidence) => evidence.path)
+      .filter(
+        (reference) => reference.startsWith("capture/") || reference.startsWith("comparison/")
+      )
+  ]);
 }
 
 function captureReportState(capture: CaptureArtifact | null) {
@@ -1687,12 +1783,18 @@ function validateManifest(value: unknown): { manifest: ReportManifest | null; er
     !isRecord(value.privacy) ||
     !hasExactKeys(value.privacy, [
       "includesAbsolutePaths",
+      "includesCookies",
       "includesRawEnvironment",
-      "includesRawDom"
+      "includesRawDom",
+      "includesRawHeaders",
+      "includesTraces"
     ]) ||
     value.privacy.includesAbsolutePaths !== false ||
+    value.privacy.includesCookies !== false ||
     value.privacy.includesRawEnvironment !== false ||
-    value.privacy.includesRawDom !== false
+    value.privacy.includesRawDom !== false ||
+    value.privacy.includesRawHeaders !== false ||
+    value.privacy.includesTraces !== false
   ) {
     errors.push("Manifest privacy declaration is invalid");
   }
@@ -1803,7 +1905,10 @@ async function readJsonForValidation(
   errors: string[]
 ): Promise<unknown | null> {
   try {
-    return JSON.parse(await readRegularText(filename)) as unknown;
+    return parseBoundedJson(await readRegularText(filename), {
+      label,
+      maximumBytes: maximumArtifactBytes
+    });
   } catch (error) {
     if (error instanceof UtsuriError) {
       errors.push(error.message);
@@ -1832,9 +1937,9 @@ async function populateReportDirectory(
   await writeJson(path.join(directory, "report.json"), report);
   await writeFile(path.join(directory, "assets/app.js"), reportUiJavaScript, { flag: "wx" });
   await writeFile(path.join(directory, "assets/app.css"), reportUiCss, { flag: "wx" });
-  await writeFile(path.join(directory, "assets/icons.svg"), statusIconSvg, { flag: "wx" });
   await writeJson(path.join(directory, "diagnostics/summary.json"), report.diagnostics);
 
+  const rasterReferences = reportRasterReferences(report);
   for (const reference of reportArtifactReferences(report)) {
     const source = await resolveContainedPath(runDirectory, reference);
     const destination = path.join(directory, reference);
@@ -1845,6 +1950,17 @@ async function populateReportDirectory(
         `Evidence artifact changed before publication: ${reference}`,
         ExitCode.Artifact
       );
+    }
+    if (rasterReferences.has(reference)) {
+      try {
+        assertPngBytes(bytes, { maximumBytes: maximumArtifactBytes });
+      } catch (error) {
+        throw new UtsuriError(
+          "REPORT_PNG_INVALID",
+          error instanceof Error ? error.message : `Invalid PNG evidence: ${reference}`,
+          ExitCode.Artifact
+        );
+      }
     }
     await mkdir(path.dirname(destination), { recursive: true, mode: 0o700 });
     await writeFile(destination, bytes, { flag: "wx", mode: 0o600 });
@@ -1870,8 +1986,11 @@ async function populateReportDirectory(
     assetHashes,
     privacy: {
       includesAbsolutePaths: false,
+      includesCookies: false,
       includesRawEnvironment: false,
-      includesRawDom: false
+      includesRawDom: false,
+      includesRawHeaders: false,
+      includesTraces: false
     },
     incompleteReasons: report.diagnostics.incompleteReasons
   };
@@ -2044,12 +2163,27 @@ export async function buildReport(
     await assertArtifactDigests(runDirectory, artifactReferences, artifactDigests);
     await assertDirectoryIdentity(runDirectory, runIdentity, "Run");
     await assertDirectoryIdentity(stagingDirectory, stagingIdentity, "Staging");
-    await publishDirectoryNoReplace(runHandle, runIdentity, stagingName, "report", stagingIdentity);
+    await publishDirectoryNoReplace(
+      runDirectory,
+      runHandle,
+      runIdentity,
+      stagingName,
+      "report",
+      stagingIdentity
+    );
     await assertDirectoryIdentity(runDirectory, runIdentity, "Run");
     await assertDirectoryIdentity(reportDirectory, stagingIdentity, "Published report");
     return { reportDirectory, manifest, reused: false };
   } finally {
+    await closeRunDirectoryHandle(runHandle);
+  }
+}
+
+async function closeRunDirectoryHandle(runHandle: Awaited<ReturnType<typeof open>>): Promise<void> {
+  try {
     await runHandle.close();
+  } catch (error) {
+    if ((error as NodeJS.ErrnoException).code !== "EBADF") throw error;
   }
 }
 
@@ -2140,7 +2274,15 @@ export async function validateReportDirectory(
     for (const [relative, expected] of Object.entries(manifest.assetHashes)) {
       try {
         const file = await resolveContainedPath(directory, relative);
-        const actual = sha256(await readRegularBytes(file));
+        const bytes = await readRegularBytes(file);
+        if (/^(?:capture|comparison)\/.+\.png$/iu.test(relative)) {
+          try {
+            assertPngBytes(bytes, { maximumBytes: maximumArtifactBytes });
+          } catch {
+            errors.push(`Invalid PNG asset: ${relative}`);
+          }
+        }
+        const actual = sha256(bytes);
         if (actual !== expected) errors.push(`Hash mismatch: ${relative}`);
       } catch {
         errors.push(`Missing asset: ${relative}`);
@@ -2186,7 +2328,6 @@ export async function validateReportDirectory(
       ["index.html", report ? indexHtml(report) : null],
       ["assets/app.js", reportUiJavaScript],
       ["assets/app.css", reportUiCss],
-      ["assets/icons.svg", statusIconSvg],
       ...reportSchemaFiles.map((filename) => [filename, reportSchemaAssets[filename]] as const)
     ] as const) {
       if (expected === null) continue;
@@ -2201,9 +2342,10 @@ export async function validateReportDirectory(
     if (reportUiJavaScript.length === 0) errors.push("Report UI build asset is empty");
     if (report) {
       try {
-        const diagnostics = JSON.parse(
-          await readRegularText(path.join(directory, "diagnostics/summary.json"))
-        ) as unknown;
+        const diagnostics = parseBoundedJson(
+          await readRegularText(path.join(directory, "diagnostics/summary.json")),
+          { label: "diagnostics/summary.json", maximumBytes: maximumArtifactBytes }
+        );
         if (canonicalJson(diagnostics) !== canonicalJson(report.diagnostics)) {
           errors.push("Diagnostic summary does not match report.json");
         }

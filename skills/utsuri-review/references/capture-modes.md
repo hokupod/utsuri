@@ -8,12 +8,12 @@
 
 ## Modes
 
-| Mode              | Project command | Trust requirement | Current support |
-| ----------------- | --------------- | ----------------- | --------------- |
-| `dual-url`        | Never           | `configured`      | Available       |
-| `static-fragment` | Never           | `untrusted`       | Available       |
-| `worktree`        | Explicit argv   | `trusted`         | Available       |
-| `container`       | Isolated argv   | `untrusted`       | Phase 4         |
+| Mode              | Project command | Trust requirement | Current support  |
+| ----------------- | --------------- | ----------------- | ---------------- |
+| `dual-url`        | Never           | `configured`      | Available        |
+| `static-fragment` | Never           | `untrusted`       | Available        |
+| `worktree`        | Explicit argv   | `trusted`         | Available        |
+| `container`       | Isolated argv   | `untrusted`       | Capability-gated |
 
 `dual-url` is the default. Start both URLs yourself, declare both origins, and keep server commands out of the configuration.
 
@@ -30,6 +30,8 @@ node "${PLUGIN_ROOT}/skills/utsuri-review/scripts/utsuri.mjs" capture \
 ```
 
 Do not add install, on-demand package execution, shell, or browser-download commands. Child environments contain only a minimal baseline plus explicitly allowlisted non-secret names.
+
+`container` requires explicit argv and contained working directories for both sides, plus an exact SHA-256 image digest already present in Docker or Podman. Utsuri never pulls it, and the image must provide Node 22 for the bounded request bridge. Fixed server controls enforce no network, a read-only root and project mount, no new privileges, no Linux capabilities, a non-root user, and bounded PID/CPU/memory/tmpfs/time/artifact resources. Requests pass only through a full-container-ID-bound, authenticated loopback proxy; external redirects revoke the proxy. Before Chromium can load untrusted content, a writable delegated Linux cgroup v2 must accept `memory.max` and the browser launcher must join it before `exec`. macOS and Linux hosts without that delegation fail capability probing before project code starts. Host environment allowlists, secret mounts, and host sockets are forbidden.
 
 ## Stabilization and actions
 
@@ -57,6 +59,6 @@ Each side uses a separate Browser Context with identical viewport, DPR, locale, 
 
 Initial HTTP requests, redirect destinations, and WebSocket handshakes use the same origin allowlist. External redirects are blocked before follow-up requests are sent. Persisted textual evidence removes URL credentials, queries, and fragments from absolute and relative URL forms.
 
-External origins and mutation methods are blocked by default. A blocked request or failed side makes the capture incomplete. Successful compatible sides may be reused only when the configuration/run binding, browser version, and artifact digests still match.
+External origins and mutation methods are blocked by default. A blocked request, failed side, exceeded diff/image/time/memory/artifact limit, or unavailable runtime capability makes the capture incomplete. Successful compatible sides may be reused only when the configuration/run binding, browser version, limits, and artifact digests still match.
 
 After capture, run `discover --run <run> --config <config>` and then `compare --run <run>`. Discovery keeps known, verified, unknown, planned, succeeded, failed, and unmapped scope separate. Comparison validates every capture digest and classifies pixel, DOM, ARIA, style, axe, console/page, network, and overflow evidence as new, resolved, unchanged, or incomplete. Finalization independently validates both manifests, copies referenced capture/comparison evidence into the immutable report, and hashes it.

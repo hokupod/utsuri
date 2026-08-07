@@ -1,5 +1,9 @@
 import { describe, expect, test } from "bun:test";
-import { trackedBrowserProcessIds } from "./browser-process";
+import {
+  terminateTrackedBrowserProcesses,
+  trackedBrowserProcessIds,
+  waitForTrackedBrowserProcesses
+} from "./browser-process";
 
 describe("browser process tracking", () => {
   test("selects only the marked browser parent process", () => {
@@ -15,5 +19,10 @@ describe("browser process tracking", () => {
     `;
 
     expect(trackedBrowserProcessIds(processList, executable, token)).toEqual(new Set([102]));
+  });
+
+  test("observes an empty tracked process set as fully reaped", async () => {
+    await expect(waitForTrackedBrowserProcesses(new Set(), 10)).resolves.toBeTrue();
+    await expect(terminateTrackedBrowserProcesses(new Set())).resolves.toBeTrue();
   });
 });

@@ -65,6 +65,50 @@
         "timeoutMs": { "type": "integer", "minimum": 1, "maximum": 900000 }
       }
     },
+    "container": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "engine",
+        "image",
+        "network",
+        "readOnlyRoot",
+        "noNewPrivileges",
+        "capDrop",
+        "mountProjectReadOnly"
+      ],
+      "properties": {
+        "engine": { "enum": ["docker", "podman"] },
+        "image": {
+          "type": "string",
+          "pattern": "^[^\\s@]+(?:/[^\\s@]+)*@sha256:[a-f0-9]{64}$"
+        },
+        "network": { "const": "none" },
+        "readOnlyRoot": { "const": true },
+        "noNewPrivileges": { "const": true },
+        "capDrop": {
+          "type": "array",
+          "items": { "const": "ALL" },
+          "minItems": 1,
+          "maxItems": 1
+        },
+        "mountProjectReadOnly": { "const": true },
+        "pidsLimit": { "type": "integer", "minimum": 16, "maximum": 512 },
+        "cpus": { "type": "number", "minimum": 0.1, "maximum": 4 },
+        "tmpfsMiB": { "type": "integer", "minimum": 16, "maximum": 1024 }
+      }
+    },
+    "limits": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "maxDiffLines": { "type": "integer", "minimum": 1, "maximum": 2000000 },
+        "maxImagePixels": { "type": "integer", "minimum": 1, "maximum": 100000000 },
+        "maxTimeMs": { "type": "integer", "minimum": 1, "maximum": 900000 },
+        "maxMemoryMiB": { "type": "integer", "minimum": 128, "maximum": 4096 },
+        "maxArtifactBytes": { "type": "integer", "minimum": 1024, "maximum": 67108864 }
+      }
+    },
     "servers": {
       "type": "object",
       "additionalProperties": false,

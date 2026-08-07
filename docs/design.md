@@ -6,7 +6,7 @@
 - **Plugin name**: `utsuri`
 - **Skill name**: `utsuri-review`
 - **CLI name**: `utsuri`
-- **Document version**: 2.1
+- **Document version**: 2.2
 - **Created**: 2026-08-06
 - **Last updated**: 2026-08-07
 - **Language**: English (canonical)
@@ -14,7 +14,7 @@
 - **Implementation language**: TypeScript
 - **Development environment**: Bun
 - **Report UI**: a static application built with Svelte
-- **v2.1 changes**: implemented Phase 3 comparison and coverage with content-addressed pixel diffs, structural/runtime finding classification, explicit target discovery, structured unknown coverage, whole-report source binding, and a keyboard-accessible visual evidence UI
+- **v2.2 changes**: implemented Phase 4 report/runtime/supply-chain hardening with separate static and interactive CSPs, bounded untrusted-data parsing, validated PNG-only report images, immutable-ID container transport, fail-closed Linux cgroup v2 browser memory isolation, independent bundle rebuilds, and deterministic SPDX/license inventories
 
 ---
 
@@ -918,12 +918,15 @@ Development source lives under `packages/`. At release time, bundle it as one No
 
 - Do not require Bun on the consuming system.
 - Bundle runtime dependencies.
+- Embed the pinned Playwright package metadata and browser registry required by capture; the installed bundle must capture from an unrelated project without reading `node_modules` or checkout-relative runtime files.
 - Never download a Playwright browser automatically.
 - Detect system Chrome/Chromium or an existing Playwright browser with `doctor`.
 - Keep report UI assets self-contained in the Skill directory.
 - Include no symlinks in release artifacts.
 - Publish the bundled CLI through `@utsu-ri/cli` as `bin.utsuri`.
 - Keep internal `@utsu-ri/*` workspace packages private implementation boundaries. They must not appear as registry runtime dependencies in the published CLI manifest; JavaScript runtime dependencies are bundled into the CLI.
+- Generate deterministic SPDX 2.3 and third-party-license inventories from exact lockfile SHA-512 checksums and installed-package verification codes. Copy identical documents into CLI and Skill artifacts.
+- Bind every actual third-party esbuild input to an explicitly regenerated, reviewed dependency baseline. Build-manifest 1.1 records those byte hashes alongside the single ESM bundle, source inputs, schemas, and report UI assets; reject baseline drift, external runtime imports, symlinks, placeholders, former identifiers, source-only absolute paths, and hash drift.
 - Assemble the npm package from a newly created private staging directory. Validate the exact recursive tarball inventory, executable bits, package manifest, and absence of install lifecycle scripts before publication.
 - Install and execute the exact generated tarball in an isolated directory under supported Node versions. Do not substitute the workspace package or an ambient CLI.
 - Package README links must resolve against the exact `v<version>` release tag rather than `main` or paths absent from the tarball.
@@ -1399,7 +1402,7 @@ A command may still succeed when findings exist unless policy defines them as fa
 
 ## 14. Configuration file
 
-### 14.1 Phase 2 accepted example
+### 14.1 Phase 4 accepted example
 
 ```yaml
 version: 1
@@ -1429,6 +1432,13 @@ execution:
   install: never
   shell: false
   timeoutMs: 120000
+
+limits:
+  maxDiffLines: 2000000
+  maxImagePixels: 80000000
+  maxTimeMs: 120000
+  maxMemoryMiB: 512
+  maxArtifactBytes: 16777216
 
 servers:
   before:
@@ -1589,7 +1599,32 @@ policy:
     - partial-coverage
 ```
 
-`dual-url` is the default and omits every server `command` and `cwd`. `static-fragment` replaces `servers` with repository-relative `fragments.before` and `fragments.after` on each target. `container` remains machine-readable but unavailable until Phase 4.
+`dual-url` is the default and omits every server `command` and `cwd`. `static-fragment` replaces `servers` with repository-relative `fragments.before` and `fragments.after` on each target. All normalized limits are recorded in `capture.json`; crossing a diff, image, time, memory, or artifact boundary produces typed `INCOMPLETE` evidence before the result can be presented as verified.
+
+Container mode additionally requires fixed isolation settings and an exact local image digest:
+
+```yaml
+execution:
+  mode: container
+  trust: untrusted
+  install: never
+  shell: false
+  timeoutMs: 120000
+
+container:
+  engine: docker
+  image: registry.example/utsuri-runtime@sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
+  network: none
+  readOnlyRoot: true
+  noNewPrivileges: true
+  capDrop: [ALL]
+  mountProjectReadOnly: true
+  pidsLimit: 64
+  cpus: 1
+  tmpfsMiB: 64
+```
+
+The image must already exist locally; Utsuri uses `--pull=never`. Container mode accepts no host environment allowlist and no secret or host-socket mount. Missing engine/image capability, an unreachable isolated endpoint, or any weakened fixed control leaves capture incomplete.
 
 ### 14.2 Command representation
 
@@ -1608,7 +1643,7 @@ The string form is forbidden by default:
 command: "bun run dev && curl ..."
 ```
 
-`execution.shell` must remain `false`; there is no override. `worktree` additionally requires `execution.trust: trusted`, separate contained working directories, and the user's `capture --allow-project-code` opt-in. `init` may record read-only `proposedCommands`, but those proposals never authorize execution.
+`execution.shell` must remain `false`; there is no override. `worktree` additionally requires `execution.trust: trusted`, separate contained working directories, and the user's `capture --allow-project-code` opt-in. `container` requires explicit per-side argv and contained repository-relative directories but never inherits the host environment allowlist. `init` may record read-only `proposedCommands`, but those proposals never authorize execution.
 
 ---
 
@@ -1825,7 +1860,7 @@ servers:
     readyUrl: http://127.0.0.1:4174
 ```
 
-The Skill does not start project code. It captures URLs started by the user or an existing environment, rejects configured server commands, and allows browser requests only to declared origins. Use `execution.trust: configured`; `untrusted` input is limited to `static-fragment` until container mode is available.
+The Skill does not start project code. It captures URLs started by the user or an existing environment, rejects configured server commands, and allows browser requests only to declared origins. Use `execution.trust: configured`; `untrusted` input is limited to `static-fragment` or fixed-isolation `container` mode.
 
 ### 18.2 `worktree`
 
@@ -1865,7 +1900,7 @@ Render repository-relative HTML/CSS fragments in a minimal fixture. Every target
 
 For lower-trust branches or CI.
 
-Recommended constraints:
+Required controls:
 
 ```text
 network: none
@@ -1879,11 +1914,15 @@ secrets mount: none
 host socket mount: none
 ```
 
-Container mode is machine-readable as unsupported with `availablePhase: 4`. Container mode is required to reliably prevent external communication by the server process itself. Blocking Playwright requests cannot prevent application-server communication.
+The runtime converts these controls into fixed Docker/Podman arguments: `--pull=never`, `--network=none`, `--read-only`, `--security-opt=no-new-privileges`, `--cap-drop=ALL`, bounded PID/CPU/memory, a non-root user, a bounded `noexec,nosuid,nodev` temporary filesystem, and one read-only project bind. Configuration cannot weaken those controls, pass a host environment allowlist, mount a secret, or mount a host socket. The pinned image must provide Node 22 for the bounded in-container request bridge.
+
+The engine and exact digest-pinned image are probed without pulling. `create` must return a full 64-hex container ID. Every subsequent `inspect`, `exec`, and cleanup operation uses that ID, never the mutable name. Browser and readiness traffic uses only an ephemeral loopback proxy that requires both an exact `Host` and a random 256-bit capability; identity is inspected before and after each bridge request. A bridge connection failure is retryable only before the first successful bounded readiness response. Identity, response-envelope, and origin failures revoke the proxy immediately; same-origin internal redirects are remapped to it, while external redirects revoke it before the browser can follow them. Removal is retried within a fixed deadline and succeeds only when a responsive engine proves the immutable ID is absent; otherwise cleanup returns `CONTAINER_CLEANUP_FAILED`.
+
+The untrusted page still executes in Chromium, so server-container memory limits alone are insufficient. Before either project server starts, Linux must provide a writable delegated cgroup v2. Utsuri creates a private child cgroup, writes `maxMemoryMiB` to `memory.max`, disables swap where supported, and uses the native launcher to move Chromium into `cgroup.procs` before `exec`; all renderer descendants inherit the boundary. macOS and Linux hosts without the required delegation report `CONTAINER_CAPABILITY_MISSING` before project code starts. Missing engine, image, Node bridge, cgroup, immutable identity, or ready endpoint remains machine-readable `INCOMPLETE` evidence and is never a successful isolation test. Container mode is required to prevent external communication by a server process itself because Playwright request blocking alone cannot do so.
 
 ### 18.5 Browser and artifact boundary
 
-Capture uses an existing system Chrome or Chromium and never downloads a browser. Before and after always use separate Browser Contexts. Each successful side stores full-page and element screenshots, normalized DOM, ARIA, computed styles, raw axe output, console entries, network entries, and metadata as separate artifacts. Initial HTTP requests, every HTTP redirect `Location`, and WebSocket handshakes are checked against the same origin policy; an external redirect is replaced before the browser can follow it and is recorded as blocked evidence. Finalization copies every report-referenced capture artifact into immutable `report/` and covers it with the report asset manifest.
+Capture uses an existing system Chrome or Chromium and never downloads a browser. Before and after always use separate Browser Contexts. Each browser launch receives a random capture token; Utsuri requires exactly one matching parent process and, after every failed launch or completed run, performs bounded close/termination followed by a global token rescan. Unavailable process tracking, ambiguous ownership, or a surviving process fails closed instead of reporting successful cleanup. Browser, cgroup, and server/container teardown steps execute independently so one failure cannot skip the remaining cleanup; the first failure remains the typed result. Each capture side has a hard `maxTimeMs` deadline across context, network setup, navigation, actions, fonts, stabilization, screenshots, and browser-derived artifacts; native contained-file reads inherit the bounded operation timeout. Each successful side stores full-page and element screenshots, normalized DOM, ARIA, computed styles, raw axe output, console entries, network entries, and metadata as separate artifacts. Initial HTTP requests, every HTTP redirect `Location`, and WebSocket handshakes are checked against the same origin policy; an external redirect is rejected before the browser can follow it and is recorded as blocked evidence. Finalization copies every report-referenced capture artifact into immutable `report/` and covers it with the report asset manifest. Resource limits are stored with capture conditions; schema-invalid or oversized diff/JSON, oversized image dimensions or PNG bytes, elapsed operation limits, unavailable hard browser-memory isolation for container mode, and oversized copied artifacts fail closed as `INCOMPLETE` or an artifact-integrity error.
 
 ---
 
@@ -2183,11 +2222,11 @@ report/
 Report generation follows this fail-closed sequence:
 
 1. Require `input.json`, `diff.json`, and other run inputs to be regular non-symlink files.
-2. Resolve `run/`, retain its directory descriptor, and reject a publication path controlled or renameable by another unprivileged principal. A shared writable ancestor is allowed only when sticky-directory ownership protects the immediate child.
+2. Resolve `run/`, pin its device and inode identity through a retained directory descriptor, and reject a publication path controlled or renameable by another unprivileged principal. A shared writable ancestor is allowed only when sticky-directory ownership protects the immediate child.
 3. Snapshot annotations and the supplied report before the first asynchronous boundary; reconstruct the full report from validated run artifacts, bind its manifest semantic hash to the exact source-byte snapshot hash, and retain only the immutable reconstruction.
 4. Generate into a unique `0700` staging directory and complete strict schema, reference, inventory, content-hash, CSP, and embedded-asset validation there.
 5. Recheck source JSON, referenced evidence digests, and the run and staging inode identities.
-6. Publish through the retained descriptor with `renameatx_np(RENAME_EXCL)` on macOS or `renameat2(RENAME_NOREPLACE)` on Linux.
+6. Have the native helper reopen `run/` with `O_NOFOLLOW`, require the pinned device and inode identity, and publish through that verified descriptor with `renameatx_np(RENAME_EXCL)` on macOS or `renameat2(RENAME_NOREPLACE)` on Linux.
 7. Recheck the published inode. Never overwrite or delete an existing destination.
 
 If the helper or filesystem primitive is unavailable, publication fails instead of falling back to ordinary `rename`. A failed generation may retain its private staging directory for diagnosis; Utsuri never performs a path-based recursive cleanup that could delete a foreign object.
@@ -2844,17 +2883,17 @@ The Agent may process a Feedback Batch in one turn, but it must return one `Revi
 
 ### 27.1 Standard display
 
-The standard evidence is an image such as PNG or WebP. Never insert target HTML into the report DOM.
+The standard evidence is PNG. Report references reject SVG and every non-PNG visual artifact. Never insert target HTML into the report DOM.
 
 ### 27.2 Supplementary iframe
 
-Only `static-fragment` may display sanitized HTML in a sandboxed iframe:
+Only `static-fragment` may display allowlist-sanitized HTML in a sandboxed iframe:
 
 ```html
 <iframe sandbox title="After synthetic preview" srcdoc="...sanitized fragment..."> </iframe>
 ```
 
-Do not allow `allow-scripts`, `allow-same-origin`, forms, popups, or top navigation.
+Do not allow `allow-scripts`, `allow-same-origin`, forms, popups, or top navigation. The sanitizer drops active elements, inline event handlers, unsafe styles, non-fragment links, and non-raster image sources before creating `srcdoc`; the empty sandbox and iframe CSP remain mandatory independent defenses.
 
 Require these boundaries between the viewer and interactive API:
 
@@ -2882,9 +2921,9 @@ form-action 'none';
 
 SVG may contain scripts, external references, or `foreignObject`; do not embed it directly by default.
 
-- Sanitize and rasterize it.
-- Display it as PNG.
-- Exclude the original from downloadable output by default.
+- Sanitize and rasterize it outside the report boundary.
+- Display and reference only the resulting PNG.
+- Exclude the original from report artifacts; strict validation rejects direct SVG references.
 
 ---
 
@@ -2925,10 +2964,13 @@ Cross-Origin-Resource-Policy: same-origin
 Cache-Control: no-store
 ```
 
+Phase 4 exposes these policies as shared viewer-security primitives. Static mode retains `connect-src 'none'`; interactive mode changes only that directive to same-origin. Interactive mutation requests must independently validate Origin, report ID, a capability token, and schema validity.
+
 ### 28.2 Data-injection protection
 
 - Never concatenate JSON directly into an inline `<script>`.
 - Use separate JSON assets or safe serialization.
+- Bound JSON byte size and reject prototype-bearing keys before interpretation.
 - Render code text as text nodes.
 - Treat filenames, commit messages, HTML, SVG, and console text as untrusted.
 - Allowlist URL schemes.
@@ -2938,22 +2980,25 @@ Cache-Control: no-store
 
 ## 29. Runtime threat model
 
-| Threat              | Example                                            | Control                                                     |
-| ------------------- | -------------------------------------------------- | ----------------------------------------------------------- |
-| Report XSS          | A diff contains `</script>`                        | Escaping, separate JSON, CSP, no inline script              |
-| HTML preview escape | An iframe interferes with its parent               | Empty sandbox, no same-origin, no script                    |
-| Secret exfiltration | Server code sends an AWS credential                | Environment allowlist, no-network container                 |
-| Postinstall attack  | Arbitrary execution during dependency installation | No automatic installation                                   |
-| Shell injection     | A configuration command includes `;`               | Argument arrays, shell false                                |
-| Path traversal      | `../../` writes outside output                     | Canonical-path check                                        |
-| Symlink escape      | A symlink reads a secret                           | `followSymlinks: false`                                     |
-| Browser mutation    | Capture calls a destructive API                    | Block non-GET, disposable context                           |
-| PII leakage         | Screenshot contains personal data                  | Masking, redaction, privacy scan                            |
-| Denial of service   | Extremely large image or diff                      | Size, time, and memory limits                               |
-| Hostile remote page | Popup, download, or navigation                     | Popup/download block, origin allowlist                      |
-| Active SVG content  | Script or `foreignObject`                          | Rasterize, no direct embedding                              |
-| Report tampering    | Asset replacement                                  | SHA-256 manifest                                            |
-| Publication race    | A concurrent process creates or swaps `report/`    | Protected ancestors, inode checks, atomic no-replace rename |
+| Threat              | Example                                              | Control                                                                    |
+| ------------------- | ---------------------------------------------------- | -------------------------------------------------------------------------- |
+| Report XSS          | A diff contains `</script>`                          | Escaping, separate JSON, CSP, no inline script                             |
+| HTML preview escape | An iframe interferes with its parent                 | Empty sandbox, no same-origin, no script                                   |
+| Secret exfiltration | Server code sends an AWS credential                  | Environment allowlist, no-network container                                |
+| Postinstall attack  | Arbitrary execution during dependency installation   | No automatic installation                                                  |
+| Shell injection     | A configuration command includes `;`                 | Argument arrays, shell false                                               |
+| Path traversal      | `../../` writes outside output                       | Canonical-path check                                                       |
+| Symlink escape      | A swapped parent redirects a read to a secret        | Root descriptor plus component-wise `openat` / `O_NOFOLLOW`                |
+| Browser mutation    | Capture calls a destructive API                      | Block non-GET, disposable context                                          |
+| PII leakage         | Screenshot contains personal data                    | Masking, redaction, privacy scan                                           |
+| Denial of service   | Extremely large image, diff, or browser allocation   | Schema/byte/pixel/time limits and container browser cgroup                 |
+| Hostile remote page | Popup, download, or navigation                       | Popup/download block, origin allowlist                                     |
+| Active SVG content  | Script or `foreignObject`                            | Rasterize, no direct embedding                                             |
+| Report tampering    | Asset replacement                                    | SHA-256 manifest                                                           |
+| Publication race    | A concurrent process creates or swaps `report/`      | Protected ancestors, inode checks, atomic no-replace rename                |
+| Archive escape      | Duplicate, traversal, symlink, or special entry      | Canonical inventory and bounded regular-file extraction                    |
+| Container weakening | Network, mutable identity, host decoy, or memory DoS | Fixed engine arguments, authenticated ID-bound proxy, cgroup               |
+| Supply-chain drift  | Bundle, schema, UI, or dependency substitution       | Reviewed dependency-byte baseline, independent rebuild, exact release scan |
 
 ### 29.1 Trust levels
 
@@ -2963,7 +3008,7 @@ configured
 trusted
 ```
 
-- `untrusted`: only static-fragment, or container mode after Phase 4.
+- `untrusted`: only static-fragment or fixed-isolation container mode.
 - `configured`: dual-url capture of explicitly configured origins; no project command starts.
 - `trusted`: worktree commands declared as argv and working directories in validated configuration, plus the local user's `--allow-project-code` flag.
 
@@ -2977,7 +3022,7 @@ The Skill must never elevate trust automatically.
 
 Build the child-process environment from a minimal baseline; never copy the parent-process environment.
 
-The Phase 2 baseline is limited to path, temporary-directory, and locale variables. Additional names must be allowlisted and secret-like names are rejected.
+The process baseline is limited to path, temporary-directory, and locale variables. Additional names must be allowlisted and secret-like names are rejected. Container mode ignores the host allowlist completely.
 
 ### 30.2 Authentication state
 
@@ -3014,7 +3059,7 @@ Include these in secret and personal-data inspection:
 
 A Context Pack preview displays redaction results and the assets that will be shared with the current conversation.
 
-Capture artifacts remove URL credentials, query strings, fragments, complete request headers, cookies, and absolute repository/run paths before persistence. Textual redaction covers absolute, protocol-relative, root-relative, parent-relative, bare path-relative, query-only, and fragment-only URLs. Screenshot masks remain explicit review information; Utsuri does not claim that an unmasked screenshot is free of personal data.
+Capture artifacts remove URL credentials, query strings, fragments, complete request headers, cookies, and absolute repository/run paths before persistence. Report manifests assert that absolute paths, cookies, raw environment, raw DOM, raw headers, and traces are absent. Textual redaction covers absolute, protocol-relative, root-relative, parent-relative, bare path-relative, query-only, and fragment-only URLs. Screenshot masks remain explicit review information; Utsuri does not claim that an unmasked screenshot is free of personal data.
 
 ---
 
@@ -3518,6 +3563,8 @@ The Phase 3 source checkout implements this completion condition through `discov
 
 **Completion**: every high-risk threat-model item has an automated test.
 
+The Phase 4 source checkout implements a permanently offline static report CSP and an exact interactive-server CSP transition, security headers, bounded JSON, conservative static-fragment sanitization, empty-sandbox previews, decoded PNG validation, expanded privacy declarations, descriptor-chain reads, safe archive inventories without extraction, immutable SHA-256 inventories, immutable-ID container transport and verified removal, delegated Linux cgroup v2 browser memory isolation, teardown that continues after individual failures, token-bound browser process cleanup, a self-contained Node 22 ESM bundle, deterministic SPDX/license inventories, reviewed dependency-byte baselines, and independent bundle/source/schema/UI parity checks. Negative fixtures cover active HTML/SVG, traversal and parent swaps, unsafe commands/environment/network configuration, host decoys, external redirects, replaced or unremovable containers, unavailable memory isolation, malformed/oversized input, artifact tampering, dependency drift, and release-layout substitution.
+
 ### Phase 5: Review workflow / CI / distribution candidate
 
 - review state, viewed state, and inline comments;
@@ -3558,9 +3605,11 @@ The Phase 3 source checkout implements this completion condition through `discov
 - Report-schema validation succeeds.
 - There is no external asset dependency.
 - The report-XSS fixture passes.
+- Static, interactive, and iframe CSPs remain distinct and strict report validation rejects active HTML, direct SVG, unlisted files, and hash drift.
 - There is no automatic installation.
 - Capture failure and no diff remain distinct.
 - dual-url, worktree, and static-fragment succeed.
+- Container mode cannot weaken no-network/read-only/no-new-privileges/cap-drop/resource/mount controls; unavailable runtime capability remains explicit rather than PASS.
 - Accessibility findings classify new and resolved.
 - Coverage gaps are visible.
 - A keyboard-only review completes.
@@ -3589,10 +3638,10 @@ The Phase 3 source checkout implements this completion condition through `discov
 - Safe-chain 1.5.14 is verified against a pinned official platform SHA-256 before its first execution, and its npx/bunx shims are verified before local or CI package operations.
 - Immutable reports are published with the verified four-platform no-replace helper set; missing, mismatched, or unsupported helpers fail closed.
 - The published `@utsu-ri/cli` tarball has an exact recursive inventory, no install lifecycle scripts, no runtime dependency on private workspace packages, version-tagged documentation links, and a successful isolated exact-tarball smoke test.
+- The single ESM bundle has no external JavaScript runtime import, embeds the pinned Playwright runtime metadata required by capture, passes an unrelated-project real-browser smoke test, and has deterministic build-manifest, SPDX, and license documents that match the source, lockfile, schemas, and report UI assets.
 
 ### 41.2 Should
 
-- container mode;
 - Storybook adapter;
 - import-graph mapping;
 - review-notes export;
@@ -3608,6 +3657,7 @@ The Phase 3 source checkout implements this completion condition through `discov
 - inherited secret environment;
 - lingering child process;
 - report-asset hash mismatch;
+- weakened container isolation, host secret/socket exposure, or unavailable capability presented as PASS;
 - display of capture failure as PASS;
 - visual evidence linked to a hunk from another target;
 - primary functionality unreachable by keyboard;
@@ -4582,13 +4632,14 @@ A feature outside this definition is accepted only when it makes review decision
 
 ## Document change log
 
-| Entry ID                                   | Version | Date       | Change                                                                                                                                                                                                                                                                                                                  |
-| ------------------------------------------ | ------: | ---------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| design-v2.1-comparison-coverage            |     2.1 | 2026-08-07 | Implemented content-addressed pixel comparison and changed regions; DOM, ARIA, style, accessibility, runtime, and overflow classification; prioritized target discovery and structured unknown coverage; whole-report source binding; cross-linked measured evidence; and Phase 3 visual/accessibility fixture gates.   |
-| design-v2.0-browser-capture                |     2.0 | 2026-08-07 | Implemented isolated dual-url, static-fragment, and explicitly authorized worktree capture; deterministic stabilization and safe actions; redirect-aware external and mutation request blocking; typed partial failures; URL redaction; digest-validated reuse; and independently validated immutable capture evidence. |
-| design-v1.9-code-diff-mvp                  |     1.9 | 2026-08-07 | Implemented four explicit Git collection modes, structured diff/evidence/review-plan contracts, deterministic full-hunk coverage, schema-validated annotations, mandatory code-only verification gaps, and the keyboard-accessible Diff Ledger report UI.                                                               |
-| design-v1.8-exact-cli-tarball              |     1.8 | 2026-08-07 | Required a clean exact-inventory npm CLI tarball with bundled JavaScript dependencies, no registry dependency on private workspace packages, no install lifecycle scripts, isolated exact-tarball smoke tests, and version-tagged documentation links.                                                                  |
-| design-v1.7-atomic-report-publication-gate |     1.7 | 2026-08-07 | Added fail-closed atomic no-replace report publication, protected-ancestor and inode checks, regular non-symlink run inputs, current-platform source builds, four-platform release assembly, and explicit Phase 0 rejection of non-empty diff or annotation evidence.                                                   |
-| design-v1.6-publication-and-safe-chain     |     1.6 | 2026-08-07 | Fixed publisher, npm maintainer, trusted-publishing, and SPDX metadata; replaced the local absolute-path Safe-chain requirement with exact-version discovery at the standard user installation; pinned official platform SHA-256 digests for verification before first execution.                                       |
-| design-v1.5-english-canonical              |     1.5 | 2026-08-06 | Established English as the living canonical design; retained the verified Japanese v1.4 source for review; fixed npm identifiers at `@utsu-ri/*`; selected `review-answer.schema.json` and `run/review/`; added the locked Nix, Bun, Safe-chain, Apple HIG, synchronized README, and documentation-review gates.        |
-| design-v1.4-product-name                   |     1.4 | 2026-08-06 | Established Utsuri as the product name and unified Plugin, Skill, CLI, configuration, artifact, and display identifiers.                                                                                                                                                                                                |
+| Entry ID                                   | Version | Date       | Change                                                                                                                                                                                                                                                                                                                                                                                                                     |
+| ------------------------------------------ | ------: | ---------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| design-v2.2-security-hardening             |     2.2 | 2026-08-07 | Implemented static/interactive/iframe CSP boundaries, bounded untrusted data and decoded PNG validation, descriptor-chain reads, immutable-ID container proxying, delegated Linux cgroup v2 browser memory limits, token-bound browser process cleanup, immutable asset checks, an independently rebuilt Node-compatible ESM bundle with embedded Playwright runtime metadata, and deterministic SPDX/license inventories. |
+| design-v2.1-comparison-coverage            |     2.1 | 2026-08-07 | Implemented content-addressed pixel comparison and changed regions; DOM, ARIA, style, accessibility, runtime, and overflow classification; prioritized target discovery and structured unknown coverage; whole-report source binding; cross-linked measured evidence; and Phase 3 visual/accessibility fixture gates.                                                                                                      |
+| design-v2.0-browser-capture                |     2.0 | 2026-08-07 | Implemented isolated dual-url, static-fragment, and explicitly authorized worktree capture; deterministic stabilization and safe actions; redirect-aware external and mutation request blocking; typed partial failures; URL redaction; digest-validated reuse; and independently validated immutable capture evidence.                                                                                                    |
+| design-v1.9-code-diff-mvp                  |     1.9 | 2026-08-07 | Implemented four explicit Git collection modes, structured diff/evidence/review-plan contracts, deterministic full-hunk coverage, schema-validated annotations, mandatory code-only verification gaps, and the keyboard-accessible Diff Ledger report UI.                                                                                                                                                                  |
+| design-v1.8-exact-cli-tarball              |     1.8 | 2026-08-07 | Required a clean exact-inventory npm CLI tarball with bundled JavaScript dependencies, no registry dependency on private workspace packages, no install lifecycle scripts, isolated exact-tarball smoke tests, and version-tagged documentation links.                                                                                                                                                                     |
+| design-v1.7-atomic-report-publication-gate |     1.7 | 2026-08-07 | Added fail-closed atomic no-replace report publication, protected-ancestor and inode checks, regular non-symlink run inputs, current-platform source builds, four-platform release assembly, and explicit Phase 0 rejection of non-empty diff or annotation evidence.                                                                                                                                                      |
+| design-v1.6-publication-and-safe-chain     |     1.6 | 2026-08-07 | Fixed publisher, npm maintainer, trusted-publishing, and SPDX metadata; replaced the local absolute-path Safe-chain requirement with exact-version discovery at the standard user installation; pinned official platform SHA-256 digests for verification before first execution.                                                                                                                                          |
+| design-v1.5-english-canonical              |     1.5 | 2026-08-06 | Established English as the living canonical design; retained the verified Japanese v1.4 source for review; fixed npm identifiers at `@utsu-ri/*`; selected `review-answer.schema.json` and `run/review/`; added the locked Nix, Bun, Safe-chain, Apple HIG, synchronized README, and documentation-review gates.                                                                                                           |
+| design-v1.4-product-name                   |     1.4 | 2026-08-06 | Established Utsuri as the product name and unified Plugin, Skill, CLI, configuration, artifact, and display identifiers.                                                                                                                                                                                                                                                                                                   |

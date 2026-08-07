@@ -1,0 +1,13 @@
+{
+  "name": "@utsu-ri/interactive-server",
+  "version": "0.1.0",
+  "private": true,
+  "license": "AGPL-3.0-or-later",
+  "type": "module",
+  "dependencies": {
+    "@utsu-ri/security": "workspace:*"
+  },
+  "exports": {
+    ".": "./src/index.ts"
+  }
+}

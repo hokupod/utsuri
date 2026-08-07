@@ -18,16 +18,7 @@ const expectedManifestKeys = [
   "type",
   "version"
 ].sort();
-const expectedDependencies = {
-  "@utsu-ri/capture": "workspace:*",
-  "@utsu-ri/core": "workspace:*",
-  "@utsu-ri/git-collector": "workspace:*",
-  "@utsu-ri/report-builder": "workspace:*",
-  "@utsu-ri/report-model": "workspace:*",
-  "@utsu-ri/security": "workspace:*",
-  "playwright-core": "1.61.1",
-  yaml: "2.8.1"
-};
+const expectedDependencies = {};
 
 function sortedStrings(value) {
   return Array.isArray(value) && value.every((item) => typeof item === "string")

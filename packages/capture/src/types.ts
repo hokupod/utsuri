@@ -8,6 +8,29 @@ export interface CaptureCapability {
   startsProjectCode: boolean;
   requiresExplicitCommand: boolean;
   availablePhase?: number;
+  engine?: "docker" | "podman";
+  reason?: string;
+}
+
+export interface ResourceLimits {
+  maxDiffLines: number;
+  maxImagePixels: number;
+  maxTimeMs: number;
+  maxMemoryMiB: number;
+  maxArtifactBytes: number;
+}
+
+export interface ContainerConfiguration {
+  engine: "docker" | "podman";
+  image: string;
+  network: "none";
+  readOnlyRoot: true;
+  noNewPrivileges: true;
+  capDrop: ["ALL"];
+  mountProjectReadOnly: true;
+  pidsLimit: number;
+  cpus: number;
+  tmpfsMiB: number;
 }
 
 export interface ServerConfiguration {
@@ -73,7 +96,7 @@ export interface CaptureOutputConfiguration {
 }
 
 export interface NormalizedCaptureConfig {
-  mode: Exclude<CaptureMode, "container">;
+  mode: CaptureMode;
   trust: "untrusted" | "configured" | "trusted";
   timeoutMs: number;
   servers: Record<CaptureSide, ServerConfiguration> | null;
@@ -84,6 +107,8 @@ export interface NormalizedCaptureConfig {
   network: NetworkConfiguration;
   capture: CaptureOutputConfiguration;
   envAllowlist: string[];
+  container: ContainerConfiguration | null;
+  limits: ResourceLimits;
 }
 
 export interface CaptureFailure {
@@ -128,7 +153,7 @@ export interface CaptureTargetResult {
 export interface CaptureManifest {
   schemaVersion: "1.0";
   configurationHash: string;
-  mode: Exclude<CaptureMode, "container">;
+  mode: CaptureMode;
   capability: CaptureCapability;
   browser: {
     engine: "chromium";
@@ -141,6 +166,7 @@ export interface CaptureManifest {
   environment: {
     os: NodeJS.Platform;
     arch: string;
+    limits: ResourceLimits;
   };
   stabilization: {
     disableAnimations: boolean;

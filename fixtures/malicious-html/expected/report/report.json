@@ -1,0 +1,40 @@
+{
+  "schemaVersion": "1.0",
+  "reportId": "report-52593161860ef49e",
+  "status": "SKIPPED",
+  "summary": {
+    "statement": "No code diff was supplied; visual verification was skipped.",
+    "filesChanged": 0,
+    "additions": 0,
+    "deletions": 0
+  },
+  "files": [],
+  "hunks": [],
+  "evidence": [],
+  "unclassifiedHunkRefs": [],
+  "changes": [],
+  "targets": [],
+  "comparisons": [],
+  "findings": [],
+  "coverage": {
+    "knownUsages": null,
+    "verifiedUsages": 0,
+    "unknownPossible": true,
+    "planned": 0,
+    "succeeded": 0,
+    "failed": 0
+  },
+  "origin": {
+    "host": "unknown",
+    "projectFingerprint": "828868bed02f32af",
+    "reportId": "report-52593161860ef49e",
+    "bindingMode": "unbound",
+    "createdAt": "1970-01-01T00:00:00.000Z"
+  },
+  "diagnostics": {
+    "incompleteReasons": [
+      "no-input"
+    ],
+    "blockedRequestCount": 0
+  }
+}

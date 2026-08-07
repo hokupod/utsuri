@@ -1,0 +1,319 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://utsu-ri.dev/schemas/context-pack/v1.1",
+  "title": "ContextPack",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion",
+    "reportId",
+    "batchId",
+    "itemId",
+    "baseSha",
+    "headSha",
+    "anchor",
+    "question",
+    "code",
+    "images",
+    "evidenceRefs",
+    "priorThreadMessages",
+    "redactions",
+    "contextHash"
+  ],
+  "properties": {
+    "schemaVersion": {
+      "const": "1.1"
+    },
+    "reportId": {
+      "type": "string"
+    },
+    "batchId": {
+      "type": "string"
+    },
+    "itemId": {
+      "type": "string"
+    },
+    "baseSha": {
+      "type": "string"
+    },
+    "headSha": {
+      "type": "string"
+    },
+    "anchor": {
+      "$ref": "#/$defs/anchor"
+    },
+    "question": {
+      "type": "string",
+      "minLength": 1
+    },
+    "semanticChange": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "title",
+        "summary",
+        "intent",
+        "risk"
+      ],
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "title": {
+          "type": "string"
+        },
+        "summary": {
+          "type": "string"
+        },
+        "intent": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "text",
+            "source",
+            "evidenceRefs"
+          ],
+          "properties": {
+            "text": {
+              "type": "string"
+            },
+            "source": {
+              "enum": [
+                "declared",
+                "supported-inference",
+                "weak-inference",
+                "unknown"
+              ]
+            },
+            "evidenceRefs": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            }
+          }
+        },
+        "risk": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "level",
+            "reasons"
+          ],
+          "properties": {
+            "level": {
+              "enum": [
+                "critical",
+                "high",
+                "medium",
+                "low",
+                "info"
+              ]
+            },
+            "reasons": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            }
+          }
+        }
+      }
+    },
+    "code": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "path",
+          "startLine",
+          "endLine",
+          "textRef"
+        ],
+        "properties": {
+          "path": {
+            "type": "string"
+          },
+          "startLine": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "endLine": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "textRef": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "images": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "role",
+          "assetRef"
+        ],
+        "properties": {
+          "role": {
+            "enum": [
+              "before",
+              "after",
+              "diff"
+            ]
+          },
+          "assetRef": {
+            "type": "string"
+          },
+          "crop": {
+            "$ref": "#/$defs/region"
+          }
+        }
+      }
+    },
+    "evidenceRefs": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "uniqueItems": true
+    },
+    "priorThreadMessages": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "role",
+          "text"
+        ],
+        "properties": {
+          "role": {
+            "enum": [
+              "human",
+              "agent"
+            ]
+          },
+          "text": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "redactions": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "category",
+          "ref"
+        ],
+        "properties": {
+          "category": {
+            "type": "string"
+          },
+          "ref": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "contextHash": {
+      "type": "string",
+      "minLength": 8
+    }
+  },
+  "$defs": {
+    "anchor": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "type",
+        "ref",
+        "fingerprint"
+      ],
+      "properties": {
+        "type": {
+          "enum": [
+            "change",
+            "file",
+            "hunk",
+            "line-range",
+            "visual-target",
+            "visual-region",
+            "finding",
+            "verification-gap"
+          ]
+        },
+        "ref": {
+          "type": "string"
+        },
+        "path": {
+          "type": "string"
+        },
+        "side": {
+          "enum": [
+            "before",
+            "after",
+            "diff"
+          ]
+        },
+        "startLine": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "endLine": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "targetRef": {
+          "type": "string"
+        },
+        "region": {
+          "$ref": "#/$defs/region"
+        },
+        "selectorHint": {
+          "type": "string"
+        },
+        "fingerprint": {
+          "type": "string",
+          "minLength": 8
+        }
+      }
+    },
+    "region": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "x",
+        "y",
+        "width",
+        "height"
+      ],
+      "properties": {
+        "x": {
+          "type": "number",
+          "minimum": 0
+        },
+        "y": {
+          "type": "number",
+          "minimum": 0
+        },
+        "width": {
+          "type": "number",
+          "exclusiveMinimum": 0
+        },
+        "height": {
+          "type": "number",
+          "exclusiveMinimum": 0
+        }
+      }
+    }
+  }
+}

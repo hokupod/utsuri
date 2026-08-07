@@ -1,0 +1,9 @@
+{
+  "strictValidation": "rejected",
+  "requiredDiagnostics": [
+    "Hash mismatch: index.html",
+    "Inline script is forbidden",
+    "Inline event handlers are forbidden",
+    "Active URL scheme is forbidden"
+  ]
+}

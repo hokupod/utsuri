@@ -1,5 +1,5 @@
 import { spawn } from "node:child_process";
-import { closeSync, constants, fstatSync, openSync } from "node:fs";
+import { constants } from "node:fs";
 import { access, lstat, type FileHandle } from "node:fs/promises";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
@@ -44,19 +44,13 @@ async function resolveNativeHelper(): Promise<string> {
 
 async function runNativeHelper(
   helper: string,
-  args: string[],
-  parentDescriptor: number
+  args: string[]
 ): Promise<{ code: number | null; signal: NodeJS.Signals | null; stderr: string }> {
   return await new Promise((resolve, reject) => {
-    let child: ReturnType<typeof spawn>;
-    try {
-      child = spawn(helper, args, {
-        shell: false,
-        stdio: ["ignore", "ignore", "pipe", parentDescriptor]
-      });
-    } finally {
-      closeInheritedDescriptor(parentDescriptor);
-    }
+    const child = spawn(helper, args, {
+      shell: false,
+      stdio: ["ignore", "ignore", "pipe"]
+    });
     let stderr = "";
     const errorStream = child.stderr;
     if (!errorStream) {
@@ -72,37 +66,8 @@ async function runNativeHelper(
   });
 }
 
-function duplicateDirectoryDescriptor(
-  parentHandle: FileHandle,
-  parentIdentity: FileIdentity
-): number {
-  const descriptorPath = `${process.platform === "linux" ? "/proc/self/fd" : "/dev/fd"}/${parentHandle.fd}`;
-  const duplicate = openSync(descriptorPath, constants.O_RDONLY);
-  const duplicateIdentity = fstatSync(duplicate, { bigint: true });
-  if (
-    !duplicateIdentity.isDirectory() ||
-    String(duplicateIdentity.dev) !== String(parentIdentity.dev) ||
-    String(duplicateIdentity.ino) !== String(parentIdentity.ino)
-  ) {
-    closeSync(duplicate);
-    throw new UtsuriError(
-      "REPORT_PUBLISH_IDENTITY_CHANGED",
-      "The retained report publication directory changed before helper execution",
-      ExitCode.Security
-    );
-  }
-  return duplicate;
-}
-
-function closeInheritedDescriptor(descriptor: number): void {
-  try {
-    closeSync(descriptor);
-  } catch (error) {
-    if ((error as NodeJS.ErrnoException).code !== "EBADF") throw error;
-  }
-}
-
 export async function publishDirectoryNoReplace(
+  parentPath: string,
   parentHandle: FileHandle,
   parentIdentity: FileIdentity,
   sourceName: string,
@@ -110,19 +75,28 @@ export async function publishDirectoryNoReplace(
   sourceIdentity: FileIdentity
 ): Promise<void> {
   const helper = await resolveNativeHelper();
-  const inheritedDescriptor = duplicateDirectoryDescriptor(parentHandle, parentIdentity);
-  const result = await runNativeHelper(
-    helper,
-    [
-      sourceName,
-      destinationName,
-      String(parentIdentity.dev),
-      String(parentIdentity.ino),
-      String(sourceIdentity.dev),
-      String(sourceIdentity.ino)
-    ],
-    inheritedDescriptor
-  );
+  const retainedIdentity = await parentHandle.stat({ bigint: true });
+  if (
+    !retainedIdentity.isDirectory() ||
+    String(retainedIdentity.dev) !== String(parentIdentity.dev) ||
+    String(retainedIdentity.ino) !== String(parentIdentity.ino)
+  ) {
+    throw new UtsuriError(
+      "REPORT_PUBLISH_IDENTITY_CHANGED",
+      "The retained report publication directory changed before helper execution",
+      ExitCode.Security
+    );
+  }
+  const result = await runNativeHelper(helper, [
+    "publish-contained",
+    parentPath,
+    sourceName,
+    destinationName,
+    String(parentIdentity.dev),
+    String(parentIdentity.ino),
+    String(sourceIdentity.dev),
+    String(sourceIdentity.ino)
+  ]);
 
   if (result.code === 0) return;
   if (result.code === helperExit.destinationExists) {

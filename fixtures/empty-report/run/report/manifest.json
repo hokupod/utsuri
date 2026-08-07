@@ -4,14 +4,13 @@
   "toolVersion": "0.1.0",
   "generatedAt": "1970-01-01T00:00:00.000Z",
   "sourceSnapshotHash": "e2189445cb8fc2656021aa9de819b3169c487818f5cabec8ccd730606c7610f5",
-  "semanticHash": "8f7853a12dd27559e98d4cb81040894f177365a6c75e0eb874bd9056a71e7bb0",
+  "semanticHash": "bbd575f48031b42552b4c73c5538172a4415779ca05063eba21dbf70af2d2a40",
   "assetHashes": {
     "assets/app.css": "ca847a6d252b3a0676e9efa616fb5a84fc621d83d52b738d7c36b872b7042cc0",
     "assets/app.js": "5b892f1754135a1cbba34dd28e6b0183dc82f046387d0ff584fb24f6ebd24e3a",
-    "assets/icons.svg": "e3f7e7ede4e26a8bd9243ffb538b7037d3c821b7e91767fa81a6562c555789ea",
     "context-pack.schema.json": "15a91a1f02f8bec3037bf869229f16de321e435948db6c56fa91145ee32a66d0",
     "diagnostics/summary.json": "432769f2ed6b55431c399eec2e7b9f1160b945ca7cc51b904b82e0923b9c28f2",
-    "index.html": "c0782cfef82f4240778a683bc89dbf945bc07c00650c3dc47b25ac308a86e6a4",
+    "index.html": "347d8f1ae0000bfd5dbbc071b06069963d8e6620ed412f65b8db2acc1f1e24f8",
     "report.json": "81a3dd335b8de58f04c9dc0f956ce7c3202f047f0e5ac0a5950597589291b976",
     "review-answer.schema.json": "b26c42404e30f1974262dd467084284b2e41821ff948e97f8819d385b403fb3b",
     "review-state.schema.json": "dfa63ae91dc03ee8eeedce780894c510d36632c5ce8c6e8c4fcb731d2f7a5589",
@@ -19,8 +18,11 @@
   },
   "privacy": {
     "includesAbsolutePaths": false,
+    "includesCookies": false,
     "includesRawEnvironment": false,
-    "includesRawDom": false
+    "includesRawDom": false,
+    "includesRawHeaders": false,
+    "includesTraces": false
   },
   "incompleteReasons": [
     "no-input"

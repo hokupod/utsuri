@@ -3,6 +3,7 @@ import { execFile } from "node:child_process";
 import { readFile, rm } from "node:fs/promises";
 import path from "node:path";
 import { promisify } from "node:util";
+import { viewerDocument } from "../../packages/interactive-server/src";
 import type { UtsuriReport } from "../../packages/report-model/src";
 
 const repositoryRoot = path.resolve(import.meta.dirname, "../..");
@@ -105,10 +106,12 @@ export async function servePhase3Report(
     }
     const filename = path.join(fixture.directory, relative);
     try {
+      const body = await readFile(filename);
       await route.fulfill({
         status: 200,
         contentType: contentTypes[path.extname(filename)] ?? "application/octet-stream",
-        body: await readFile(filename)
+        body:
+          relative === "index.html" ? viewerDocument(body.toString("utf8"), "interactive") : body
       });
     } catch {
       await route.fulfill({ status: 404, body: "Not found" });

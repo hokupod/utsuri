@@ -1,6 +1,7 @@
 import { expect, test, type Browser, type Page, type Route, type TestInfo } from "@playwright/test";
 import { mkdir, readFile, writeFile } from "node:fs/promises";
 import path from "node:path";
+import { viewerDocument } from "../../packages/interactive-server/src";
 import type { UtsuriReport } from "../../packages/report-model/src";
 
 const root = path.resolve(import.meta.dirname, "../..");
@@ -25,10 +26,12 @@ async function serveReport(page: Page): Promise<void> {
     if (relative.includes("..")) return await route.abort("blockedbyclient");
     const filename = path.join(fixture, relative);
     try {
+      const body = await readFile(filename);
       await route.fulfill({
         status: 200,
         contentType: contentTypes[path.extname(filename)] ?? "application/octet-stream",
-        body: await readFile(filename)
+        body:
+          relative === "index.html" ? viewerDocument(body.toString("utf8"), "interactive") : body
       });
     } catch {
       await route.fulfill({ status: 404, body: "Not found" });
@@ -61,7 +64,7 @@ async function newFixturePage(
 test("renders every hunk from structured data without executing diff text", async ({ page }) => {
   await serveReport(page);
 
-  await expect(page.getByText("UNCOVERED", { exact: true })).toBeVisible();
+  await expect(page.getByRole("banner").getByText("UNCOVERED", { exact: true })).toBeVisible();
   await expect(page.getByText("Visual verification has not run")).toBeVisible();
   await page.getByRole("link", { name: /src\/malicious\.ts/u }).click();
   await expect(page.getByText(/<img src=x onerror=/u)).toBeVisible();

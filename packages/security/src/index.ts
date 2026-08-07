@@ -1,6 +1,23 @@
-import { lstat, realpath } from "node:fs/promises";
+import { closeSync, constants, fstatSync, openSync } from "node:fs";
+import { spawn } from "node:child_process";
+import { access, lstat, realpath } from "node:fs/promises";
 import path from "node:path";
+import { fileURLToPath } from "node:url";
 import { ExitCode, UtsuriError } from "@utsu-ri/core";
+
+export {
+  assertPngBytes,
+  assertRasterImageReference,
+  assertSafeReportAssetReference,
+  interactiveReportCsp,
+  parseBoundedJson,
+  reportSecurityHeaders,
+  sandboxedStaticFragment,
+  sanitizeStaticFragment,
+  staticFragmentCsp,
+  staticFragmentDocument,
+  staticReportCsp
+} from "./report";
 
 const shellExecutables = new Set(["bash", "cmd", "fish", "powershell", "pwsh", "sh", "zsh"]);
 const delegatingExecutables = new Set(["busybox", "env"]);
@@ -120,12 +137,56 @@ export function assertLoopbackAddress(host: string): void {
 }
 
 export function assertArchiveEntryPath(entry: string): string {
-  if (entry.includes("\0") || path.isAbsolute(entry)) {
+  if (
+    entry.includes("\0") ||
+    path.isAbsolute(entry) ||
+    /^[a-z]:[\\/]/iu.test(entry) ||
+    entry.startsWith("\\\\")
+  ) {
     securityError("SEC_ARCHIVE_PATH", "Archive entries must be relative and contain no NUL byte");
   }
   const normalized = path.posix.normalize(entry.replaceAll("\\", "/"));
-  if (normalized === ".." || normalized.startsWith("../")) {
+  if (
+    !normalized ||
+    normalized === "." ||
+    normalized === ".." ||
+    normalized.startsWith("../") ||
+    normalized.startsWith("/")
+  ) {
     securityError("SEC_ARCHIVE_TRAVERSAL", "Archive entry escapes the destination");
+  }
+  return normalized;
+}
+
+export function assertArchiveEntriesSafe(
+  entries: readonly {
+    path: string;
+    kind: "directory" | "file" | "symlink" | "special";
+    uncompressedBytes: number;
+  }[],
+  options: { maximumEntries?: number; maximumUncompressedBytes?: number } = {}
+): string[] {
+  const maximumEntries = options.maximumEntries ?? 10_000;
+  const maximumUncompressedBytes = options.maximumUncompressedBytes ?? 64 * 1024 * 1024;
+  if (entries.length > maximumEntries) {
+    securityError("SEC_ARCHIVE_ENTRY_LIMIT", "Archive contains too many entries");
+  }
+  let totalBytes = 0;
+  const normalized = entries.map((entry) => {
+    if (entry.kind !== "file" && entry.kind !== "directory") {
+      securityError("SEC_ARCHIVE_ENTRY_TYPE", "Archive symlinks and special files are forbidden");
+    }
+    if (!Number.isSafeInteger(entry.uncompressedBytes) || entry.uncompressedBytes < 0) {
+      securityError("SEC_ARCHIVE_SIZE", "Archive entry size is invalid");
+    }
+    totalBytes += entry.uncompressedBytes;
+    if (totalBytes > maximumUncompressedBytes) {
+      securityError("SEC_ARCHIVE_SIZE_LIMIT", "Archive exceeds the uncompressed byte limit");
+    }
+    return assertArchiveEntryPath(entry.path);
+  });
+  if (new Set(normalized).size !== normalized.length) {
+    securityError("SEC_ARCHIVE_DUPLICATE", "Archive contains duplicate normalized paths");
   }
   return normalized;
 }
@@ -135,7 +196,12 @@ export async function resolveContainedPath(
   relativeInput: string,
   options: { allowMissing?: boolean } = {}
 ): Promise<string> {
-  if (path.isAbsolute(relativeInput) || relativeInput.includes("\0")) {
+  if (
+    path.isAbsolute(relativeInput) ||
+    relativeInput.includes("\0") ||
+    /^[a-z]:[\\/]/iu.test(relativeInput) ||
+    relativeInput.startsWith("\\\\")
+  ) {
     securityError("SEC_PATH_RELATIVE", "Repository paths must be relative");
   }
   const root = await realpath(rootInput);
@@ -160,4 +226,157 @@ export async function resolveContainedPath(
     }
   }
   return candidate;
+}
+
+export async function readContainedRegularFile(
+  rootInput: string,
+  relativeInput: string,
+  options: { maximumBytes?: number; timeoutMs?: number } = {}
+): Promise<Buffer> {
+  if (
+    !relativeInput ||
+    path.isAbsolute(relativeInput) ||
+    relativeInput.includes("\\") ||
+    relativeInput.includes("\0") ||
+    relativeInput.split("/").some((segment) => !segment || segment === "." || segment === "..")
+  ) {
+    securityError("SEC_PATH_RELATIVE", "Repository paths must use safe relative components");
+  }
+  const maximumBytes = options.maximumBytes ?? 64 * 1024 * 1024;
+  if (!Number.isSafeInteger(maximumBytes) || maximumBytes < 0) {
+    securityError("SEC_FILE_SIZE_LIMIT", "Contained input byte limit is invalid");
+  }
+  const timeoutMs = options.timeoutMs ?? 30_000;
+  if (!Number.isSafeInteger(timeoutMs) || timeoutMs < 1 || timeoutMs > 30_000) {
+    securityError("SEC_FILE_TIMEOUT_LIMIT", "Contained input timeout must be 1 to 30000ms");
+  }
+  const root = await realpath(rootInput);
+  const moduleDirectory = path.dirname(fileURLToPath(import.meta.url));
+  const target = `${process.platform}-${process.arch}`;
+  const candidates = [
+    path.join(moduleDirectory, "native", target, "utsuri-fs-ops"),
+    path.resolve(moduleDirectory, "../../..", ".artifacts/native", target, "utsuri-fs-ops")
+  ];
+  let helper: string | undefined;
+  for (const candidate of candidates) {
+    try {
+      await access(candidate, constants.X_OK);
+      helper = candidate;
+      break;
+    } catch {
+      // Try the source-checkout or installed-package location next.
+    }
+  }
+  if (!helper) {
+    securityError("SEC_NATIVE_HELPER_UNAVAILABLE", "Contained read helper is unavailable");
+  }
+  const rootDescriptor = openSync(
+    root,
+    constants.O_RDONLY | constants.O_DIRECTORY | constants.O_NOFOLLOW
+  );
+  let rootIdentity: ReturnType<typeof fstatSync>;
+  try {
+    rootIdentity = fstatSync(rootDescriptor, { bigint: true });
+  } finally {
+    closeSync(rootDescriptor);
+  }
+  return await new Promise<Buffer>((resolve, reject) => {
+    const child = spawn(
+      helper,
+      [
+        "read-contained-root",
+        root,
+        relativeInput,
+        String(maximumBytes),
+        String(rootIdentity.dev),
+        String(rootIdentity.ino)
+      ],
+      {
+        env: {},
+        killSignal: "SIGKILL",
+        shell: false,
+        stdio: ["ignore", "pipe", "pipe"],
+        timeout: timeoutMs,
+        windowsHide: true
+      }
+    );
+    const stdout: Buffer[] = [];
+    const stderr: Buffer[] = [];
+    let stdoutBytes = 0;
+    let stderrBytes = 0;
+    child.stdout!.on("data", (chunk: Buffer) => {
+      stdoutBytes += chunk.length;
+      if (stdoutBytes > maximumBytes) {
+        child.kill("SIGKILL");
+        return;
+      }
+      stdout.push(chunk);
+    });
+    child.stderr!.on("data", (chunk: Buffer) => {
+      const remaining = 8192 - stderrBytes;
+      if (remaining <= 0) return;
+      const retained = chunk.subarray(0, remaining);
+      stderrBytes += retained.length;
+      stderr.push(retained);
+    });
+    child.once("error", reject);
+    child.once("close", (code, signal) => {
+      if (stdoutBytes > maximumBytes || code === 71) {
+        reject(
+          new UtsuriError(
+            "SEC_FILE_SIZE_LIMIT",
+            `Contained input exceeds ${maximumBytes} bytes`,
+            ExitCode.Security
+          )
+        );
+        return;
+      }
+      if (code === 72) {
+        reject(new UtsuriError("SEC_PATH_MISSING", "Path does not exist", ExitCode.Security));
+        return;
+      }
+      if (code === 69) {
+        reject(
+          new UtsuriError(
+            "SEC_PATH_RELATIVE",
+            "Repository paths must use safe relative components",
+            ExitCode.Security
+          )
+        );
+        return;
+      }
+      if (code === 66) {
+        reject(
+          new UtsuriError(
+            "SEC_ROOT_IDENTITY_CHANGED",
+            "Contained input root identity changed before the native read",
+            ExitCode.Security
+          )
+        );
+        return;
+      }
+      if (code === 70) {
+        reject(
+          new UtsuriError(
+            "SEC_FILE_TYPE",
+            "Contained input must be a regular non-symlink file",
+            ExitCode.Security
+          )
+        );
+        return;
+      }
+      if (code !== 0) {
+        const detail = Buffer.concat(stderr).toString("utf8").trim();
+        reject(
+          new UtsuriError(
+            "SEC_CONTAINED_READ_FAILED",
+            detail || `Contained read helper failed (${signal ?? code ?? "unknown"})`,
+            ExitCode.Security
+          )
+        );
+        return;
+      }
+      resolve(Buffer.concat(stdout));
+    });
+  });
 }

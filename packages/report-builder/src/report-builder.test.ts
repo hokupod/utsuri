@@ -323,6 +323,7 @@ describe("atomic publication helper", () => {
     try {
       await expect(
         publishDirectoryNoReplace(
+          root,
           parentHandle,
           await parentHandle.stat({ bigint: true }),
           "source",
@@ -357,6 +358,7 @@ describe("atomic publication helper", () => {
     try {
       await expect(
         publishDirectoryNoReplace(
+          root,
           parentHandle,
           await parentHandle.stat({ bigint: true }),
           "source",

@@ -17,6 +17,8 @@ Do not invoke Utsuri for a one-line explanation, a repository with no reviewable
 - Accept configured commands only as argument arrays. Never evaluate shell strings.
 - Preserve incomplete and failed evidence. Never relabel missing verification as a pass.
 - Keep generated `report/` content immutable. Store review updates under the run's `review/` directory.
+- Never weaken container isolation, inherit host secrets, pull a missing image, or treat unavailable runtime capability as PASS.
+- Strictly validate report hashes and inventories; direct SVG and active HTML are not report evidence.
 
 ## Workflow
 

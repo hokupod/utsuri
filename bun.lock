@@ -77,18 +77,6 @@
       "bin": {
         "utsuri": "dist/utsuri.mjs",
       },
-      "dependencies": {
-        "@utsu-ri/capture": "workspace:*",
-        "@utsu-ri/compare": "workspace:*",
-        "@utsu-ri/core": "workspace:*",
-        "@utsu-ri/discovery": "workspace:*",
-        "@utsu-ri/git-collector": "workspace:*",
-        "@utsu-ri/report-builder": "workspace:*",
-        "@utsu-ri/report-model": "workspace:*",
-        "@utsu-ri/security": "workspace:*",
-        "playwright-core": "1.61.1",
-        "yaml": "2.8.1",
-      },
     },
     "packages/compare": {
       "name": "@utsu-ri/compare",
@@ -129,6 +117,13 @@
         "@utsu-ri/security": "workspace:*",
       },
     },
+    "packages/interactive-server": {
+      "name": "@utsu-ri/interactive-server",
+      "version": "0.1.0",
+      "dependencies": {
+        "@utsu-ri/security": "workspace:*",
+      },
+    },
     "packages/report-builder": {
       "name": "@utsu-ri/report-builder",
       "version": "0.1.0",
@@ -158,6 +153,7 @@
       "version": "0.1.0",
       "dependencies": {
         "@utsu-ri/core": "workspace:*",
+        "pngjs": "7.0.0",
       },
     },
   },
