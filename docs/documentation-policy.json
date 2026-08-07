@@ -45,6 +45,8 @@
     "init-capture-config",
     "collect-patch",
     "capture-run",
+    "discover-run",
+    "compare-run",
     "finalize-report",
     "validate-report",
     "check",

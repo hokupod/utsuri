@@ -57,4 +57,6 @@ Each side uses a separate Browser Context with identical viewport, DPR, locale, 
 
 Initial HTTP requests, redirect destinations, and WebSocket handshakes use the same origin allowlist. External redirects are blocked before follow-up requests are sent. Persisted textual evidence removes URL credentials, queries, and fragments from absolute and relative URL forms.
 
-External origins and mutation methods are blocked by default. A blocked request or failed side makes the capture incomplete. Successful compatible sides may be reused only when the configuration/run binding, browser version, and artifact digests still match. Finalization copies referenced capture evidence into the immutable report and hashes it.
+External origins and mutation methods are blocked by default. A blocked request or failed side makes the capture incomplete. Successful compatible sides may be reused only when the configuration/run binding, browser version, and artifact digests still match.
+
+After capture, run `discover --run <run> --config <config>` and then `compare --run <run>`. Discovery keeps known, verified, unknown, planned, succeeded, failed, and unmapped scope separate. Comparison validates every capture digest and classifies pixel, DOM, ARIA, style, axe, console/page, network, and overflow evidence as new, resolved, unchanged, or incomplete. Finalization independently validates both manifests, copies referenced capture/comparison evidence into the immutable report, and hashes it.

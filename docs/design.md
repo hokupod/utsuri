@@ -6,7 +6,7 @@
 - **Plugin name**: `utsuri`
 - **Skill name**: `utsuri-review`
 - **CLI name**: `utsuri`
-- **Document version**: 2.0
+- **Document version**: 2.1
 - **Created**: 2026-08-06
 - **Last updated**: 2026-08-07
 - **Language**: English (canonical)
@@ -14,7 +14,7 @@
 - **Implementation language**: TypeScript
 - **Development environment**: Bun
 - **Report UI**: a static application built with Svelte
-- **v2.0 changes**: implemented the Phase 2 browser-capture contract with three isolated capture modes, explicit worktree execution consent, deterministic stabilization and action schemas, network mutation blocking, digest-validated reuse, typed partial failures, and self-contained immutable capture evidence
+- **v2.1 changes**: implemented Phase 3 comparison and coverage with content-addressed pixel diffs, structural/runtime finding classification, explicit target discovery, structured unknown coverage, whole-report source binding, and a keyboard-accessible visual evidence UI
 
 ---
 
@@ -1760,6 +1760,8 @@ In a code-only report, Git structure is the only verified evidence. The report b
 6. CSS selector or token usage
 7. Generic smoke target
 
+Phase 3 records every selected candidate in `discovery.json` with its source, confidence, reason, changed paths, known-usage evidence, and target reference. A higher-priority adapter wins when multiple adapters map the same target. Changes that cannot be mapped remain explicit in `unmappedChangeRefs`; fallback targets do not erase that uncertainty.
+
 ### 17.2 Discovery confidence
 
 | Category | Example                                       |
@@ -1796,12 +1798,14 @@ Store structured coverage rather than one percentage:
 {
   "knownUsages": 28,
   "verifiedUsages": 5,
-  "unknownUsagePossibility": true,
-  "targetsPlanned": 8,
-  "targetsSucceeded": 7,
-  "targetsFailed": 1
+  "unknownPossible": true,
+  "planned": 8,
+  "succeeded": 7,
+  "failed": 1
 }
 ```
+
+`knownUsages` is `null` when no defensible denominator exists. `verifiedUsages` never exceeds a known denominator. When the denominator is unavailable or `unknownPossible` is true, the report states the uncertainty in words and does not display a percentage. Discovery binds its semantic hash to the collected diff and capture manifest so finalization can reject substituted mappings.
 
 ---
 
@@ -1968,6 +1972,8 @@ The capture manifest records the configuration/run-binding hash, browser version
 
 ## 20. Comparison engine
 
+Phase 3 writes an atomic `comparison.json` bound to the exact capture hash. It independently verifies every referenced capture digest before reading evidence, stores diff images under a content-addressed comparison directory, and records a semantic comparison hash. Finalization revalidates the manifest, digests, target bindings, and complete artifact inventory rather than trusting the comparison producer. Each report-source JSON file is opened and read once into an immutable snapshot; its hash and parsed value come from those exact bytes. Finalization reconstructs every report field from that snapshot and optional snapshotted annotations, compares the result with the supplied report, and uses only a deep-cloned immutable reconstruction for reuse and publication. Source JSON and referenced evidence digests are rechecked before atomic publication so a concurrent change fails closed.
+
 ### 20.1 Pixel comparison
 
 Use Pixelmatch to generate:
@@ -1979,6 +1985,8 @@ Use Pixelmatch to generate:
 - region bounding boxes.
 
 Pixel values must not be the sole regression criterion.
+
+Pixel-only differences are informational `visual` findings. They may produce `CHANGED`, but they cannot produce `REGRESSION` without a new serious structural, accessibility, layout, or runtime finding.
 
 ### 20.2 Changed-region extraction
 
@@ -2040,10 +2048,10 @@ Do not display every property. Limit the default to:
 
 ### 20.6 Accessibility comparison
 
-Use `@axe-core/playwright` and generate a finding fingerprint as:
+Inject pinned `axe-core` into non-synthetic capture contexts and generate a finding fingerprint as:
 
 ```text
-<rule-id>:<normalized-target-selector>:<target-state>
+<rule-id>:<normalized-target-selector>:<target-ref>
 ```
 
 Classifications:
@@ -2054,6 +2062,8 @@ Classifications:
 - incomplete.
 
 Always state that automated inspection cannot find every accessibility problem.
+
+Synthetic static fragments keep JavaScript disabled, so their axe result is `incomplete`; DOM and ARIA snapshots remain measured evidence but do not masquerade as a completed automated accessibility check.
 
 ### 20.7 Runtime-error comparison
 
@@ -2073,6 +2083,8 @@ Compare identical fingerprints before and after, prioritizing new events.
 - target-root overflow;
 - bounding box outside the viewport; and
 - potential content obstruction by fixed elements.
+
+Every layout finding references the style/metadata artifacts and the relevant screenshot. The comparison classifies stable fingerprints as `new`, `resolved`, or `unchanged`; missing or malformed evidence becomes `incomplete`. Overall status aggregation preserves `INCOMPLETE` before `UNCOVERED`, reserves `REGRESSION` for serious new non-pixel findings, uses `CHANGED` for measured differences without such a regression, and uses `PASS` only when comparison is complete and no new difference remains.
 
 Present automated results as findings with image evidence.
 
@@ -2157,6 +2169,7 @@ report/
 - schema version;
 - tool version;
 - generation time;
+- source-snapshot hash;
 - base and head SHAs;
 - dirty state;
 - configuration hash;
@@ -2171,10 +2184,11 @@ Report generation follows this fail-closed sequence:
 
 1. Require `input.json`, `diff.json`, and other run inputs to be regular non-symlink files.
 2. Resolve `run/`, retain its directory descriptor, and reject a publication path controlled or renameable by another unprivileged principal. A shared writable ancestor is allowed only when sticky-directory ownership protects the immediate child.
-3. Generate into a unique `0700` staging directory and complete strict schema, reference, inventory, content-hash, CSP, and embedded-asset validation there.
-4. Recheck the run and staging inode identities.
-5. Publish through the retained descriptor with `renameatx_np(RENAME_EXCL)` on macOS or `renameat2(RENAME_NOREPLACE)` on Linux.
-6. Recheck the published inode. Never overwrite or delete an existing destination.
+3. Snapshot annotations and the supplied report before the first asynchronous boundary; reconstruct the full report from validated run artifacts, bind its manifest semantic hash to the exact source-byte snapshot hash, and retain only the immutable reconstruction.
+4. Generate into a unique `0700` staging directory and complete strict schema, reference, inventory, content-hash, CSP, and embedded-asset validation there.
+5. Recheck source JSON, referenced evidence digests, and the run and staging inode identities.
+6. Publish through the retained descriptor with `renameatx_np(RENAME_EXCL)` on macOS or `renameat2(RENAME_NOREPLACE)` on Linux.
+7. Recheck the published inode. Never overwrite or delete an existing destination.
 
 If the helper or filesystem primitive is unavailable, publication fails instead of falling back to ordinary `rename`. A failed generation may retain its private staging directory for diagnosis; Utsuri never performs a path-based recursive cleanup that could delete a foreign object.
 
@@ -2214,7 +2228,7 @@ Use single-file output only for small reports.
 
 ## 23. Report information architecture
 
-Phase 1 implements the code-only subset as a local **Diff Ledger**: decision summary, three-state queue, one focused change, fixed explanations and gaps, evidence drawer, file inventory, and structured code diff. The visual, structural, review-state, and feedback surfaces below remain the v1 target for later phases. Interaction and visual decisions are traced to primary Apple HIG and WCAG sources in [UI guidelines](ui-guidelines.md).
+Phase 3 extends the local **Diff Ledger** with measured visual, DOM, ARIA, style, accessibility, runtime, layout, and coverage evidence. Agent interpretation and deterministic measurements are separate sections; findings, visual regions, and hunks cross-link without changing the underlying evidence. Persisted review state and feedback surfaces remain later v1 work. Interaction and visual decisions are traced to primary Apple HIG and WCAG sources in [UI guidelines](ui-guidelines.md).
 
 ### 23.1 Overall structure
 
@@ -2230,6 +2244,8 @@ Phase 1 implements the code-only subset as a local **Diff Ledger**: decision sum
 │               │                                          │
 │ change list   │ Focused Change                           │
 │               │ ├─ what / why / impact / risk            │
+│               │ ├─ Agent interpretation                  │
+│               │ ├─ measured evidence / coverage          │
 │               │ ├─ rendered evidence                     │
 │               │ ├─ structural evidence                   │
 │               │ ├─ code diff                             │
@@ -2305,6 +2321,8 @@ Available modes:
 - pixel diff; and
 - after only.
 
+Blink is off by default, can always be stopped, and is unavailable when `prefers-reduced-motion: reduce` is active. Numeric shortcuts select modes without replacing labeled buttons. Region controls identify position and pixel count in text, and before/after images retain descriptive accessible names.
+
 ### 23.6 Component crop and full page
 
 Keep both rather than choosing one:
@@ -2314,7 +2332,7 @@ Keep both rather than choosing one:
 
 ### 23.7 Code Diff
 
-Phase 1 implements semantic-group and unclassified-hunk access, side-by-side and unified views, structured line rendering, word emphasis, context expansion, hunk anchors, and change/hunk URL fragments. Code content is inserted only as text nodes. The file tree, syntax highlighting, whitespace toggle, and visual-target links remain later-phase targets.
+Phase 3 implements semantic-group and unclassified-hunk access, side-by-side and unified views, structured line rendering, word emphasis, context expansion, hunk anchors, change/hunk URL fragments, and code-to-visual/finding links. Code content is inserted only as text nodes. The file tree, syntax highlighting, and whitespace toggle remain later-phase targets.
 
 - by semantic group;
 - by file tree;
@@ -2331,7 +2349,7 @@ Phase 1 implements semantic-group and unclassified-hunk access, side-by-side and
 
 Show up to three important evidence items by default and place the rest in a drawer.
 
-Phase 1 derives this list from the evidence index and keeps path, evidence type, summary, and hunk relationship visible without copying raw source content.
+Phase 3 derives this list from the evidence index and comparison bindings. It keeps path, evidence type, summary, and hunk relationship visible without copying raw source content, while full measured details remain available in visual and finding sections.
 
 ### 23.9 Verification gaps
 
@@ -2344,7 +2362,7 @@ Not verified
 - 23 components using the shared token
 ```
 
-The Phase 1 code-only UI always shows visual and runtime gaps in this position and labels the report `UNCOVERED`; those gaps are never collapsed into a clear queue state.
+The Phase 3 UI keeps code-only visual/runtime gaps and partial target coverage in this position. `UNCOVERED` and `INCOMPLETE` remain persistent status surfaces and are never collapsed into a clear queue state or transient toast.
 
 ### 23.10 Review state and comments
 
@@ -2469,21 +2487,20 @@ WCAG 2.2 AA.
 
 ### 24.3 Keyboard shortcuts
 
-| Key       | Action                                                  |
-| --------- | ------------------------------------------------------- |
-| `j` / `k` | Next / previous change                                  |
-| `n` / `p` | Next / previous finding                                 |
-| `1`       | Side by side                                            |
-| `2`       | Wipe                                                    |
-| `3`       | Pixel diff                                              |
-| `e`       | Evidence drawer                                         |
-| `v`       | Toggle viewed                                           |
-| `r`       | Toggle reviewed                                         |
-| `c`       | Comment at current anchor                               |
-| `a`       | Add or remove current-anchor comments from Agent review |
-| `Shift+A` | List Agent-review items                                 |
-| `/`       | Search                                                  |
-| `?`       | Shortcut help                                           |
+| Key       | Action                                     |
+| --------- | ------------------------------------------ |
+| `j` / `k` | Next / previous change                     |
+| `n` / `p` | Next / previous finding                    |
+| `1`       | Side by side                               |
+| `2`       | Wipe                                       |
+| `3`       | Pixel diff                                 |
+| `4`       | Blink when reduced motion is not requested |
+| `5`       | After only                                 |
+| `e`       | Move focus to visual evidence              |
+| `/`       | Search                                     |
+
+Viewed/reviewed/comment/Agent-feedback shortcuts are introduced with their Phase 5 surfaces rather than reserving inactive keys in Phase 3.
+| `?` | Shortcut help |
 
 Disable shortcuts while the user is typing.
 
@@ -3485,6 +3502,8 @@ Phases define implementation order, not a reduction of final scope.
 - coverage matrix.
 
 **Completion**: visual, structural, and unverified scope appear in one view.
+
+The Phase 3 source checkout implements this completion condition through `discover`, `compare`, independent report-builder validation, and the measured-evidence UI. Persisted review state, interactive comments, container execution, and distribution remain unavailable until later phases.
 
 ### Phase 4: Security hardening
 
@@ -4565,6 +4584,7 @@ A feature outside this definition is accepted only when it makes review decision
 
 | Entry ID                                   | Version | Date       | Change                                                                                                                                                                                                                                                                                                                  |
 | ------------------------------------------ | ------: | ---------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| design-v2.1-comparison-coverage            |     2.1 | 2026-08-07 | Implemented content-addressed pixel comparison and changed regions; DOM, ARIA, style, accessibility, runtime, and overflow classification; prioritized target discovery and structured unknown coverage; whole-report source binding; cross-linked measured evidence; and Phase 3 visual/accessibility fixture gates.   |
 | design-v2.0-browser-capture                |     2.0 | 2026-08-07 | Implemented isolated dual-url, static-fragment, and explicitly authorized worktree capture; deterministic stabilization and safe actions; redirect-aware external and mutation request blocking; typed partial failures; URL redaction; digest-validated reuse; and independently validated immutable capture evidence. |
 | design-v1.9-code-diff-mvp                  |     1.9 | 2026-08-07 | Implemented four explicit Git collection modes, structured diff/evidence/review-plan contracts, deterministic full-hunk coverage, schema-validated annotations, mandatory code-only verification gaps, and the keyboard-accessible Diff Ledger report UI.                                                               |
 | design-v1.8-exact-cli-tarball              |     1.8 | 2026-08-07 | Required a clean exact-inventory npm CLI tarball with bundled JavaScript dependencies, no registry dependency on private workspace packages, no install lifecycle scripts, isolated exact-tarball smoke tests, and version-tagged documentation links.                                                                  |

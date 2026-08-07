@@ -26,3 +26,7 @@ Use `--json` for a single JSON result and `--ndjson` only on commands that expli
 Do not discard an output path merely because a command reports a partial result. Strictly validate the preserved report and explain its gaps.
 
 `capture` requires `--run` and `--config`. `worktree` capture additionally requires `--allow-project-code`; configuration content cannot grant that process-execution consent by itself.
+
+`discover` requires the same `--run` and `--config`, writes a diff/capture-bound `discovery.json`, and reports structured known/verified/unknown/planned/succeeded/failed coverage. `compare` requires `--run`, verifies capture digests, and writes a capture-bound `comparison.json` plus content-addressed diff images. Run both before `finalize` when browser evidence is expected.
+
+`compare` returns exit code 4 when a target or evidence class is incomplete. Finalize the preserved result and report the exact gaps; do not retry deterministic malformed evidence or treat a pixel-only difference as a regression.

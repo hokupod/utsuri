@@ -18,9 +18,9 @@ The name joins the Japanese ideas of how a UI is reflected after a change and ho
 
 ## Status
 
-<!-- availability:phase-2-browser-capture -->
+<!-- availability:phase-3-comparison-coverage -->
 
-The Phase 2 browser-capture flow is available from this source checkout. It combines the Phase 1 code review with isolated `dual-url`, `static-fragment`, or explicitly authorized `worktree` evidence. Visual/runtime comparison, persisted review state, and Agent feedback are not implemented yet. The npm package and Plugin remain unpublished.
+The Phase 3 comparison-and-coverage flow is available from this source checkout. It combines code review and isolated browser capture with target discovery, visual/structural/runtime comparison, explicit coverage gaps, and a measured-evidence UI. Persisted review state, Agent feedback, and container execution are not implemented yet. The npm package and Plugin remain unpublished.
 
 <a id="capabilities"></a><!-- section:capabilities -->
 
@@ -35,9 +35,13 @@ Available now:
 - a self-contained code review with summary, three-state queue, Focus mode, evidence drawer, unified/side-by-side diff, deep links, and keyboard focus restoration;
 - separate before/after Browser Contexts with identical viewport, DPR, locale, timezone, color scheme, and reduced-motion settings;
 - full-page and element screenshots plus normalized DOM, ARIA, computed-style, axe, console, network, metadata, and typed failure evidence; and
-- deterministic stabilization, an allowlisted action DSL, blocked external/mutation requests, digest-checked reuse, and partial `INCOMPLETE` reports.
+- deterministic stabilization, an allowlisted action DSL, blocked external/mutation requests, digest-checked reuse, and partial `INCOMPLETE` reports;
+- prioritized explicit/Storybook/Playwright/route/import/selector/fallback target discovery with structured known, verified, unknown, planned, succeeded, and failed coverage;
+- Pixelmatch counts, ratios, content-addressed diff images, changed regions, and normalized DOM/ARIA/style fingerprints;
+- `new`, `resolved`, `unchanged`, and `incomplete` accessibility/runtime findings plus overflow and obstruction evidence; and
+- side-by-side, wipe, stoppable blink, pixel-diff, and after-only views with crop/full-page selection, synchronized scroll/zoom, region navigation, and code/finding cross-links.
 
-Later v1 phases add visual/DOM/ARIA/style/accessibility/runtime comparison, persisted review state, and Origin Session feedback. A complete capture remains `UNCOVERED` until comparison and target mapping run; a failed side or blocked request remains `INCOMPLETE`.
+Later v1 phases add container hardening, persisted review state, and Origin Session feedback. A complete capture remains `UNCOVERED` until discovery and comparison run. Missing or malformed evidence or a failed side remains `INCOMPLETE`; an unknown denominator remains explicit and is never presented as a percentage. Pixel differences alone do not establish `REGRESSION`.
 
 <a id="quick-start"></a><!-- section:quick-start -->
 
@@ -91,6 +95,22 @@ node skills/utsuri-review/scripts/utsuri.mjs capture --run .artifacts/utsuri/rea
 
 A capture exit code of 4 preserves successful sides and typed failure evidence. Finalize that partial run rather than treating it as no visual difference.
 
+Map changed code to the captured targets and preserve any unmapped change and unknown denominator.
+
+<!-- sync-command:discover-run -->
+
+```bash
+node skills/utsuri-review/scripts/utsuri.mjs discover --run .artifacts/utsuri/readme-example --config utsuri.yml --json
+```
+
+Compare pixels, structure, accessibility, runtime errors, network evidence, and overflow. Exit code 4 means the comparison is incomplete but its evidence is preserved.
+
+<!-- sync-command:compare-run -->
+
+```bash
+node skills/utsuri-review/scripts/utsuri.mjs compare --run .artifacts/utsuri/readme-example --json
+```
+
 <!-- sync-command:finalize-report -->
 
 ```bash
@@ -135,7 +155,7 @@ Utsuri treats repository content, diffs, HTML, SVG, comments, Context Packs, and
 
 `dual-url` never starts project code. `worktree` requires trusted input, explicit argv and separate working directories for both sides, plus the user's `--allow-project-code` opt-in. Child environments use only a minimal baseline and allowlisted non-secret names. `static-fragment` disables JavaScript and HTTP requests, sanitizes active markup, and is not equivalent to real-application rendering. Browser request blocking does not isolate a project server process; untrusted server execution waits for Phase 4 container mode.
 
-Generated `report/` content is immutable. Referenced capture evidence is copied into it and covered by the report asset manifest. Utsuri requires regular non-symlink run inputs, a publication path protected from other local principals, strict staging validation, and the bundled OS no-replace helper. Missing or unsupported helpers fail closed; failed generation can leave a private staging directory for manual diagnosis and never deletes it automatically. Mutable human-review data is stored separately in `run/review/`. The static viewer does not contact external services.
+Generated `report/` content is immutable. Referenced capture and comparison evidence is independently digest-checked, copied into the report, and covered by the report asset manifest. Discovery and comparison manifests are bound to the collected diff/capture hashes; substituted or unlisted artifacts fail finalization. Finalization reconstructs the complete report from validated run artifacts and annotations, records the exact source-byte snapshot hash in the manifest, publishes only an immutable snapshot, and rejects source or evidence drift during staging or reuse. Utsuri requires regular non-symlink run inputs, a publication path protected from other local principals, strict staging validation, and the bundled OS no-replace helper. Missing or unsupported helpers fail closed; failed generation can leave a private staging directory for manual diagnosis and never deletes it automatically. Mutable human-review data is stored separately in `run/review/`. The static viewer does not contact external services.
 
 Code diff content is parsed into structured lines and rendered only as text. Repository-controlled diff text is never injected as HTML.
 
@@ -146,6 +166,7 @@ Code diff content is parsed into structured lines and rendered only as text. Rep
 - [Canonical detailed design](https://github.com/hokupod/utsuri/blob/main/docs/design.md)
 - [UI guidelines and HIG/WCAG traceability](https://github.com/hokupod/utsuri/blob/main/docs/ui-guidelines.md)
 - [Capture modes and runtime boundary](https://github.com/hokupod/utsuri/blob/main/skills/utsuri-review/references/capture-modes.md)
+- [CLI contract](https://github.com/hokupod/utsuri/blob/main/skills/utsuri-review/references/cli-contract.md)
 - [v1 implementation plan](https://github.com/hokupod/utsuri/blob/main/ai/plans/active/v1-%E5%AE%9F%E8%A3%85/README.md)
 
 The design is canonical in English. User-facing README changes update English, Japanese, and Simplified Chinese in the same change.

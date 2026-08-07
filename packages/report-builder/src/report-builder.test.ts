@@ -2,6 +2,7 @@ import { afterAll, describe, expect, test } from "bun:test";
 import { constants } from "node:fs";
 import {
   chmod,
+  copyFile,
   lstat,
   mkdtemp,
   mkdir,
@@ -43,6 +44,27 @@ async function createReportRun() {
   return { root, run, report: await createInitialReport(run) };
 }
 
+async function createAnnotatedReportRun() {
+  const root = await mkdtemp(path.join(os.tmpdir(), "utsuri-report-annotations-"));
+  temporaryDirectories.push(root);
+  const run = path.join(root, "run");
+  const fixture = path.resolve(import.meta.dir, "../../../fixtures/code-only-review/expected");
+  await mkdir(run);
+  await Promise.all(
+    ["input.json", "diff.json", "evidence-index.json", "review-plan.json"].map((filename) =>
+      copyFile(path.join(fixture, filename), path.join(run, filename))
+    )
+  );
+  const fallback = await createInitialReport(run);
+  const annotations = {
+    schemaVersion: "1.0" as const,
+    changes: [structuredClone(fallback.changes[0]!)]
+  };
+  annotations.changes[0]!.intent.text = "Entry annotation snapshot.";
+  const report = await createInitialReport(run, annotations);
+  return { run, report, annotations };
+}
+
 describe("report output preflight", () => {
   test("accepts a nested output path whose nearest existing ancestor is writable", async () => {
     const root = await mkdtemp(path.join(os.tmpdir(), "utsuri-report-output-"));
@@ -60,6 +82,65 @@ describe("report output preflight", () => {
 });
 
 describe("immutable report generation", () => {
+  test("rejects schema-valid report fields that differ from validated run artifacts", async () => {
+    const { run, report } = await createReportRun();
+    const staleReport = structuredClone(report);
+    staleReport.summary.statement = "A stale caller-supplied conclusion.";
+
+    await expect(buildReport(run, staleReport)).rejects.toMatchObject({
+      diagnosticId: "REPORT_SOURCE_MISMATCH"
+    });
+  });
+
+  test("publishes the immutable entry snapshot when the caller mutates its report", async () => {
+    const { run, report } = await createReportRun();
+    const expectedStatement = report.summary.statement;
+
+    const building = buildReport(run, report);
+    report.summary.statement = "Mutated after buildReport returned its promise.";
+    const { reportDirectory } = await building;
+    const published = JSON.parse(
+      await readFile(path.join(reportDirectory, "report.json"), "utf8")
+    ) as typeof report;
+
+    expect(published.summary.statement).toBe(expectedStatement);
+  });
+
+  test("publishes the immutable entry snapshot when the caller mutates annotations", async () => {
+    const { run, report, annotations } = await createAnnotatedReportRun();
+
+    const building = buildReport(run, report, { annotations });
+    annotations.changes[0]!.intent.text = "Mutated after buildReport returned its promise.";
+    const { reportDirectory } = await building;
+    const published = JSON.parse(
+      await readFile(path.join(reportDirectory, "report.json"), "utf8")
+    ) as typeof report;
+
+    expect(published.changes[0]?.intent.text).toBe("Entry annotation snapshot.");
+  });
+
+  test("rejects a stale report when comparison evidence lacks discovery", async () => {
+    const { run, report } = await createReportRun();
+    await writeFile(path.join(run, "comparison.json"), "{}\n");
+
+    await expect(buildReport(run, report)).rejects.toMatchObject({
+      diagnosticId: "PHASE3_ARTIFACT_MISSING"
+    });
+  });
+
+  test("rejects a stale report when Phase 3 evidence lacks a diff", async () => {
+    const { run, report } = await createReportRun();
+    await Promise.all([
+      writeFile(path.join(run, "comparison.json"), "{}\n"),
+      writeFile(path.join(run, "discovery.json"), "{}\n"),
+      writeFile(path.join(run, "review-plan.json"), "{}\n")
+    ]);
+
+    await expect(buildReport(run, report)).rejects.toMatchObject({
+      diagnosticId: "PHASE3_ARTIFACT_MISSING"
+    });
+  });
+
   test("allows a sticky shared ancestor when its child belongs to the current user", async () => {
     const stickyRoot = process.platform === "darwin" ? "/private/tmp" : os.tmpdir();
     const root = await mkdtemp(path.join(stickyRoot, "utsuri-report-sticky-"));
@@ -154,6 +235,33 @@ describe("immutable report generation", () => {
     await expect(buildReport(run, report)).rejects.toThrow(
       "Existing report failed strict validation"
     );
+  });
+
+  test("does not reuse a report built from byte-distinct source JSON", async () => {
+    const { run, report } = await createReportRun();
+    await buildReport(run, report);
+    await writeFile(path.join(run, "input.json"), '{\n  "mode": "empty"\n}\n');
+    const equivalentReport = await createInitialReport(run);
+
+    expect(equivalentReport).toEqual(report);
+    await expect(buildReport(run, equivalentReport)).rejects.toMatchObject({
+      diagnosticId: "REPORT_SOURCE_SNAPSHOT_MISMATCH"
+    });
+  });
+
+  test("binds the manifest semantic hash to its source snapshot hash", async () => {
+    const { run, report } = await createReportRun();
+    const { reportDirectory } = await buildReport(run, report);
+    const manifestFile = path.join(reportDirectory, "manifest.json");
+    const manifest = JSON.parse(await readFile(manifestFile, "utf8")) as {
+      sourceSnapshotHash: string;
+    };
+    expect(manifest.sourceSnapshotHash).toMatch(/^[a-f0-9]{64}$/u);
+    manifest.sourceSnapshotHash = "0".repeat(64);
+    await writeFile(manifestFile, `${JSON.stringify(manifest, null, 2)}\n`);
+
+    const result = await validateReportDirectory(reportDirectory, { strict: true });
+    expect(result.errors).toContain("Manifest semanticHash mismatch");
   });
 
   test("returns validation errors for malformed report JSON", async () => {

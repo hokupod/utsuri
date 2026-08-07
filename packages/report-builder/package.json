@@ -5,7 +5,9 @@
   "license": "AGPL-3.0-or-later",
   "type": "module",
   "dependencies": {
+    "@utsu-ri/compare": "workspace:*",
     "@utsu-ri/core": "workspace:*",
+    "@utsu-ri/discovery": "workspace:*",
     "@utsu-ri/report-model": "workspace:*",
     "@utsu-ri/security": "workspace:*"
   },

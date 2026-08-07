@@ -18,9 +18,9 @@ Utsuri 将代码变更转换为有证据、便于人类理解的可视化评审�
 
 ## 状态
 
-<!-- availability:phase-2-browser-capture -->
+<!-- availability:phase-3-comparison-coverage -->
 
-Phase 2 的 browser capture flow 已可在此 source checkout 中使用。它把 Phase 1 code review 与隔离的 `dual-url`、`static-fragment` 或经明确授权的 `worktree` 证据结合起来。visual/runtime comparison、持久化 review state 和 Agent feedback 尚未实现。npm package 与 Plugin 也尚未发布。
+Phase 3 的 comparison / coverage flow 已可在此 source checkout 中使用。它把 code review 和隔离的 browser capture 与 target discovery、visual / structural / runtime comparison、明确的 coverage gap 和 measured-evidence UI 结合起来。持久化 review state、Agent feedback 与 container execution 尚未实现。npm package 与 Plugin 也尚未发布。
 
 <a id="capabilities"></a><!-- section:capabilities -->
 
@@ -35,9 +35,13 @@ Phase 2 的 browser capture flow 已可在此 source checkout 中使用。它把
 - 包含 summary、三状态 queue、Focus mode、evidence drawer、unified/side-by-side diff、deep link 和 keyboard focus 恢复的自包含 code review；
 - viewport、DPR、locale、timezone、color scheme 与 reduced motion 一致且 before / after 相互独立的 Browser Context；
 - full-page 与 element screenshot，以及 normalized DOM、ARIA、computed style、axe、console、network、metadata 和类型化 failure evidence；以及
-- 确定性 stabilization、allowlist action DSL、external / mutation request 阻止、经过 digest 校验的复用，以及部分 `INCOMPLETE` report。
+- 确定性 stabilization、allowlist action DSL、external / mutation request 阻止、经过 digest 校验的复用，以及部分 `INCOMPLETE` report；
+- 按 explicit / Storybook / Playwright / route / import / selector / fallback 排序，并分别记录 known、verified、unknown、planned、succeeded 与 failed 的 target discovery；
+- Pixelmatch count / ratio、content-addressed diff image、changed region 与 normalized DOM / ARIA / style fingerprint；
+- accessibility / runtime finding 的 `new` / `resolved` / `unchanged` / `incomplete` 分类，以及 overflow / obstruction evidence；以及
+- side-by-side、wipe、可停止 blink、pixel diff、after-only、crop / full-page 选择、sync scroll / zoom、region navigation 与 code / finding cross-link。
 
-后续 v1 Phase 将加入 visual/DOM/ARIA/style/accessibility/runtime comparison、持久化 review state 与 Origin Session feedback。即使 capture 完整，在 comparison 和 target mapping 运行前仍为 `UNCOVERED`；任一侧失败或存在 blocked request 时仍为 `INCOMPLETE`。
+后续 v1 Phase 将加入 container hardening、持久化 review state 与 Origin Session feedback。即使 capture 完整，在 discovery 和 comparison 前仍为 `UNCOVERED`。证据缺失、格式错误或任一侧失败时仍为 `INCOMPLETE`；分母未知时不显示 percentage。pixel 差异本身不能判定 `REGRESSION`。
 
 <a id="quick-start"></a><!-- section:quick-start -->
 
@@ -91,6 +95,22 @@ node skills/utsuri-review/scripts/utsuri.mjs capture --run .artifacts/utsuri/rea
 
 即使 capture 返回 exit code 4，成功的一侧和类型化 failure evidence 仍会保留。请 finalize 该 partial run，不要把它当作 no visual difference。
 
+把变更代码映射到已 capture 的 target，并保留 unmapped change 与未知分母。
+
+<!-- sync-command:discover-run -->
+
+```bash
+node skills/utsuri-review/scripts/utsuri.mjs discover --run .artifacts/utsuri/readme-example --config utsuri.yml --json
+```
+
+比较 pixel、structure、accessibility、runtime error、network evidence 与 overflow。exit code 4 表示 comparison 不完整，但证据会保留。
+
+<!-- sync-command:compare-run -->
+
+```bash
+node skills/utsuri-review/scripts/utsuri.mjs compare --run .artifacts/utsuri/readme-example --json
+```
+
 <!-- sync-command:finalize-report -->
 
 ```bash
@@ -135,7 +155,7 @@ Utsuri 将 repository content、diff、HTML、SVG、comment、Context Pack 和 c
 
 `dual-url` 永远不会启动 project code。`worktree` 要求 trusted input、before / after 各自的明确 argv 和不同 working directory，以及用户提供 `--allow-project-code` opt-in。child environment 只包含最小 baseline 与 allowlist 中的非 secret 名称。`static-fragment` 会禁用 JavaScript 和 HTTP request、清理 active markup，但不等同于真实 application rendering。阻止 browser request 并不能隔离 project server process；untrusted server execution 必须等待 Phase 4 container mode。
 
-生成的 `report/` 是 immutable。引用的 capture evidence 会复制到其中，并纳入 report asset manifest 的 hash。Utsuri 要求 run input 是普通文件且不是 symlink，publication path 不可被其他本地 principal 改名，staging 必须通过 strict validation，并使用 OS 的 no-replace helper。helper 缺失或 filesystem 不支持时会 fail closed。生成失败可能保留用于诊断的 private staging directory，Utsuri 不会自动删除它。可变的人工 review data 单独存储在 `run/review/`。static viewer 不连接外部服务。
+生成的 `report/` 是 immutable。引用的 capture / comparison evidence 会独立进行 digest 校验，复制到 report 中，并纳入 asset manifest 的 hash。discovery / comparison manifest 与收集到的 diff / capture hash 绑定；被替换或未列出的 artifact 会在 finalize 时被拒绝。finalize 会从已验证的 run artifact 与 annotations 重建完整 report，在 manifest 中记录精确的 source byte snapshot hash，只发布 immutable snapshot，并拒绝 staging 或 reuse 期间发生的 source / evidence 漂移。Utsuri 要求 run input 是普通文件且不是 symlink，publication path 不可被其他本地 principal 改名，staging 必须通过 strict validation，并使用 OS 的 no-replace helper。helper 缺失或 filesystem 不支持时会 fail closed。生成失败可能保留用于诊断的 private staging directory，Utsuri 不会自动删除它。可变的人工 review data 单独存储在 `run/review/`。static viewer 不连接外部服务。
 
 code diff content 会解析为 structured line，并且只以 text 方式渲染。由 repository 控制的 diff text 永远不会作为 HTML 注入。
 
@@ -146,6 +166,7 @@ code diff content 会解析为 structured line，并且只以 text 方式渲染�
 - [英文详细设计正本](https://github.com/hokupod/utsuri/blob/main/docs/design.md)
 - [UI guideline 与 HIG/WCAG traceability](https://github.com/hokupod/utsuri/blob/main/docs/ui-guidelines.md)
 - [Capture mode 与 runtime boundary](https://github.com/hokupod/utsuri/blob/main/skills/utsuri-review/references/capture-modes.md)
+- [CLI contract](https://github.com/hokupod/utsuri/blob/main/skills/utsuri-review/references/cli-contract.md)
 - [v1 实现计划](https://github.com/hokupod/utsuri/blob/main/ai/plans/active/v1-%E5%AE%9F%E8%A3%85/README.md)
 
 详细设计以英文为正本。面向用户的 README 变更必须在同一个 change 中同步英文、日文和简体中文。

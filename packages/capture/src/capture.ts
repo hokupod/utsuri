@@ -1,5 +1,5 @@
 import { readFile } from "node:fs/promises";
-import { execFileSync } from "node:child_process";
+import { randomUUID } from "node:crypto";
 import path from "node:path";
 import axe from "axe-core";
 import { ExitCode, sha256, stableHash, UtsuriError } from "@utsu-ri/core";
@@ -14,6 +14,10 @@ import {
   writeJsonArtifact
 } from "./artifacts";
 import { resolveBrowserExecutable } from "./browser";
+import {
+  directTrackedBrowserProcessIds,
+  terminateTrackedBrowserProcesses
+} from "./browser-process";
 import { captureCapabilities } from "./capabilities";
 import { captureFailure, writeFailureEvidence } from "./failure-evidence";
 import { installNetworkPolicy, type NetworkRecorder } from "./network-policy";
@@ -228,14 +232,22 @@ async function computedStyles(page: Page, roots: readonly string[]): Promise<unk
         "color",
         "background-color",
         "border-radius",
+        "outline-color",
+        "outline-style",
+        "outline-width",
         "overflow-x",
         "overflow-y",
+        "z-index",
+        "flex-direction",
+        "gap",
+        "grid-template-columns",
         "opacity",
         "visibility"
       ];
       const selected = selectors.length
         ? selectors.flatMap((selector) => [...document.querySelectorAll(selector)])
         : [document.documentElement];
+      const selectedSet = new Set(selected);
       const elements = [
         ...new Set(selected.flatMap((root) => [root, ...root.querySelectorAll("*")]))
       ].slice(0, 2000);
@@ -250,11 +262,18 @@ async function computedStyles(page: Page, roots: readonly string[]): Promise<unk
           tag: element.tagName.toLowerCase(),
           id: element.id || null,
           testId: element.getAttribute("data-testid"),
+          root: selectedSet.has(element),
           rectangle: {
             x: Math.round(rectangle.x * 100) / 100,
             y: Math.round(rectangle.y * 100) / 100,
             width: Math.round(rectangle.width * 100) / 100,
             height: Math.round(rectangle.height * 100) / 100
+          },
+          scroll: {
+            width: element.scrollWidth,
+            height: element.scrollHeight,
+            clientWidth: element.clientWidth,
+            clientHeight: element.clientHeight
           },
           values
         };
@@ -330,19 +349,6 @@ async function captureSide(
   const synthetic = config.mode === "static-fragment";
   const server = config.servers?.[side];
   const targetUrl = server ? new URL(target.path, server.readyUrl).toString() : undefined;
-  const context = await browser.newContext({
-    viewport: { width: viewport.width, height: viewport.height },
-    deviceScaleFactor: viewport.deviceScaleFactor,
-    locale: config.browser.locale,
-    timezoneId: config.browser.timezone,
-    colorScheme: config.browser.colorScheme,
-    reducedMotion: config.browser.reducedMotion,
-    serviceWorkers: "block",
-    javaScriptEnabled: !synthetic
-  });
-  if (config.stabilization.freezeTime && !synthetic) {
-    await addTimeFreeze(context, config.stabilization.freezeTime);
-  }
   const allowedOrigins = [
     ...config.network.allowedOrigins,
     ...(config.servers
@@ -351,11 +357,25 @@ async function captureSide(
         )
       : [])
   ];
+  let context: BrowserContext | null = null;
   let recorder: NetworkRecorder | null = null;
   let page: Page | null = null;
   let stage = "context";
   let attempts = 1;
   try {
+    context = await browser.newContext({
+      viewport: { width: viewport.width, height: viewport.height },
+      deviceScaleFactor: viewport.deviceScaleFactor,
+      locale: config.browser.locale,
+      timezoneId: config.browser.timezone,
+      colorScheme: config.browser.colorScheme,
+      reducedMotion: config.browser.reducedMotion,
+      serviceWorkers: "block",
+      javaScriptEnabled: !synthetic
+    });
+    if (config.stabilization.freezeTime && !synthetic) {
+      await addTimeFreeze(context, config.stabilization.freezeTime);
+    }
     recorder = await installNetworkPolicy(context, {
       allowedOrigins,
       blockMethods: config.network.blockMethods,
@@ -576,7 +596,8 @@ async function captureSide(
     };
   } finally {
     if (recorder) await recorder.dispose().catch(() => undefined);
-    await boundedClose(() => context.close(), 3000);
+    const activeContext = context;
+    if (activeContext) await boundedClose(() => activeContext.close(), 3000);
   }
 }
 
@@ -632,52 +653,19 @@ async function stopServers(
 }
 
 async function boundedClose(operation: () => Promise<void>, timeoutMs: number): Promise<boolean> {
-  return Promise.race([
-    operation()
-      .then(() => true)
-      .catch(() => true),
-    new Promise<false>((resolve) => setTimeout(() => resolve(false), timeoutMs))
-  ]);
-}
-
-function directChildProcessIds(): Set<number> {
-  if (process.platform === "win32") return new Set();
+  let timeout: ReturnType<typeof setTimeout> | undefined;
   try {
-    const output = execFileSync("ps", ["-o", "pid=", "-P", String(process.pid)], {
-      encoding: "utf8",
-      shell: false,
-      stdio: ["ignore", "pipe", "ignore"]
-    });
-    return new Set(output.split(/\s+/u).filter(Boolean).map(Number).filter(Number.isInteger));
-  } catch {
-    return new Set();
-  }
-}
-
-function processAlive(pid: number): boolean {
-  try {
-    process.kill(pid, 0);
-    return true;
-  } catch {
-    return false;
-  }
-}
-
-async function terminateTrackedBrowserProcesses(processIds: ReadonlySet<number>): Promise<void> {
-  for (const pid of processIds) {
-    try {
-      if (processAlive(pid)) process.kill(pid, "SIGTERM");
-    } catch {
-      // The process exited between the liveness check and signal.
-    }
-  }
-  await new Promise((resolve) => setTimeout(resolve, 250));
-  for (const pid of processIds) {
-    try {
-      if (processAlive(pid)) process.kill(pid, "SIGKILL");
-    } catch {
-      // The process exited between the liveness check and signal.
-    }
+    return await Promise.race([
+      operation().then(
+        () => true,
+        () => false
+      ),
+      new Promise<false>((resolve) => {
+        timeout = setTimeout(() => resolve(false), timeoutMs);
+      })
+    ]);
+  } finally {
+    if (timeout) clearTimeout(timeout);
   }
 }
 
@@ -685,8 +673,8 @@ async function closeBrowserRuntime(
   browser: Browser | null,
   browserProcessIds: ReadonlySet<number>
 ): Promise<void> {
-  if (browser) await boundedClose(() => browser.close(), 3000);
-  await terminateTrackedBrowserProcesses(browserProcessIds);
+  const closed = browser ? await boundedClose(() => browser.close(), 3000) : true;
+  if (!closed) await terminateTrackedBrowserProcesses(browserProcessIds);
 }
 
 export async function captureRun(
@@ -720,13 +708,13 @@ export async function captureRun(
   let browserProcessIds = new Set<number>();
   let browserFailure: CaptureFailure | null = null;
   let browserVersion = previous?.browser.version ?? "unavailable";
+  const browserProcessToken = randomUUID();
   const ensureBrowser = async (): Promise<Browser | null> => {
     if (browser) return browser;
     if (browserFailure) return null;
     try {
       const { chromium } = await import("playwright-core");
       const executablePath = await resolveBrowserExecutable();
-      const childrenBeforeLaunch = directChildProcessIds();
       browser = await chromium.launch({
         executablePath,
         headless: config.browser.headless,
@@ -739,12 +727,11 @@ export async function captureRun(
           "--disable-quic",
           "--disable-sync",
           "--metrics-recording-only",
-          "--no-first-run"
+          "--no-first-run",
+          `--utsuri-capture-token=${browserProcessToken}`
         ]
       });
-      browserProcessIds = new Set(
-        [...directChildProcessIds()].filter((pid) => !childrenBeforeLaunch.has(pid))
-      );
+      browserProcessIds = directTrackedBrowserProcessIds(executablePath, browserProcessToken);
       browserVersion = browser.version();
       return browser;
     } catch (error) {

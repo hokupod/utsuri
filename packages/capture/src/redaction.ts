@@ -83,13 +83,33 @@ function redactAttribute(name: string, value: string): string {
   return redactUrlsInText(value);
 }
 
-export function redactEvidenceValue(value: unknown): unknown {
-  if (typeof value === "string") return redactUrlsInText(value);
-  if (Array.isArray(value)) return value.map(redactEvidenceValue);
+function redactSelector(input: string): string {
+  const attributeUrl = new RegExp(
+    `(\\[\\s*(?:${[...urlAttributes].join("|")})\\s*[*^$|~]?=\\s*(["']))([^"']+)(\\2\\s*\\])`,
+    "giu"
+  );
+  return input
+    .replace(
+      attributeUrl,
+      (_match, prefix: string, _quote: string, value: string, suffix: string) =>
+        `${prefix}${redactSingleAttributeUrl(value)}${suffix}`
+    )
+    .replace(absoluteUrl, (candidate) => withoutPrivateUrlParts(candidate))
+    .replace(protocolRelativeUrl, (_match, prefix: string, candidate: string) => {
+      const redacted = withoutPrivateUrlParts(`https:${candidate}`);
+      return `${prefix}${redacted.startsWith("https:") ? redacted.slice("https:".length) : redacted}`;
+    });
+}
+
+function redactValue(value: unknown, selectorContext: boolean): unknown {
+  if (typeof value === "string") {
+    return selectorContext ? redactSelector(value) : redactUrlsInText(value);
+  }
+  if (Array.isArray(value)) return value.map((entry) => redactValue(entry, selectorContext));
   if (typeof value !== "object" || value === null) return value;
   const record = value as Record<string, unknown>;
   const output = Object.fromEntries(
-    Object.entries(record).map(([key, entry]) => [key, redactEvidenceValue(entry)])
+    Object.entries(record).map(([key, entry]) => [key, redactValue(entry, key === "target")])
   );
   if (Array.isArray(record.attributes)) {
     output.attributes = record.attributes.map((entry) => {
@@ -101,8 +121,12 @@ export function redactEvidenceValue(value: unknown): unknown {
       ) {
         return [entry[0], redactAttribute(entry[0], entry[1])];
       }
-      return redactEvidenceValue(entry);
+      return redactValue(entry, false);
     });
   }
   return output;
+}
+
+export function redactEvidenceValue(value: unknown): unknown {
+  return redactValue(value, false);
 }

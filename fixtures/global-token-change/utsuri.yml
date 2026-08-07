@@ -1,0 +1,96 @@
+version: 1
+project:
+  name: global-token-change
+  locale: en-US
+diff:
+  base: HEAD
+  head: worktree
+execution:
+  mode: static-fragment
+  trust: configured
+  install: never
+  shell: false
+  timeoutMs: 10000
+browser:
+  engine: chromium
+  headless: true
+  serviceWorkers: block
+  locale: en-US
+  timezone: UTC
+  colorScheme: light
+  reducedMotion: reduce
+viewports:
+  desktop:
+    width: 1024
+    height: 720
+    deviceScaleFactor: 1
+targets:
+  - id: palette
+    path: /
+    viewports: [desktop]
+    roots: [main]
+    fragments:
+      before: fixtures/global-token-change/before.html
+      after: fixtures/global-token-change/after.html
+    states:
+      - name: default
+        steps: []
+stabilization:
+  disableAnimations: true
+  hideCaret: true
+  waitForFonts: true
+  freezeTime: 2026-01-01T00:00:00.000Z
+  waitAfterReadyMs: 0
+  maxRetries: 1
+  masks: []
+network:
+  browserPolicy: block-external
+  allowedOrigins: []
+  blockMethods: [POST, PUT, PATCH, DELETE]
+  recordBlocked: true
+security:
+  envAllowlist: []
+  followSymlinks: false
+  allowArbitraryScriptSteps: false
+  allowRemoteAuthState: false
+  sanitizeHtmlPreview: true
+capture:
+  fullPage: true
+  elementCrops: true
+  maxFullPageHeight: 30000
+  maxMegapixels: 80
+  screenshotFormat: png
+  includeDom: normalized
+  includeRawDom: false
+  includeAria: true
+  includeComputedStyles: changed-and-layout
+  includeAxe: true
+discovery:
+  knownUsages: 12
+  unknownPossible: true
+  sources:
+    selectorUsage: fixtures/global-token-change/selector-usage.json
+report:
+  outputDirectory: .artifacts/utsuri
+  language: en
+  theme: system
+  singleFile: false
+  includeReviewNotes: true
+  includeRawLogs: false
+  includeAbsolutePaths: false
+review:
+  enabled: true
+  viewedMode: manual
+  staleOnFingerprintChange: true
+  autoResolveAgentAnswer: false
+feedback:
+  target: origin-session
+  delivery: return-to-session
+  directSameSessionBridge: disabled
+  neverCreateNewSession: true
+  contextPreview: required
+  maxBatchItems: 25
+  maxContextBytes: 1048576
+policy:
+  failOn: []
+  warnOn: []

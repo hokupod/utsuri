@@ -2,7 +2,9 @@ import { createHash, randomUUID } from "node:crypto";
 import { constants, type BigIntStats } from "node:fs";
 import { access, lstat, mkdir, open, readdir, realpath, stat, writeFile } from "node:fs/promises";
 import path from "node:path";
-import { canonicalJson, ExitCode, stableHash, UtsuriError } from "@utsu-ri/core";
+import { canonicalJson, ExitCode, stableHash, stableId, UtsuriError } from "@utsu-ri/core";
+import type { ComparisonManifest } from "@utsu-ri/compare";
+import type { DiscoveryManifest } from "@utsu-ri/discovery";
 import {
   assertArtifact,
   validateDiffReferences,
@@ -49,12 +51,31 @@ const reportArtifactPaths = new Set([
 ]);
 
 const maximumArtifactBytes = 16 * 1024 * 1024;
+const reportSourceArtifactNames = [
+  "input.json",
+  "diff.json",
+  "evidence-index.json",
+  "review-plan.json",
+  "capture.json",
+  "comparison.json",
+  "discovery.json"
+] as const;
+
+type ReportSourceArtifactName = (typeof reportSourceArtifactNames)[number];
+type ReportSourceDigests = Record<ReportSourceArtifactName, string | null>;
+type ReportSourceValues = Record<ReportSourceArtifactName, unknown | null>;
+
+interface ReportSourceSnapshot {
+  values: ReportSourceValues;
+  digests: ReportSourceDigests;
+}
 
 export interface ReportManifest {
   schemaVersion: "1.0";
   reportId: string;
   toolVersion: string;
   generatedAt: string;
+  sourceSnapshotHash: string;
   semanticHash: string;
   assetHashes: Record<string, string>;
   privacy: {
@@ -63,6 +84,23 @@ export interface ReportManifest {
     includesRawDom: false;
   };
   incompleteReasons: string[];
+}
+
+export interface BuildReportOptions {
+  now?: Date;
+  toolVersion?: string;
+  annotations?: unknown | null;
+}
+
+function deepFreezeJson<T>(value: T, seen = new WeakSet<object>()): T {
+  if (typeof value !== "object" || value === null || seen.has(value)) return value;
+  seen.add(value);
+  for (const child of Object.values(value)) deepFreezeJson(child, seen);
+  return Object.freeze(value);
+}
+
+function immutableJsonSnapshot<T>(value: T): T {
+  return deepFreezeJson(structuredClone(value));
 }
 
 function sha256(bytes: string | Uint8Array): string {
@@ -163,6 +201,85 @@ async function readOptionalJson(filename: string): Promise<unknown | null> {
   } catch (error) {
     if ((error as NodeJS.ErrnoException).code === "ENOENT") return null;
     throw error;
+  }
+}
+
+async function readReportSourceSnapshot(runDirectory: string): Promise<ReportSourceSnapshot> {
+  const entries = await Promise.all(
+    reportSourceArtifactNames.map(async (name) => {
+      try {
+        const bytes = await readRegularBytes(path.join(runDirectory, name));
+        let value: unknown;
+        try {
+          value = JSON.parse(bytes.toString("utf8")) as unknown;
+        } catch {
+          throw new UtsuriError(
+            "ARTIFACT_JSON_INVALID",
+            `${name} is not valid JSON`,
+            ExitCode.Artifact
+          );
+        }
+        return { name, value, digest: sha256(bytes) } as const;
+      } catch (error) {
+        if ((error as NodeJS.ErrnoException).code === "ENOENT") {
+          return { name, value: null, digest: null } as const;
+        }
+        throw error;
+      }
+    })
+  );
+  return immutableJsonSnapshot({
+    values: Object.fromEntries(
+      entries.map(({ name, value }) => [name, value])
+    ) as ReportSourceValues,
+    digests: Object.fromEntries(
+      entries.map(({ name, digest }) => [name, digest])
+    ) as ReportSourceDigests
+  });
+}
+
+async function readReportSourceDigests(runDirectory: string): Promise<ReportSourceDigests> {
+  const entries = await Promise.all(
+    reportSourceArtifactNames.map(async (name) => {
+      try {
+        return [name, sha256(await readRegularBytes(path.join(runDirectory, name)))] as const;
+      } catch (error) {
+        if ((error as NodeJS.ErrnoException).code === "ENOENT") return [name, null] as const;
+        throw error;
+      }
+    })
+  );
+  return Object.fromEntries(entries) as ReportSourceDigests;
+}
+
+async function assertReportSourcesUnchanged(
+  runDirectory: string,
+  expected: ReportSourceDigests
+): Promise<void> {
+  const current = await readReportSourceDigests(runDirectory);
+  if (canonicalJson(current) !== canonicalJson(expected)) {
+    throw new UtsuriError(
+      "REPORT_SOURCE_CHANGED",
+      "Run report source artifacts changed during publication",
+      ExitCode.Artifact
+    );
+  }
+}
+
+async function assertArtifactDigests(
+  runDirectory: string,
+  references: readonly string[],
+  artifactDigests: Readonly<Record<string, string>>
+): Promise<void> {
+  for (const reference of references) {
+    const filename = await resolveContainedPath(runDirectory, reference);
+    if (sha256(await readRegularBytes(filename)) !== artifactDigests[reference]) {
+      throw new UtsuriError(
+        "REPORT_ARTIFACT_DIGEST_MISMATCH",
+        `Evidence artifact changed before publication: ${reference}`,
+        ExitCode.Artifact
+      );
+    }
   }
 }
 
@@ -384,6 +501,417 @@ async function validateCaptureArtifact(
   return value as unknown as CaptureArtifact;
 }
 
+function comparisonArtifactError(message: string): never {
+  throw new UtsuriError("COMPARISON_ARTIFACT_INVALID", message, ExitCode.Artifact);
+}
+
+function validDigest(value: unknown): value is string {
+  return typeof value === "string" && /^[a-f0-9]{64}$/u.test(value);
+}
+
+function safeArtifactReference(
+  reference: unknown,
+  prefix: "capture/" | "comparison/"
+): reference is string {
+  return (
+    typeof reference === "string" &&
+    reference.startsWith(prefix) &&
+    !reference.includes("\\") &&
+    path.posix.normalize(reference) === reference
+  );
+}
+
+async function validateComparisonArtifact(
+  runDirectory: string,
+  capture: CaptureArtifact,
+  value: unknown
+): Promise<ComparisonManifest> {
+  if (
+    !isRecord(value) ||
+    !hasExactKeys(value, [
+      "schemaVersion",
+      "captureHash",
+      "engine",
+      "targets",
+      "artifactDigests",
+      "comparisonHash"
+    ]) ||
+    value.schemaVersion !== "1.0" ||
+    value.captureHash !== capture.captureHash ||
+    !isRecord(value.engine) ||
+    !Array.isArray(value.targets) ||
+    !isRecord(value.artifactDigests) ||
+    !validDigest(value.comparisonHash)
+  ) {
+    return comparisonArtifactError("comparison.json has an invalid top-level structure");
+  }
+  if (
+    !hasExactKeys(value.engine, [
+      "name",
+      "version",
+      "pixelThreshold",
+      "minimumRegionPixels",
+      "mergeDistance"
+    ]) ||
+    value.engine.name !== "utsu-ri-compare" ||
+    value.engine.version !== "1" ||
+    typeof value.engine.pixelThreshold !== "number" ||
+    !Number.isInteger(value.engine.minimumRegionPixels) ||
+    !Number.isInteger(value.engine.mergeDistance)
+  ) {
+    return comparisonArtifactError("comparison engine metadata is invalid");
+  }
+  const captureTargetIds = new Set(capture.targets.map((target) => target.id));
+  const targetRefs: string[] = [];
+  const comparisonIds: string[] = [];
+  const referencedDiffs = new Set<string>();
+  const categories = new Set([
+    "visual",
+    "layout",
+    "dom",
+    "aria",
+    "style",
+    "a11y",
+    "console",
+    "page-error",
+    "network",
+    "coverage",
+    "security"
+  ]);
+  const states = new Set(["new", "resolved", "unchanged", "incomplete"]);
+  const severities = new Set(["critical", "high", "medium", "low", "info"]);
+  for (const rawTarget of value.targets) {
+    if (
+      !isRecord(rawTarget) ||
+      !hasExactKeys(rawTarget, [
+        "id",
+        "targetRef",
+        "status",
+        "images",
+        "structural",
+        "findings",
+        "incompleteReasons"
+      ]) ||
+      typeof rawTarget.id !== "string" ||
+      !rawTarget.id.startsWith("comparison:") ||
+      typeof rawTarget.targetRef !== "string" ||
+      !captureTargetIds.has(rawTarget.targetRef) ||
+      !new Set(["compared", "incomplete"]).has(String(rawTarget.status)) ||
+      !Array.isArray(rawTarget.images) ||
+      !Array.isArray(rawTarget.findings) ||
+      !Array.isArray(rawTarget.incompleteReasons) ||
+      rawTarget.incompleteReasons.some((reason) => typeof reason !== "string")
+    ) {
+      return comparisonArtifactError("comparison target is invalid");
+    }
+    targetRefs.push(rawTarget.targetRef);
+    comparisonIds.push(rawTarget.id);
+    if (rawTarget.structural !== null) {
+      if (
+        !isRecord(rawTarget.structural) ||
+        !hasExactKeys(rawTarget.structural, ["dom", "aria", "style"])
+      ) {
+        return comparisonArtifactError(`${rawTarget.id} structural comparison is invalid`);
+      }
+      for (const name of ["dom", "aria", "style"] as const) {
+        const fingerprint = rawTarget.structural[name];
+        if (
+          !isRecord(fingerprint) ||
+          !hasExactKeys(fingerprint, ["beforeHash", "afterHash", "changed"]) ||
+          !validDigest(fingerprint.beforeHash) ||
+          !validDigest(fingerprint.afterHash) ||
+          typeof fingerprint.changed !== "boolean"
+        ) {
+          return comparisonArtifactError(`${rawTarget.id}.${name} fingerprint is invalid`);
+        }
+      }
+    }
+    for (const rawImage of rawTarget.images) {
+      if (
+        !isRecord(rawImage) ||
+        !hasExactKeys(rawImage, [
+          "id",
+          "kind",
+          "label",
+          "beforeRef",
+          "afterRef",
+          "diffRef",
+          "width",
+          "height",
+          "diffPixelCount",
+          "diffRatio",
+          "regions"
+        ]) ||
+        typeof rawImage.id !== "string" ||
+        !rawImage.id.startsWith("image-comparison:") ||
+        !new Set(["full-page", "crop", "viewport"]).has(String(rawImage.kind)) ||
+        typeof rawImage.label !== "string" ||
+        !safeArtifactReference(rawImage.beforeRef, "capture/") ||
+        !safeArtifactReference(rawImage.afterRef, "capture/") ||
+        !safeArtifactReference(rawImage.diffRef, "comparison/") ||
+        typeof capture.artifactDigests[rawImage.beforeRef] !== "string" ||
+        typeof capture.artifactDigests[rawImage.afterRef] !== "string" ||
+        !Number.isInteger(rawImage.width) ||
+        (rawImage.width as number) < 1 ||
+        !Number.isInteger(rawImage.height) ||
+        (rawImage.height as number) < 1 ||
+        !Number.isInteger(rawImage.diffPixelCount) ||
+        (rawImage.diffPixelCount as number) < 0 ||
+        typeof rawImage.diffRatio !== "number" ||
+        rawImage.diffRatio < 0 ||
+        rawImage.diffRatio > 1 ||
+        !Array.isArray(rawImage.regions)
+      ) {
+        return comparisonArtifactError(`${rawTarget.id} image comparison is invalid`);
+      }
+      referencedDiffs.add(rawImage.diffRef);
+      const expected = value.artifactDigests[rawImage.diffRef];
+      if (!validDigest(expected)) {
+        return comparisonArtifactError(
+          `Comparison artifact digest is missing: ${rawImage.diffRef}`
+        );
+      }
+      const filename = await resolveContainedPath(runDirectory, rawImage.diffRef);
+      if (sha256(await readRegularBytes(filename)) !== expected) {
+        return comparisonArtifactError(`Comparison artifact digest mismatch: ${rawImage.diffRef}`);
+      }
+      for (const rawRegion of rawImage.regions) {
+        if (
+          !isRecord(rawRegion) ||
+          !hasExactKeys(rawRegion, ["id", "x", "y", "width", "height", "pixels"]) ||
+          typeof rawRegion.id !== "string" ||
+          !rawRegion.id.startsWith("region:") ||
+          ![rawRegion.x, rawRegion.y, rawRegion.width, rawRegion.height, rawRegion.pixels].every(
+            Number.isInteger
+          ) ||
+          (rawRegion.x as number) < 0 ||
+          (rawRegion.y as number) < 0 ||
+          (rawRegion.width as number) < 1 ||
+          (rawRegion.height as number) < 1 ||
+          (rawRegion.pixels as number) < 1
+        ) {
+          return comparisonArtifactError(`${rawImage.id} changed region is invalid`);
+        }
+      }
+    }
+    for (const rawFinding of rawTarget.findings) {
+      if (
+        !isRecord(rawFinding) ||
+        !hasExactKeys(rawFinding, [
+          "id",
+          "fingerprint",
+          "category",
+          "state",
+          "severity",
+          "title",
+          "description",
+          "targetRef",
+          "evidencePaths"
+        ]) ||
+        typeof rawFinding.id !== "string" ||
+        !rawFinding.id.startsWith("finding:") ||
+        typeof rawFinding.fingerprint !== "string" ||
+        !categories.has(String(rawFinding.category)) ||
+        !states.has(String(rawFinding.state)) ||
+        !severities.has(String(rawFinding.severity)) ||
+        typeof rawFinding.title !== "string" ||
+        typeof rawFinding.description !== "string" ||
+        rawFinding.targetRef !== rawTarget.targetRef ||
+        !Array.isArray(rawFinding.evidencePaths)
+      ) {
+        return comparisonArtifactError(`${rawTarget.id} finding is invalid`);
+      }
+      for (const reference of rawFinding.evidencePaths) {
+        const captureReference = safeArtifactReference(reference, "capture/");
+        const comparisonReference = safeArtifactReference(reference, "comparison/");
+        if (
+          (!captureReference && !comparisonReference) ||
+          (captureReference && typeof capture.artifactDigests[reference as string] !== "string") ||
+          (comparisonReference && typeof value.artifactDigests[reference as string] !== "string")
+        ) {
+          return comparisonArtifactError(
+            `Finding evidence reference is invalid: ${String(reference)}`
+          );
+        }
+      }
+    }
+  }
+  if (
+    new Set(targetRefs).size !== targetRefs.length ||
+    new Set(comparisonIds).size !== comparisonIds.length ||
+    canonicalJson([...targetRefs].sort()) !== canonicalJson([...captureTargetIds].sort()) ||
+    canonicalJson([...referencedDiffs].sort()) !==
+      canonicalJson(Object.keys(value.artifactDigests).sort())
+  ) {
+    return comparisonArtifactError("Comparison target or artifact inventory is inconsistent");
+  }
+  for (const [reference, digest] of Object.entries(value.artifactDigests)) {
+    if (!safeArtifactReference(reference, "comparison/") || !validDigest(digest)) {
+      return comparisonArtifactError(`Comparison digest is invalid: ${reference}`);
+    }
+  }
+  const { comparisonHash, ...base } = value;
+  if (stableHash(base) !== comparisonHash) {
+    return comparisonArtifactError("comparison.json semantic hash does not match");
+  }
+  return value as unknown as ComparisonManifest;
+}
+
+function discoveryArtifactError(message: string): never {
+  throw new UtsuriError("DISCOVERY_ARTIFACT_INVALID", message, ExitCode.Artifact);
+}
+
+function validateDiscoveryArtifact(
+  capture: CaptureArtifact,
+  diff: GitDiffDocument,
+  plan: ReviewPlan,
+  value: unknown
+): DiscoveryManifest {
+  if (
+    !isRecord(value) ||
+    !hasExactKeys(value, [
+      "schemaVersion",
+      "captureHash",
+      "diffHash",
+      "candidates",
+      "unmappedChangeRefs",
+      "coverage",
+      "discoveryHash"
+    ]) ||
+    value.schemaVersion !== "1.0" ||
+    value.captureHash !== capture.captureHash ||
+    value.diffHash !== stableHash(diff) ||
+    !Array.isArray(value.candidates) ||
+    !Array.isArray(value.unmappedChangeRefs) ||
+    !isRecord(value.coverage) ||
+    !validDigest(value.discoveryHash)
+  ) {
+    return discoveryArtifactError("discovery.json has an invalid top-level structure");
+  }
+  const captureTargets = new Set(capture.targets.map((target) => target.id));
+  const changeIds = new Set(plan.candidates.map((candidate) => candidate.id));
+  const hunkIds = new Set(diff.hunks.map((hunk) => hunk.id));
+  const mappedChanges = new Set<string>();
+  const candidateIds: string[] = [];
+  const assignedTargets = new Set<string>();
+  for (const rawCandidate of value.candidates) {
+    if (
+      !isRecord(rawCandidate) ||
+      !hasExactKeys(rawCandidate, [
+        "id",
+        "targetId",
+        "targetRefs",
+        "source",
+        "confidence",
+        "reason",
+        "knownUsageCount",
+        "changeRefs",
+        "hunkRefs"
+      ]) ||
+      typeof rawCandidate.id !== "string" ||
+      !rawCandidate.id.startsWith("discovery:") ||
+      typeof rawCandidate.targetId !== "string" ||
+      !new Set(["explicit", "storybook", "test", "route", "import", "selector", "fallback"]).has(
+        String(rawCandidate.source)
+      ) ||
+      !new Set(["explicit", "strong", "medium", "weak", "unknown"]).has(
+        String(rawCandidate.confidence)
+      ) ||
+      typeof rawCandidate.reason !== "string" ||
+      !Number.isInteger(rawCandidate.knownUsageCount) ||
+      (rawCandidate.knownUsageCount as number) < 0 ||
+      !Array.isArray(rawCandidate.targetRefs) ||
+      !Array.isArray(rawCandidate.changeRefs) ||
+      !Array.isArray(rawCandidate.hunkRefs)
+    ) {
+      return discoveryArtifactError("Discovery candidate is invalid");
+    }
+    candidateIds.push(rawCandidate.id);
+    for (const reference of rawCandidate.targetRefs) {
+      if (
+        typeof reference !== "string" ||
+        !captureTargets.has(reference) ||
+        assignedTargets.has(reference)
+      ) {
+        return discoveryArtifactError(
+          `Discovery target reference is invalid: ${String(reference)}`
+        );
+      }
+      if (!reference.startsWith(`target:${rawCandidate.targetId}:`)) {
+        return discoveryArtifactError(`Discovery target ID does not match ${reference}`);
+      }
+      assignedTargets.add(reference);
+    }
+    for (const reference of rawCandidate.changeRefs) {
+      if (typeof reference !== "string" || !changeIds.has(reference)) {
+        return discoveryArtifactError(
+          `Discovery change reference is invalid: ${String(reference)}`
+        );
+      }
+      mappedChanges.add(reference);
+    }
+    for (const reference of rawCandidate.hunkRefs) {
+      if (typeof reference !== "string" || !hunkIds.has(reference)) {
+        return discoveryArtifactError(`Discovery hunk reference is invalid: ${String(reference)}`);
+      }
+    }
+  }
+  if (
+    new Set(candidateIds).size !== candidateIds.length ||
+    canonicalJson([...assignedTargets].sort()) !== canonicalJson([...captureTargets].sort())
+  ) {
+    return discoveryArtifactError("Discovery candidate inventory is inconsistent");
+  }
+  const expectedUnmapped = [...changeIds]
+    .filter((reference) => !mappedChanges.has(reference))
+    .sort();
+  if (
+    value.unmappedChangeRefs.some(
+      (reference) => typeof reference !== "string" || !changeIds.has(reference)
+    ) ||
+    canonicalJson([...value.unmappedChangeRefs].sort()) !== canonicalJson(expectedUnmapped)
+  ) {
+    return discoveryArtifactError("Discovery unmapped-change inventory is inconsistent");
+  }
+  if (
+    !hasExactKeys(value.coverage, [
+      "knownUsages",
+      "verifiedUsages",
+      "unknownPossible",
+      "planned",
+      "succeeded",
+      "failed"
+    ]) ||
+    !(value.coverage.knownUsages === null || Number.isInteger(value.coverage.knownUsages)) ||
+    (typeof value.coverage.knownUsages === "number" && value.coverage.knownUsages < 0) ||
+    !Number.isInteger(value.coverage.verifiedUsages) ||
+    (value.coverage.verifiedUsages as number) < 0 ||
+    typeof value.coverage.unknownPossible !== "boolean" ||
+    !Number.isInteger(value.coverage.planned) ||
+    !Number.isInteger(value.coverage.succeeded) ||
+    !Number.isInteger(value.coverage.failed)
+  ) {
+    return discoveryArtifactError("Discovery coverage is invalid");
+  }
+  const succeeded = capture.targets.filter(
+    (target) => target.before.status === "success" && target.after.status === "success"
+  ).length;
+  if (
+    value.coverage.planned !== capture.targets.length ||
+    value.coverage.succeeded !== succeeded ||
+    value.coverage.failed !== capture.targets.length - succeeded ||
+    (typeof value.coverage.knownUsages === "number" &&
+      (value.coverage.verifiedUsages as number) > value.coverage.knownUsages)
+  ) {
+    return discoveryArtifactError("Discovery coverage does not match capture results");
+  }
+  const { discoveryHash, ...base } = value;
+  if (stableHash(base) !== discoveryHash) {
+    return discoveryArtifactError("discovery.json semantic hash does not match");
+  }
+  return value as unknown as DiscoveryManifest;
+}
+
 function reportCaptureResult(
   result: CaptureArtifactResult
 ): UtsuriReport["targets"][number]["before"] {
@@ -397,6 +925,7 @@ function reportCaptureResult(
     ...(result.axeRef ? { axeRef: result.axeRef } : {}),
     ...(result.consoleRef ? { consoleRef: result.consoleRef } : {}),
     ...(result.networkRef ? { networkRef: result.networkRef } : {}),
+    ...(result.metadataRef ? { metadataRef: result.metadataRef } : {}),
     ...(result.failure
       ? {
           failure: {
@@ -409,22 +938,39 @@ function reportCaptureResult(
   };
 }
 
-function reportCaptureTargets(capture: CaptureArtifact | null): UtsuriReport["targets"] {
+function reportCaptureTargets(
+  capture: CaptureArtifact | null,
+  discovery: DiscoveryManifest | null = null,
+  comparison: ComparisonManifest | null = null
+): UtsuriReport["targets"] {
   return (
-    capture?.targets.map((target) => ({
-      id: target.id,
-      routeOrStory: target.routeOrStory,
-      viewport: target.viewport,
-      state: target.state,
-      roots: target.roots,
-      discovery: target.discovery,
-      before: reportCaptureResult(target.before),
-      after: reportCaptureResult(target.after)
-    })) ?? []
+    capture?.targets.map((target) => {
+      const discovered = discovery?.candidates.find((candidate) =>
+        candidate.targetRefs.includes(target.id)
+      );
+      const compared = comparison?.targets.find((entry) => entry.targetRef === target.id);
+      return {
+        id: target.id,
+        routeOrStory: target.routeOrStory,
+        viewport: target.viewport,
+        state: target.state,
+        roots: target.roots,
+        discovery: discovered
+          ? {
+              source: discovered.source,
+              confidence: discovered.confidence,
+              reason: discovered.reason
+            }
+          : target.discovery,
+        before: reportCaptureResult(target.before),
+        after: reportCaptureResult(target.after),
+        ...(compared ? { comparisonRef: compared.id } : {})
+      };
+    }) ?? []
   );
 }
 
-function captureEvidenceReferences(report: UtsuriReport): string[] {
+function reportArtifactReferences(report: UtsuriReport): string[] {
   const references = report.targets.flatMap((target) =>
     ([target.before, target.after] as const).flatMap((result) => [
       ...result.screenshotRefs,
@@ -433,19 +979,30 @@ function captureEvidenceReferences(report: UtsuriReport): string[] {
       result.styleRef,
       result.axeRef,
       result.consoleRef,
-      result.networkRef
+      result.networkRef,
+      result.metadataRef
     ])
+  );
+  references.push(
+    ...report.comparisons.flatMap((comparison) =>
+      comparison.images.flatMap((image) => [image.beforeRef, image.afterRef, image.diffRef])
+    ),
+    ...report.evidence
+      .map((evidence) => evidence.path)
+      .filter(
+        (reference) => reference.startsWith("capture/") || reference.startsWith("comparison/")
+      )
   );
   const normalized = references.filter((reference): reference is string => Boolean(reference));
   for (const reference of normalized) {
     if (
-      !reference.startsWith("capture/") ||
+      (!reference.startsWith("capture/") && !reference.startsWith("comparison/")) ||
       reference.includes("\\") ||
       path.posix.normalize(reference) !== reference
     ) {
       throw new UtsuriError(
-        "REPORT_CAPTURE_REFERENCE_INVALID",
-        `Capture reference is unsafe: ${reference}`,
+        "REPORT_ARTIFACT_REFERENCE_INVALID",
+        `Report artifact reference is unsafe: ${reference}`,
         ExitCode.Artifact
       );
     }
@@ -477,6 +1034,271 @@ function captureReportState(capture: CaptureArtifact | null) {
       ]
     : ["visual-capture-not-run", "runtime-not-executed"];
   return { targets, succeeded, failed, blockedRequestCount, incompleteReasons };
+}
+
+function evidenceType(reference: string): UtsuriReport["evidence"][number]["type"] {
+  const name = path.posix.basename(reference);
+  if (name.endsWith(".png")) return "visual";
+  if (name === "dom.json") return "dom";
+  if (name === "aria.json") return "aria";
+  if (name === "styles.json") return "style";
+  if (name === "axe.json") return "a11y";
+  return "runtime";
+}
+
+function evidenceSummary(reference: string): string {
+  const type = evidenceType(reference);
+  if (type === "visual") {
+    return reference.includes("-diff.png")
+      ? "Measured pixel-difference bitmap."
+      : "Captured browser screenshot.";
+  }
+  if (type === "dom") return "Normalized DOM evidence.";
+  if (type === "aria") return "ARIA snapshot evidence.";
+  if (type === "style") return "Selected computed-style and layout evidence.";
+  if (type === "a11y") return "Automated accessibility inspection evidence.";
+  return "Captured runtime, network, or layout metadata evidence.";
+}
+
+function comparisonEvidence(
+  report: UtsuriReport,
+  comparison: ComparisonManifest,
+  discovery: DiscoveryManifest
+): {
+  evidence: UtsuriReport["evidence"];
+  idsByPath: Map<string, string>;
+} {
+  const targetsByPath = new Map<string, Set<string>>();
+  for (const target of comparison.targets) {
+    const references = [
+      ...target.images.flatMap((image) => [image.beforeRef, image.afterRef, image.diffRef]),
+      ...target.findings.flatMap((finding) => finding.evidencePaths)
+    ];
+    for (const reference of references) {
+      const values = targetsByPath.get(reference) ?? new Set<string>();
+      values.add(target.targetRef);
+      targetsByPath.set(reference, values);
+    }
+  }
+  const existingIds = new Set(report.evidence.map((entry) => entry.id));
+  const idsByPath = new Map<string, string>();
+  const evidence = [...targetsByPath.keys()].sort().map((reference) => {
+    let id = stableId("evidence", { phase: 3, path: reference }, 16);
+    if (existingIds.has(id)) id = stableId("evidence", { phase: 3, path: reference, retry: 1 }, 24);
+    existingIds.add(id);
+    idsByPath.set(reference, id);
+    const targetRefs = targetsByPath.get(reference) ?? new Set<string>();
+    const hunkRefs = discovery.candidates
+      .filter((candidate) => candidate.targetRefs.some((targetRef) => targetRefs.has(targetRef)))
+      .flatMap((candidate) => candidate.hunkRefs);
+    return {
+      id,
+      type: evidenceType(reference),
+      path: reference,
+      range: null,
+      summary: evidenceSummary(reference),
+      hunkRefs: [...new Set(hunkRefs)].sort()
+    };
+  });
+  return { evidence, idsByPath };
+}
+
+function riskRank(level: UtsuriReport["changes"][number]["risk"]["level"]): number {
+  return ["info", "low", "medium", "high", "critical"].indexOf(level);
+}
+
+function reportComparisons(comparison: ComparisonManifest | null): UtsuriReport["comparisons"] {
+  return (
+    comparison?.targets.map((target) => ({
+      id: target.id,
+      targetRef: target.targetRef,
+      status: target.status,
+      images: target.images,
+      structural: target.structural,
+      incompleteReasons: [...new Set(target.incompleteReasons)]
+    })) ?? []
+  );
+}
+
+function integratePhase3(
+  source: UtsuriReport,
+  capture: CaptureArtifact | null,
+  comparison: ComparisonManifest | null,
+  discovery: DiscoveryManifest | null
+): UtsuriReport {
+  if (!capture || !comparison || !discovery) return source;
+  const targets = reportCaptureTargets(capture, discovery, comparison);
+  const comparisons = reportComparisons(comparison);
+  const phase3Evidence = comparisonEvidence(source, comparison, discovery);
+  const findings: UtsuriReport["findings"] = comparison.targets.flatMap((target) => {
+    const candidate = discovery.candidates.find((entry) =>
+      entry.targetRefs.includes(target.targetRef)
+    );
+    return target.findings.map((finding) => ({
+      id: finding.id,
+      category: finding.category,
+      state: finding.state,
+      severity: finding.severity,
+      title: finding.title,
+      description: finding.description,
+      targetRef: finding.targetRef,
+      evidenceRefs: finding.evidencePaths
+        .map((reference) => phase3Evidence.idsByPath.get(reference))
+        .filter((reference): reference is string => Boolean(reference)),
+      hunkRefs: candidate?.hunkRefs ?? []
+    }));
+  });
+  const findingsById = new Map(findings.map((finding) => [finding.id, finding]));
+  const changes = source.changes.map((change) => {
+    const candidates = discovery.candidates.filter((candidate) =>
+      candidate.changeRefs.includes(change.id)
+    );
+    const targetRefs = [...new Set(candidates.flatMap((candidate) => candidate.targetRefs))].sort();
+    const findingRefs = findings
+      .filter((finding) => finding.targetRef && targetRefs.includes(finding.targetRef))
+      .map((finding) => finding.id)
+      .sort();
+    const linkedFindings = findingRefs
+      .map((reference) => findingsById.get(reference))
+      .filter((finding): finding is UtsuriReport["findings"][number] => Boolean(finding));
+    const severeNewFinding = linkedFindings
+      .filter((finding) => finding.state === "new")
+      .sort((left, right) => riskRank(right.severity) - riskRank(left.severity))[0];
+    const riskLevel =
+      severeNewFinding && riskRank(severeNewFinding.severity) > riskRank(change.risk.level)
+        ? severeNewFinding.severity
+        : change.risk.level;
+    const compared = targetRefs.filter(
+      (reference) =>
+        comparison.targets.find((target) => target.targetRef === reference)?.status === "compared"
+    ).length;
+    const knownGap =
+      discovery.coverage.knownUsages === null
+        ? null
+        : Math.max(0, discovery.coverage.knownUsages - discovery.coverage.verifiedUsages);
+    const gaps = [
+      ...change.verification.gaps.filter(
+        (gap) =>
+          !new Set([
+            "Visual behavior was not captured.",
+            "Runtime behavior was not executed.",
+            "Captured evidence has not been compared or mapped to this change."
+          ]).has(gap)
+      ),
+      ...(targetRefs.length === 0 ? ["No visual target was mapped to this change."] : []),
+      ...(targetRefs.length > compared
+        ? [`${targetRefs.length - compared} mapped target comparison is incomplete.`]
+        : []),
+      ...(knownGap && knownGap > 0 ? [`${knownGap} known usages were not verified.`] : []),
+      ...(discovery.coverage.unknownPossible
+        ? ["Additional unmapped usages may exist; coverage is not a percentage."]
+        : [])
+    ];
+    return {
+      ...change,
+      targetRefs,
+      findingRefs,
+      risk: {
+        level: riskLevel,
+        reasons: [
+          ...change.risk.reasons,
+          ...(severeNewFinding
+            ? [`New ${severeNewFinding.severity} ${severeNewFinding.category} finding.`]
+            : [])
+        ]
+      },
+      verification: {
+        verified: [
+          ...new Set([
+            ...change.verification.verified,
+            ...(compared > 0
+              ? [`${compared} mapped browser target${compared === 1 ? " was" : "s were"} compared.`]
+              : [])
+          ])
+        ],
+        gaps: [...new Set(gaps)]
+      }
+    };
+  });
+  const captureIncomplete =
+    capture.blockedRequestCount > 0 ||
+    capture.targets.some(
+      (target) => target.before.status !== "success" || target.after.status !== "success"
+    );
+  const comparisonIncomplete = comparison.targets.some(
+    (target) =>
+      target.status === "incomplete" ||
+      target.findings.some((finding) => finding.state === "incomplete")
+  );
+  const newFindings = findings.filter((finding) => finding.state === "new");
+  const regression = newFindings.some(
+    (finding) =>
+      new Set(["critical", "high", "medium"]).has(finding.severity) &&
+      new Set(["layout", "a11y", "console", "page-error", "network", "security"]).has(
+        finding.category
+      )
+  );
+  const changed = findings.some((finding) => new Set(["new", "resolved"]).has(finding.state));
+  const status: UtsuriReport["status"] =
+    captureIncomplete || comparisonIncomplete
+      ? "INCOMPLETE"
+      : discovery.unmappedChangeRefs.length > 0
+        ? "UNCOVERED"
+        : regression
+          ? "REGRESSION"
+          : changed
+            ? "CHANGED"
+            : "PASS";
+  const statement =
+    status === "INCOMPLETE"
+      ? "Browser comparison is incomplete; inspect failed targets before making a visual judgment."
+      : status === "UNCOVERED"
+        ? "Comparison completed, but at least one code change has no mapped visual target."
+        : status === "REGRESSION"
+          ? `Comparison found ${newFindings.length} new finding${newFindings.length === 1 ? "" : "s"}, including a likely regression.`
+          : status === "CHANGED"
+            ? "Measured visual or structural evidence changed without a regression being established by pixels alone."
+            : "Compared targets have no new measured difference; coverage remains visible below.";
+  const incompleteReasons = [
+    ...source.diagnostics.incompleteReasons.filter(
+      (reason) =>
+        !new Set([
+          "comparison-not-run",
+          "capture-target-mapping-not-run",
+          "visual-capture-not-run",
+          "runtime-not-executed"
+        ]).has(reason)
+    ),
+    ...comparison.targets.flatMap((target) => [
+      ...target.incompleteReasons.map((reason) => `comparison:${target.targetRef}:${reason}`),
+      ...target.findings
+        .filter((finding) => finding.state === "incomplete")
+        .map((finding) => `comparison:${target.targetRef}:incomplete-${finding.category}`)
+    ]),
+    ...discovery.unmappedChangeRefs.map((reference) => `coverage:unmapped:${reference}`)
+  ];
+  const reportId = `report-${stableHash({
+    sourceReportId: source.reportId,
+    comparisonHash: comparison.comparisonHash,
+    discoveryHash: discovery.discoveryHash
+  }).slice(0, 16)}`;
+  return {
+    ...source,
+    reportId,
+    status,
+    summary: { ...source.summary, statement },
+    evidence: [...source.evidence, ...phase3Evidence.evidence],
+    changes,
+    targets,
+    comparisons,
+    findings,
+    coverage: discovery.coverage,
+    origin: { ...source.origin, reportId },
+    diagnostics: {
+      incompleteReasons: [...new Set(incompleteReasons)],
+      blockedRequestCount: capture.blockedRequestCount
+    }
+  };
 }
 
 function createCodeOnlyReport(
@@ -568,6 +1390,7 @@ function createCodeOnlyReport(
     unclassifiedHunkRefs,
     changes,
     targets: captureState.targets,
+    comparisons: [],
     findings: [],
     coverage: {
       knownUsages: null,
@@ -591,23 +1414,53 @@ function createCodeOnlyReport(
   };
 }
 
-export async function createInitialReport(
+interface ValidatedReportSnapshot {
+  report: UtsuriReport;
+  artifactDigests: Readonly<Record<string, string>>;
+  sourceSnapshotHash: string;
+}
+
+async function reconstructReportFromSourceSnapshot(
   runDirectory: string,
-  annotationsValue: unknown | null = null
-): Promise<UtsuriReport> {
-  const input = await readOptionalJson(path.join(runDirectory, "input.json"));
-  const diffValue = await readOptionalJson(path.join(runDirectory, "diff.json"));
-  const captureValue = await readOptionalJson(path.join(runDirectory, "capture.json"));
+  source: ReportSourceSnapshot,
+  annotations: Annotations | null
+): Promise<ValidatedReportSnapshot> {
+  const input = source.values["input.json"];
+  const diffValue = source.values["diff.json"];
+  const captureValue = source.values["capture.json"];
   const capture =
     captureValue === null ? null : await validateCaptureArtifact(runDirectory, captureValue);
-  if (annotationsValue !== null) assertArtifact("annotations", annotationsValue);
-  const annotations = annotationsValue as Annotations | null;
+  const comparisonValue = source.values["comparison.json"];
+  if (comparisonValue !== null && capture === null) {
+    throw new UtsuriError(
+      "COMPARISON_REQUIRES_CAPTURE",
+      "comparison.json requires a validated capture.json",
+      ExitCode.Artifact
+    );
+  }
+  const comparison =
+    comparisonValue === null || capture === null
+      ? null
+      : await validateComparisonArtifact(runDirectory, capture, comparisonValue);
+  const discoveryValue = source.values["discovery.json"];
+  const artifactDigests = immutableJsonSnapshot({
+    ...(capture?.artifactDigests ?? {}),
+    ...(comparison?.artifactDigests ?? {})
+  });
+  const sourceSnapshotHash = stableHash(source.digests);
   if (diffValue !== null) {
     assertArtifact("diff", diffValue);
     const diff = diffValue as GitDiffDocument;
     assertReferenceResult("DIFF_REFERENCE_INVALID", validateDiffReferences(diff));
-    const evidenceValue = await readOptionalJson(path.join(runDirectory, "evidence-index.json"));
-    const planValue = await readOptionalJson(path.join(runDirectory, "review-plan.json"));
+    const evidenceValue = source.values["evidence-index.json"];
+    const planValue = source.values["review-plan.json"];
+    if ((comparison === null) !== (discoveryValue === null)) {
+      throw new UtsuriError(
+        "PHASE3_ARTIFACT_MISSING",
+        "Phase 3 evidence requires comparison.json and discovery.json together",
+        ExitCode.Artifact
+      );
+    }
     if (evidenceValue === null || planValue === null) {
       throw new UtsuriError(
         "COLLECT_ARTIFACT_MISSING",
@@ -623,14 +1476,37 @@ export async function createInitialReport(
       "REVIEW_PLAN_INVALID",
       validateReviewPlanReferences(plan, diff, evidenceIndex)
     );
-    const report = createCodeOnlyReport(input, diff, evidenceIndex, plan, annotations, capture);
+    const discovery =
+      discoveryValue === null || capture === null
+        ? null
+        : validateDiscoveryArtifact(capture, diff, plan, discoveryValue);
+    const report = integratePhase3(
+      createCodeOnlyReport(input, diff, evidenceIndex, plan, annotations, capture),
+      capture,
+      comparison,
+      discovery
+    );
     assertReferenceResult("REPORT_REFERENCE_INVALID", validateReportReferences(report));
-    return report;
+    return { report, artifactDigests, sourceSnapshotHash };
   }
   if (annotations?.changes.length) {
     throw new UtsuriError(
       "ANNOTATIONS_REQUIRE_DIFF",
       "Non-empty annotations require a collected diff",
+      ExitCode.Artifact
+    );
+  }
+  if (discoveryValue !== null) {
+    throw new UtsuriError(
+      "DISCOVERY_REQUIRES_DIFF",
+      "discovery.json requires a collected diff",
+      ExitCode.Artifact
+    );
+  }
+  if (comparisonValue !== null) {
+    throw new UtsuriError(
+      "PHASE3_ARTIFACT_MISSING",
+      "comparison.json requires a collected diff and discovery.json",
       ExitCode.Artifact
     );
   }
@@ -642,7 +1518,7 @@ export async function createInitialReport(
     captureState.failed === 0 &&
     captureState.blockedRequestCount === 0;
   const reportId = `report-${stableHash({ input, ...(capture ? { capture } : {}) }).slice(0, 16)}`;
-  return {
+  const report: UtsuriReport = {
     schemaVersion: "1.0",
     reportId,
     status: capture ? (captureComplete ? "UNCOVERED" : "INCOMPLETE") : "SKIPPED",
@@ -662,6 +1538,7 @@ export async function createInitialReport(
     unclassifiedHunkRefs: [],
     changes: [],
     targets: captureState.targets,
+    comparisons: [],
     findings: [],
     coverage: {
       knownUsages: null,
@@ -685,6 +1562,21 @@ export async function createInitialReport(
       blockedRequestCount: captureState.blockedRequestCount
     }
   };
+  assertReferenceResult("REPORT_REFERENCE_INVALID", validateReportReferences(report));
+  return { report, artifactDigests, sourceSnapshotHash };
+}
+
+export async function createInitialReport(
+  runDirectory: string,
+  annotationsValue: unknown | null = null
+): Promise<UtsuriReport> {
+  let annotations: Annotations | null = null;
+  if (annotationsValue !== null) {
+    assertArtifact("annotations", annotationsValue);
+    annotations = immutableJsonSnapshot(annotationsValue as Annotations);
+  }
+  const source = await readReportSourceSnapshot(runDirectory);
+  return (await reconstructReportFromSourceSnapshot(runDirectory, source, annotations)).report;
 }
 
 async function listFiles(directory: string, prefix = ""): Promise<string[]> {
@@ -736,6 +1628,7 @@ function validateManifest(value: unknown): { manifest: ReportManifest | null; er
       "reportId",
       "toolVersion",
       "generatedAt",
+      "sourceSnapshotHash",
       "semanticHash",
       "assetHashes",
       "privacy",
@@ -759,6 +1652,12 @@ function validateManifest(value: unknown): { manifest: ReportManifest | null; er
     Number.isNaN(Date.parse(value.generatedAt))
   ) {
     errors.push("Manifest generatedAt is invalid");
+  }
+  if (
+    typeof value.sourceSnapshotHash !== "string" ||
+    !/^[a-f0-9]{64}$/u.test(value.sourceSnapshotHash)
+  ) {
+    errors.push("Manifest sourceSnapshotHash is invalid");
   }
   if (typeof value.semanticHash !== "string" || !/^[a-f0-9]{64}$/u.test(value.semanticHash)) {
     errors.push("Manifest semanticHash is invalid");
@@ -923,8 +1822,9 @@ async function populateReportDirectory(
   directory: string,
   runDirectory: string,
   report: UtsuriReport,
-  captureDigests: Readonly<Record<string, string>>,
-  options: { now?: Date; toolVersion?: string }
+  artifactDigests: Readonly<Record<string, string>>,
+  sourceSnapshotHash: string,
+  options: BuildReportOptions
 ): Promise<ReportManifest> {
   await mkdir(path.join(directory, "assets"), { recursive: true });
   await mkdir(path.join(directory, "diagnostics"), { recursive: true });
@@ -935,14 +1835,14 @@ async function populateReportDirectory(
   await writeFile(path.join(directory, "assets/icons.svg"), statusIconSvg, { flag: "wx" });
   await writeJson(path.join(directory, "diagnostics/summary.json"), report.diagnostics);
 
-  for (const reference of captureEvidenceReferences(report)) {
+  for (const reference of reportArtifactReferences(report)) {
     const source = await resolveContainedPath(runDirectory, reference);
     const destination = path.join(directory, reference);
     const bytes = await readRegularBytes(source);
-    if (sha256(bytes) !== captureDigests[reference]) {
+    if (sha256(bytes) !== artifactDigests[reference]) {
       throw new UtsuriError(
-        "CAPTURE_ARTIFACT_DIGEST_MISMATCH",
-        `Capture artifact changed before publication: ${reference}`,
+        "REPORT_ARTIFACT_DIGEST_MISMATCH",
+        `Evidence artifact changed before publication: ${reference}`,
         ExitCode.Artifact
       );
     }
@@ -965,7 +1865,8 @@ async function populateReportDirectory(
     reportId: report.reportId,
     toolVersion: options.toolVersion ?? "0.1.0",
     generatedAt: (options.now ?? new Date()).toISOString(),
-    semanticHash: stableHash({ report, assetHashes }),
+    sourceSnapshotHash,
+    semanticHash: stableHash({ report, sourceSnapshotHash, assetHashes }),
     assetHashes,
     privacy: {
       includesAbsolutePaths: false,
@@ -981,10 +1882,11 @@ async function populateReportDirectory(
 export async function buildReport(
   runInput: string,
   report: UtsuriReport,
-  options: { now?: Date; toolVersion?: string } = {}
+  options: BuildReportOptions = {}
 ): Promise<{ reportDirectory: string; manifest: ReportManifest; reused: boolean }> {
   assertArtifact("report", report);
-  const references = validateReportReferences(report);
+  const suppliedReport = immutableJsonSnapshot(report);
+  const references = validateReportReferences(suppliedReport);
   if (!references.ok) {
     throw new UtsuriError(
       "REPORT_REFERENCE_INVALID",
@@ -992,6 +1894,15 @@ export async function buildReport(
       ExitCode.Artifact
     );
   }
+  let annotations: Annotations | null = null;
+  if (options.annotations !== undefined && options.annotations !== null) {
+    assertArtifact("annotations", options.annotations);
+    annotations = immutableJsonSnapshot(options.annotations as Annotations);
+  }
+  const publicationOptions: BuildReportOptions = {
+    ...(options.now ? { now: new Date(options.now.getTime()) } : {}),
+    ...(options.toolVersion !== undefined ? { toolVersion: options.toolVersion } : {})
+  };
 
   const runDirectory = await realpath(runInput);
   const runHandle = await open(
@@ -1009,6 +1920,53 @@ export async function buildReport(
     }
     await assertProtectedPublicationPath(runDirectory, runIdentity);
     await assertDirectoryIdentity(runDirectory, runIdentity, "Run");
+
+    const source = await readReportSourceSnapshot(runDirectory);
+    if (
+      suppliedReport.comparisons.length > 0 ||
+      source.digests["comparison.json"] !== null ||
+      source.digests["discovery.json"] !== null
+    ) {
+      if (
+        source.digests["comparison.json"] === null ||
+        source.digests["discovery.json"] === null ||
+        source.digests["diff.json"] === null ||
+        source.digests["review-plan.json"] === null
+      ) {
+        throw new UtsuriError(
+          "PHASE3_ARTIFACT_MISSING",
+          "Phase 3 publication requires comparison.json, discovery.json, diff.json, and review-plan.json",
+          ExitCode.Artifact
+        );
+      }
+    }
+
+    const reconstructed = await reconstructReportFromSourceSnapshot(
+      runDirectory,
+      source,
+      annotations
+    );
+    await assertReportSourcesUnchanged(runDirectory, source.digests);
+
+    const publicationReport = immutableJsonSnapshot(reconstructed.report);
+    const artifactDigests = reconstructed.artifactDigests;
+    if (canonicalJson(publicationReport) !== canonicalJson(suppliedReport)) {
+      throw new UtsuriError(
+        "REPORT_SOURCE_MISMATCH",
+        "The report does not match the report reconstructed from validated run artifacts",
+        ExitCode.Artifact
+      );
+    }
+    const artifactReferences = reportArtifactReferences(publicationReport);
+    for (const reference of artifactReferences) {
+      if (!validDigest(artifactDigests[reference])) {
+        throw new UtsuriError(
+          "REPORT_ARTIFACT_DIGEST_MISSING",
+          `No independently validated digest exists for ${reference}`,
+          ExitCode.Artifact
+        );
+      }
+    }
 
     const reportDirectory = path.join(runDirectory, "report");
     const existingStat = await optionalLstat(reportDirectory);
@@ -1029,7 +1987,7 @@ export async function buildReport(
       }
       await listFiles(reportDirectory);
       const existing = await readOptionalJson(path.join(reportDirectory, "report.json"));
-      if (existing && canonicalJson(existing) === canonicalJson(report)) {
+      if (existing && canonicalJson(existing) === canonicalJson(publicationReport)) {
         const validation = await validateReportDirectory(reportDirectory, { strict: true });
         if (!validation.ok) {
           throw new UtsuriError(
@@ -1042,6 +2000,15 @@ export async function buildReport(
           await readOptionalJson(path.join(reportDirectory, "manifest.json"))
         );
         if (manifestResult.manifest) {
+          if (manifestResult.manifest.sourceSnapshotHash !== reconstructed.sourceSnapshotHash) {
+            throw new UtsuriError(
+              "REPORT_SOURCE_SNAPSHOT_MISMATCH",
+              "The immutable report was built from different source artifact bytes",
+              ExitCode.Artifact
+            );
+          }
+          await assertReportSourcesUnchanged(runDirectory, source.digests);
+          await assertArtifactDigests(runDirectory, artifactReferences, artifactDigests);
           await assertDirectoryIdentity(runDirectory, runIdentity, "Run");
           return { reportDirectory, manifest: manifestResult.manifest, reused: true };
         }
@@ -1053,29 +2020,6 @@ export async function buildReport(
       );
     }
 
-    const captureReferences = captureEvidenceReferences(report);
-    let captureDigests: Readonly<Record<string, string>> = {};
-    const captureValue = await readOptionalJson(path.join(runDirectory, "capture.json"));
-    if (captureValue === null) {
-      if (report.targets.length > 0 || captureReferences.length > 0) {
-        throw new UtsuriError(
-          "CAPTURE_ARTIFACT_MISSING",
-          "The report contains capture results but capture.json is missing",
-          ExitCode.Artifact
-        );
-      }
-    } else {
-      const capture = await validateCaptureArtifact(runDirectory, captureValue);
-      if (canonicalJson(reportCaptureTargets(capture)) !== canonicalJson(report.targets)) {
-        throw new UtsuriError(
-          "REPORT_CAPTURE_MISMATCH",
-          "The report capture targets do not match the independently validated capture manifest",
-          ExitCode.Artifact
-        );
-      }
-      captureDigests = capture.artifactDigests;
-    }
-
     const stagingName = `.report-${randomUUID()}.tmp`;
     const stagingDirectory = path.join(runDirectory, stagingName);
     await mkdir(stagingDirectory, { recursive: false, mode: 0o700 });
@@ -1083,9 +2027,10 @@ export async function buildReport(
     const manifest = await populateReportDirectory(
       stagingDirectory,
       runDirectory,
-      report,
-      captureDigests,
-      options
+      publicationReport,
+      artifactDigests,
+      reconstructed.sourceSnapshotHash,
+      publicationOptions
     );
     const validation = await validateReportDirectory(stagingDirectory, { strict: true });
     if (!validation.ok) {
@@ -1095,6 +2040,8 @@ export async function buildReport(
         ExitCode.Artifact
       );
     }
+    await assertReportSourcesUnchanged(runDirectory, source.digests);
+    await assertArtifactDigests(runDirectory, artifactReferences, artifactDigests);
     await assertDirectoryIdentity(runDirectory, runIdentity, "Run");
     await assertDirectoryIdentity(stagingDirectory, stagingIdentity, "Staging");
     await publishDirectoryNoReplace(runHandle, runIdentity, stagingName, "report", stagingIdentity);
@@ -1171,7 +2118,7 @@ export async function validateReportDirectory(
       assertArtifact("report", reportRaw);
       report = reportRaw as UtsuriReport;
       errors.push(...validateReportReferences(report).errors);
-      for (const reference of captureEvidenceReferences(report)) {
+      for (const reference of reportArtifactReferences(report)) {
         if (!files.includes(reference)) errors.push(`Missing capture evidence: ${reference}`);
       }
     } catch (error) {
@@ -1201,7 +2148,14 @@ export async function validateReportDirectory(
     }
     if (report) {
       if (manifest.reportId !== report.reportId) errors.push("Manifest reportId mismatch");
-      if (manifest.semanticHash !== stableHash({ report, assetHashes: manifest.assetHashes })) {
+      if (
+        manifest.semanticHash !==
+        stableHash({
+          report,
+          sourceSnapshotHash: manifest.sourceSnapshotHash,
+          assetHashes: manifest.assetHashes
+        })
+      ) {
         errors.push("Manifest semanticHash mismatch");
       }
       if (
@@ -1223,7 +2177,7 @@ export async function validateReportDirectory(
     const actualAssets = files.filter((relative) => relative !== "manifest.json").sort();
     const expectedAssets = [
       ...reportArtifactPaths,
-      ...(report ? captureEvidenceReferences(report) : [])
+      ...(report ? reportArtifactReferences(report) : [])
     ].sort();
     if (JSON.stringify(actualAssets) !== JSON.stringify(expectedAssets)) {
       errors.push("Strict report artifact inventory mismatch");

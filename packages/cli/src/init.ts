@@ -170,6 +170,11 @@ export async function initializeConfig(cwd: string, output = "utsuri.yml") {
       includeComputedStyles: "changed-and-layout",
       includeAxe: true
     },
+    discovery: {
+      knownUsages: null,
+      unknownPossible: true,
+      mappings: []
+    },
     report: {
       outputDirectory: ".artifacts/utsuri",
       language: "en",

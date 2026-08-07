@@ -5,7 +5,11 @@
   type Change = UtsuriReport["changes"][number];
   type Hunk = UtsuriReport["hunks"][number];
   type DiffLine = Hunk["lines"][number];
+  type Comparison = UtsuriReport["comparisons"][number];
+  type ImageComparison = Comparison["images"][number];
+  type Finding = UtsuriReport["findings"][number];
   type QueueKind = "action-required" | "needs-confirmation" | "no-issue";
+  type VisualMode = "side-by-side" | "wipe" | "blink" | "pixel-diff" | "after-only";
   type DiffRow = { kind: "line"; line: DiffLine; index: number } | { kind: "fold"; count: number };
 
   const copy = {
@@ -37,6 +41,29 @@
       split: "Side by side",
       context: "Show {count} hidden context lines",
       moreEvidence: "More evidence",
+      measured: "Measured evidence",
+      interpretation: "Agent interpretation",
+      visualEvidence: "Visual comparison",
+      sideBySide: "Side by side",
+      wipe: "Wipe",
+      blink: "Blink",
+      stopBlink: "Stop blink",
+      pixelDiff: "Pixel diff",
+      afterOnly: "After only",
+      imageScope: "Image scope",
+      zoom: "Zoom",
+      wipePosition: "Wipe position",
+      changedRegions: "Changed regions",
+      noRegions: "No changed pixel regions",
+      findings: "Findings",
+      noFindings: "No linked findings",
+      coverage: "Visual coverage",
+      planned: "Planned targets",
+      captured: "Captured targets",
+      failed: "Failed targets",
+      viewCode: "View linked code",
+      viewVisual: "View visual evidence",
+      reducedMotion: "Blink unavailable because reduced motion is enabled",
       backChange: "Back to focused change",
       visualGap: "Visual verification has not run",
       empty: "No semantic changes",
@@ -70,6 +97,29 @@
       split: "左右表示",
       context: "非表示のコンテキスト {count} 行を表示",
       moreEvidence: "その他の根拠",
+      measured: "計測された根拠",
+      interpretation: "Agent の解釈",
+      visualEvidence: "画面比較",
+      sideBySide: "左右比較",
+      wipe: "ワイプ",
+      blink: "点滅比較",
+      stopBlink: "点滅を停止",
+      pixelDiff: "ピクセル差分",
+      afterOnly: "変更後のみ",
+      imageScope: "画像の範囲",
+      zoom: "拡大率",
+      wipePosition: "ワイプ位置",
+      changedRegions: "変更領域",
+      noRegions: "変更ピクセル領域はありません",
+      findings: "検出事項",
+      noFindings: "関連する検出事項はありません",
+      coverage: "画面カバレッジ",
+      planned: "予定 target",
+      captured: "取得済み target",
+      failed: "失敗 target",
+      viewCode: "関連コードを見る",
+      viewVisual: "画面根拠を見る",
+      reducedMotion: "視差低減が有効なため点滅比較は利用できません",
       backChange: "変更グループへ戻る",
       visualGap: "画面の検証は未実施です",
       empty: "意味単位の変更はありません",
@@ -85,11 +135,28 @@
   let activeHunkId = "";
   let lastQueueElement = "";
   let diffMode: "unified" | "split" = "unified";
+  let visualMode: VisualMode = "side-by-side";
+  let selectedComparisonId = "";
+  let selectedImageId = "";
+  let activeRegionIndex = 0;
+  let activeFindingIndex = 0;
+  let visualZoom = 100;
+  let wipePosition = 50;
+  let blinkRunning = false;
+  let reducedMotion = false;
+  let searchInput: HTMLInputElement;
+  let beforePane: HTMLDivElement;
+  let afterPane: HTMLDivElement;
+  let syncingScroll = false;
   let expandedContext = new Set<string>();
   let selectedChange: Change | undefined;
   let selectedHunks: Hunk[] = [];
   let selectedEvidence: UtsuriReport["evidence"] = [];
   let filteredChanges: Change[] = [];
+  let selectedComparisons: Comparison[] = [];
+  let activeComparison: Comparison | undefined;
+  let activeImage: ImageComparison | undefined;
+  let selectedFindings: Finding[] = [];
 
   $: t = copy[locale];
   $: selectedChange = report?.changes.find((change) => change.id === selectedChangeId);
@@ -111,6 +178,26 @@
         `${change.title} ${change.summary}`.toLocaleLowerCase().includes(query.toLocaleLowerCase())
       )
     : [];
+  $: selectedComparisons =
+    selectedChange && report
+      ? report.comparisons.filter((comparison) =>
+          selectedChange?.targetRefs.includes(comparison.targetRef)
+        )
+      : [];
+  $: activeComparison =
+    selectedComparisons.find((comparison) => comparison.id === selectedComparisonId) ??
+    selectedComparisons[0];
+  $: activeImage =
+    activeComparison?.images.find((image) => image.id === selectedImageId) ??
+    activeComparison?.images[0];
+  $: selectedFindings =
+    selectedChange && report
+      ? report.findings.filter(
+          (finding) =>
+            selectedChange?.findingRefs.includes(finding.id) ||
+            (finding.targetRef ? selectedChange?.targetRefs.includes(finding.targetRef) : false)
+        )
+      : [];
 
   function domId(prefix: string, value: string): string {
     return `${prefix}-${value.replace(/[^a-zA-Z0-9_-]/gu, "-")}`;
@@ -147,6 +234,11 @@
     if (rememberQueue) lastQueueElement = domId("queue", change.id);
     selectedChangeId = change.id;
     activeHunkId = "";
+    selectedComparisonId = "";
+    selectedImageId = "";
+    activeRegionIndex = 0;
+    activeFindingIndex = 0;
+    blinkRunning = false;
     updateHash("change", change.id);
     void focusElement(domId("change", change.id));
   }
@@ -155,6 +247,100 @@
     activeHunkId = hunkId;
     updateHash("hunk", hunkId);
     void focusElement(domId("hunk", hunkId));
+  }
+
+  function openVisualEvidence(): void {
+    activeHunkId = "";
+    void focusElement("visual-evidence-heading");
+  }
+
+  function setVisualMode(mode: VisualMode): void {
+    if (mode === "blink" && reducedMotion) {
+      visualMode = "side-by-side";
+      blinkRunning = false;
+      return;
+    }
+    visualMode = mode;
+    blinkRunning = mode === "blink" && !reducedMotion;
+  }
+
+  function selectComparison(id: string): void {
+    selectedComparisonId = id;
+    selectedImageId = "";
+    activeRegionIndex = 0;
+  }
+
+  function selectImage(id: string): void {
+    selectedImageId = id;
+    activeRegionIndex = 0;
+  }
+
+  async function jumpRegion(index: number): Promise<void> {
+    activeRegionIndex = index;
+    await tick();
+    document
+      .getElementById(`visual-region-${index}`)
+      ?.scrollIntoView({ block: "center", inline: "center", behavior: "smooth" });
+  }
+
+  function syncVisualScroll(source: HTMLDivElement, target: HTMLDivElement): void {
+    if (syncingScroll || !source || !target) return;
+    syncingScroll = true;
+    const verticalRange = source.scrollHeight - source.clientHeight;
+    const horizontalRange = source.scrollWidth - source.clientWidth;
+    const targetVerticalRange = target.scrollHeight - target.clientHeight;
+    const targetHorizontalRange = target.scrollWidth - target.clientWidth;
+    target.scrollTop =
+      verticalRange > 0 ? (source.scrollTop / verticalRange) * targetVerticalRange : 0;
+    target.scrollLeft =
+      horizontalRange > 0 ? (source.scrollLeft / horizontalRange) * targetHorizontalRange : 0;
+    requestAnimationFrame(() => (syncingScroll = false));
+  }
+
+  function coverageSummary(value: UtsuriReport): string {
+    const known = value.coverage.knownUsages;
+    const base =
+      known === null
+        ? `${value.coverage.verifiedUsages} verified; known usage count unavailable`
+        : `${value.coverage.verifiedUsages} of ${known} known usages verified`;
+    return value.coverage.unknownPossible ? `${base}; additional usage may exist` : base;
+  }
+
+  function handleShortcut(event: KeyboardEvent): void {
+    const element = event.target as HTMLElement | null;
+    if (
+      element?.isContentEditable ||
+      new Set(["INPUT", "TEXTAREA", "SELECT"]).has(element?.tagName ?? "") ||
+      event.metaKey ||
+      event.ctrlKey ||
+      event.altKey
+    ) {
+      return;
+    }
+    if (event.key === "/") {
+      event.preventDefault();
+      searchInput?.focus();
+      return;
+    }
+    if (event.key === "1") setVisualMode("side-by-side");
+    else if (event.key === "2") setVisualMode("wipe");
+    else if (event.key === "3") setVisualMode("pixel-diff");
+    else if (event.key === "4") setVisualMode("blink");
+    else if (event.key === "5") setVisualMode("after-only");
+    else if ((event.key === "j" || event.key === "k") && report?.changes.length) {
+      const index = report.changes.findIndex((change) => change.id === selectedChangeId);
+      const delta = event.key === "j" ? 1 : -1;
+      selectChange(
+        report.changes[(index + delta + report.changes.length) % report.changes.length]!
+      );
+    } else if ((event.key === "n" || event.key === "p") && selectedFindings.length) {
+      const delta = event.key === "n" ? 1 : -1;
+      activeFindingIndex =
+        (activeFindingIndex + delta + selectedFindings.length) % selectedFindings.length;
+      void focusElement(domId("finding", selectedFindings[activeFindingIndex]!.id));
+    } else if (event.key === "e") {
+      openVisualEvidence();
+    }
   }
 
   function openUnclassified(hunkId: string): void {
@@ -297,8 +483,13 @@
   onMount(() => {
     locale = navigator.language.toLowerCase().startsWith("ja") ? "ja" : "en";
     void loadReport();
+    reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
     window.addEventListener("hashchange", applyLocation);
-    return () => window.removeEventListener("hashchange", applyLocation);
+    window.addEventListener("keydown", handleShortcut);
+    return () => {
+      window.removeEventListener("hashchange", applyLocation);
+      window.removeEventListener("keydown", handleShortcut);
+    };
   });
 </script>
 
@@ -312,7 +503,7 @@
       <div class="report-state" data-status={report.status}>
         <span class="state-mark" aria-hidden="true"></span>
         <span>{report.status}</span>
-        <small>{t.visualGap}</small>
+        <small>{coverageSummary(report)}</small>
       </div>
       <p class="report-id">{report.reportId}</p>
     </header>
@@ -324,7 +515,7 @@
       </div>
       <label class="queue-search">
         <span>{t.search}</span>
-        <input type="search" bind:value={query} autocomplete="off" />
+        <input type="search" bind:this={searchInput} bind:value={query} autocomplete="off" />
       </label>
 
       <nav aria-label={t.queue}>
@@ -428,6 +619,27 @@
             <dd>{report.files.filter((file) => file.lowSignal).length}</dd>
           </div>
         </dl>
+        <section class="coverage-overview" aria-labelledby="coverage-heading">
+          <div>
+            <p class="kicker">Coverage / structured</p>
+            <h2 id="coverage-heading">{t.coverage}</h2>
+            <p>{coverageSummary(report)}</p>
+          </div>
+          <dl>
+            <div>
+              <dt>{t.planned}</dt>
+              <dd>{report.coverage.planned}</dd>
+            </div>
+            <div>
+              <dt>{t.captured}</dt>
+              <dd>{report.coverage.succeeded}</dd>
+            </div>
+            <div>
+              <dt>{t.failed}</dt>
+              <dd>{report.coverage.failed}</dd>
+            </div>
+          </dl>
+        </section>
         <details class="file-inventory">
           <summary>{t.inventory}</summary>
           <ul>
@@ -472,43 +684,354 @@
             </div>
           </header>
 
-          <div class="explanation-grid">
-            <section>
-              <h3>{t.what}</h3>
-              <p>{selectedChange.summary}</p>
-              <p class="technical">{selectedChange.implementation}</p>
+          <section class="interpretation-section" aria-labelledby="interpretation-heading">
+            <div class="section-heading">
+              <div>
+                <p class="kicker">Interpretation / Agent</p>
+                <h3 id="interpretation-heading">{t.interpretation}</h3>
+              </div>
+            </div>
+            <div class="explanation-grid">
+              <section>
+                <h3>{t.what}</h3>
+                <p>{selectedChange.summary}</p>
+                <p class="technical">{selectedChange.implementation}</p>
+              </section>
+              <section>
+                <h3>{t.why}</h3>
+                <p>{selectedChange.intent.text || "Intent unknown"}</p>
+              </section>
+              <section>
+                <h3>{t.userImpact}</h3>
+                {#if selectedChange.userImpact.length > 0}<ul>
+                    {#each selectedChange.userImpact as item, index (index)}<li>{item}</li>{/each}
+                  </ul>{:else}<p>{t.noImpact}</p>{/if}
+              </section>
+              <section class="risk-block">
+                <h3>{t.risk}</h3>
+                <ul>
+                  {#each selectedChange.risk.reasons as reason, index (index)}<li>
+                      {reason}
+                    </li>{/each}
+                </ul>
+              </section>
+              <section class="gap-block">
+                <h3>{t.gaps}</h3>
+                <ul>
+                  {#each selectedChange.verification.gaps as gap, index (index)}<li>
+                      {gap}
+                    </li>{/each}
+                </ul>
+              </section>
+              <section>
+                <h3>{t.verified}</h3>
+                <ul>
+                  {#each selectedChange.verification.verified as item, index (index)}<li>
+                      {item}
+                    </li>{/each}
+                </ul>
+              </section>
+            </div>
+          </section>
+
+          <section class="visual-evidence-section" aria-labelledby="measured-evidence-heading">
+            <div class="section-heading visual-heading">
+              <div>
+                <p class="kicker">Evidence / {selectedComparisons.length}</p>
+                <h3 id="measured-evidence-heading">{t.measured}</h3>
+                <h4 id="visual-evidence-heading" tabindex="-1">{t.visualEvidence}</h4>
+                <p>{coverageSummary(report)}</p>
+              </div>
+            </div>
+
+            {#if selectedComparisons.length > 0}
+              <div class="visual-selectors">
+                {#if selectedComparisons.length > 1}
+                  <label>
+                    <span>Target</span>
+                    <select
+                      value={activeComparison?.id}
+                      onchange={(event) => selectComparison(event.currentTarget.value)}
+                    >
+                      {#each selectedComparisons as comparison (comparison.id)}
+                        {@const target = report.targets.find(
+                          (entry) => entry.id === comparison.targetRef
+                        )}
+                        <option value={comparison.id}
+                          >{target?.routeOrStory ?? comparison.targetRef} · {target?.viewport} · {target?.state}</option
+                        >
+                      {/each}
+                    </select>
+                  </label>
+                {/if}
+                {#if activeComparison && activeComparison.images.length > 1}
+                  <label>
+                    <span>{t.imageScope}</span>
+                    <select
+                      value={activeImage?.id}
+                      onchange={(event) => selectImage(event.currentTarget.value)}
+                    >
+                      {#each activeComparison.images as image (image.id)}
+                        <option value={image.id}>{image.label}</option>
+                      {/each}
+                    </select>
+                  </label>
+                {/if}
+                <label class="visual-slider">
+                  <span>{t.zoom}: {visualZoom}%</span>
+                  <input type="range" min="50" max="200" step="10" bind:value={visualZoom} />
+                </label>
+              </div>
+
+              <div class="visual-mode-control" role="group" aria-label={t.visualEvidence}>
+                <button
+                  type="button"
+                  aria-pressed={visualMode === "side-by-side"}
+                  onclick={() => setVisualMode("side-by-side")}>{t.sideBySide}</button
+                >
+                <button
+                  type="button"
+                  aria-pressed={visualMode === "wipe"}
+                  onclick={() => setVisualMode("wipe")}>{t.wipe}</button
+                >
+                <button
+                  type="button"
+                  aria-pressed={visualMode === "blink"}
+                  disabled={reducedMotion}
+                  title={reducedMotion ? t.reducedMotion : undefined}
+                  onclick={() => {
+                    if (visualMode === "blink") blinkRunning = !blinkRunning;
+                    else setVisualMode("blink");
+                  }}>{visualMode === "blink" && blinkRunning ? t.stopBlink : t.blink}</button
+                >
+                <button
+                  type="button"
+                  aria-pressed={visualMode === "pixel-diff"}
+                  onclick={() => setVisualMode("pixel-diff")}>{t.pixelDiff}</button
+                >
+                <button
+                  type="button"
+                  aria-pressed={visualMode === "after-only"}
+                  onclick={() => setVisualMode("after-only")}>{t.afterOnly}</button
+                >
+              </div>
+
+              {#if activeComparison?.status === "incomplete"}
+                <div class="persistent-error" role="alert">
+                  <strong>INCOMPLETE</strong>
+                  <span>{activeComparison.incompleteReasons.join(", ")}</span>
+                </div>
+              {/if}
+
+              {#if activeImage}
+                <dl class="visual-metrics">
+                  <div>
+                    <dt>Pixels changed</dt>
+                    <dd>{activeImage.diffPixelCount}</dd>
+                  </div>
+                  <div>
+                    <dt>Pixel ratio</dt>
+                    <dd>{(activeImage.diffRatio * 100).toFixed(3)}%</dd>
+                  </div>
+                  <div>
+                    <dt>{t.changedRegions}</dt>
+                    <dd>{activeImage.regions.length}</dd>
+                  </div>
+                  <div>
+                    <dt>Canvas</dt>
+                    <dd>{activeImage.width} × {activeImage.height}</dd>
+                  </div>
+                </dl>
+
+                {#if visualMode === "side-by-side"}
+                  <div class="visual-panes" data-visual-mode="side-by-side">
+                    <figure>
+                      <figcaption>Before · {activeImage.label}</figcaption>
+                      <div
+                        class="visual-scroll"
+                        bind:this={beforePane}
+                        onscroll={() => syncVisualScroll(beforePane, afterPane)}
+                      >
+                        <div class="image-stage" style={`width: ${visualZoom}%`}>
+                          <img
+                            src={`./${activeImage.beforeRef}`}
+                            alt={`Before capture for ${activeImage.label}`}
+                          />
+                        </div>
+                      </div>
+                    </figure>
+                    <figure>
+                      <figcaption>After · {activeImage.label}</figcaption>
+                      <div
+                        class="visual-scroll"
+                        bind:this={afterPane}
+                        onscroll={() => syncVisualScroll(afterPane, beforePane)}
+                      >
+                        <div class="image-stage" style={`width: ${visualZoom}%`}>
+                          <img
+                            src={`./${activeImage.afterRef}`}
+                            alt={`After capture for ${activeImage.label}`}
+                          />
+                          {#each activeImage.regions as region, index (region.id)}
+                            <button
+                              id={`visual-region-${index}`}
+                              class:active-region={activeRegionIndex === index}
+                              class="region-marker"
+                              type="button"
+                              aria-label={`Changed region ${index + 1}, ${region.pixels} pixels`}
+                              style={`left:${(region.x / activeImage.width) * 100}%;top:${(region.y / activeImage.height) * 100}%;width:${(region.width / activeImage.width) * 100}%;height:${(region.height / activeImage.height) * 100}%`}
+                              onclick={() => void jumpRegion(index)}>{index + 1}</button
+                            >
+                          {/each}
+                        </div>
+                      </div>
+                    </figure>
+                  </div>
+                {:else if visualMode === "wipe"}
+                  <label class="wipe-control">
+                    <span>{t.wipePosition}: {wipePosition}%</span>
+                    <input type="range" min="0" max="100" bind:value={wipePosition} />
+                  </label>
+                  <figure class="single-visual">
+                    <figcaption>Before / after wipe · {activeImage.label}</figcaption>
+                    <div class="visual-scroll">
+                      <div class="image-stage" style={`width: ${visualZoom}%`}>
+                        <img
+                          src={`./${activeImage.beforeRef}`}
+                          alt={`Before capture for ${activeImage.label}`}
+                        />
+                        <img
+                          class="wipe-after"
+                          style={`clip-path: inset(0 ${100 - wipePosition}% 0 0)`}
+                          src={`./${activeImage.afterRef}`}
+                          alt={`After capture revealed to ${wipePosition}%`}
+                        />
+                      </div>
+                    </div>
+                  </figure>
+                {:else if visualMode === "blink"}
+                  <figure class="single-visual">
+                    <figcaption>
+                      {blinkRunning ? "Blink running; use Stop blink to pause" : "Blink paused"} ·
+                      {activeImage.label}
+                    </figcaption>
+                    <div class="visual-scroll">
+                      <div class="image-stage" style={`width: ${visualZoom}%`}>
+                        <img
+                          src={`./${activeImage.beforeRef}`}
+                          alt={`Before capture for ${activeImage.label}`}
+                        />
+                        <img
+                          class:blink-running={blinkRunning}
+                          class="blink-after"
+                          src={`./${activeImage.afterRef}`}
+                          alt={`After capture for ${activeImage.label}`}
+                        />
+                      </div>
+                    </div>
+                  </figure>
+                {:else if visualMode === "pixel-diff"}
+                  <figure class="single-visual pixel-diff-view">
+                    <figcaption>{t.pixelDiff} · {activeImage.label}</figcaption>
+                    <div class="visual-scroll">
+                      <div class="image-stage" style={`width: ${visualZoom}%`}>
+                        <img
+                          src={`./${activeImage.diffRef}`}
+                          alt={`Pixel difference bitmap with ${activeImage.diffPixelCount} changed pixels`}
+                        />
+                      </div>
+                    </div>
+                  </figure>
+                {:else}
+                  <figure class="single-visual">
+                    <figcaption>{t.afterOnly} · {activeImage.label}</figcaption>
+                    <div class="visual-scroll">
+                      <div class="image-stage" style={`width: ${visualZoom}%`}>
+                        <img
+                          src={`./${activeImage.afterRef}`}
+                          alt={`After capture for ${activeImage.label}`}
+                        />
+                        {#each activeImage.regions as region, index (region.id)}
+                          <button
+                            id={`visual-region-${index}`}
+                            class:active-region={activeRegionIndex === index}
+                            class="region-marker"
+                            type="button"
+                            aria-label={`Changed region ${index + 1}, ${region.pixels} pixels`}
+                            style={`left:${(region.x / activeImage.width) * 100}%;top:${(region.y / activeImage.height) * 100}%;width:${(region.width / activeImage.width) * 100}%;height:${(region.height / activeImage.height) * 100}%`}
+                            onclick={() => void jumpRegion(index)}>{index + 1}</button
+                          >
+                        {/each}
+                      </div>
+                    </div>
+                  </figure>
+                {/if}
+
+                <section class="region-list" aria-labelledby="region-heading">
+                  <h4 id="region-heading">{t.changedRegions}</h4>
+                  {#if activeImage.regions.length > 0}
+                    <ol>
+                      {#each activeImage.regions as region, index (region.id)}
+                        <li>
+                          <button
+                            type="button"
+                            aria-current={activeRegionIndex === index ? "true" : undefined}
+                            onclick={() => void jumpRegion(index)}
+                            >Region {index + 1} · {region.pixels} px · ({region.x}, {region.y}) {region.width}
+                            × {region.height}</button
+                          >
+                        </li>
+                      {/each}
+                    </ol>
+                  {:else}
+                    <p>{t.noRegions}</p>
+                  {/if}
+                </section>
+              {/if}
+            {:else}
+              <div class="verification-gap" role="status">
+                <strong>UNCOVERED</strong>
+                <span>{t.visualGap}</span>
+              </div>
+            {/if}
+
+            <section class="finding-list" aria-labelledby="finding-heading">
+              <div class="section-heading">
+                <div>
+                  <p class="kicker">Finding states / {selectedFindings.length}</p>
+                  <h4 id="finding-heading">{t.findings}</h4>
+                </div>
+              </div>
+              {#if selectedFindings.length > 0}
+                <ol>
+                  {#each selectedFindings as finding, index (finding.id)}
+                    <li>
+                      <article
+                        id={domId("finding", finding.id)}
+                        tabindex="-1"
+                        class:active-finding={activeFindingIndex === index}
+                      >
+                        <div class="finding-badges">
+                          <span>{finding.state}</span><span>{finding.severity}</span><span
+                            >{finding.category}</span
+                          >
+                        </div>
+                        <h5>{finding.title}</h5>
+                        <p>{finding.description}</p>
+                        {#if finding.hunkRefs[0]}
+                          <button type="button" onclick={() => openHunk(finding.hunkRefs[0]!)}
+                            >{t.viewCode}</button
+                          >
+                        {/if}
+                      </article>
+                    </li>
+                  {/each}
+                </ol>
+              {:else}
+                <p>{t.noFindings}</p>
+              {/if}
             </section>
-            <section>
-              <h3>{t.why}</h3>
-              <p>{selectedChange.intent.text || "Intent unknown"}</p>
-            </section>
-            <section>
-              <h3>{t.userImpact}</h3>
-              {#if selectedChange.userImpact.length > 0}<ul>
-                  {#each selectedChange.userImpact as item, index (index)}<li>{item}</li>{/each}
-                </ul>{:else}<p>{t.noImpact}</p>{/if}
-            </section>
-            <section class="risk-block">
-              <h3>{t.risk}</h3>
-              <ul>
-                {#each selectedChange.risk.reasons as reason, index (index)}<li>{reason}</li>{/each}
-              </ul>
-            </section>
-            <section class="gap-block">
-              <h3>{t.gaps}</h3>
-              <ul>
-                {#each selectedChange.verification.gaps as gap, index (index)}<li>{gap}</li>{/each}
-              </ul>
-            </section>
-            <section>
-              <h3>{t.verified}</h3>
-              <ul>
-                {#each selectedChange.verification.verified as item, index (index)}<li>
-                    {item}
-                  </li>{/each}
-              </ul>
-            </section>
-          </div>
+          </section>
 
           <section class="evidence-section" aria-labelledby="evidence-heading">
             <div class="section-heading">
@@ -572,17 +1095,22 @@
                       @@ −{hunk.oldStart},{hunk.oldLines} +{hunk.newStart},{hunk.newLines} @@ {hunk.heading}
                     </h4>
                   </div>
-                  <button
-                    type="button"
-                    class="anchor-button"
-                    aria-label={`Link to hunk in ${hunk.path}`}
-                    onclick={() => openHunk(hunk.id)}>#</button
-                  >
+                  <div class="hunk-actions">
+                    {#if selectedComparisons.length > 0}
+                      <button type="button" onclick={openVisualEvidence}>{t.viewVisual}</button>
+                    {/if}
+                    <button
+                      type="button"
+                      class="anchor-button"
+                      aria-label={`Link to hunk in ${hunk.path}`}
+                      onclick={() => openHunk(hunk.id)}>#</button
+                    >
+                  </div>
                 </header>
                 <div
                   class:split-diff={diffMode === "split"}
                   class="diff-table"
-                  role="table"
+                  role="region"
                   aria-label={`Diff for ${hunk.path}`}
                 >
                   {#each contextRows(hunk) as row, rowIndex (rowIndex)}
@@ -595,17 +1123,13 @@
                         {t.context.replace("{count}", String(row.count))}
                       </button>
                     {:else if diffMode === "unified"}
-                      <div class={`diff-line ${row.line.kind}`} role="row">
-                        <span
-                          class="line-number"
-                          aria-label={`old line ${row.line.oldLine ?? "none"}`}
-                          >{row.line.oldLine ?? ""}</span
-                        >
-                        <span
-                          class="line-number"
-                          aria-label={`new line ${row.line.newLine ?? "none"}`}
-                          >{row.line.newLine ?? ""}</span
-                        >
+                      <div
+                        class={`diff-line ${row.line.kind}`}
+                        role="group"
+                        aria-label={`${row.line.kind}, old line ${row.line.oldLine ?? "none"}, new line ${row.line.newLine ?? "none"}`}
+                      >
+                        <span class="line-number" aria-hidden="true">{row.line.oldLine ?? ""}</span>
+                        <span class="line-number" aria-hidden="true">{row.line.newLine ?? ""}</span>
                         <span class="line-sign" aria-hidden="true"
                           >{row.line.kind === "addition"
                             ? "+"
@@ -620,12 +1144,18 @@
                         >
                       </div>
                     {:else}
-                      <div class="split-row" role="row">
+                      <div
+                        class="split-row"
+                        role="group"
+                        aria-label={`${row.line.kind}, old line ${row.line.oldLine ?? "none"}, new line ${row.line.newLine ?? "none"}`}
+                      >
                         <div
                           class:empty-side={row.line.kind === "addition"}
                           class={`diff-line ${row.line.kind === "addition" ? "empty" : row.line.kind}`}
                         >
-                          <span class="line-number">{row.line.oldLine ?? ""}</span>
+                          <span class="line-number" aria-hidden="true"
+                            >{row.line.oldLine ?? ""}</span
+                          >
                           <span class="line-sign" aria-hidden="true"
                             >{row.line.kind === "deletion" ? "−" : " "}</span
                           >
@@ -639,7 +1169,9 @@
                           class:empty-side={row.line.kind === "deletion"}
                           class={`diff-line ${row.line.kind === "deletion" ? "empty" : row.line.kind}`}
                         >
-                          <span class="line-number">{row.line.newLine ?? ""}</span>
+                          <span class="line-number" aria-hidden="true"
+                            >{row.line.newLine ?? ""}</span
+                          >
                           <span class="line-sign" aria-hidden="true"
                             >{row.line.kind === "addition" ? "+" : " "}</span
                           >

@@ -1,0 +1,7 @@
+diff --git a/src/tokens.css b/src/tokens.css
+index 1111111..2222222 100644
+--- a/src/tokens.css
++++ b/src/tokens.css
+@@ -1 +1 @@
+--brand-accent: #b42318;
++--brand-accent: #1558d6;

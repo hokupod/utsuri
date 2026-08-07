@@ -28,7 +28,7 @@ function browserExecutable(): string {
 }
 
 export default defineConfig({
-  testDir: "tests/e2e",
+  testDir: "tests",
   outputDir: ".artifacts/playwright",
   fullyParallel: false,
   forbidOnly: true,
@@ -46,15 +46,31 @@ export default defineConfig({
   projects: [
     {
       name: "code-only",
-      testMatch: /code-only\.spec\.ts/u
+      testMatch: /e2e\/code-only\.spec\.ts/u
     },
     {
       name: "capture",
-      testMatch: /capture\.spec\.ts/u
+      testMatch: /e2e\/capture\.spec\.ts/u
     },
     {
       name: "failed-before-server",
-      testMatch: /failed-before-server\.spec\.ts/u
+      testMatch: /e2e\/failed-before-server\.spec\.ts/u
+    },
+    {
+      name: "comparison",
+      testMatch: /e2e\/comparison\.spec\.ts/u
+    },
+    {
+      name: "global-token-change",
+      testMatch: /e2e\/global-token-change\.spec\.ts/u
+    },
+    {
+      name: "report-visual",
+      testMatch: /e2e\/report-visual\.spec\.ts/u
+    },
+    {
+      name: "a11y",
+      testMatch: /a11y\/.*\.spec\.ts/u
     }
   ]
 });

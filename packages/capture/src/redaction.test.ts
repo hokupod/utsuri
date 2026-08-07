@@ -54,4 +54,31 @@ describe("capture evidence redaction", () => {
     );
     expect(failure.message).toBe("GET https://example.test/path failed");
   });
+
+  test("preserves axe CSS selector identity while redacting URL attributes", () => {
+    const redacted = redactEvidenceValue({
+      violations: [
+        {
+          id: "button-name",
+          nodes: [
+            { target: ["#new-a11y", "button#checkout"] },
+            {
+              target: ['a[href="https://user:password@example.test/path?token=secret#fragment"]']
+            }
+          ]
+        }
+      ]
+    });
+    expect(redacted).toEqual({
+      violations: [
+        {
+          id: "button-name",
+          nodes: [
+            { target: ["#new-a11y", "button#checkout"] },
+            { target: ['a[href="https://example.test/path"]'] }
+          ]
+        }
+      ]
+    });
+  });
 });

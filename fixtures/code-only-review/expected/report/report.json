@@ -466,6 +466,7 @@
     }
   ],
   "targets": [],
+  "comparisons": [],
   "findings": [],
   "coverage": {
     "knownUsages": null,

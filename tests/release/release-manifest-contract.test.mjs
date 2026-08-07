@@ -32,7 +32,7 @@ const validManifest = {
     "@utsu-ri/report-builder": "workspace:*",
     "@utsu-ri/report-model": "workspace:*",
     "@utsu-ri/security": "workspace:*",
-    "playwright-core": "1.55.0",
+    "playwright-core": "1.61.1",
     yaml: "2.8.1"
   }
 };

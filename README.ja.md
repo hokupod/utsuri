@@ -18,9 +18,9 @@ Utsuriは、コード変更を、根拠と意図を伴う人間向けの視覚�
 
 ## 状態
 
-<!-- availability:phase-2-browser-capture -->
+<!-- availability:phase-3-comparison-coverage -->
 
-Phase 2のbrowser capture flowは、このsource checkoutで利用できます。Phase 1のcode reviewに、分離した`dual-url`、`static-fragment`、または明示承認済み`worktree`の証跡を組み合わせます。visual/runtime comparison、review stateの永続化、Agent feedbackは未実装です。npm packageとPluginも未公開です。
+Phase 3のcomparison / coverage flowは、このsource checkoutで利用できます。code reviewと分離したbrowser captureに、target discovery、visual / structural / runtime comparison、明示的なcoverage gap、measured-evidence UIを組み合わせます。review stateの永続化、Agent feedback、container実行は未実装です。npm packageとPluginも未公開です。
 
 <a id="capabilities"></a><!-- section:capabilities -->
 
@@ -36,8 +36,12 @@ Phase 2のbrowser capture flowは、このsource checkoutで利用できます�
 - viewport、DPR、locale、timezone、color scheme、reduced motionを揃えたbefore / after別々のBrowser Context
 - full-page / element screenshot、normalized DOM、ARIA、computed style、axe、console、network、metadata、型付きfailure evidence
 - 決定論的stabilization、allowlist action DSL、external / mutation request block、digest検証付き再利用、部分的な`INCOMPLETE` report
+- explicit / Storybook / Playwright / route / import / selector / fallbackの優先順を持ち、既知・検証済み・未知・予定・成功・失敗を分離するtarget discovery
+- Pixelmatch count / ratio、content-addressed diff image、changed region、normalized DOM / ARIA / style fingerprint
+- accessibility / runtime findingの`new` / `resolved` / `unchanged` / `incomplete`分類とoverflow / obstruction evidence
+- side-by-side、wipe、停止可能なblink、pixel diff、after-only、crop / full-page選択、sync scroll / zoom、region navigation、code / finding cross-link
 
-後続Phaseで、visual/DOM/ARIA/style/accessibility/runtime comparison、review stateの永続化、Origin Session feedbackを追加します。captureが完了してもcomparisonとtarget mapping前は`UNCOVERED`、片側失敗またはblocked requestがあれば`INCOMPLETE`のままです。
+後続Phaseで、container hardening、review stateの永続化、Origin Session feedbackを追加します。captureが完了してもdiscoveryとcomparison前は`UNCOVERED`です。証拠の欠落・不正、または片側失敗は`INCOMPLETE`のままです。分母が不明なら割合を表示せず、pixel差分だけで`REGRESSION`とは判定しません。
 
 <a id="quick-start"></a><!-- section:quick-start -->
 
@@ -91,6 +95,22 @@ node skills/utsuri-review/scripts/utsuri.mjs capture --run .artifacts/utsuri/rea
 
 captureがexit code 4でも、成功した片側と型付きfailure evidenceは残ります。no visual differenceと扱わず、partial runをfinalizeしてください。
 
+変更codeをcapture済みtargetへ対応付け、未mapping changeと不明な分母を保持します。
+
+<!-- sync-command:discover-run -->
+
+```bash
+node skills/utsuri-review/scripts/utsuri.mjs discover --run .artifacts/utsuri/readme-example --config utsuri.yml --json
+```
+
+pixel、structure、accessibility、runtime error、network evidence、overflowを比較します。exit code 4はcomparisonが未完了であることを示しますが、証拠は保持されます。
+
+<!-- sync-command:compare-run -->
+
+```bash
+node skills/utsuri-review/scripts/utsuri.mjs compare --run .artifacts/utsuri/readme-example --json
+```
+
 <!-- sync-command:finalize-report -->
 
 ```bash
@@ -135,7 +155,7 @@ Utsuriはrepository content、diff、HTML、SVG、comment、Context Pack、captu
 
 `dual-url`はproject codeを起動しません。`worktree`はtrusted input、before / afterそれぞれの明示argvと別working directory、利用者による`--allow-project-code` opt-inを必須とします。child environmentは最小baselineとallowlist済みの非secret名だけです。`static-fragment`はJavaScriptとHTTP requestを無効化し、active markupをsanitizeしますが、実application描画と同一ではありません。browser requestのblockはproject server processを隔離しないため、untrustedなserver実行はPhase 4のcontainer modeまで行いません。
 
-生成済み`report/`はimmutableです。参照するcapture evidenceも内部へcopyし、report asset manifestのhash対象にします。Utsuriは、通常fileかつsymlinkではないrun input、他のlocal principalから保護されたpublication path、stagingのstrict validation、OSのno-replace helperを必須とします。helperが存在しない、またはfilesystemが対応しない場合はfail closedとします。生成失敗時には診断用のprivate staging directoryが残る場合がありますが、自動削除はしません。人間のmutable review dataは`run/review/`へ分離します。static viewerは外部serviceへ通信しません。
+生成済み`report/`はimmutableです。参照するcapture / comparison evidenceは独立してdigest検証し、report内部へcopyしてasset manifestのhash対象にします。discovery / comparison manifestは収集diff / capture hashへbindされ、差し替え・未列挙artifactはfinalizeで拒否します。finalizeは検証済みrun artifactとannotationsからreport全体を再構築し、正確なsource byte snapshot hashをmanifestへ記録し、immutable snapshotだけを公開します。stagingまたはreuse中のsource / evidenceの変化は拒否します。Utsuriは、通常fileかつsymlinkではないrun input、他のlocal principalから保護されたpublication path、stagingのstrict validation、OSのno-replace helperを必須とします。helperが存在しない、またはfilesystemが対応しない場合はfail closedとします。生成失敗時には診断用のprivate staging directoryが残る場合がありますが、自動削除はしません。人間のmutable review dataは`run/review/`へ分離します。static viewerは外部serviceへ通信しません。
 
 code diff contentはstructured lineへparseし、textとしてだけrenderします。repositoryが制御するdiff textをHTMLとして挿入しません。
 
@@ -146,6 +166,7 @@ code diff contentはstructured lineへparseし、textとしてだけrenderしま
 - [英語の詳細設計正本](https://github.com/hokupod/utsuri/blob/main/docs/design.md)
 - [UI guidelineとHIG/WCAG traceability](https://github.com/hokupod/utsuri/blob/main/docs/ui-guidelines.md)
 - [Capture modeとruntime boundary](https://github.com/hokupod/utsuri/blob/main/skills/utsuri-review/references/capture-modes.md)
+- [CLI contract](https://github.com/hokupod/utsuri/blob/main/skills/utsuri-review/references/cli-contract.md)
 - [v1実装計画](https://github.com/hokupod/utsuri/blob/main/ai/plans/active/v1-%E5%AE%9F%E8%A3%85/README.md)
 
 詳細設計は英語を正本とします。user-facingなREADME変更は英語・日本語・簡体字中国語を同じchangeで更新します。

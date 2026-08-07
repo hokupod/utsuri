@@ -1,0 +1,56 @@
+{
+  "schemaVersion": "1.0",
+  "scenarios": [
+    {
+      "name": "english-light-1024-partial",
+      "locale": "en-US",
+      "colorScheme": "light",
+      "width": 1024,
+      "state": "partial"
+    },
+    {
+      "name": "japanese-dark-1280-partial",
+      "locale": "ja-JP",
+      "colorScheme": "dark",
+      "width": 1280,
+      "state": "partial"
+    },
+    {
+      "name": "english-light-1440-long-dense",
+      "locale": "en-US",
+      "colorScheme": "light",
+      "width": 1440,
+      "state": "long-dense"
+    },
+    {
+      "name": "english-light-1024-zoom-200",
+      "locale": "en-US",
+      "colorScheme": "light",
+      "width": 512,
+      "deviceScaleFactor": 2,
+      "state": "partial"
+    },
+    {
+      "name": "english-light-1024-empty",
+      "locale": "en-US",
+      "colorScheme": "light",
+      "width": 1024,
+      "state": "empty"
+    },
+    {
+      "name": "english-light-1024-loading",
+      "locale": "en-US",
+      "colorScheme": "light",
+      "width": 1024,
+      "state": "loading"
+    },
+    {
+      "name": "english-light-1024-reduced-motion",
+      "locale": "en-US",
+      "colorScheme": "light",
+      "width": 1024,
+      "reducedMotion": "reduce",
+      "state": "partial"
+    }
+  ]
+}

@@ -1,0 +1,21 @@
+{
+  "name": "@utsu-ri/discovery",
+  "version": "0.1.0",
+  "private": true,
+  "license": "AGPL-3.0-or-later",
+  "type": "module",
+  "dependencies": {
+    "@utsu-ri/adapter-generic": "workspace:*",
+    "@utsu-ri/adapter-playwright": "workspace:*",
+    "@utsu-ri/adapter-route-manifest": "workspace:*",
+    "@utsu-ri/adapter-storybook": "workspace:*",
+    "@utsu-ri/capture": "workspace:*",
+    "@utsu-ri/core": "workspace:*",
+    "@utsu-ri/report-model": "workspace:*",
+    "@utsu-ri/security": "workspace:*",
+    "yaml": "2.8.1"
+  },
+  "exports": {
+    ".": "./src/index.ts"
+  }
+}

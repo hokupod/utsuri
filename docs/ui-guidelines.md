@@ -1,7 +1,7 @@
 # Utsuri report UI guidelines
 
-- **Status**: Phase 1 implemented baseline
-- **Scope**: static code-only report UI
+- **Status**: Phase 3 implemented baseline
+- **Scope**: static code, visual, structural, runtime, and coverage report UI
 - **Reference date**: 2026-08-07
 - **Normative accessibility baseline**: WCAG 2.2 Level AA
 
@@ -12,7 +12,8 @@ The report uses a **diff ledger** direction: editorial hierarchy, compact eviden
 The primary path is fixed:
 
 ```text
-decision summary → review queue → focused change → evidence → structured diff
+decision summary → review queue → focused change → Agent interpretation
+→ measured evidence → finding / changed region → structured diff
 ```
 
 At every depth, a reviewer can return to the prior focus target. The report does not use an external font, Apple artwork, or a platform-specific asset.
@@ -24,7 +25,7 @@ At every depth, a reviewer can return to the prior focus target. The report does
 | 1     | Overall status and decision statement | Appears before counts; `UNCOVERED` and verification gaps remain visible.                                                                  |
 | 2     | Three-state review queue              | Uses `Action required`, `Needs confirmation`, and `No issue found`; rows show at most risk and gap badges in addition to the queue state. |
 | 3     | Focused Semantic Change               | Shows one change at a time in the fixed explanation order.                                                                                |
-| 4     | Evidence and code diff                | Shows three evidence records before progressive disclosure; diff text comes only from structured line data.                               |
+| 4     | Measured evidence and findings        | Separates deterministic visual/structural/runtime evidence from Agent interpretation and exposes coverage gaps before code detail.        |
 | 5     | Context and inventory                 | Uses native disclosure controls for hidden context, remaining evidence, and the complete file inventory.                                  |
 
 ## 3. Semantic design tokens
@@ -50,27 +51,28 @@ Apple HIG is design guidance, not the web conformance standard. WCAG 2.2 AA and 
 | Typography                    | [HIG typography](https://developer.apple.com/design/human-interface-guidelines/typography)                    | Adapt        | A system font stack preserves platform legibility; type scale and weight express hierarchy. Native point-size minima are not copied mechanically because browser CSS units differ. | English/Japanese screenshots and 200% reflow review.                         |
 | Accessibility                 | [HIG accessibility](https://developer.apple.com/design/human-interface-guidelines/accessibility/)             | Adopt        | Semantic landmarks, native controls, labels, text-plus-color state, reduced-motion support, and zoom-safe layout.                                                                  | Keyboard E2E, locale/theme matrix, and WCAG checks below.                    |
 | Focus and selection           | [HIG focus and selection](https://developer.apple.com/design/human-interface-guidelines/focus-and-selection/) | Adopt        | Focus uses a visible ring; queue selection uses a separate leading marker; deep links restore focus to the hunk or change.                                                         | `queue → change → hunk → change → queue` focus record.                       |
-| Keyboard conventions          | [HIG keyboards](https://developer.apple.com/design/human-interface-guidelines/keyboards)                      | Adopt        | Links, buttons, search, and disclosure widgets retain native keyboard behavior. No custom shortcut is required for the primary path.                                               | Keyboard-only E2E with Enter and Tab-compatible controls.                    |
+| Keyboard conventions          | [HIG keyboards](https://developer.apple.com/design/human-interface-guidelines/keyboards)                      | Adopt        | Links, buttons, search, and disclosure widgets retain native keyboard behavior. Optional `1`–`5`, `j`/`k`, `n`/`p`, `e`, and `/` shortcuts mirror labeled actions.                 | Keyboard-only E2E with native controls and documented shortcuts.             |
 | Dark appearance               | [HIG Dark Mode](https://developer.apple.com/design/human-interface-guidelines/dark-mode)                      | Adopt        | Light and dark values are semantic variants, not direct color inversion.                                                                                                           | Japanese dark-mode screenshot and state-label assertions.                    |
 | Color                         | [HIG color](https://developer.apple.com/design/human-interface-guidelines/color)                              | Adopt        | Queue and risk colors always include text, border, or line-sign cues.                                                                                                              | DOM assertions and manual screenshot review.                                 |
-| Lists                         | [HIG lists and tables](https://developer.apple.com/design/human-interface-guidelines/lists-and-tables)        | Adapt        | The queue uses a stable list hierarchy; code diff uses table roles only for line-grid semantics.                                                                                   | Screen-reader role inspection in E2E.                                        |
+| Lists                         | [HIG lists and tables](https://developer.apple.com/design/human-interface-guidelines/lists-and-tables)        | Adapt        | The queue uses a stable list hierarchy; code diff is a labeled region containing grouped text lines so it does not claim incomplete grid semantics.                                | Screen-reader role inspection and axe E2E.                                   |
 | Liquid Glass and Apple assets | [HIG materials](https://developer.apple.com/design/human-interface-guidelines/materials)                      | Do not adopt | The portable static report avoids Apple-only material and artwork. A restrained local surface system keeps evidence primary and works offline.                                     | Release layout contains no font, remote image, or Apple asset.               |
 
 ## 5. WCAG 2.2 mapping
 
-| Criterion                           | Requirement                                                  | Phase 1 evidence                                                                                                                                 |
+| Criterion                           | Requirement                                                  | Phase 3 evidence                                                                                                                                 |
 | ----------------------------------- | ------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------ |
 | 1.3.1 Info and Relationships        | Structure is programmatic, not visual-only.                  | `header`, `nav`, `main`, ordered lists, headings, definition list, articles, and labeled sections.                                               |
-| 1.4.3 Contrast (Minimum)            | Normal text reaches 4.5:1; large text reaches 3:1.           | Semantic light/dark palettes are reviewed before the documentation gate; automated contrast coverage is added in Phase 3.                        |
+| 1.4.3 Contrast (Minimum)            | Normal text reaches 4.5:1; large text reaches 3:1.           | Semantic light/dark palettes plus axe checks; current Phase 3 report fixture has no serious or critical automated violations.                    |
 | 1.4.4 Resize Text                   | 200% text sizing loses no content or function.               | 512 CSS px with device scale factor 2 exercises the 1024 physical-pixel equivalent without page-level overflow.                                  |
 | 1.4.10 Reflow                       | Ordinary content does not require two-dimensional scrolling. | Layout becomes one column below 760 CSS px; only the code-diff region may scroll horizontally because two-dimensional alignment carries meaning. |
 | 1.4.11 Non-text Contrast            | Focus and state boundaries remain perceivable.               | Three-pixel focus outline, borders, line signs, and queue labels.                                                                                |
 | 2.1.1 Keyboard                      | Every primary action works from a keyboard.                  | Queue, change, hunk, context, mode, evidence, and return controls use native interactive elements.                                               |
+| 2.2.2 Pause, Stop, Hide             | Moving information can be stopped.                           | Blink starts only after an explicit mode selection, its control becomes `Stop blink`, and reduced motion disables the mode and shortcut.         |
 | 2.4.3 Focus Order                   | Focus follows the task sequence.                             | Automated focus record covers the complete primary path.                                                                                         |
 | 2.4.7 Focus Visible                 | Keyboard focus is visible.                                   | Global `:focus-visible` token and active-hunk ring.                                                                                              |
 | 2.4.11 Focus Not Obscured (Minimum) | Sticky content does not fully hide focus.                    | Focus targets scroll into view and the fixed header height is accounted for by the page layout.                                                  |
 | 2.5.8 Target Size (Minimum)         | Small targets have sufficient size or spacing.               | Header anchor buttons have a 32 CSS px minimum; text links and compact controls retain surrounding spacing.                                      |
-| 4.1.2 Name, Role, Value             | Custom state is exposed.                                     | `aria-current`, `aria-pressed`, labeled navigation, labeled diff table, and native disclosure state.                                             |
+| 4.1.2 Name, Role, Value             | Custom state is exposed.                                     | `aria-current`, `aria-pressed`, labeled navigation/groups/regions, descriptive images, and native disclosure state.                              |
 
 WCAG reference: [Web Content Accessibility Guidelines (WCAG) 2.2](https://www.w3.org/TR/WCAG22/).
 
@@ -106,4 +108,42 @@ WCAG reference: [Web Content Accessibility Guidelines (WCAG) 2.2](https://www.w3
 - [x] **Untrusted code text**: diff content is rendered as text under the static CSP.
 - [x] **External dependency**: no remote font, Apple-specific asset, or runtime network call is required.
 
-There are no unresolved Phase 1 Must items in this checklist. Human review remains required before the Phase 1 documentation gate can pass.
+There are no unresolved Phase 1 Must items in this checklist; its documentation/UI review gate has passed.
+
+## 9. Phase 3 visual evidence rules
+
+1. Keep **Agent interpretation** and **Measured evidence** as separate labeled sections.
+2. Default to side-by-side before/after images. Wipe, blink, pixel diff, and after-only are peer controls with visible text labels.
+3. Preserve both full-page and component-crop evidence. The selector states the current scope.
+4. Synchronize side-by-side scroll positions by normalized scroll range and apply one shared zoom value.
+5. Identify changed regions by ordinal, pixel count, position, and size; markers and borders supplement rather than replace text.
+6. Cross-link hunk → visual evidence and finding → linked hunk while restoring keyboard focus at the destination.
+7. Keep `INCOMPLETE` and `UNCOVERED` visible in the header and affected evidence surface. Never rely on a disappearing toast.
+8. A pixel-only difference remains informational and does not use blocker styling.
+9. Blink is off by default, stoppable, and unavailable under `prefers-reduced-motion: reduce`, including its numeric shortcut.
+10. Long paths and finding titles use safe wrapping; only the inherently two-dimensional diff and image panes may scroll horizontally.
+
+## 10. Phase 3 verification matrix
+
+| Evidence       | Condition                                            | Expected result                                                                                  | Location                                                       |
+| -------------- | ---------------------------------------------------- | ------------------------------------------------------------------------------------------------ | -------------------------------------------------------------- |
+| Comparison E2E | Modes, region, finding, evidence, and hunk shortcuts | Every destination is keyboard reachable and restores focus.                                      | `tests/e2e/comparison.spec.ts`                                 |
+| Coverage E2E   | known 12 / verified 7 / unknown true                 | Counts stay separate and no single coverage percentage is shown.                                 | `tests/e2e/global-token-change.spec.ts`                        |
+| Visual fixture | English light, Japanese dark, partial failure        | Status, hierarchy, mode controls, and measured evidence remain distinguishable.                  | `.artifacts/phase-3-ui/*-partial.png`                          |
+| Visual fixture | Long path and 24 findings                            | Titles wrap without page overflow; dense evidence preserves the primary path.                    | `.artifacts/phase-3-ui/english-light-1440-long-dense.png`      |
+| Visual fixture | Empty and loading                                    | Stable status/fallback surfaces appear without unintended layout shift.                          | `.artifacts/phase-3-ui/english-light-1024-{empty,loading}.png` |
+| Visual fixture | 512 CSS px at device scale 2                         | 200% reflow proxy keeps all ordinary controls and content available.                             | `.artifacts/phase-3-ui/english-light-1024-zoom-200.png`        |
+| Reduced motion | Browser preference is `reduce`                       | Blink button is disabled and shortcut `4` leaves side-by-side active.                            | `.artifacts/phase-3-ui/english-light-1024-reduced-motion.png`  |
+| Accessibility  | WCAG 2.2 A/AA tags through axe                       | No serious or critical automated violation; manual keyboard/focus/reflow checks remain required. | `tests/a11y/report-a11y.spec.ts`                               |
+
+## 11. Phase 3 Must checklist
+
+- [x] **Evidence separation**: Agent claims do not overwrite deterministic counts, hashes, status, comparison, or coverage.
+- [x] **Mode consistency**: all five visual modes use the same labeled control group and image scope.
+- [x] **Multiple perception channels**: mode, region, severity, finding state, and coverage never depend on color or motion alone.
+- [x] **Failure persistence**: incomplete and uncovered scope remains on the judgment surface.
+- [x] **Cross-linking**: code, visual evidence, findings, and changed regions preserve a keyboard path.
+- [x] **Responsive evidence**: light/dark, Japanese/English, long/dense, empty/loading/partial, reduced-motion, and 200% proxy fixtures have no page-level overflow.
+- [x] **Automated accessibility**: the Phase 3 fixture has zero serious or critical axe violations.
+
+There are no unresolved Phase 3 Must items in this checklist. Human review remains required before the Phase 3 documentation/UI guideline gate can pass.

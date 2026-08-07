@@ -1,0 +1,10 @@
+{
+  "usages": [
+    {
+      "changedPath": "src/tokens.css",
+      "targetId": "palette",
+      "token": "--brand-accent",
+      "count": 7
+    }
+  ]
+}

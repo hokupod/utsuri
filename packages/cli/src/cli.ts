@@ -1,7 +1,9 @@
 import { readFile } from "node:fs/promises";
 import path from "node:path";
 import { captureCapabilities, captureRun, loadCaptureConfig } from "@utsu-ri/capture";
+import { compareRun } from "@utsu-ri/compare";
 import { ExitCode, toUtsuriError, UtsuriError } from "@utsu-ri/core";
+import { discoverRun } from "@utsu-ri/discovery";
 import { collectGit } from "@utsu-ri/git-collector";
 import { buildReport, createInitialReport, validateReportDirectory } from "@utsu-ri/report-builder";
 import { assertArtifact } from "@utsu-ri/report-model";
@@ -29,6 +31,8 @@ Commands:
   collect                Collect a Git diff into a review run
   capture                Capture configured before/after browser evidence
                          Worktree mode also requires --allow-project-code
+  discover               Map code changes to captured targets and coverage
+  compare                Compare captured visual, structural, and runtime evidence
   finalize --run <path>  Build an immutable report
   validate <report>      Validate report schema, CSP, assets, and hashes
 
@@ -132,7 +136,10 @@ export async function executeCli(
         assertArtifact("annotations", annotations);
       }
       const report = await createInitialReport(runDirectory, annotations);
-      const built = await buildReport(runDirectory, report, { toolVersion: "0.1.0" });
+      const built = await buildReport(runDirectory, report, {
+        toolVersion: "0.1.0",
+        annotations
+      });
       const relative = path.relative(cwd, built.reportDirectory).replaceAll(path.sep, "/");
       const data = {
         ok: true,
@@ -181,6 +188,64 @@ export async function executeCli(
         exitCode: captured.complete ? ExitCode.Success : ExitCode.Incomplete,
         data,
         human: captured.complete ? "Browser capture completed" : "Browser capture is incomplete",
+        json
+      };
+    }
+
+    if (args.command === "discover") {
+      const runValue = optionString(args, "--run");
+      const configValue = optionString(args, "--config");
+      if (!runValue || !configValue) {
+        throw new UtsuriError(
+          "CLI_DISCOVERY_INPUT_REQUIRED",
+          "discover requires --run and --config",
+          ExitCode.Arguments
+        );
+      }
+      const runDirectory = await resolveContainedPath(cwd, runValue);
+      const discovered = await discoverRun(cwd, runDirectory, configValue);
+      const data = {
+        ok: true,
+        command: "discover",
+        discoveryHash: discovered.manifest.discoveryHash,
+        candidates: discovered.manifest.candidates.length,
+        unmappedChanges: discovered.manifest.unmappedChangeRefs.length,
+        coverage: discovered.manifest.coverage,
+        manifest: path.relative(cwd, discovered.manifestPath).replaceAll(path.sep, "/")
+      };
+      return { exitCode: ExitCode.Success, data, human: "Visual target discovery completed", json };
+    }
+
+    if (args.command === "compare") {
+      const runValue = optionString(args, "--run");
+      if (!runValue) {
+        throw new UtsuriError(
+          "CLI_COMPARE_INPUT_REQUIRED",
+          "compare requires --run",
+          ExitCode.Arguments
+        );
+      }
+      const runDirectory = await resolveContainedPath(cwd, runValue);
+      const compared = await compareRun(runDirectory);
+      const findings = compared.manifest.targets.flatMap((target) => target.findings);
+      const data = {
+        ok: compared.complete,
+        command: "compare",
+        comparisonHash: compared.manifest.comparisonHash,
+        targets: compared.manifest.targets.length,
+        incompleteTargets: compared.manifest.targets.filter(
+          (target) => target.status === "incomplete"
+        ).length,
+        newFindings: findings.filter((finding) => finding.state === "new").length,
+        resolvedFindings: findings.filter((finding) => finding.state === "resolved").length,
+        manifest: path.relative(cwd, compared.manifestPath).replaceAll(path.sep, "/")
+      };
+      return {
+        exitCode: compared.complete ? ExitCode.Success : ExitCode.Incomplete,
+        data,
+        human: compared.complete
+          ? "Evidence comparison completed"
+          : "Evidence comparison is incomplete",
         json
       };
     }

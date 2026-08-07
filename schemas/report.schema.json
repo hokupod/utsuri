@@ -15,6 +15,7 @@
     "unclassifiedHunkRefs",
     "changes",
     "targets",
+    "comparisons",
     "findings",
     "coverage",
     "origin",
@@ -41,6 +42,7 @@
     "unclassifiedHunkRefs": { "type": "array", "items": { "type": "string" }, "uniqueItems": true },
     "changes": { "type": "array", "items": { "$ref": "#/$defs/change" } },
     "targets": { "type": "array", "items": { "$ref": "#/$defs/target" } },
+    "comparisons": { "type": "array", "items": { "$ref": "#/$defs/comparison" } },
     "findings": { "type": "array", "items": { "$ref": "#/$defs/finding" } },
     "coverage": {
       "type": "object",
@@ -178,7 +180,21 @@
       "required": ["id", "type", "path", "range", "summary", "hunkRefs"],
       "properties": {
         "id": { "type": "string", "pattern": "^evidence:" },
-        "type": { "enum": ["code", "test", "style", "configuration", "generated", "binary"] },
+        "type": {
+          "enum": [
+            "code",
+            "test",
+            "style",
+            "configuration",
+            "generated",
+            "binary",
+            "visual",
+            "dom",
+            "aria",
+            "a11y",
+            "runtime"
+          ]
+        },
         "path": { "type": "string", "minLength": 1 },
         "range": {
           "oneOf": [
@@ -278,6 +294,7 @@
         "axeRef": { "type": "string" },
         "consoleRef": { "type": "string" },
         "networkRef": { "type": "string" },
+        "metadataRef": { "type": "string" },
         "failure": {
           "type": "object",
           "additionalProperties": false,
@@ -323,7 +340,91 @@
         },
         "before": { "$ref": "#/$defs/captureResult" },
         "after": { "$ref": "#/$defs/captureResult" },
-        "comparisonRef": { "type": "string" }
+        "comparisonRef": { "type": "string", "pattern": "^comparison:" }
+      }
+    },
+    "comparison": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "targetRef", "status", "images", "structural", "incompleteReasons"],
+      "properties": {
+        "id": { "type": "string", "pattern": "^comparison:" },
+        "targetRef": { "type": "string", "pattern": "^target:" },
+        "status": { "enum": ["compared", "incomplete"] },
+        "images": { "type": "array", "items": { "$ref": "#/$defs/imageComparison" } },
+        "structural": {
+          "oneOf": [
+            { "type": "null" },
+            {
+              "type": "object",
+              "additionalProperties": false,
+              "required": ["dom", "aria", "style"],
+              "properties": {
+                "dom": { "$ref": "#/$defs/structuralFingerprint" },
+                "aria": { "$ref": "#/$defs/structuralFingerprint" },
+                "style": { "$ref": "#/$defs/structuralFingerprint" }
+              }
+            }
+          ]
+        },
+        "incompleteReasons": {
+          "type": "array",
+          "items": { "type": "string" },
+          "uniqueItems": true
+        }
+      }
+    },
+    "structuralFingerprint": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["beforeHash", "afterHash", "changed"],
+      "properties": {
+        "beforeHash": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
+        "afterHash": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
+        "changed": { "type": "boolean" }
+      }
+    },
+    "imageComparison": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "kind",
+        "label",
+        "beforeRef",
+        "afterRef",
+        "diffRef",
+        "width",
+        "height",
+        "diffPixelCount",
+        "diffRatio",
+        "regions"
+      ],
+      "properties": {
+        "id": { "type": "string", "pattern": "^image-comparison:" },
+        "kind": { "enum": ["full-page", "crop", "viewport"] },
+        "label": { "type": "string", "minLength": 1 },
+        "beforeRef": { "type": "string", "pattern": "^capture/" },
+        "afterRef": { "type": "string", "pattern": "^capture/" },
+        "diffRef": { "type": "string", "pattern": "^comparison/" },
+        "width": { "type": "integer", "minimum": 1 },
+        "height": { "type": "integer", "minimum": 1 },
+        "diffPixelCount": { "type": "integer", "minimum": 0 },
+        "diffRatio": { "type": "number", "minimum": 0, "maximum": 1 },
+        "regions": { "type": "array", "items": { "$ref": "#/$defs/changedRegion" } }
+      }
+    },
+    "changedRegion": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "x", "y", "width", "height", "pixels"],
+      "properties": {
+        "id": { "type": "string", "pattern": "^region:" },
+        "x": { "type": "integer", "minimum": 0 },
+        "y": { "type": "integer", "minimum": 0 },
+        "width": { "type": "integer", "minimum": 1 },
+        "height": { "type": "integer", "minimum": 1 },
+        "pixels": { "type": "integer", "minimum": 1 }
       }
     },
     "finding": {
@@ -347,6 +448,7 @@
             "layout",
             "dom",
             "aria",
+            "style",
             "a11y",
             "console",
             "page-error",

@@ -110,11 +110,14 @@ export function assertArtifact(name: SchemaName, value: unknown): void {
 }
 
 export function validateReportReferences(report: UtsuriReport): ArtifactValidationResult {
+  const schema = validateArtifact("report", report);
+  if (!schema.ok) return schema;
   const errors: string[] = [];
   const hunkIds = new Set(report.hunks.map((hunk) => hunk.id));
   const hunksById = new Map(report.hunks.map((hunk) => [hunk.id, hunk]));
   const evidenceIds = new Set(report.evidence.map((evidence) => evidence.id));
   const targetIds = new Set(report.targets.map((target) => target.id));
+  const comparisonIds = new Set(report.comparisons.map((comparison) => comparison.id));
   const findingIds = new Set(report.findings.map((finding) => finding.id));
   const assigned = new Map<string, string>();
   errors.push(...validateStructuredHunks(report.hunks));
@@ -141,6 +144,10 @@ export function validateReportReferences(report: UtsuriReport): ArtifactValidati
   requireUniqueIds(
     "targets",
     report.targets.map((target) => target.id)
+  );
+  requireUniqueIds(
+    "comparisons",
+    report.comparisons.map((comparison) => comparison.id)
   );
   requireUniqueIds(
     "findings",
@@ -207,6 +214,28 @@ export function validateReportReferences(report: UtsuriReport): ArtifactValidati
     unique(`${evidence.id}.hunkRefs`, evidence.hunkRefs);
     for (const ref of evidence.hunkRefs) {
       if (!hunkIds.has(ref)) errors.push(`${evidence.id} references missing hunk ${ref}`);
+    }
+  }
+
+  const comparedTargets = new Set<string>();
+  for (const comparison of report.comparisons) {
+    if (!targetIds.has(comparison.targetRef)) {
+      errors.push(`${comparison.id} references missing target ${comparison.targetRef}`);
+    }
+    if (comparedTargets.has(comparison.targetRef)) {
+      errors.push(`${comparison.targetRef} has more than one comparison`);
+    }
+    comparedTargets.add(comparison.targetRef);
+  }
+  for (const target of report.targets) {
+    if (target.comparisonRef && !comparisonIds.has(target.comparisonRef)) {
+      errors.push(`${target.id} references missing comparison ${target.comparisonRef}`);
+    }
+    if (target.comparisonRef) {
+      const comparison = report.comparisons.find((entry) => entry.id === target.comparisonRef);
+      if (comparison?.targetRef !== target.id) {
+        errors.push(`${target.id} comparison does not point back to the target`);
+      }
     }
   }
 

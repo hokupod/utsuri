@@ -83,6 +83,23 @@ export interface UtsuriConfig {
     includeComputedStyles?: "changed-and-layout" | "layout";
     includeAxe?: boolean;
   };
+  discovery?: {
+    knownUsages?: number | null;
+    unknownPossible?: boolean;
+    mappings?: {
+      targetId: string;
+      changedPaths?: string[];
+      reason: string;
+      knownUsageCount?: number;
+    }[];
+    sources?: {
+      storybookIndex?: string;
+      playwrightManifest?: string;
+      routeManifest?: string;
+      importGraph?: string;
+      selectorUsage?: string;
+    };
+  };
   report: {
     outputDirectory: string;
     language?: string;

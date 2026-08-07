@@ -163,6 +163,43 @@
         "includeAxe": { "type": "boolean" }
       }
     },
+    "discovery": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "knownUsages": { "type": ["integer", "null"], "minimum": 0 },
+        "unknownPossible": { "type": "boolean" },
+        "mappings": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["targetId", "reason"],
+            "properties": {
+              "targetId": { "type": "string", "pattern": "^[a-z0-9][a-z0-9-]*$" },
+              "changedPaths": {
+                "type": "array",
+                "items": { "type": "string", "minLength": 1 },
+                "uniqueItems": true
+              },
+              "reason": { "type": "string", "minLength": 1 },
+              "knownUsageCount": { "type": "integer", "minimum": 0 }
+            }
+          }
+        },
+        "sources": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "storybookIndex": { "type": "string", "minLength": 1 },
+            "playwrightManifest": { "type": "string", "minLength": 1 },
+            "routeManifest": { "type": "string", "minLength": 1 },
+            "importGraph": { "type": "string", "minLength": 1 },
+            "selectorUsage": { "type": "string", "minLength": 1 }
+          }
+        }
+      }
+    },
     "report": {
       "type": "object",
       "additionalProperties": false,

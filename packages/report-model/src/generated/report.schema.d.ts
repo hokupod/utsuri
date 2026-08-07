@@ -16,6 +16,7 @@ export interface UtsuriReport {
   unclassifiedHunkRefs: string[];
   changes: Change[];
   targets: Target[];
+  comparisons: Comparison[];
   findings: Finding[];
   coverage: {
     knownUsages: number | null;
@@ -69,7 +70,18 @@ export interface Line {
 }
 export interface Evidence {
   id: string;
-  type: "code" | "test" | "style" | "configuration" | "generated" | "binary";
+  type:
+    | "code"
+    | "test"
+    | "style"
+    | "configuration"
+    | "generated"
+    | "binary"
+    | "visual"
+    | "dom"
+    | "aria"
+    | "a11y"
+    | "runtime";
   path: string;
   range: null | {
     start: number;
@@ -129,16 +141,65 @@ export interface CaptureResult {
   axeRef?: string;
   consoleRef?: string;
   networkRef?: string;
+  metadataRef?: string;
   failure?: {
     code: string;
     message: string;
     stage: string;
   };
 }
+export interface Comparison {
+  id: string;
+  targetRef: string;
+  status: "compared" | "incomplete";
+  images: ImageComparison[];
+  structural: null | {
+    dom: StructuralFingerprint;
+    aria: StructuralFingerprint;
+    style: StructuralFingerprint;
+  };
+  incompleteReasons: string[];
+}
+export interface ImageComparison {
+  id: string;
+  kind: "full-page" | "crop" | "viewport";
+  label: string;
+  beforeRef: string;
+  afterRef: string;
+  diffRef: string;
+  width: number;
+  height: number;
+  diffPixelCount: number;
+  diffRatio: number;
+  regions: ChangedRegion[];
+}
+export interface ChangedRegion {
+  id: string;
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+  pixels: number;
+}
+export interface StructuralFingerprint {
+  beforeHash: string;
+  afterHash: string;
+  changed: boolean;
+}
 export interface Finding {
   id: string;
   category:
-    "visual" | "layout" | "dom" | "aria" | "a11y" | "console" | "page-error" | "network" | "coverage" | "security";
+    | "visual"
+    | "layout"
+    | "dom"
+    | "aria"
+    | "style"
+    | "a11y"
+    | "console"
+    | "page-error"
+    | "network"
+    | "coverage"
+    | "security";
   state: "new" | "resolved" | "unchanged" | "incomplete";
   severity: "critical" | "high" | "medium" | "low" | "info";
   title: string;

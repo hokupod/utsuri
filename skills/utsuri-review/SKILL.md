@@ -23,10 +23,11 @@ Do not invoke Utsuri for a one-line explanation, a repository with no reviewable
 1. Run `doctor --json` and resolve blocking diagnostics without mutating the project.
 2. Collect the requested Git input into a new run directory.
 3. Validate any agent-authored annotations before finalizing.
-4. Capture and compare only when the user requested visual evidence and the configuration explicitly authorizes the required runtime.
-5. Finalize and strictly validate the report.
-6. Present the report path, verified coverage, failures, and gaps.
-7. When feedback exists, use `feedback pull` and return the produced context pack to the bound origin session.
+4. Capture only when the user requested visual evidence and the configuration explicitly authorizes the required runtime.
+5. Run `discover` to preserve mapped targets, unmapped changes, and structured coverage, then run `compare` to classify measured visual, structural, accessibility, runtime, network, and overflow evidence.
+6. Finalize and strictly validate the report. Preserve exit code 4 evidence as `INCOMPLETE`; never infer a pass from missing comparison data.
+7. Present the report path, verified coverage, failures, and gaps.
+8. When feedback exists, use `feedback pull` and return the produced context pack to the bound origin session.
 
 Invoke the bundled CLI with:
 

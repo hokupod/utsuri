@@ -1,0 +1,17 @@
+{
+  "name": "@utsu-ri/compare",
+  "version": "0.1.0",
+  "private": true,
+  "license": "AGPL-3.0-or-later",
+  "type": "module",
+  "dependencies": {
+    "@utsu-ri/capture": "workspace:*",
+    "@utsu-ri/core": "workspace:*",
+    "@utsu-ri/security": "workspace:*",
+    "pixelmatch": "7.1.0",
+    "pngjs": "7.0.0"
+  },
+  "exports": {
+    ".": "./src/index.ts"
+  }
+}
