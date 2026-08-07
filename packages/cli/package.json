@@ -1,6 +1,7 @@
 {
   "name": "@utsu-ri/cli",
   "version": "0.1.0",
+  "private": true,
   "description": "Evidence-backed visual change review for Codex and Claude Code",
   "license": "AGPL-3.0-or-later",
   "author": {
@@ -29,5 +30,18 @@
   "publishConfig": {
     "access": "public"
   },
-  "dependencies": {}
+  "dependencies": {
+    "@utsu-ri/capture": "workspace:*",
+    "@utsu-ri/compare": "workspace:*",
+    "@utsu-ri/core": "workspace:*",
+    "@utsu-ri/discovery": "workspace:*",
+    "@utsu-ri/git-collector": "workspace:*",
+    "@utsu-ri/interactive-server": "workspace:*",
+    "@utsu-ri/report-builder": "workspace:*",
+    "@utsu-ri/report-model": "workspace:*",
+    "@utsu-ri/review-state": "workspace:*",
+    "@utsu-ri/security": "workspace:*",
+    "fflate": "0.8.2",
+    "yaml": "2.8.1"
+  }
 }

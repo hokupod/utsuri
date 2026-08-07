@@ -1,9 +1,7 @@
 import { spawn } from "node:child_process";
-import { constants } from "node:fs";
-import { access, lstat, type FileHandle } from "node:fs/promises";
-import path from "node:path";
-import { fileURLToPath } from "node:url";
+import { type FileHandle } from "node:fs/promises";
 import { ExitCode, UtsuriError } from "@utsu-ri/core";
+import { resolveNativeHelper as resolveDistributedNativeHelper } from "@utsu-ri/security";
 
 export interface FileIdentity {
   dev: number | bigint;
@@ -18,22 +16,8 @@ const helperExit = {
 
 async function resolveNativeHelper(): Promise<string> {
   const target = `${process.platform}-${process.arch}`;
-  const moduleDirectory = path.dirname(fileURLToPath(import.meta.url));
-  const candidates = [
-    path.join(moduleDirectory, "native", target, "utsuri-fs-ops"),
-    path.resolve(moduleDirectory, "../../..", ".artifacts/native", target, "utsuri-fs-ops")
-  ];
-
-  for (const candidate of candidates) {
-    try {
-      const candidateStat = await lstat(candidate);
-      if (!candidateStat.isFile() || candidateStat.isSymbolicLink()) continue;
-      await access(candidate, constants.X_OK);
-      return candidate;
-    } catch (error) {
-      if ((error as NodeJS.ErrnoException).code !== "ENOENT") throw error;
-    }
-  }
+  const helper = await resolveDistributedNativeHelper();
+  if (helper) return helper;
 
   throw new UtsuriError(
     "REPORT_ATOMIC_PUBLISH_UNAVAILABLE",

@@ -2,7 +2,7 @@
 
 ## Prerequisites
 
-- Use an existing system Chrome or Chromium. Utsuri never downloads a browser.
+- Prefer an installed version-matched Playwright browser or headless Chromium. A normal macOS Chrome application is used only when the user explicitly authorizes its absolute executable with `UTSURI_BROWSER_EXECUTABLE`. Utsuri never downloads a browser.
 - Create the run with `collect`, then pass that run and a validated configuration to `capture`.
 - Use `init` only to produce a non-overwriting proposal. `proposedCommands` are never executed.
 

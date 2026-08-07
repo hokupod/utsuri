@@ -2,8 +2,8 @@ import { randomUUID } from "node:crypto";
 import { constants } from "node:fs";
 import { access, lstat, mkdir, readFile, realpath, rmdir, writeFile } from "node:fs/promises";
 import path from "node:path";
-import { fileURLToPath } from "node:url";
 import { ExitCode, UtsuriError } from "@utsu-ri/core";
+import { resolveNativeHelper as resolveDistributedNativeHelper } from "@utsu-ri/security";
 
 export interface BrowserMemoryBoundary {
   supported: true;
@@ -38,22 +38,7 @@ function currentUnifiedCgroup(value: string): string | null {
 }
 
 async function resolveNativeHelper(): Promise<string | null> {
-  const moduleDirectory = path.dirname(fileURLToPath(import.meta.url));
-  const target = `${process.platform}-${process.arch}`;
-  for (const candidate of [
-    path.resolve(moduleDirectory, "native", target, "utsuri-fs-ops"),
-    path.resolve(moduleDirectory, "../../../..", ".artifacts/native", target, "utsuri-fs-ops")
-  ]) {
-    try {
-      const candidateStat = await lstat(candidate);
-      if (!candidateStat.isFile() || candidateStat.isSymbolicLink()) continue;
-      await access(candidate, constants.X_OK);
-      return candidate;
-    } catch {
-      // Try the installed-package or source-checkout location next.
-    }
-  }
-  return null;
+  return resolveDistributedNativeHelper();
 }
 
 async function writeOptionalControl(filename: string, value: string): Promise<void> {

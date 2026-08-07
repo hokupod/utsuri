@@ -1,0 +1,15 @@
+{
+  "schemaVersion": "1.0",
+  "id": "event:0000000000000001",
+  "reportId": "report-0000000000000001",
+  "sequence": 1,
+  "type": "viewed.changed",
+  "createdAt": "2026-08-07T00:00:00.000Z",
+  "anchor": {
+    "type": "hunk",
+    "ref": "hunk:src/app.ts:1:1:00000000",
+    "path": "src/app.ts",
+    "fingerprint": "0000000000000000"
+  },
+  "viewState": "viewed"
+}

@@ -4,17 +4,19 @@
   "toolVersion": "0.1.0",
   "generatedAt": "1970-01-01T00:00:00.000Z",
   "sourceSnapshotHash": "e2189445cb8fc2656021aa9de819b3169c487818f5cabec8ccd730606c7610f5",
-  "semanticHash": "a35cc5303e4b37f4b13ee95748f2ee4f84749d78ea34fba7ae4cecdbfe81838b",
+  "semanticHash": "84d6bcc6eb152713bff8df731d0ba11ba0c15999b124a5decab9216e9de51c2e",
   "assetHashes": {
-    "assets/app.css": "ca847a6d252b3a0676e9efa616fb5a84fc621d83d52b738d7c36b872b7042cc0",
-    "assets/app.js": "5b892f1754135a1cbba34dd28e6b0183dc82f046387d0ff584fb24f6ebd24e3a",
+    "assets/app.css": "616b21ef7e009dc12f1bdb17fe9e0094c4247311e3a226adf1cd4e5a1cf4a27a",
+    "assets/app.js": "fac600d623f076d6d7a7953dd78200bcc27ba8cafb87881ac14d7c43394019e5",
     "context-pack.schema.json": "15a91a1f02f8bec3037bf869229f16de321e435948db6c56fa91145ee32a66d0",
     "diagnostics/summary.json": "432769f2ed6b55431c399eec2e7b9f1160b945ca7cc51b904b82e0923b9c28f2",
     "index.html": "b4b5c78a76efd9e58b0371d04ca75874a79e09db8cef0ddf1b34bed80a807757",
     "report.json": "81a3dd335b8de58f04c9dc0f956ce7c3202f047f0e5ac0a5950597589291b976",
     "review-answer.schema.json": "b26c42404e30f1974262dd467084284b2e41821ff948e97f8819d385b403fb3b",
+    "review-bundle.schema.json": "9f695ba90a8c7bc83e8a5848b4cd07944391b648f3d78b657547f9d271f26a0f",
+    "review-event.schema.json": "2337266edb16da0c9bdc0c5eb35d460c5df2f9f8d4b16fd008b2ec2f946078aa",
     "review-state.schema.json": "dfa63ae91dc03ee8eeedce780894c510d36632c5ce8c6e8c4fcb731d2f7a5589",
-    "review-thread.schema.json": "2f835797fd08a91d3d65de7943e6fa4f1eeb3a2afdc96ec7c4f675812b779ba2"
+    "review-thread.schema.json": "e114611db04522812b5d961def35ecc05760923ec0e26e794eefe30239b24200"
   },
   "privacy": {
     "includesAbsolutePaths": false,

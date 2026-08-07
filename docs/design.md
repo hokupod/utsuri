@@ -6,7 +6,7 @@
 - **Plugin name**: `utsuri`
 - **Skill name**: `utsuri-review`
 - **CLI name**: `utsuri`
-- **Document version**: 2.2
+- **Document version**: 2.4
 - **Created**: 2026-08-06
 - **Last updated**: 2026-08-07
 - **Language**: English (canonical)
@@ -14,7 +14,7 @@
 - **Implementation language**: TypeScript
 - **Development environment**: Bun
 - **Report UI**: a static application built with Svelte
-- **v2.2 changes**: implemented Phase 4 report/runtime/supply-chain hardening with separate static and interactive CSPs, bounded untrusted-data parsing, validated PNG-only report images, immutable-ID container transport, fail-closed Linux cgroup v2 browser memory isolation, independent bundle rebuilds, and deterministic SPDX/license inventories
+- **v2.4 changes**: hardened Phase 5 review persistence with canonical browser validation, explicit cross-report re-anchoring, concurrent-tab conflict rejection, and crash-consistent immutable generations
 
 ---
 
@@ -372,8 +372,9 @@ Important rules:
 - An Agent answer never changes `reviewed` or `resolved` automatically.
 - Only an explicit human action sets `reviewed`.
 - When the anchored fingerprint changes, transition the existing state to `stale`.
-- Static viewing persists to browser storage and supports JSON export/import.
-- Interactive mode persists an append-only event log and atomic snapshot.
+- Static viewing persists to browser storage and supports schema-validated JSON export/import. Require Web Locks and an expected revision for writes; reject a stale tab instead of overwriting newer state.
+- Import from another report only after an explicit re-anchor opt-in.
+- Interactive mode writes each cumulative append-only event log and snapshot into an immutable generation, then atomically hard-links one immutable commit record for the expected revision.
 
 Keep `review-notes.json` as the legacy-compatible export name; `review-state.json` is canonical.
 
@@ -920,7 +921,7 @@ Development source lives under `packages/`. At release time, bundle it as one No
 - Bundle runtime dependencies.
 - Embed the pinned Playwright package metadata and browser registry required by capture; the installed bundle must capture from an unrelated project without reading `node_modules` or checkout-relative runtime files.
 - Never download a Playwright browser automatically.
-- Detect system Chrome/Chromium or an existing Playwright browser with `doctor`.
+- Prefer an installed version-matched Playwright browser or headless Chromium. Report a normal macOS Chrome application as requiring explicit `UTSURI_BROWSER_EXECUTABLE` authorization; never select it automatically.
 - Keep report UI assets self-contained in the Skill directory.
 - Include no symlinks in release artifacts.
 - Publish the bundled CLI through `@utsu-ri/cli` as `bin.utsuri`.
@@ -930,6 +931,11 @@ Development source lives under `packages/`. At release time, bundle it as one No
 - Assemble the npm package from a newly created private staging directory. Validate the exact recursive tarball inventory, executable bits, package manifest, and absence of install lifecycle scripts before publication.
 - Install and execute the exact generated tarball in an isolated directory under supported Node versions. Do not substitute the workspace package or an ambient CLI.
 - Package README links must resolve against the exact `v<version>` release tag rather than `main` or paths absent from the tarball.
+- Build `@utsu-ri/cli-{darwin-arm64,darwin-x64,linux-arm64,linux-x64}` on the matching GitHub-hosted runner. Every helper package contains the helper, its source, an integrity manifest, and the executable proof produced on that architecture.
+- Assemble all four helper packages, the private-staged `@utsu-ri/cli`, and the shared Plugin into one distribution candidate. Its aggregate manifest binds every file hash and executable mode; a missing target, source mismatch, tamper, symlink, or normal-rename fallback rejects the candidate.
+- Carry helper proofs and Plugin files between workflow jobs as regular Actions-artifact entries rather than downloaded tarballs. Revalidate hashes before restoring only manifest-declared `0644` / `0755` modes, and create the promoted archive only after the exact restored tree passes all promotion gates.
+- Keep candidate generation as the default `workflow_dispatch` mode. Any npm staged-publishing submission requires an explicit `stage` selection, the protected `npm-production` environment, OIDC `id-token: write`, npm 11.15.0 or newer, and packages that already exist on npm. Approval and public availability remain separate operator actions with 2FA.
+- Before Plugin promotion, run native `npx` and `bunx` against the exact published SemVer in isolated caches before Safe-chain or dependency setup. Parse one strict JSON line, reject notices or fallback, use a failing ambient-command sentinel, and terminate the complete process group on timeout.
 - The product name `Utsuri`, CLI name `utsuri`, and Skill name `utsuri-review` remain fixed; changing the package identifier requires an explicit design change.
 
 ---
@@ -1011,6 +1017,8 @@ The publisher is `hokupod`, the npm maintainer identity is `hokupod-npm`, npm pu
 
 Do not invent a Codex validation command whose existence has not been confirmed. The release gate uses installation from a local marketplace through the official procedure and real operation in a new conversation.
 
+The Phase 5 candidate is structurally validated by the repository release-layout gate and shared Skill evaluations. A local Codex installation/load remains operator-visible evidence: record the Codex version, local marketplace source, new-conversation activation result, and exact candidate digest rather than treating manifest validation alone as a host-load pass.
+
 #### Claude Code Plugin
 
 ```bash
@@ -1030,6 +1038,8 @@ After startup, check:
 - `--plugin-dir` resolves bundled resources.
 - CI treats validation warnings as errors.
 - When installed and local versions share a name, the local version can be selected for regression testing.
+
+Phase 5 validates the source Plugin with Claude Code 2.1.220 using strict mode. Promotion repeats strict validation against the exact aggregate Plugin artifact after verifying it against the distribution-candidate manifest.
 
 ### 11.7 Origin Session Return Interface
 
@@ -1120,6 +1130,16 @@ sequenceDiagram
     Agent-->>User: report location and important limitations
 ```
 
+Phase 5 adds a local review handoff after strict report validation:
+
+1. Open the immutable report directly or with loopback-only `serve`.
+2. Keep viewed progress, human judgment, and comments as independent state.
+3. Export a canonical review bundle before moving review state between runs.
+4. Import only after base/head and report validation; use `--reanchor` to classify changed anchors as `matched`, `stale`, or `orphaned`.
+5. Never activate a probable anchor automatically and never treat viewing as approval.
+
+Origin Session submission remains unavailable until Phase 6. Phase 5 comments stay local and are never sent to an Agent.
+
 ### 12.4 Policy for partial failure
 
 - Generate a code-diff report even if visual capture fails.
@@ -1156,7 +1176,9 @@ utsuri compare
 utsuri finalize
 utsuri validate
 utsuri serve
-utsuri review
+utsuri pack
+utsuri review export
+utsuri review import
 utsuri feedback
 ```
 
@@ -1172,7 +1194,7 @@ Checks:
 
 - Git;
 - Node runtime;
-- Chrome, Chromium, or Playwright browser;
+- a version-matched Playwright browser, headless Chromium, or explicitly authorized browser executable;
 - optional Docker or Podman;
 - diff-base resolution;
 - configuration schema;
@@ -1306,6 +1328,8 @@ With `--interactive`:
 - Stream review, Feedback Batch, and answer events over SSE.
 - Never start an Agent process from the Review Server.
 
+The Phase 5 implementation enables only static mode. `--interactive` fails closed until the Phase 6 capability-token API is enabled. Static mode binds only a random `127.0.0.1` port, rejects an untrusted Host header and traversal, and opens a browser only with `--open`.
+
 ### 13.10 `validate`
 
 ```bash
@@ -1343,7 +1367,21 @@ utsuri review import \
 - Classify re-anchoring as `matched`, `stale`, or `orphaned`.
 - Generate a conflict report when import overwrites human state.
 
-### 13.12 `feedback`
+### 13.12 `pack`
+
+```bash
+utsuri pack .artifacts/utsuri/run-001/report \
+  --config utsuri.yml \
+  --output .artifacts/utsuri/ci-output
+```
+
+- Validate the immutable report before packaging.
+- Produce deterministic `report.zip`, `report.json`, and `ci-summary.json` without uploading them.
+- Include base/head content, configuration, browser, target, and tool version in the semantic cache key while excluding timestamps, temporary paths, and ports.
+- Apply `policy.failOn` and `policy.warnOn`; policy failures preserve artifacts and return exit code `10`.
+- Emit a single-file report only when requested and within the configured byte limit; otherwise preserve the multi-file report and state the fallback reason.
+
+### 13.13 `feedback`
 
 Provide a structured interface used by the Agent in the current conversation.
 
@@ -1383,7 +1421,7 @@ utsuri feedback handoff \
 - On a host that exposes Origin Session binding, the current session reference may be supplied and checked for equality.
 - A mismatch fails closed and must not be consumed in another session without explicit rebinding.
 
-### 13.13 Exit codes
+### 13.14 Exit codes
 
 | Code | Meaning                                         |
 | ---: | ----------------------------------------------- |
@@ -1922,7 +1960,7 @@ The untrusted page still executes in Chromium, so server-container memory limits
 
 ### 18.5 Browser and artifact boundary
 
-Capture uses an existing system Chrome or Chromium and never downloads a browser. Before and after always use separate Browser Contexts. Each browser launch receives a random capture token; Utsuri requires exactly one matching parent process and, after every failed launch or completed run, performs bounded close/termination followed by a global token rescan. Unavailable process tracking, ambiguous ownership, or a surviving process fails closed instead of reporting successful cleanup. Browser, cgroup, and server/container teardown steps execute independently so one failure cannot skip the remaining cleanup; the first failure remains the typed result. Each capture side has a hard `maxTimeMs` deadline across context, network setup, navigation, actions, fonts, stabilization, screenshots, and browser-derived artifacts; native contained-file reads inherit the bounded operation timeout. Each successful side stores full-page and element screenshots, normalized DOM, ARIA, computed styles, raw axe output, console entries, network entries, and metadata as separate artifacts. Initial HTTP requests, every HTTP redirect `Location`, and WebSocket handshakes are checked against the same origin policy; an external redirect is rejected before the browser can follow it and is recorded as blocked evidence. Finalization copies every report-referenced capture artifact into immutable `report/` and covers it with the report asset manifest. Resource limits are stored with capture conditions; schema-invalid or oversized diff/JSON, oversized image dimensions or PNG bytes, elapsed operation limits, unavailable hard browser-memory isolation for container mode, and oversized copied artifacts fail closed as `INCOMPLETE` or an artifact-integrity error.
+Capture uses an installed version-matched Playwright browser, a headless-compatible Chromium on `PATH`, or an executable explicitly authorized through `UTSURI_BROWSER_EXECUTABLE`; it never downloads a browser and never auto-selects a user's normal macOS Chrome application. Before and after always use separate Browser Contexts. Each browser launch receives a random capture token; Utsuri requires exactly one matching parent process and, after every failed launch or completed run, performs bounded close/termination followed by a global token rescan. Unavailable process tracking, ambiguous ownership, or a surviving process fails closed instead of reporting successful cleanup. Browser, cgroup, and server/container teardown steps execute independently so one failure cannot skip the remaining cleanup; the first failure remains the typed result. Each capture side has a hard `maxTimeMs` deadline across context, network setup, navigation, actions, fonts, stabilization, screenshots, and browser-derived artifacts; native contained-file reads inherit the bounded operation timeout. Each successful side stores full-page and element screenshots, normalized DOM, ARIA, computed styles, raw axe output, console entries, network entries, and metadata as separate artifacts. Initial HTTP requests, every HTTP redirect `Location`, and WebSocket handshakes are checked against the same origin policy; an external redirect is rejected before the browser can follow it and is recorded as blocked evidence. Finalization copies every report-referenced capture artifact into immutable `report/` and covers it with the report asset manifest. Resource limits are stored with capture conditions; schema-invalid or oversized diff/JSON, oversized image dimensions or PNG bytes, elapsed operation limits, unavailable hard browser-memory isolation for container mode, and oversized copied artifacts fail closed as `INCOMPLETE` or an artifact-integrity error.
 
 ---
 
@@ -2237,10 +2275,14 @@ A generated report is immutable. Interactive state is never written directly int
 
 ```text
 run/review/
-├── review-state.json
-├── review-events.ndjson
-├── threads/
-│   └── <thread-id>.json
+├── commits/
+│   └── revision-<number>.json
+├── generations/
+│   └── generation-<id>/
+│       ├── review-state.json
+│       ├── review-events.ndjson
+│       └── threads/
+│           └── <thread-id-hash>.json
 ├── context-packs/
 │   └── <request-id>.json
 ├── responses/
@@ -2251,7 +2293,7 @@ run/review/
     └── agent-events.ndjson
 ```
 
-Static mode uses browser storage on a best-effort basis and converts it to the same schema on export. Treat `agent-workspaces/` with permissions equivalent to `0700`; never include it in the report package or normal review exports.
+An immutable, contiguous revision record is the only commit point for CLI review state. A generation is complete and directory-synced before a hard link creates that record; only one process can create a revision filename, so concurrent writers fail without a process lock. An unreferenced generation left by interruption is ignored, while every referenced generation is immutable. Static mode requires browser storage plus Web Locks, rejects stale revisions, and converts state to the same canonical schema on export. Treat `agent-workspaces/` with permissions equivalent to `0700`; never include it in the report package or normal review exports.
 
 ### 22.3 Single-file mode
 
@@ -3342,9 +3384,21 @@ policy:
 - `ci-summary.json`; and
 - exit code.
 
+`pack` validates the immutable input and writes a new non-overwriting output directory. A policy failure returns exit code `10` after all machine-readable artifacts are complete. The CLI never uploads artifacts; the repository workflow owns upload retention and permissions.
+
+The cache key is a SHA-256 over canonical base/head source identity, configuration, browser/runtime identity, target identity, report evidence, and Utsuri version. It excludes creation time, temporary directories, ports, and output paths.
+
 ### 37.3 Baseline
 
 The primary comparison is base versus head. Approved-baseline operation is an additional feature; the initial design uses the PR base.
+
+### 37.4 Distribution workflow boundary
+
+- `ci.yml` produces deterministic review artifacts for both required Bun versions.
+- `release.yml` builds helpers on matching `darwin-arm64`, `darwin-x64`, `linux-arm64`, and `linux-x64` GitHub-hosted runners, then assembles and verifies one candidate.
+- Node 22 and Node 24 install only the exact generated CLI/helper tarballs in isolated offline directories.
+- Candidate generation performs no registry write. The optional `stage` path is a separately selected, protected-environment OIDC operation and never approves a staged version.
+- `plugin-promotion.yml` is manually dispatched only after publication has separate authorization; it verifies the exact published CLI natively before dependency setup and verifies the aggregate Plugin against the approved candidate manifest.
 
 ---
 
@@ -3578,6 +3632,8 @@ The Phase 4 source checkout implements a permanently offline static report CSP a
 
 **Completion**: team distribution and CI use are possible, and both host release gates pass. This phase produces a distribution candidate, not a stable public release.
 
+The Phase 5 source checkout implements independent viewed/judgment/comment state, crash-consistent immutable state generations under `run/review/`, Web Locks plus optimistic browser revisions, canonical schema-validated export/import with explicit fail-closed re-anchoring, a keyboard-accessible review workspace, static loopback serving, deterministic CI packaging and policy exit code `10`, exact public-package staging contracts, four-platform helper candidate assembly, archive-free cross-job candidate transport with manifest-verified mode restoration, exact-tarball isolated installation verification, and shared Skill evaluations. No npm package, Plugin, tag, promotion, or stable release is produced by completing this phase.
+
 ### Phase 6: Origin Session Feedback Loop
 
 - Review Anchors, threads, and event journal;
@@ -3638,6 +3694,9 @@ The Phase 4 source checkout implements a permanently offline static report CSP a
 - Safe-chain 1.5.14 is verified against a pinned official platform SHA-256 before its first execution, and its npx/bunx shims are verified before local or CI package operations.
 - Immutable reports are published with the verified four-platform no-replace helper set; missing, mismatched, or unsupported helpers fail closed.
 - The published `@utsu-ri/cli` tarball has an exact recursive inventory, no install lifecycle scripts, no runtime dependency on private workspace packages, version-tagged documentation links, and a successful isolated exact-tarball smoke test.
+- A distribution candidate binds all four architecture-matched native-helper packages and the aggregate Plugin by exact file hash and executable mode; candidate generation performs no registry write.
+- CI policy failure preserves `report.zip`, `report.json`, and `ci-summary.json` and returns exit code `10`; the CLI itself never uploads them.
+- Review export/import preserves viewed progress, human judgment, comments, event history, and explicit stale/orphaned classifications without modifying immutable report assets.
 - The single ESM bundle has no external JavaScript runtime import, embeds the pinned Playwright runtime metadata required by capture, passes an unrelated-project real-browser smoke test, and has deterministic build-manifest, SPDX, and license documents that match the source, lockfile, schemas, and report UI assets.
 
 ### 41.2 Should
@@ -4165,8 +4224,13 @@ Storage:
 
 ```text
 run/review/
-├── review-state.json
-├── review-events.ndjson
+├── commits/
+│   └── revision-<number>.json
+├── generations/
+│   └── generation-<id>/
+│       ├── review-state.json
+│       ├── review-events.ndjson
+│       └── threads/
 ├── review-inbox.json
 ├── batches/
 │   └── fb_01.json
@@ -4634,6 +4698,8 @@ A feature outside this definition is accepted only when it makes review decision
 
 | Entry ID                                   | Version | Date       | Change                                                                                                                                                                                                                                                                                                                                                                                                                     |
 | ------------------------------------------ | ------: | ---------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| design-v2.4-review-state-integrity         |     2.4 | 2026-08-07 | Hardened browser import/export with canonical schemas, anchor-catalog binding, and byte limits; required explicit cross-report re-anchoring; rejected stale-tab writes through Web Locks plus optimistic revisions; made CLI persistence crash-consistent through immutable generations and hard-linked revision records; and removed downloaded-tar extraction from cross-job distribution transport.                     |
+| design-v2.3-review-distribution-candidate  |     2.3 | 2026-08-07 | Implemented independent viewed/judgment/comment persistence, canonical review export/import and re-anchoring, loopback-only static serving, deterministic CI artifacts and policy exit code 10, four-platform native-helper and aggregate Plugin candidates, exact package contracts, isolated tarball verification, strict host validation, and approval-gated trusted-publishing workflows.                              |
 | design-v2.2-security-hardening             |     2.2 | 2026-08-07 | Implemented static/interactive/iframe CSP boundaries, bounded untrusted data and decoded PNG validation, descriptor-chain reads, immutable-ID container proxying, delegated Linux cgroup v2 browser memory limits, token-bound browser process cleanup, immutable asset checks, an independently rebuilt Node-compatible ESM bundle with embedded Playwright runtime metadata, and deterministic SPDX/license inventories. |
 | design-v2.1-comparison-coverage            |     2.1 | 2026-08-07 | Implemented content-addressed pixel comparison and changed regions; DOM, ARIA, style, accessibility, runtime, and overflow classification; prioritized target discovery and structured unknown coverage; whole-report source binding; cross-linked measured evidence; and Phase 3 visual/accessibility fixture gates.                                                                                                      |
 | design-v2.0-browser-capture                |     2.0 | 2026-08-07 | Implemented isolated dual-url, static-fragment, and explicitly authorized worktree capture; deterministic stabilization and safe actions; redirect-aware external and mutation request blocking; typed partial failures; URL redaction; digest-validated reuse; and independently validated immutable capture evidence.                                                                                                    |

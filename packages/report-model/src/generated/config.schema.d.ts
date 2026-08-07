@@ -128,6 +128,7 @@ export interface UtsuriConfig {
     language?: string;
     theme?: "system" | "light" | "dark";
     singleFile: boolean;
+    singleFileMaxBytes?: number;
     includeReviewNotes?: boolean;
     includeRawLogs?: boolean;
     includeAbsolutePaths: false;

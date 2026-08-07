@@ -253,6 +253,11 @@
         "language": { "type": "string", "minLength": 2 },
         "theme": { "enum": ["system", "light", "dark"] },
         "singleFile": { "type": "boolean" },
+        "singleFileMaxBytes": {
+          "type": "integer",
+          "minimum": 65536,
+          "maximum": 67108864
+        },
         "includeReviewNotes": { "type": "boolean" },
         "includeRawLogs": { "type": "boolean" },
         "includeAbsolutePaths": { "const": false }

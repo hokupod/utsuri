@@ -16,18 +16,26 @@ async function executable(filename: string): Promise<string | null> {
 }
 
 export async function resolveBrowserExecutable(): Promise<string> {
-  const candidates = [
-    process.env.UTSURI_BROWSER_EXECUTABLE,
-    platform() === "darwin"
-      ? "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome"
-      : undefined,
-    platform() === "darwin" ? "/Applications/Chromium.app/Contents/MacOS/Chromium" : undefined
-  ].filter((value): value is string => Boolean(value));
-  for (const candidate of candidates) {
-    const resolved = await executable(candidate);
+  const explicit = process.env.UTSURI_BROWSER_EXECUTABLE;
+  if (explicit) {
+    const resolved = await executable(explicit);
     if (resolved) return resolved;
+    throw new UtsuriError(
+      "CAPTURE_BROWSER_EXPLICIT_INVALID",
+      "UTSURI_BROWSER_EXECUTABLE must name an existing executable absolute path",
+      ExitCode.Environment
+    );
   }
-  for (const command of ["chromium", "chromium-browser", "google-chrome"]) {
+
+  try {
+    const { chromium } = await import("playwright-core");
+    const managed = await executable(chromium.executablePath());
+    if (managed) return managed;
+  } catch {
+    // Continue to an existing headless-compatible executable on PATH.
+  }
+
+  for (const command of ["chrome-headless-shell", "chromium", "chromium-browser"]) {
     try {
       const candidate = execFileSync("which", [command], {
         encoding: "utf8",
@@ -42,7 +50,9 @@ export async function resolveBrowserExecutable(): Promise<string> {
   }
   throw new UtsuriError(
     "CAPTURE_BROWSER_UNAVAILABLE",
-    "No approved existing Chrome or Chromium executable was found",
+    platform() === "darwin"
+      ? "No version-matched Playwright browser or approved headless Chromium was found; set UTSURI_BROWSER_EXECUTABLE to explicitly authorize another executable"
+      : "No version-matched Playwright browser or approved headless Chromium executable was found",
     ExitCode.Environment
   );
 }

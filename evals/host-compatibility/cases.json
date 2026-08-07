@@ -1,0 +1,26 @@
+{
+  "schemaVersion": "1.0",
+  "cases": [
+    {
+      "id": "codex-local-plugin",
+      "manifest": ".codex-plugin/plugin.json",
+      "pluginName": "utsuri",
+      "skill": "skills/utsuri-review/SKILL.md",
+      "bundle": "skills/utsuri-review/scripts/utsuri.mjs"
+    },
+    {
+      "id": "claude-plugin-dir",
+      "manifest": ".claude-plugin/plugin.json",
+      "pluginName": "utsuri",
+      "skill": "skills/utsuri-review/SKILL.md",
+      "bundle": "skills/utsuri-review/scripts/utsuri.mjs"
+    },
+    {
+      "id": "standalone-skill",
+      "manifest": null,
+      "pluginName": "utsuri",
+      "skill": "skills/utsuri-review/SKILL.md",
+      "bundle": "skills/utsuri-review/scripts/utsuri.mjs"
+    }
+  ]
+}

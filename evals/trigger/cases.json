@@ -1,0 +1,40 @@
+{
+  "schemaVersion": "1.0",
+  "cases": [
+    {
+      "id": "positive-ui-review",
+      "prompt": "Review this UI change with visual and accessibility evidence.",
+      "expected": "trigger"
+    },
+    {
+      "id": "positive-diff-report",
+      "prompt": "Build a durable Utsuri report for this diff and preserve coverage gaps.",
+      "expected": "trigger"
+    },
+    {
+      "id": "negative-one-line-explanation",
+      "prompt": "Explain what this one line of code means; do not create artifacts.",
+      "expected": "do-not-trigger"
+    },
+    {
+      "id": "negative-no-change",
+      "prompt": "There is no repository change. Summarize the existing README only.",
+      "expected": "do-not-trigger"
+    },
+    {
+      "id": "boundary-no-local-write",
+      "prompt": "Review this diff, but local artifact creation is forbidden.",
+      "expected": "do-not-trigger"
+    },
+    {
+      "id": "boundary-explicit-evidence",
+      "prompt": "Review this risky diff with a local evidence report; do not execute project scripts.",
+      "expected": "trigger"
+    },
+    {
+      "id": "follow-up-incomplete",
+      "prompt": "Continue the Utsuri review after capture failed and preserve the incomplete evidence.",
+      "expected": "trigger"
+    }
+  ]
+}

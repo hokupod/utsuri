@@ -13,12 +13,18 @@ const expectedManifestKeys = [
   "homepage",
   "license",
   "name",
+  "optionalDependencies",
   "publishConfig",
   "repository",
   "type",
   "version"
 ].sort();
 const expectedDependencies = {};
+const nativeTargets = ["darwin-arm64", "darwin-x64", "linux-arm64", "linux-x64"];
+
+export function expectedNativeOptionalDependencies(version) {
+  return Object.fromEntries(nativeTargets.map((target) => [`@utsu-ri/cli-${target}`, version]));
+}
 
 function sortedStrings(value) {
   return Array.isArray(value) && value.every((item) => typeof item === "string")
@@ -59,7 +65,7 @@ export function validateCliManifest(manifest, expectedVersion) {
   ) {
     errors.push("CLI package has the wrong repository");
   }
-  if (manifest.homepage !== "https://github.com/hokupod/utsuri#readme") {
+  if (manifest.homepage !== `https://github.com/hokupod/utsuri/tree/v${expectedVersion}#readme`) {
     errors.push("CLI package has the wrong homepage");
   }
   if (!hasExactStringEntries(manifest.bugs, { url: "https://github.com/hokupod/utsuri/issues" })) {
@@ -78,12 +84,103 @@ export function validateCliManifest(manifest, expectedVersion) {
   if (!hasExactStringEntries(manifest.dependencies, expectedDependencies)) {
     errors.push("CLI package has the wrong dependencies");
   }
+  if (
+    !hasExactStringEntries(
+      manifest.optionalDependencies,
+      expectedNativeOptionalDependencies(expectedVersion)
+    )
+  ) {
+    errors.push("CLI package has the wrong optional dependencies");
+  }
 
   const actualFiles = sortedStrings(manifest.files);
   if (!actualFiles || JSON.stringify(actualFiles) !== JSON.stringify(expectedFiles)) {
     errors.push(`CLI package files must exactly match ${expectedFiles.join(", ")}`);
   }
 
+  return errors;
+}
+
+export function validateCliSourceManifest(manifest, expectedVersion) {
+  const errors = [];
+  const externalPins = { fflate: "0.8.2", yaml: "2.8.1" };
+  if (manifest.name !== "@utsu-ri/cli") errors.push("CLI source package has the wrong name");
+  if (manifest.version !== expectedVersion) errors.push("CLI source package has the wrong version");
+  if (manifest.private !== true) errors.push("CLI source package must be private");
+  if (manifest.license !== "AGPL-3.0-or-later") {
+    errors.push("CLI source package has the wrong license");
+  }
+  if (Object.hasOwn(manifest, "scripts")) errors.push("CLI source package must not define scripts");
+  const dependencies = manifest.dependencies;
+  if (!dependencies || typeof dependencies !== "object" || Array.isArray(dependencies)) {
+    errors.push("CLI source package dependencies are missing");
+    return errors;
+  }
+  for (const [name, version] of Object.entries(dependencies)) {
+    if (name.startsWith("@utsu-ri/")) {
+      if (version !== "workspace:*") {
+        errors.push(`CLI source workspace dependency is not private: ${name}`);
+      }
+    } else if (externalPins[name] !== version) {
+      errors.push(`CLI source external dependency is not pinned: ${name}`);
+    }
+  }
+  for (const [name, version] of Object.entries(externalPins)) {
+    if (dependencies[name] !== version) errors.push(`CLI source dependency is missing: ${name}`);
+  }
+  return errors;
+}
+
+export function validateNativeHelperManifest(manifest, expectedVersion, target) {
+  const errors = [];
+  const expectedKeys = [
+    "author",
+    "cpu",
+    "description",
+    "files",
+    "license",
+    "name",
+    "os",
+    "publishConfig",
+    "repository",
+    "version"
+  ].sort();
+  if (JSON.stringify(Object.keys(manifest).sort()) !== JSON.stringify(expectedKeys)) {
+    errors.push("Native helper manifest fields do not match the exact allowlist");
+  }
+  if (!nativeTargets.includes(target)) errors.push("Native helper target is unsupported");
+  if (manifest.name !== `@utsu-ri/cli-${target}`)
+    errors.push("Native helper package name is invalid");
+  if (manifest.version !== expectedVersion) errors.push("Native helper package version is invalid");
+  if (manifest.license !== "AGPL-3.0-or-later") errors.push("Native helper license is invalid");
+  if (!hasExactStringEntries(manifest.author, { name: "hokupod" })) {
+    errors.push("Native helper publisher is invalid");
+  }
+  if (
+    !hasExactStringEntries(manifest.repository, {
+      type: "git",
+      url: "git+https://github.com/hokupod/utsuri.git"
+    })
+  ) {
+    errors.push("Native helper repository is invalid");
+  }
+  if (!hasExactStringEntries(manifest.publishConfig, { access: "public" })) {
+    errors.push("Native helper publish access is invalid");
+  }
+  const expectedOs = target.startsWith("darwin-") ? ["darwin"] : ["linux"];
+  const expectedCpu = target.endsWith("-arm64") ? ["arm64"] : ["x64"];
+  if (JSON.stringify(manifest.os) !== JSON.stringify(expectedOs)) {
+    errors.push("Native helper OS selector is invalid");
+  }
+  if (JSON.stringify(manifest.cpu) !== JSON.stringify(expectedCpu)) {
+    errors.push("Native helper CPU selector is invalid");
+  }
+  if (
+    JSON.stringify(sortedStrings(manifest.files)) !==
+    JSON.stringify(["LICENSE", "bin", "integrity.json", "proof.json"].sort())
+  ) {
+    errors.push("Native helper files are invalid");
+  }
   return errors;
 }
 

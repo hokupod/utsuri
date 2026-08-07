@@ -18,9 +18,9 @@ Utsuri 将代码变更转换为有证据、便于人类理解的可视化评审�
 
 ## 状态
 
-<!-- availability:phase-4-security-hardening -->
+<!-- availability:phase-5-distribution-candidate -->
 
-Phase 4 的 security-hardened flow 已可在此 source checkout 中使用。它把 code review、隔离的 browser capture、comparison / coverage 与强化的 report 边界、resource limit、capability 检查后的 container execution、自包含 ESM bundle 和确定性的 supply-chain metadata 结合起来。持久化 review state 与 Agent feedback 尚未实现。npm package 与 Plugin 也尚未发布。
+Phase 5 的 distribution-candidate flow 已可在此 source checkout 中使用。它在 Phase 4 hardened review flow 上加入持久化的 viewed / judgment / comment state、canonical review export/import、仅限 loopback 的 static serve、确定性的 CI package/policy、四个平台的 native helper candidate 组装、exact tarball 验证和 host 验证。Origin Session feedback 要到 Phase 6 才可用。npm package 与 Plugin 仍未发布。
 
 <a id="capabilities"></a><!-- section:capabilities -->
 
@@ -42,15 +42,18 @@ Phase 4 的 security-hardened flow 已可在此 source checkout 中使用。它�
 - side-by-side、wipe、可停止 blink、pixel diff、after-only、crop / full-page 选择、sync scroll / zoom、region navigation 与 code / finding cross-link。
 - 相互独立的 static / interactive / iframe CSP、bounded JSON、empty-sandbox 的已清理 preview、仅限 PNG 的 visual evidence、扩展 privacy 声明，以及严格的 SHA-256 report 验证；
 - 强制使用 SHA-256 digest 固定的本地 image、network none、read-only root / project mount、capability drop、non-root user 与 PID / CPU / memory / time / artifact 上限的 Docker / Podman isolation；以及
-- 包含 source / schema / UI hash 与确定性 SPDX 2.3 / dependency license inventory 的单一 Node 22 ESM CLI bundle。
+- 包含 source / schema / UI hash 与确定性 SPDX 2.3 / dependency license inventory 的单一 Node 22 ESM CLI bundle；
+- 独立持久化的 viewed progress、human judgment 和 anchored comment，以及 canonical export/import 与明确的 matched / stale / orphaned re-anchor；
+- 仅限 loopback 的 static serve，以及带有 policy exit code `10` 的确定性 `report.zip`、`report.json` 和 `ci-summary.json`；以及
+- exact CLI/native package contract、四种 architecture helper candidate、aggregate Plugin 验证、Node 22/24 isolated-tarball smoke 和共享 Skill eval。
 
-后续 v1 Phase 将加入持久化 review state 与 Origin Session feedback。即使 capture 完整，在 discovery 和 comparison 前仍为 `UNCOVERED`。证据缺失、格式错误、任一侧失败、resource limit 超限或 container capability 不足时仍为 `INCOMPLETE`；分母未知时不显示 percentage。pixel 差异本身不能判定 `REGRESSION`。
+Phase 6 将加入 Origin Session feedback 路径。Phase 5 的 comment 保持在本地，绝不会发送给 Agent。即使 capture 完整，在 discovery 和 comparison 前仍为 `UNCOVERED`。证据缺失、格式错误、任一侧失败、resource limit 超限或 container capability 不足时仍为 `INCOMPLETE`；分母未知时不显示 percentage。pixel 差异本身不能判定 `REGRESSION`。
 
 <a id="quick-start"></a><!-- section:quick-start -->
 
 ## Quick Start
 
-前提条件：Nix、安装在标准用户位置的 Safe-chain 1.5.14，以及用于 capture 的现有 system Chrome 或 Chromium。Node 24 与 Bun 由 Nix shell 提供；无需配置 Safe-chain 绝对路径。
+前提条件：Nix、安装在标准用户位置的 Safe-chain 1.5.14，以及显式配置的兼容 Chrome / Chromium 或现有 Playwright 管理 browser。Node 24 与 Bun 由 Nix shell 提供；无需配置 Safe-chain 绝对路径。Utsuri 绝不会自动下载 browser。
 
 <!-- sync-command:dev-shell -->
 
@@ -126,6 +129,19 @@ node skills/utsuri-review/scripts/utsuri.mjs finalize --run .artifacts/utsuri/re
 node skills/utsuri-review/scripts/utsuri.mjs validate .artifacts/utsuri/readme-example/report --strict --json
 ```
 
+在不修改 immutable report 的前提下 export mutable review state。导入其他 run 前先检查 source identity；`--reanchor` 会让变更或缺失的 anchor 明确保持 stale / orphaned。
+
+```bash
+node skills/utsuri-review/scripts/utsuri.mjs review export --run .artifacts/utsuri/readme-example --output .artifacts/utsuri/review-bundle.json --json
+node skills/utsuri-review/scripts/utsuri.mjs review import --run .artifacts/utsuri/updated-run --input .artifacts/utsuri/review-bundle.json --reanchor --json
+```
+
+创建本地 CI artifact，但不上传：
+
+```bash
+node skills/utsuri-review/scripts/utsuri.mjs pack .artifacts/utsuri/readme-example/report --config utsuri.yml --output .artifacts/utsuri/ci-output --json
+```
+
 <a id="development"></a><!-- section:development -->
 
 ## 开发
@@ -140,7 +156,7 @@ node scripts/safe-chain.mjs bun run check
 
 bundle 后的 CLI protocol 使用 native execution 验证，避免 wrapper notice 污染 JSON / NDJSON。
 
-check 和 build gate 会为当前 macOS 或 Linux target 编译可审计的 atomic publication helper。distribution candidate 会在发布前组装并验证全部四种受支持的 OS / architecture helper。
+check 和 build gate 会为当前 macOS 或 Linux target 编译可审计的 atomic publication helper。手动 dispatch 的 candidate workflow 会在对应 runner 上 build 四种 OS / architecture helper，组装 aggregate Plugin 与 exact npm tarball，并在 Node 22 / 24 下验证 isolated install。candidate mode 不会写入 registry。
 
 <!-- sync-command:native-doctor -->
 
@@ -164,6 +180,8 @@ Utsuri 将 repository content、diff、HTML、SVG、comment、Context Pack 和 c
 
 生成的 `report/` 是 immutable。引用的 capture / comparison evidence 会独立进行 digest 校验；图片仅限通过验证的 PNG byte，复制到 report 后纳入 asset manifest 的 hash。保存的 `index.html` 始终使用 offline static CSP；只有 local interactive server 可以通过 exact match 把该 canonical CSP 边界替换为 interactive CSP。static-fragment preview 使用独立的 no-script / no-connect CSP。strict validation 会拒绝 active HTML、direct SVG、不安全 reference、未列出或缺失的 file 与 hash drift。manifest 声明已排除 absolute path、cookie、raw environment、raw DOM、raw header 与 trace。
 
+viewed progress、human judgment 和 comment 是彼此独立的 mutable record。static mode 使用 Web Locks 与 optimistic revision，按 report 存入 browser storage，并 export 为通过 schema 验证且绑定 catalog 的 bundle；stale tab 不会覆盖更新的 state。CLI state 在 `run/review/` 下使用 immutable generation 与 atomic hard-linked revision record，不会留下因 crash 而失效的 process lock。import 不会重写 `report/`；对其他 report 的 re-anchor 必须显式选择；probable anchor 不会自动启用，变更或缺失的 anchor 会明确保持 stale / orphaned。Phase 5 没有 Agent 提交路径。
+
 discovery / comparison manifest 与收集到的 diff / capture hash 绑定；被替换或未列出的 artifact 会在 finalize 时被拒绝。finalize 会从已验证的 run artifact 与 annotations 重建完整 report，在 manifest 中记录精确的 source byte snapshot hash，只发布 immutable snapshot，并拒绝 staging 或 reuse 期间发生的 source / evidence 漂移。Utsuri 要求 run input 是普通文件且不是 symlink，并要求 canonical contained path、安全 archive inventory、不可被其他本地 principal 改名的 publication path、staging strict validation 与 OS no-replace helper。helper 缺失或 filesystem 不支持时会 fail closed。生成失败可能保留用于诊断的 private staging directory，Utsuri 不会自动删除它。可变的人工 review data 单独存储在 `run/review/`。static viewer 不连接外部服务。
 
 code diff content 会解析为 structured line，并且只以 text 方式渲染。由 repository 控制的 diff text 永远不会作为 HTML 注入。
@@ -176,6 +194,7 @@ build output 是不含 external JavaScript runtime import 的单一 Node 22 兼�
 
 - [英文详细设计正本](https://github.com/hokupod/utsuri/blob/main/docs/design.md)
 - [Phase 4 threat model](https://github.com/hokupod/utsuri/blob/main/docs/threat-model.md)
+- [Release 与 distribution guide](https://github.com/hokupod/utsuri/blob/main/docs/release.md)
 - [UI guideline 与 HIG/WCAG traceability](https://github.com/hokupod/utsuri/blob/main/docs/ui-guidelines.md)
 - [Capture mode 与 runtime boundary](https://github.com/hokupod/utsuri/blob/main/skills/utsuri-review/references/capture-modes.md)
 - [CLI contract](https://github.com/hokupod/utsuri/blob/main/skills/utsuri-review/references/cli-contract.md)
@@ -187,4 +206,4 @@ build output 是不含 external JavaScript runtime import 的单一 Node 22 兼�
 
 ## License 与发布状态
 
-publisher 为 `hokupod`，npm maintainer 为 `hokupod-npm`，发布使用 GitHub Actions trusted publishing，SPDX license 为 `AGPL-3.0-or-later`。在所有 release gate 通过并取得单独明确授权前，package 保持未发布。v1 实现计划不会执行 publish、tag、push 或 promotion。
+publisher 为 `hokupod`，npm maintainer 为 `hokupod-npm`，发布使用 GitHub Actions trusted publishing，SPDX license 为 `AGPL-3.0-or-later`。Phase 5 只生成 distribution candidate。job 间传输会先验证 manifest 绑定的普通文件，再恢复声明的 mode；不会解压下载的 helper 或 Plugin tarball。在所有 release gate 通过并取得单独明确授权前，package 保持未发布。v1 实现计划不会执行 publish、tag、push 或 promotion。

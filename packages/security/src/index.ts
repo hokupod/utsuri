@@ -1,9 +1,11 @@
 import { closeSync, constants, fstatSync, openSync } from "node:fs";
 import { spawn } from "node:child_process";
-import { access, lstat, realpath } from "node:fs/promises";
+import { lstat, realpath } from "node:fs/promises";
 import path from "node:path";
-import { fileURLToPath } from "node:url";
 import { ExitCode, UtsuriError } from "@utsu-ri/core";
+import { resolveNativeHelper } from "./native-helper";
+
+export * from "./native-helper";
 
 export {
   assertPngBytes,
@@ -251,22 +253,7 @@ export async function readContainedRegularFile(
     securityError("SEC_FILE_TIMEOUT_LIMIT", "Contained input timeout must be 1 to 30000ms");
   }
   const root = await realpath(rootInput);
-  const moduleDirectory = path.dirname(fileURLToPath(import.meta.url));
-  const target = `${process.platform}-${process.arch}`;
-  const candidates = [
-    path.join(moduleDirectory, "native", target, "utsuri-fs-ops"),
-    path.resolve(moduleDirectory, "../../..", ".artifacts/native", target, "utsuri-fs-ops")
-  ];
-  let helper: string | undefined;
-  for (const candidate of candidates) {
-    try {
-      await access(candidate, constants.X_OK);
-      helper = candidate;
-      break;
-    } catch {
-      // Try the source-checkout or installed-package location next.
-    }
-  }
+  const helper = await resolveNativeHelper();
   if (!helper) {
     securityError("SEC_NATIVE_HELPER_UNAVAILABLE", "Contained read helper is unavailable");
   }

@@ -1,7 +1,7 @@
 # Utsuri report UI guidelines
 
-- **Status**: Phase 3 implemented baseline
-- **Scope**: static code, visual, structural, runtime, and coverage report UI
+- **Status**: Phase 5 implemented baseline
+- **Scope**: static code, visual, structural, runtime, coverage, and local human-review state UI
 - **Reference date**: 2026-08-07
 - **Normative accessibility baseline**: WCAG 2.2 Level AA
 
@@ -146,4 +146,43 @@ There are no unresolved Phase 1 Must items in this checklist; its documentation/
 - [x] **Responsive evidence**: light/dark, Japanese/English, long/dense, empty/loading/partial, reduced-motion, and 200% proxy fixtures have no page-level overflow.
 - [x] **Automated accessibility**: the Phase 3 fixture has zero serious or critical axe violations.
 
-There are no unresolved Phase 3 Must items in this checklist. Human review remains required before the Phase 3 documentation/UI guideline gate can pass.
+There are no unresolved Phase 3 Must items in this checklist; its documentation/UI review gate has passed.
+
+## 12. Phase 5 review-state rules
+
+1. **Viewed is navigation progress, not approval.** It uses an independent checkbox and never changes human judgment.
+2. Human judgment is an explicit `unreviewed`, `approved`, `changes-requested`, or `blocked` control for the focused change.
+3. Comments are anchored to a code line, hunk, target, finding, verification gap, or visual region. Plain comment text remains local and never implies Agent submission.
+4. Import/export actions state their report identity and result. Exact, stale, and orphaned anchors always include text labels; probable matches are never activated automatically.
+5. Static browser storage is namespaced by report ID. Exported review data is a portable convenience copy, not an immutable report asset.
+6. Mutable state errors remain visible in the review workspace. A failed import or persistence operation must not be reduced to a disappearing toast.
+7. The primary evidence path remains usable when review state is empty, unavailable, stale, or imported from a previous run.
+8. Importing another report requires a separate, explicit re-anchor checkbox; selecting the file alone is not consent.
+9. Browser writes require Web Locks and the expected revision. A stale tab shows a persistent conflict and never overwrites the newer state.
+10. No provider, model, Agent selector, or send action appears in Phase 5. Origin Session feedback belongs to Phase 6.
+
+## 13. Phase 5 verification matrix
+
+| Evidence       | Condition                                     | Expected result                                                                                | Location                                                                |
+| -------------- | --------------------------------------------- | ---------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------- |
+| Unit           | Viewed and judgment transitions               | Viewed changes no judgment; Agent-derived data changes neither.                                | `packages/review-state/src/review-state.test.ts`                        |
+| Unit           | Canonical export/import                       | Stable ordering and hashes survive round-trip; report mismatch fails closed.                   | `packages/review-state/src/review-state.test.ts`                        |
+| Unit           | Browser import and concurrent writes          | Malformed or mismatched bundles and stale-tab writes fail before storage changes.              | `packages/review-state/src/browser-store.test.ts`                       |
+| Unit           | Re-anchor exact/probable/changed/missing      | Only exact remains matched; probable/changed are stale and missing is orphaned.                | `packages/review-state/src/review-state.test.ts`                        |
+| E2E definition | Reload, export/import, comment, keyboard path | The same report resumes state and every review control remains labeled and keyboard reachable. | `tests/e2e/review-state.spec.ts`                                        |
+| Integration    | Static serve                                  | Loopback-only random port, Host validation, traversal rejection, and no implicit browser open. | `tests/integration/phase5-serve-pack.test.ts`                           |
+| Schema         | Review event and bundle                       | Unknown events, invalid anchors, oversized text, and malformed state fail validation.          | `schemas/review-event.schema.json`, `schemas/review-bundle.schema.json` |
+
+Browser-backed E2E execution requires an already installed compatible Playwright browser. Absence of that prerequisite is recorded as unexecuted evidence, never as a passing UI result.
+
+## 14. Phase 5 Must checklist
+
+- [x] **State separation**: viewed progress, human judgment, and comment/thread state use independent fields and controls.
+- [x] **Immutable boundary**: UI persistence and CLI import/export never modify `report/`.
+- [x] **Anchor status**: matched, stale, and orphaned states use text and structure in addition to color.
+- [x] **Explicit portability**: export/import is initiated by a labeled control and validates the report/source identity.
+- [x] **No implicit delivery**: comments and attention metadata do not start an Agent or send data.
+- [x] **Progressive disclosure**: review controls complement rather than replace the existing evidence hierarchy.
+- [ ] **Browser evidence**: execute the Phase 5 E2E matrix with a compatible preinstalled browser without launching the user's normal Chrome profile.
+
+The implementation checklist has one environment-dependent browser-evidence item. It remains a release gate and is not represented as PASS while the compatible Playwright browser is absent.

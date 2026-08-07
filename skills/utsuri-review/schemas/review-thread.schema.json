@@ -92,7 +92,7 @@
             "label": { "type": "string" }
           }
         },
-        "body": { "type": "string" },
+        "body": { "type": "string", "minLength": 1, "maxLength": 16384 },
         "feedbackItemId": { "type": "string" },
         "evidenceRefs": { "type": "array", "items": { "type": "string" } },
         "createdAt": { "type": "string", "format": "date-time" }

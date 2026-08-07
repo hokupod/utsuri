@@ -12,7 +12,6 @@ function run(args) {
     cwd: root,
     encoding: "utf8",
     env: {
-      HOME: process.env.HOME,
       LANG: process.env.LANG ?? "C.UTF-8",
       PATH: process.env.PATH,
       TMPDIR: process.env.TMPDIR
@@ -31,7 +30,15 @@ function run(args) {
 }
 
 const version = run(["--version", "--json"]);
-if (version.version !== "0.1.0") throw new Error("Unexpected CLI version response");
+if (
+  version.ok !== true ||
+  version.command !== "version" ||
+  version.package !== "@utsu-ri/cli" ||
+  version.version !== "0.1.0" ||
+  version.protocolVersion !== "1.0"
+) {
+  throw new Error("Unexpected CLI version response");
+}
 const doctor = run(["doctor", "--json"]);
 if (doctor.command !== "doctor" || !Array.isArray(doctor.checks)) {
   throw new Error("Unexpected doctor response");

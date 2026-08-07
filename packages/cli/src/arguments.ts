@@ -16,6 +16,7 @@ const valueOptions = new Set([
   "--head",
   "--input",
   "--merge-base",
+  "--max-bytes",
   "--output",
   "--patch",
   "--run",
@@ -27,6 +28,8 @@ const booleanOptions = new Set([
   "--interactive",
   "--json",
   "--open",
+  "--reanchor",
+  "--single-file",
   "--strict",
   "--version",
   "--worktree"

@@ -1,0 +1,12 @@
+{
+  "schemaVersion": "1.0",
+  "cases": [
+    {
+      "id": "code-only-partial-report",
+      "patch": "fixtures/code-only-review/changes.patch",
+      "expectedStatus": "UNCOVERED",
+      "expectedIncompleteReason": "visual-capture-not-run",
+      "requiredSchemaAssets": ["review-bundle.schema.json", "review-event.schema.json"]
+    }
+  ]
+}

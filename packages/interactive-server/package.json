@@ -5,6 +5,8 @@
   "license": "AGPL-3.0-or-later",
   "type": "module",
   "dependencies": {
+    "@utsu-ri/core": "workspace:*",
+    "@utsu-ri/report-builder": "workspace:*",
     "@utsu-ri/security": "workspace:*"
   },
   "exports": {

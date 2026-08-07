@@ -68,7 +68,13 @@ describe("CLI", () => {
   test("returns machine-readable version metadata", async () => {
     const result = await executeCli(["--version", "--json"]);
     expect(result.exitCode).toBe(0);
-    expect(result.data).toEqual({ version: "0.1.0" });
+    expect(result.data).toEqual({
+      ok: true,
+      command: "version",
+      package: "@utsu-ri/cli",
+      version: "0.1.0",
+      protocolVersion: "1.0"
+    });
   });
 
   test("rejects unknown commands with argument exit code", async () => {
@@ -148,6 +154,47 @@ describe("CLI", () => {
     expect(report.diagnostics.incompleteReasons).toContain("visual-capture-not-run");
     const validated = await executeCli(["validate", "run/report", "--strict", "--json"], root);
     expect(validated.exitCode).toBe(0);
+  });
+
+  test("exports and imports canonical review state without modifying the report", async () => {
+    const { root, run } = await createCollectedRun();
+    const finalized = await executeCli(["finalize", "--run", "run", "--json"], root);
+    expect(finalized.exitCode).toBe(0);
+    const reportBefore = await readFile(path.join(run, "report/report.json"), "utf8");
+
+    const exported = await executeCli(
+      ["review", "export", "--run", "run", "--output", "review-bundle.json", "--json"],
+      root
+    );
+    expect(exported.exitCode, JSON.stringify(exported.data)).toBe(0);
+    expect(
+      validateArtifact(
+        "review-bundle",
+        JSON.parse(await readFile(path.join(root, "review-bundle.json"), "utf8"))
+      ).errors
+    ).toEqual([]);
+
+    const imported = await executeCli(
+      ["review", "import", "--run", "run", "--input", "review-bundle.json", "--json"],
+      root
+    );
+    expect(imported.exitCode, JSON.stringify(imported.data)).toBe(0);
+    expect((imported.data as { conflicts: number }).conflicts).toBe(0);
+    expect(await readFile(path.join(run, "report/report.json"), "utf8")).toBe(reportBefore);
+    const pointer = JSON.parse(
+      await readFile(path.join(run, "review/commits/revision-000000000001.json"), "utf8")
+    ) as {
+      generation: string;
+    };
+    const state = JSON.parse(
+      await readFile(
+        path.join(run, "review/generations", pointer.generation, "review-state.json"),
+        "utf8"
+      )
+    ) as {
+      revision: number;
+    };
+    expect(state.revision).toBe(1);
   });
 
   test("returns artifact exit code for malformed annotations JSON", async () => {

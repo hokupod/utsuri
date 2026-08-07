@@ -40,6 +40,8 @@ const reportArtifactPaths = new Set([
   "index.html",
   "report.json",
   "review-answer.schema.json",
+  "review-bundle.schema.json",
+  "review-event.schema.json",
   "review-state.schema.json",
   "review-thread.schema.json"
 ]);

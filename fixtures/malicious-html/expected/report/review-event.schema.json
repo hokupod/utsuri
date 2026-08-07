@@ -1,0 +1,257 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://utsu-ri.dev/schemas/review-event/v1",
+  "title": "ReviewEvent",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion",
+    "id",
+    "reportId",
+    "sequence",
+    "type",
+    "createdAt"
+  ],
+  "properties": {
+    "schemaVersion": {
+      "const": "1.0"
+    },
+    "id": {
+      "type": "string",
+      "pattern": "^event:"
+    },
+    "reportId": {
+      "type": "string",
+      "pattern": "^report[-:]"
+    },
+    "sequence": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "type": {
+      "enum": [
+        "viewed.changed",
+        "judgment.changed",
+        "thread.created",
+        "thread.message-added",
+        "thread.resolved",
+        "state.imported"
+      ]
+    },
+    "createdAt": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "anchor": {
+      "$ref": "#/$defs/reviewAnchor"
+    },
+    "changeId": {
+      "type": "string",
+      "pattern": "^change[-:]"
+    },
+    "viewState": {
+      "enum": [
+        "unseen",
+        "viewed",
+        "stale"
+      ]
+    },
+    "judgmentState": {
+      "enum": [
+        "unreviewed",
+        "reviewed",
+        "follow-up",
+        "blocked",
+        "stale"
+      ]
+    },
+    "threadId": {
+      "type": "string",
+      "pattern": "^thread[-:]"
+    },
+    "messageId": {
+      "type": "string",
+      "pattern": "^message[-:]"
+    },
+    "sourceReportId": {
+      "type": "string",
+      "pattern": "^report[-:]"
+    }
+  },
+  "allOf": [
+    {
+      "if": {
+        "properties": {
+          "type": {
+            "const": "viewed.changed"
+          }
+        }
+      },
+      "then": {
+        "required": [
+          "anchor",
+          "viewState"
+        ]
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "type": {
+            "const": "judgment.changed"
+          }
+        }
+      },
+      "then": {
+        "required": [
+          "changeId",
+          "judgmentState"
+        ]
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "type": {
+            "const": "thread.created"
+          }
+        }
+      },
+      "then": {
+        "required": [
+          "anchor",
+          "threadId",
+          "messageId"
+        ]
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "type": {
+            "const": "thread.message-added"
+          }
+        }
+      },
+      "then": {
+        "required": [
+          "threadId",
+          "messageId"
+        ]
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "type": {
+            "const": "thread.resolved"
+          }
+        }
+      },
+      "then": {
+        "required": [
+          "threadId"
+        ]
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "type": {
+            "const": "state.imported"
+          }
+        }
+      },
+      "then": {
+        "required": [
+          "sourceReportId"
+        ]
+      }
+    }
+  ],
+  "$defs": {
+    "reviewAnchor": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "type",
+        "ref",
+        "fingerprint"
+      ],
+      "properties": {
+        "type": {
+          "enum": [
+            "change",
+            "file",
+            "hunk",
+            "line-range",
+            "visual-target",
+            "visual-region",
+            "finding",
+            "verification-gap"
+          ]
+        },
+        "ref": {
+          "type": "string",
+          "minLength": 1
+        },
+        "path": {
+          "type": "string"
+        },
+        "side": {
+          "enum": [
+            "before",
+            "after",
+            "diff"
+          ]
+        },
+        "startLine": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "endLine": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "targetRef": {
+          "type": "string"
+        },
+        "region": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "x",
+            "y",
+            "width",
+            "height"
+          ],
+          "properties": {
+            "x": {
+              "type": "number",
+              "minimum": 0
+            },
+            "y": {
+              "type": "number",
+              "minimum": 0
+            },
+            "width": {
+              "type": "number",
+              "exclusiveMinimum": 0
+            },
+            "height": {
+              "type": "number",
+              "exclusiveMinimum": 0
+            }
+          }
+        },
+        "selectorHint": {
+          "type": "string"
+        },
+        "fingerprint": {
+          "type": "string",
+          "minLength": 8
+        }
+      }
+    }
+  }
+}

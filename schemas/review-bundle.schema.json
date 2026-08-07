@@ -1,0 +1,78 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://utsu-ri.dev/schemas/review-bundle/v1",
+  "title": "ReviewBundle",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion",
+    "source",
+    "state",
+    "threads",
+    "events",
+    "anchorCatalog",
+    "exportedAt"
+  ],
+  "properties": {
+    "schemaVersion": { "const": "1.0" },
+    "source": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["reportId", "reportFingerprint", "base", "head"],
+      "properties": {
+        "reportId": { "type": "string", "pattern": "^report[-:]" },
+        "reportFingerprint": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
+        "base": { "type": ["string", "null"] },
+        "head": { "type": ["string", "null"] }
+      }
+    },
+    "state": { "type": "object" },
+    "threads": { "type": "array", "items": { "type": "object" } },
+    "events": { "type": "array", "items": { "type": "object" } },
+    "anchorCatalog": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/reviewAnchor" }
+    },
+    "exportedAt": { "type": "string", "format": "date-time" }
+  },
+  "$defs": {
+    "reviewAnchor": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["type", "ref", "fingerprint"],
+      "properties": {
+        "type": {
+          "enum": [
+            "change",
+            "file",
+            "hunk",
+            "line-range",
+            "visual-target",
+            "visual-region",
+            "finding",
+            "verification-gap"
+          ]
+        },
+        "ref": { "type": "string", "minLength": 1 },
+        "path": { "type": "string" },
+        "side": { "enum": ["before", "after", "diff"] },
+        "startLine": { "type": "integer", "minimum": 1 },
+        "endLine": { "type": "integer", "minimum": 1 },
+        "targetRef": { "type": "string" },
+        "region": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["x", "y", "width", "height"],
+          "properties": {
+            "x": { "type": "number", "minimum": 0 },
+            "y": { "type": "number", "minimum": 0 },
+            "width": { "type": "number", "exclusiveMinimum": 0 },
+            "height": { "type": "number", "exclusiveMinimum": 0 }
+          }
+        },
+        "selectorHint": { "type": "string" },
+        "fingerprint": { "type": "string", "minLength": 8 }
+      }
+    }
+  }
+}

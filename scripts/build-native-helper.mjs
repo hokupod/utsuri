@@ -4,6 +4,7 @@ import { spawnSync } from "node:child_process";
 import { chmod, copyFile, mkdir } from "node:fs/promises";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
+import { verifyNativeHelper } from "./verify-native-helper.mjs";
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const target = `${process.platform}-${process.arch}`;
@@ -49,5 +50,12 @@ for (const output of [
   await copyFile(artifact, output);
   await chmod(output, 0o755);
 }
+
+await verifyNativeHelper({
+  helper: artifact,
+  output: path.join(root, ".artifacts/native", target, "proof.json"),
+  source,
+  target
+});
 
 console.log(`Built atomic publication helper for ${target}`);

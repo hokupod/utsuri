@@ -74,6 +74,18 @@ jobs:
           bun run build
           bun run validate:fixtures
           bun run verify:release-layout
+      - name: Generate machine-readable review artifacts
+        run: |
+          node skills/utsuri-review/scripts/utsuri.mjs collect --patch fixtures/code-only-review/changes.patch --output .artifacts/ci-review --json
+          node skills/utsuri-review/scripts/utsuri.mjs finalize --run .artifacts/ci-review --json
+          node skills/utsuri-review/scripts/utsuri.mjs pack .artifacts/ci-review/report --config fixtures/schemas/valid/config.minimal.json --output .artifacts/ci-review-output --json
+      - name: Upload review artifacts
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: utsuri-review-bun-${{ matrix.bun }}
+          path: .artifacts/ci-review-output
+          if-no-files-found: error
+          retention-days: 7
       - name: Reject generated or lockfile drift
         run: git diff --exit-code -- bun.lock packages/report-model/src/generated packages/cli/dist packages/cli/README.md packages/cli/LICENSE skills/utsuri-review
 

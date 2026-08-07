@@ -3,18 +3,16 @@ import { existsSync, realpathSync } from "node:fs";
 import path from "node:path";
 import { defineConfig } from "@playwright/test";
 
-function browserExecutable(): string {
-  const candidates = [
-    process.env.UTSURI_BROWSER_EXECUTABLE,
-    process.platform === "darwin"
-      ? "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome"
-      : undefined,
-    process.platform === "darwin" ? "/Applications/Chromium.app/Contents/MacOS/Chromium" : undefined
-  ].filter((candidate): candidate is string => Boolean(candidate));
-  for (const candidate of candidates) {
-    if (path.isAbsolute(candidate) && existsSync(candidate)) return realpathSync(candidate);
+function browserExecutable(): string | undefined {
+  const explicit = process.env.UTSURI_BROWSER_EXECUTABLE;
+  if (explicit) {
+    if (!path.isAbsolute(explicit) || !existsSync(explicit)) {
+      throw new Error("UTSURI_BROWSER_EXECUTABLE must name an existing absolute path");
+    }
+    return realpathSync(explicit);
   }
-  for (const command of ["chromium", "chromium-browser", "google-chrome"]) {
+
+  for (const command of ["chrome-headless-shell", "chromium", "chromium-browser"]) {
     try {
       const candidate = execFileSync("which", [command], { encoding: "utf8" }).trim();
       if (candidate && existsSync(candidate)) return realpathSync(candidate);
@@ -22,10 +20,11 @@ function browserExecutable(): string {
       // Try the next standard executable name.
     }
   }
-  throw new Error(
-    "No approved system Chrome/Chromium was found; set UTSURI_BROWSER_EXECUTABLE to an executable file"
-  );
+  // Leaving executablePath unset selects Playwright's managed, version-matched browser.
+  return undefined;
 }
+
+const executablePath = browserExecutable();
 
 export default defineConfig({
   testDir: "tests",
@@ -41,7 +40,7 @@ export default defineConfig({
     headless: true,
     locale: "en-US",
     colorScheme: "light",
-    launchOptions: { executablePath: browserExecutable() },
+    launchOptions: executablePath ? { executablePath } : undefined,
     trace: "retain-on-failure"
   },
   projects: [
@@ -68,6 +67,10 @@ export default defineConfig({
     {
       name: "report-visual",
       testMatch: /e2e\/report-visual\.spec\.ts/u
+    },
+    {
+      name: "review-state",
+      testMatch: /e2e\/review-state\.spec\.ts/u
     },
     {
       name: "a11y",

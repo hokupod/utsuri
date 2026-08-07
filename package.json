@@ -34,6 +34,7 @@
     "build": "node scripts/build.mjs",
     "check": "node scripts/check.mjs",
     "validate:fixtures": "node scripts/validate-fixtures.mjs",
+    "fixtures:refresh-report-assets": "node scripts/refresh-report-fixture-assets.mjs",
     "verify:release-layout": "node scripts/verify-release-layout.mjs",
     "verify:sbom": "node scripts/verify-sbom.mjs",
     "supply-chain:baseline": "node scripts/generate-dependency-baseline.mjs",

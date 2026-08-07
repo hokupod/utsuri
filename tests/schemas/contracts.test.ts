@@ -5,6 +5,7 @@ import {
   schemaNames,
   validateArtifact,
   validateReportReferences,
+  validateReviewBundle,
   type SchemaName,
   type UtsuriReport
 } from "../../packages/report-model/src";
@@ -36,6 +37,8 @@ describe("schema contracts", () => {
       "origin-session",
       "report",
       "review-answer",
+      "review-bundle",
+      "review-event",
       "review-plan",
       "review-state",
       "review-thread"
@@ -49,6 +52,9 @@ describe("schema contracts", () => {
       if (fixture.schemaName === "report") {
         expect(validateReportReferences(fixture.value as UtsuriReport).errors).toEqual([]);
       }
+      if (fixture.schemaName === "review-bundle") {
+        expect(validateReviewBundle(fixture.value).errors).toEqual([]);
+      }
     }
   });
 
@@ -58,7 +64,9 @@ describe("schema contracts", () => {
       const references =
         fixture.schemaName === "report"
           ? validateReportReferences(fixture.value as UtsuriReport)
-          : { ok: true, errors: [] };
+          : fixture.schemaName === "review-bundle"
+            ? validateReviewBundle(fixture.value)
+            : { ok: true, errors: [] };
       expect(schema.ok && references.ok, fixture.filename).toBeFalse();
     }
   });

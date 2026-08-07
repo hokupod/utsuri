@@ -11,6 +11,9 @@ import { resolveContainedPath } from "@utsu-ri/security";
 import { optionString, parseArguments } from "./arguments";
 import { doctor } from "./doctor";
 import { initializeConfig } from "./init";
+import { packReport } from "./pack";
+import { reviewExport, reviewImport } from "./review";
+import { serveReport } from "./serve";
 
 async function readArtifactJson(filename: string, label: string): Promise<unknown> {
   const content = await readFile(filename, "utf8");
@@ -35,6 +38,10 @@ Commands:
   compare                Compare captured visual, structural, and runtime evidence
   finalize --run <path>  Build an immutable report
   validate <report>      Validate report schema, CSP, assets, and hashes
+  serve <report>         Serve a report on a random loopback port
+  pack <report>          Create deterministic CI artifacts and apply policy
+  review export          Export review state, comments, and event journal
+  review import          Import review state with optional --reanchor
 
 Global options:
   --json                  Emit one strict JSON value
@@ -58,7 +65,18 @@ export async function executeCli(
     const args = parseArguments(argv);
     json = args.json;
     if (args.options.has("--version") || args.command === "version") {
-      return { exitCode: 0, data: { version: "0.1.0" }, human: "0.1.0", json };
+      return {
+        exitCode: 0,
+        data: {
+          ok: true,
+          command: "version",
+          package: "@utsu-ri/cli",
+          version: "0.1.0",
+          protocolVersion: "1.0"
+        },
+        human: "0.1.0",
+        json
+      };
     }
     if (args.options.has("--help") || !args.command || args.command === "help") {
       return { exitCode: 0, data: { help }, human: help, json };
@@ -268,6 +286,85 @@ export async function executeCli(
         human: result.ok ? `Report valid: ${result.reportId}` : result.errors.join("\n"),
         json
       };
+    }
+
+    if (args.command === "serve") {
+      const reportValue = args.positionals[0];
+      if (!reportValue || args.positionals.length !== 1) {
+        throw new UtsuriError(
+          "CLI_REPORT_REQUIRED",
+          "serve requires exactly one report directory",
+          ExitCode.Arguments
+        );
+      }
+      const served = await serveReport(cwd, reportValue, {
+        interactive: args.options.has("--interactive"),
+        openBrowser: args.options.has("--open")
+      });
+      return { exitCode: ExitCode.Success, ...served, json };
+    }
+
+    if (args.command === "pack") {
+      const reportValue = args.positionals[0];
+      const output = optionString(args, "--output");
+      if (!reportValue || args.positionals.length !== 1 || !output) {
+        throw new UtsuriError(
+          "CLI_PACK_INPUT_REQUIRED",
+          "pack requires exactly one report directory and --output",
+          ExitCode.Arguments
+        );
+      }
+      const maximumValue = optionString(args, "--max-bytes");
+      if (maximumValue && !/^\d+$/u.test(maximumValue)) {
+        throw new UtsuriError(
+          "CLI_MAX_BYTES_INVALID",
+          "--max-bytes must be a positive integer",
+          ExitCode.Arguments
+        );
+      }
+      const packed = await packReport(cwd, reportValue, output, {
+        config: optionString(args, "--config"),
+        singleFile: args.options.has("--single-file"),
+        maximumSingleFileBytes: maximumValue ? Number(maximumValue) : undefined
+      });
+      return { exitCode: packed.exitCode, data: packed.data, human: packed.human, json };
+    }
+
+    if (args.command === "review") {
+      const subcommand = args.positionals[0];
+      const runValue = optionString(args, "--run");
+      if (!runValue) {
+        throw new UtsuriError("CLI_RUN_REQUIRED", "review requires --run", ExitCode.Arguments);
+      }
+      if (subcommand === "export") {
+        const output = optionString(args, "--output");
+        if (!output) {
+          throw new UtsuriError(
+            "CLI_OUTPUT_REQUIRED",
+            "review export requires --output",
+            ExitCode.Arguments
+          );
+        }
+        const result = await reviewExport(cwd, runValue, output);
+        return { exitCode: ExitCode.Success, data: result.data, human: result.human, json };
+      }
+      if (subcommand === "import") {
+        const input = optionString(args, "--input");
+        if (!input) {
+          throw new UtsuriError(
+            "CLI_INPUT_REQUIRED",
+            "review import requires --input",
+            ExitCode.Arguments
+          );
+        }
+        const result = await reviewImport(cwd, runValue, input, args.options.has("--reanchor"));
+        return { exitCode: ExitCode.Success, data: result.data, human: result.human, json };
+      }
+      throw new UtsuriError(
+        "CLI_REVIEW_SUBCOMMAND",
+        "review requires export or import",
+        ExitCode.Arguments
+      );
     }
 
     throw new UtsuriError(

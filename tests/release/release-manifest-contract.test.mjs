@@ -1,12 +1,18 @@
 import assert from "node:assert/strict";
-import { mkdtemp, mkdir, rm, writeFile } from "node:fs/promises";
+import { mkdtemp, mkdir, readFile, rm, writeFile } from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
 import { describe, test } from "node:test";
+import { fileURLToPath } from "node:url";
 import {
+  expectedNativeOptionalDependencies,
   validateCliManifest,
-  validateExactFileInventory
+  validateCliSourceManifest,
+  validateExactFileInventory,
+  validateNativeHelperManifest
 } from "../../scripts/release-manifest-contract.mjs";
+
+const repositoryRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../..");
 
 const validManifest = {
   name: "@utsu-ri/cli",
@@ -18,14 +24,15 @@ const validManifest = {
     type: "git",
     url: "git+https://github.com/hokupod/utsuri.git"
   },
-  homepage: "https://github.com/hokupod/utsuri#readme",
+  homepage: "https://github.com/hokupod/utsuri/tree/v0.1.0#readme",
   bugs: { url: "https://github.com/hokupod/utsuri/issues" },
   type: "module",
   engines: { node: ">=22" },
   bin: { utsuri: "dist/utsuri.mjs" },
   files: ["dist", "README.md", "LICENSE"],
   publishConfig: { access: "public" },
-  dependencies: {}
+  dependencies: {},
+  optionalDependencies: expectedNativeOptionalDependencies("0.1.0")
 };
 
 describe("CLI release manifest contract", () => {
@@ -130,5 +137,72 @@ describe("release file inventory", () => {
     } finally {
       await rm(root, { recursive: true, force: true });
     }
+  });
+});
+
+describe("cross-job distribution transport", () => {
+  test("never extracts a downloaded helper or Plugin tarball", async () => {
+    const [releaseWorkflow, promotionWorkflow] = await Promise.all([
+      readFile(path.join(repositoryRoot, ".github/workflows/release.yml"), "utf8"),
+      readFile(path.join(repositoryRoot, ".github/workflows/plugin-promotion.yml"), "utf8")
+    ]);
+    for (const workflow of [releaseWorkflow, promotionWorkflow]) {
+      assert.doesNotMatch(workflow, /(?:^|\s)-[A-Za-z]*x[A-Za-z]*(?:\s|$)/mu);
+    }
+    assert.match(promotionWorkflow, /--restore-plugin-modes/u);
+    assert.match(promotionWorkflow, /Package only the verified aggregate Plugin/u);
+  });
+});
+
+describe("source and native package contracts", () => {
+  test("keeps the workspace CLI private while pinning bundled external inputs", () => {
+    const sourceManifest = {
+      name: "@utsu-ri/cli",
+      version: "0.1.0",
+      private: true,
+      license: "AGPL-3.0-or-later",
+      dependencies: {
+        "@utsu-ri/core": "workspace:*",
+        fflate: "0.8.2",
+        yaml: "2.8.1"
+      }
+    };
+    assert.deepEqual(validateCliSourceManifest(sourceManifest, "0.1.0"), []);
+    assert.match(
+      validateCliSourceManifest(
+        {
+          ...sourceManifest,
+          private: false,
+          dependencies: { ...sourceManifest.dependencies, fflate: "latest" }
+        },
+        "0.1.0"
+      ).join("\n"),
+      /must be private|not pinned/u
+    );
+  });
+
+  test("accepts only the exact platform helper package metadata", () => {
+    const manifest = {
+      name: "@utsu-ri/cli-linux-arm64",
+      version: "0.1.0",
+      description: "Atomic filesystem helper for Utsuri on linux-arm64",
+      license: "AGPL-3.0-or-later",
+      author: { name: "hokupod" },
+      repository: {
+        type: "git",
+        url: "git+https://github.com/hokupod/utsuri.git"
+      },
+      os: ["linux"],
+      cpu: ["arm64"],
+      files: ["bin", "integrity.json", "proof.json", "LICENSE"],
+      publishConfig: { access: "public" }
+    };
+    assert.deepEqual(validateNativeHelperManifest(manifest, "0.1.0", "linux-arm64"), []);
+    assert.match(
+      validateNativeHelperManifest({ ...manifest, cpu: ["x64"] }, "0.1.0", "linux-arm64").join(
+        "\n"
+      ),
+      /CPU selector/u
+    );
   });
 });

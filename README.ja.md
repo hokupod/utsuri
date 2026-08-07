@@ -18,9 +18,9 @@ Utsuriは、コード変更を、根拠と意図を伴う人間向けの視覚�
 
 ## 状態
 
-<!-- availability:phase-4-security-hardening -->
+<!-- availability:phase-5-distribution-candidate -->
 
-Phase 4のsecurity-hardened flowは、このsource checkoutで利用できます。code review、分離したbrowser capture、comparison / coverageに、強化したreport境界、resource limit、capability検査付きcontainer実行、自己完結ESM bundle、決定論的なsupply-chain metadataを組み合わせます。review stateの永続化とAgent feedbackは未実装です。npm packageとPluginも未公開です。
+Phase 5のdistribution-candidate flowは、このsource checkoutで利用できます。Phase 4のhardened review flowに、viewed / judgment / comment stateの永続化、canonical review export/import、loopback限定static serve、決定論的CI package/policy、4 platform native helper candidateのassemble、exact tarball検証、host検証を追加します。Origin Session feedbackはPhase 6まで利用できません。npm packageとPluginは未公開です。
 
 <a id="capabilities"></a><!-- section:capabilities -->
 
@@ -43,14 +43,17 @@ Phase 4のsecurity-hardened flowは、このsource checkoutで利用できます
 - static / interactive / iframe別のCSP、bounded JSON、empty-sandboxのsanitize済みpreview、PNG限定のvisual evidence、拡張privacy宣言、SHA-256によるstrict report検証
 - SHA-256 digest固定のlocal image、network none、read-only root / project mount、capability drop、non-root user、PID / CPU / memory / time / artifact limitを強制するDocker / Podman isolation
 - source / schema / UI hashと、決定論的なSPDX 2.3 / dependency license inventoryを含む単一Node 22 ESM CLI bundle
+- 独立して永続化するviewed progress、human judgment、anchored comment、canonical export/import、明示的なmatched / stale / orphaned re-anchor
+- loopback限定static serve、policy exit code `10`を持つ決定論的`report.zip` / `report.json` / `ci-summary.json`
+- exact CLI/native package契約、4 architecture helper candidate、aggregate Plugin検証、Node 22/24 isolated-tarball smoke、共通Skill eval
 
-後続Phaseで、review stateの永続化とOrigin Session feedbackを追加します。captureが完了してもdiscoveryとcomparison前は`UNCOVERED`です。証拠の欠落・不正、片側失敗、resource limit超過、container capability不足は`INCOMPLETE`のままです。分母が不明なら割合を表示せず、pixel差分だけで`REGRESSION`とは判定しません。
+Phase 6でOrigin Session feedback経路を追加します。Phase 5のcommentはlocalに留まり、Agentへ送信されません。captureが完了してもdiscoveryとcomparison前は`UNCOVERED`です。証拠の欠落・不正、片側失敗、resource limit超過、container capability不足は`INCOMPLETE`のままです。分母が不明なら割合を表示せず、pixel差分だけで`REGRESSION`とは判定しません。
 
 <a id="quick-start"></a><!-- section:quick-start -->
 
 ## Quick Start
 
-前提: Nix、標準のuser install先に導入済みのSafe-chain 1.5.14、capture用の既存system ChromeまたはChromium。Node 24とBunはNix shellが提供し、Safe-chainの絶対pathは設定しません。
+前提: Nix、標準のuser install先に導入済みのSafe-chain 1.5.14、明示設定した互換Chrome / Chromiumまたは既存のPlaywright管理browser。Node 24とBunはNix shellが提供し、Safe-chainの絶対pathは設定しません。Utsuriはbrowserを自動downloadしません。
 
 <!-- sync-command:dev-shell -->
 
@@ -126,6 +129,19 @@ node skills/utsuri-review/scripts/utsuri.mjs finalize --run .artifacts/utsuri/re
 node skills/utsuri-review/scripts/utsuri.mjs validate .artifacts/utsuri/readme-example/report --strict --json
 ```
 
+immutable reportを変更せず、mutable review stateをexportします。別runへのimportはsource identityを確認してから行い、`--reanchor`は変更・欠落anchorをstale / orphanedとして明示的に保持します。
+
+```bash
+node skills/utsuri-review/scripts/utsuri.mjs review export --run .artifacts/utsuri/readme-example --output .artifacts/utsuri/review-bundle.json --json
+node skills/utsuri-review/scripts/utsuri.mjs review import --run .artifacts/utsuri/updated-run --input .artifacts/utsuri/review-bundle.json --reanchor --json
+```
+
+外部uploadせずにlocal CI artifactを作成します。
+
+```bash
+node skills/utsuri-review/scripts/utsuri.mjs pack .artifacts/utsuri/readme-example/report --config utsuri.yml --output .artifacts/utsuri/ci-output --json
+```
+
 <a id="development"></a><!-- section:development -->
 
 ## 開発
@@ -140,7 +156,7 @@ node scripts/safe-chain.mjs bun run check
 
 bundle済みCLI protocolはnative実行で検証し、wrapper noticeがJSON / NDJSONを汚染しないようにします。
 
-checkとbuild gateは、現在のmacOSまたはLinux target向けに、監査可能なatomic publication helperをcompileします。distribution candidateでは、公開前に対応する4種類のOS / architecture helperをassemble・検証します。
+checkとbuild gateは、現在のmacOSまたはLinux target向けに、監査可能なatomic publication helperをcompileします。手動dispatchするcandidate workflowは、対応するrunnerで4種類のOS / architecture helperをbuildし、aggregate Pluginとexact npm tarballをassembleして、Node 22 / 24でisolated installを検証します。candidate modeはregistryへ書き込みません。
 
 <!-- sync-command:native-doctor -->
 
@@ -164,6 +180,8 @@ Utsuriはrepository content、diff、HTML、SVG、comment、Context Pack、captu
 
 生成済み`report/`はimmutableです。参照するcapture / comparison evidenceは独立してdigest検証し、画像を検証済みPNG byteに限定してreport内部へcopyし、asset manifestのhash対象にします。保存される`index.html`は常にoffline static CSPです。local interactive serverだけが、そのcanonical CSP境界をexact matchでinteractive CSPへ置換できます。static-fragment previewには別のno-script / no-connect CSPを適用します。strict validationはactive HTML、direct SVG、unsafeな参照、未列挙・欠落file、hash driftを拒否します。manifestはabsolute path、cookie、raw environment、raw DOM、raw header、traceを除外したことを宣言します。
 
+viewed progress、human judgment、commentは別々のmutable recordです。static modeはWeb Locksとoptimistic revisionを使ってreportごとにbrowser storageへ保存し、schema検証とcatalog bindingを通過したbundleへexportします。staleなtabが新しいstateを上書きすることはありません。CLI stateは`run/review/`配下のimmutable generationとatomic hard link済みrevision recordを使い、crashで残るprocess lockを持ちません。importは`report/`を書き換えず、別reportへのre-anchorを明示的な選択とし、probable anchorを自動有効化せず、変更・欠落anchorをstale / orphanedとして明示します。Phase 5にAgent送信経路はありません。
+
 discovery / comparison manifestは収集diff / capture hashへbindされ、差し替え・未列挙artifactはfinalizeで拒否します。finalizeは検証済みrun artifactとannotationsからreport全体を再構築し、正確なsource byte snapshot hashをmanifestへ記録し、immutable snapshotだけを公開します。stagingまたはreuse中のsource / evidenceの変化は拒否します。Utsuriは、通常fileかつsymlinkではないrun input、canonicalなcontained path、安全なarchive inventory、他のlocal principalから保護されたpublication path、stagingのstrict validation、OSのno-replace helperを必須とします。helperが存在しない、またはfilesystemが対応しない場合はfail closedとします。生成失敗時には診断用のprivate staging directoryが残る場合がありますが、自動削除はしません。人間のmutable review dataは`run/review/`へ分離します。static viewerは外部serviceへ通信しません。
 
 code diff contentはstructured lineへparseし、textとしてだけrenderします。repositoryが制御するdiff textをHTMLとして挿入しません。
@@ -176,6 +194,7 @@ build outputはexternal JavaScript runtime importを持たない単一のNode 22
 
 - [英語の詳細設計正本](https://github.com/hokupod/utsuri/blob/main/docs/design.md)
 - [Phase 4 threat model](https://github.com/hokupod/utsuri/blob/main/docs/threat-model.md)
+- [Release・distribution guide](https://github.com/hokupod/utsuri/blob/main/docs/release.md)
 - [UI guidelineとHIG/WCAG traceability](https://github.com/hokupod/utsuri/blob/main/docs/ui-guidelines.md)
 - [Capture modeとruntime boundary](https://github.com/hokupod/utsuri/blob/main/skills/utsuri-review/references/capture-modes.md)
 - [CLI contract](https://github.com/hokupod/utsuri/blob/main/skills/utsuri-review/references/cli-contract.md)
@@ -187,4 +206,4 @@ build outputはexternal JavaScript runtime importを持たない単一のNode 22
 
 ## License・公開状態
 
-publisherは`hokupod`、npm maintainerは`hokupod-npm`、公開方式はGitHub Actions trusted publishing、SPDX licenseは`AGPL-3.0-or-later`です。全release gate通過と別途の明示承認までpackageは未公開に保ちます。v1実装計画ではpublish、tag、push、promotionを行いません。
+publisherは`hokupod`、npm maintainerは`hokupod-npm`、公開方式はGitHub Actions trusted publishing、SPDX licenseは`AGPL-3.0-or-later`です。Phase 5はdistribution candidateだけを生成します。job間ではmanifestにbindされた通常fileを検証してから宣言済みmodeだけを復元し、downloadしたhelper / Plugin tarballは展開しません。全release gate通過と別途の明示承認までpackageは未公開に保ちます。v1実装計画ではpublish、tag、push、promotionを行いません。

@@ -1,6 +1,23 @@
 <script lang="ts">
   import { onMount, tick } from "svelte";
   import type { UtsuriReport } from "../../report-model/src";
+  import {
+    anchorKey,
+    browserCreateComment,
+    browserResolveThread,
+    browserSetJudgment,
+    browserSetViewed,
+    createBrowserReviewBundle,
+    findAnchor,
+    importBrowserReviewBundle,
+    loadBrowserReviewStore,
+    saveBrowserReviewStore,
+    type HumanJudgment,
+    type ReviewAnchor,
+    type ReviewSourceIdentity,
+    type ReviewStore,
+    type ReviewThreadKind
+  } from "../../review-state/src/browser";
 
   type Change = UtsuriReport["changes"][number];
   type Hunk = UtsuriReport["hunks"][number];
@@ -66,6 +83,30 @@
       reducedMotion: "Blink unavailable because reduced motion is enabled",
       backChange: "Back to focused change",
       visualGap: "Visual verification has not run",
+      reviewWorkspace: "Human review",
+      reviewProgress: "Review progress",
+      viewed: "Viewed",
+      humanJudgment: "Human judgment",
+      unreviewed: "Unreviewed",
+      reviewed: "Reviewed",
+      followUp: "Follow-up",
+      blocked: "Blocked",
+      comments: "Comments",
+      comment: "Comment",
+      commentOn: "Comment on",
+      commentBody: "Review note",
+      saveComment: "Save comment",
+      cancel: "Cancel",
+      resolve: "Resolve",
+      resolved: "Resolved",
+      noComments: "No comments for this change",
+      localOnly: "Saved locally. Plain comments are never sent to an Agent.",
+      exportReview: "Export review",
+      importReview: "Import review",
+      reanchorImport: "Re-anchor another report",
+      stale: "Stale",
+      orphaned: "Orphaned",
+      reviewUnavailable: "Review state unavailable",
       empty: "No semantic changes",
       loading: "Loading review data…"
     },
@@ -122,6 +163,30 @@
       reducedMotion: "視差低減が有効なため点滅比較は利用できません",
       backChange: "変更グループへ戻る",
       visualGap: "画面の検証は未実施です",
+      reviewWorkspace: "人によるレビュー",
+      reviewProgress: "レビュー進捗",
+      viewed: "確認済み",
+      humanJudgment: "人の判断",
+      unreviewed: "未レビュー",
+      reviewed: "レビュー済み",
+      followUp: "要フォロー",
+      blocked: "ブロック中",
+      comments: "コメント",
+      comment: "コメント",
+      commentOn: "コメント対象",
+      commentBody: "レビューメモ",
+      saveComment: "コメントを保存",
+      cancel: "キャンセル",
+      resolve: "解決済みにする",
+      resolved: "解決済み",
+      noComments: "この変更へのコメントはありません",
+      localOnly: "ローカルに保存します。通常コメントを Agent へ送信することはありません。",
+      exportReview: "レビューを書き出す",
+      importReview: "レビューを読み込む",
+      reanchorImport: "別レポートへ再アンカーする",
+      stale: "古い状態",
+      orphaned: "参照先なし",
+      reviewUnavailable: "レビュー状態を利用できません",
       empty: "意味単位の変更はありません",
       loading: "レビューデータを読み込んでいます…"
     }
@@ -157,6 +222,18 @@
   let activeComparison: Comparison | undefined;
   let activeImage: ImageComparison | undefined;
   let selectedFindings: Finding[] = [];
+  let reviewStore: ReviewStore | null = null;
+  let reviewSource: ReviewSourceIdentity = { base: null, head: null };
+  let reviewFailure = "";
+  let reviewNotice = "";
+  let reviewReanchor = false;
+  let reviewBusy = false;
+  let commentAnchor: ReviewAnchor | null = null;
+  let commentBody = "";
+  let commentKind: ReviewThreadKind = "note";
+  let commentInput: HTMLTextAreaElement;
+  let reviewImportInput: HTMLInputElement;
+  let selectedThreads: ReviewStore["threads"] = [];
 
   $: t = copy[locale];
   $: selectedChange = report?.changes.find((change) => change.id === selectedChangeId);
@@ -198,6 +275,12 @@
             (finding.targetRef ? selectedChange?.targetRefs.includes(finding.targetRef) : false)
         )
       : [];
+  $: selectedThreads =
+    selectedChange && reviewStore
+      ? reviewStore.threads.filter((thread) =>
+          threadBelongsToChange(thread.anchor, selectedChange!)
+        )
+      : [];
 
   function domId(prefix: string, value: string): string {
     return `${prefix}-${value.replace(/[^a-zA-Z0-9_-]/gu, "-")}`;
@@ -209,6 +292,168 @@
       return "needs-confirmation";
     }
     return "no-issue";
+  }
+
+  function judgmentLabel(value: HumanJudgment): string {
+    if (value === "reviewed") return t.reviewed;
+    if (value === "follow-up") return t.followUp;
+    if (value === "blocked") return t.blocked;
+    if (value === "stale") return t.stale;
+    return t.unreviewed;
+  }
+
+  function judgment(changeId: string): HumanJudgment {
+    return reviewStore?.state.judgments[changeId]?.state ?? "unreviewed";
+  }
+
+  function currentAnchor(type: ReviewAnchor["type"], ref: string): ReviewAnchor | undefined {
+    return reviewStore ? findAnchor(reviewStore.anchorCatalog, type, ref) : undefined;
+  }
+
+  function viewed(type: ReviewAnchor["type"], ref: string): boolean {
+    const anchor = currentAnchor(type, ref);
+    if (!anchor || !reviewStore) return false;
+    return reviewStore.state.viewed[anchorKey(anchor)]?.state === "viewed";
+  }
+
+  function lineReviewAnchor(hunk: Hunk, index: number): ReviewAnchor | undefined {
+    const line = hunk.lines[index];
+    if (!line || line.kind === "no-newline") return undefined;
+    const side = line.kind === "addition" ? "after" : line.kind === "deletion" ? "before" : "diff";
+    const lineNumber = side === "before" ? line.oldLine : (line.newLine ?? line.oldLine);
+    return lineNumber
+      ? currentAnchor("line-range", `${hunk.id}:${side}:${lineNumber}:${index}`)
+      : undefined;
+  }
+
+  function threadBelongsToChange(anchor: ReviewAnchor, change: Change): boolean {
+    if (anchor.type === "change") return anchor.ref === change.id;
+    if (anchor.type === "hunk" || anchor.type === "line-range") {
+      return change.hunkRefs.some(
+        (reference) => anchor.ref === reference || anchor.ref.startsWith(`${reference}:`)
+      );
+    }
+    if (anchor.type === "visual-target" || anchor.type === "visual-region") {
+      return (
+        Boolean(anchor.targetRef && change.targetRefs.includes(anchor.targetRef)) ||
+        change.targetRefs.includes(anchor.ref)
+      );
+    }
+    if (anchor.type === "finding") return change.findingRefs.includes(anchor.ref);
+    if (anchor.type === "verification-gap") return anchor.ref.startsWith(`${change.id}:gap:`);
+    return false;
+  }
+
+  async function persistReview(next: ReviewStore): Promise<void> {
+    await saveBrowserReviewStore(next, next.state.revision - 1);
+    reviewStore = next;
+    reviewNotice = "";
+  }
+
+  async function updateViewed(
+    type: ReviewAnchor["type"],
+    ref: string,
+    checked: boolean
+  ): Promise<void> {
+    const anchor = currentAnchor(type, ref);
+    if (!reviewStore || !anchor) return;
+    reviewBusy = true;
+    try {
+      await persistReview(
+        await browserSetViewed(reviewStore, anchor, checked ? "viewed" : "unseen")
+      );
+    } catch (error) {
+      reviewNotice = error instanceof Error ? error.message : String(error);
+    } finally {
+      reviewBusy = false;
+    }
+  }
+
+  async function updateJudgment(changeId: string, value: HumanJudgment): Promise<void> {
+    if (!reviewStore || value === "stale") return;
+    reviewBusy = true;
+    try {
+      await persistReview(await browserSetJudgment(reviewStore, changeId, value));
+    } catch (error) {
+      reviewNotice = error instanceof Error ? error.message : String(error);
+    } finally {
+      reviewBusy = false;
+    }
+  }
+
+  async function startComment(anchor: ReviewAnchor | undefined): Promise<void> {
+    if (!anchor) return;
+    commentAnchor = anchor;
+    commentBody = "";
+    await tick();
+    commentInput?.focus();
+  }
+
+  async function saveComment(): Promise<void> {
+    if (!reviewStore || !commentAnchor) return;
+    reviewBusy = true;
+    try {
+      await persistReview(
+        await browserCreateComment(reviewStore, commentAnchor, commentBody, commentKind)
+      );
+      commentAnchor = null;
+      commentBody = "";
+    } catch (error) {
+      reviewNotice = error instanceof Error ? error.message : String(error);
+    } finally {
+      reviewBusy = false;
+    }
+  }
+
+  async function resolveComment(threadId: string): Promise<void> {
+    if (!reviewStore) return;
+    reviewBusy = true;
+    try {
+      await persistReview(await browserResolveThread(reviewStore, threadId));
+    } catch (error) {
+      reviewNotice = error instanceof Error ? error.message : String(error);
+    } finally {
+      reviewBusy = false;
+    }
+  }
+
+  function exportReview(): void {
+    if (!reviewStore) return;
+    const bundle = createBrowserReviewBundle(reviewStore, reviewSource);
+    const blob = new Blob([`${JSON.stringify(bundle, null, 2)}\n`], {
+      type: "application/json"
+    });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = `${report?.reportId ?? "utsuri"}-review.json`;
+    link.click();
+    URL.revokeObjectURL(url);
+  }
+
+  async function importReview(file: File | undefined): Promise<void> {
+    if (!reviewStore || !file) return;
+    reviewBusy = true;
+    try {
+      if (file.size > 16 * 1024 * 1024) throw new Error("Review bundle exceeds 16 MiB");
+      const imported = await importBrowserReviewBundle(reviewStore, JSON.parse(await file.text()), {
+        reanchor: reviewReanchor
+      });
+      await persistReview(imported.store);
+      const counts = imported.reanchored.reduce(
+        (value, result) => {
+          value[result.disposition] += 1;
+          return value;
+        },
+        { matched: 0, stale: 0, orphaned: 0 }
+      );
+      reviewNotice = `${counts.matched} matched · ${counts.stale} stale · ${counts.orphaned} orphaned · ${imported.conflicts.length} conflicts`;
+    } catch (error) {
+      reviewNotice = error instanceof Error ? error.message : String(error);
+    } finally {
+      reviewImportInput.value = "";
+      reviewBusy = false;
+    }
   }
 
   function queueLabel(kind: QueueKind): string {
@@ -393,9 +638,40 @@
 
   async function loadReport(): Promise<void> {
     try {
-      const response = await fetch("./report.json", { credentials: "omit" });
-      if (!response.ok) throw new Error(`HTTP ${response.status}`);
-      report = (await response.json()) as UtsuriReport;
+      const embeddedReport = document.querySelector<HTMLScriptElement>("[data-utsuri-report]");
+      const embeddedManifest = document.querySelector<HTMLScriptElement>("[data-utsuri-manifest]");
+      let manifest: { source?: { base?: string | null; head?: string | null } } | null = null;
+      if (embeddedReport?.textContent) {
+        report = JSON.parse(embeddedReport.textContent) as UtsuriReport;
+        manifest = embeddedManifest?.textContent
+          ? (JSON.parse(embeddedManifest.textContent) as {
+              source?: { base?: string | null; head?: string | null };
+            })
+          : null;
+      } else {
+        const [response, manifestResponse] = await Promise.all([
+          fetch("./report.json", { credentials: "omit" }),
+          fetch("./manifest.json", { credentials: "omit" })
+        ]);
+        if (!response.ok) throw new Error(`HTTP ${response.status}`);
+        report = (await response.json()) as UtsuriReport;
+        manifest = manifestResponse.ok
+          ? ((await manifestResponse.json()) as {
+              source?: { base?: string | null; head?: string | null };
+            })
+          : null;
+      }
+      if (manifest) {
+        reviewSource = {
+          base: manifest.source?.base ?? null,
+          head: manifest.source?.head ?? null
+        };
+      }
+      try {
+        reviewStore = await loadBrowserReviewStore(report);
+      } catch (error) {
+        reviewFailure = error instanceof Error ? error.message : String(error);
+      }
       selectedChangeId = report.changes[0]?.id ?? "";
       document.querySelector("[data-static-fallback]")?.remove();
       applyLocation();
@@ -656,6 +932,18 @@
                     ? "binary"
                     : `+${file.additions ?? 0} / −${file.deletions ?? 0}`}</span
                 >
+                {#if reviewStore}
+                  <label class="viewed-control compact-control">
+                    <input
+                      type="checkbox"
+                      checked={viewed("file", file.id)}
+                      disabled={reviewBusy}
+                      onchange={(event) =>
+                        void updateViewed("file", file.id, event.currentTarget.checked)}
+                    />
+                    <span>{t.viewed}</span>
+                  </label>
+                {/if}
               </li>
             {/each}
           </ul>
@@ -683,6 +971,90 @@
               <span>{selectedChange.intent.source}</span>
             </div>
           </header>
+
+          <section class="review-workspace" aria-labelledby="review-workspace-heading">
+            <div class="review-workspace-heading">
+              <div>
+                <p class="kicker">State / human-owned</p>
+                <h3 id="review-workspace-heading">{t.reviewWorkspace}</h3>
+                {#if reviewStore}
+                  <p>
+                    {t.reviewProgress}: {Object.values(reviewStore.state.viewed).filter(
+                      (entry) => entry.state === "viewed"
+                    ).length}
+                    {t.viewed.toLocaleLowerCase()} ·
+                    {reviewStore.threads.length}
+                    {t.comments.toLocaleLowerCase()}
+                  </p>
+                {:else}
+                  <p>{t.reviewUnavailable}</p>
+                {/if}
+              </div>
+              <div class="review-transfer-actions">
+                <label>
+                  <input type="checkbox" bind:checked={reviewReanchor} disabled={reviewBusy} />
+                  <span>{t.reanchorImport}</span>
+                </label>
+                <button type="button" disabled={!reviewStore || reviewBusy} onclick={exportReview}
+                  >{t.exportReview}</button
+                >
+                <button
+                  type="button"
+                  disabled={!reviewStore || reviewBusy}
+                  onclick={() => reviewImportInput?.click()}>{t.importReview}</button
+                >
+                <input
+                  class="visually-hidden"
+                  bind:this={reviewImportInput}
+                  type="file"
+                  accept="application/json,.json"
+                  onchange={(event) => void importReview(event.currentTarget.files?.[0])}
+                />
+              </div>
+            </div>
+            {#if reviewStore}
+              <div class="review-controls">
+                <label>
+                  <span>{t.humanJudgment}</span>
+                  <select
+                    value={judgment(selectedChange.id)}
+                    disabled={reviewBusy || judgment(selectedChange.id) === "stale"}
+                    onchange={(event) =>
+                      void updateJudgment(
+                        selectedChange!.id,
+                        event.currentTarget.value as HumanJudgment
+                      )}
+                  >
+                    {#each ["unreviewed", "reviewed", "follow-up", "blocked"] as value (value)}
+                      <option {value}>{judgmentLabel(value as HumanJudgment)}</option>
+                    {/each}
+                    {#if judgment(selectedChange.id) === "stale"}
+                      <option value="stale">{t.stale}</option>
+                    {/if}
+                  </select>
+                </label>
+                <label class="viewed-control">
+                  <input
+                    type="checkbox"
+                    checked={viewed("change", selectedChange.id)}
+                    disabled={reviewBusy}
+                    onchange={(event) =>
+                      void updateViewed("change", selectedChange!.id, event.currentTarget.checked)}
+                  />
+                  <span>{t.viewed}</span>
+                </label>
+                <button
+                  type="button"
+                  disabled={reviewBusy}
+                  onclick={() => void startComment(currentAnchor("change", selectedChange!.id))}
+                  >{t.comment}</button
+                >
+              </div>
+              <p class="local-only-note">{t.localOnly}</p>
+            {/if}
+            {#if reviewFailure}<p class="review-message" role="alert">{reviewFailure}</p>{/if}
+            {#if reviewNotice}<p class="review-message" role="status">{reviewNotice}</p>{/if}
+          </section>
 
           <section class="interpretation-section" aria-labelledby="interpretation-heading">
             <div class="section-heading">
@@ -719,7 +1091,18 @@
                 <h3>{t.gaps}</h3>
                 <ul>
                   {#each selectedChange.verification.gaps as gap, index (index)}<li>
-                      {gap}
+                      <span>{gap}</span>
+                      {#if reviewStore}<button
+                          type="button"
+                          class="inline-comment-action"
+                          onclick={() =>
+                            void startComment(
+                              currentAnchor(
+                                "verification-gap",
+                                `${selectedChange!.id}:gap:${index}`
+                              )
+                            )}>{t.comment}</button
+                        >{/if}
                     </li>{/each}
                 </ul>
               </section>
@@ -775,6 +1158,22 @@
                         <option value={image.id}>{image.label}</option>
                       {/each}
                     </select>
+                  </label>
+                {/if}
+                {#if activeComparison && reviewStore}
+                  <label class="viewed-control visual-viewed-control">
+                    <input
+                      type="checkbox"
+                      checked={viewed("visual-target", activeComparison.targetRef)}
+                      disabled={reviewBusy}
+                      onchange={(event) =>
+                        void updateViewed(
+                          "visual-target",
+                          activeComparison!.targetRef,
+                          event.currentTarget.checked
+                        )}
+                    />
+                    <span>{t.viewed}</span>
                   </label>
                 {/if}
                 <label class="visual-slider">
@@ -973,13 +1372,25 @@
                     <ol>
                       {#each activeImage.regions as region, index (region.id)}
                         <li>
-                          <button
-                            type="button"
-                            aria-current={activeRegionIndex === index ? "true" : undefined}
-                            onclick={() => void jumpRegion(index)}
-                            >Region {index + 1} · {region.pixels} px · ({region.x}, {region.y}) {region.width}
-                            × {region.height}</button
-                          >
+                          <div class="region-actions">
+                            <button
+                              type="button"
+                              aria-current={activeRegionIndex === index ? "true" : undefined}
+                              onclick={() => void jumpRegion(index)}
+                              >Region {index + 1} · {region.pixels} px · ({region.x}, {region.y}) {region.width}
+                              × {region.height}</button
+                            >
+                            {#if reviewStore}<button
+                                type="button"
+                                onclick={() =>
+                                  void startComment(
+                                    currentAnchor(
+                                      "visual-region",
+                                      `${activeComparison!.id}:${activeImage!.id}:${region.id}`
+                                    )
+                                  )}>{t.comment}</button
+                              >{/if}
+                          </div>
                         </li>
                       {/each}
                     </ol>
@@ -1023,6 +1434,11 @@
                             >{t.viewCode}</button
                           >
                         {/if}
+                        {#if reviewStore}<button
+                            type="button"
+                            onclick={() => void startComment(currentAnchor("finding", finding.id))}
+                            >{t.comment}</button
+                          >{/if}
                       </article>
                     </li>
                   {/each}
@@ -1096,6 +1512,23 @@
                     </h4>
                   </div>
                   <div class="hunk-actions">
+                    {#if reviewStore}
+                      <label class="viewed-control dark-control">
+                        <input
+                          type="checkbox"
+                          checked={viewed("hunk", hunk.id)}
+                          disabled={reviewBusy}
+                          onchange={(event) =>
+                            void updateViewed("hunk", hunk.id, event.currentTarget.checked)}
+                        />
+                        <span>{t.viewed}</span>
+                      </label>
+                      <button
+                        type="button"
+                        onclick={() => void startComment(currentAnchor("hunk", hunk.id))}
+                        >{t.comment}</button
+                      >
+                    {/if}
                     {#if selectedComparisons.length > 0}
                       <button type="button" onclick={openVisualEvidence}>{t.viewVisual}</button>
                     {/if}
@@ -1123,6 +1556,7 @@
                         {t.context.replace("{count}", String(row.count))}
                       </button>
                     {:else if diffMode === "unified"}
+                      {@const reviewAnchor = lineReviewAnchor(hunk, row.index)}
                       <div
                         class={`diff-line ${row.line.kind}`}
                         role="group"
@@ -1142,8 +1576,16 @@
                               class:word-change={segment.changed}>{segment.text}</span
                             >{/each}</code
                         >
+                        {#if reviewStore && reviewAnchor}<button
+                            class="line-comment"
+                            type="button"
+                            aria-label={`${t.commentOn} ${hunk.path}:${reviewAnchor.startLine}`}
+                            title={t.comment}
+                            onclick={() => void startComment(reviewAnchor)}>✎</button
+                          >{/if}
                       </div>
                     {:else}
+                      {@const reviewAnchor = lineReviewAnchor(hunk, row.index)}
                       <div
                         class="split-row"
                         role="group"
@@ -1181,6 +1623,13 @@
                                 >{/each}</code
                             >{/if}
                         </div>
+                        {#if reviewStore && reviewAnchor}<button
+                            class="line-comment"
+                            type="button"
+                            aria-label={`${t.commentOn} ${hunk.path}:${reviewAnchor.startLine}`}
+                            title={t.comment}
+                            onclick={() => void startComment(reviewAnchor)}>✎</button
+                          >{/if}
                       </div>
                     {/if}
                   {/each}
@@ -1193,6 +1642,93 @@
               </section>
             {/each}
           </section>
+
+          <section class="review-comments" aria-labelledby="review-comments-heading">
+            <div class="section-heading">
+              <div>
+                <p class="kicker">Notes / {selectedThreads.length}</p>
+                <h3 id="review-comments-heading">{t.comments}</h3>
+              </div>
+            </div>
+
+            {#if commentAnchor}
+              <form
+                class="comment-composer"
+                onsubmit={(event) => {
+                  event.preventDefault();
+                  void saveComment();
+                }}
+              >
+                <div>
+                  <p class="kicker">{t.commentOn} / {commentAnchor.type}</p>
+                  <code>{commentAnchor.path ?? commentAnchor.ref}</code>
+                </div>
+                <label>
+                  <span>Kind</span>
+                  <select bind:value={commentKind} disabled={reviewBusy}>
+                    <option value="note">Note</option>
+                    <option value="question">Question</option>
+                    <option value="finding">Finding</option>
+                    <option value="change-request">Change request</option>
+                  </select>
+                </label>
+                <label class="comment-body">
+                  <span>{t.commentBody}</span>
+                  <textarea
+                    bind:this={commentInput}
+                    bind:value={commentBody}
+                    rows="4"
+                    maxlength="16384"
+                    required
+                    disabled={reviewBusy}
+                  ></textarea>
+                </label>
+                <p>{t.localOnly}</p>
+                <div class="comment-actions">
+                  <button type="submit" disabled={reviewBusy || !commentBody.trim()}
+                    >{t.saveComment}</button
+                  >
+                  <button
+                    type="button"
+                    disabled={reviewBusy}
+                    onclick={() => {
+                      commentAnchor = null;
+                      commentBody = "";
+                    }}>{t.cancel}</button
+                  >
+                </div>
+              </form>
+            {/if}
+
+            {#if selectedThreads.length > 0}
+              <ol class="thread-list">
+                {#each selectedThreads as thread (thread.id)}
+                  <li data-thread-state={thread.state}>
+                    <header>
+                      <div>
+                        <span>{thread.kind}</span>
+                        <strong>{thread.anchor.type}</strong>
+                      </div>
+                      <span>{thread.state === "resolved" ? t.resolved : thread.state}</span>
+                    </header>
+                    <code>{thread.anchor.path ?? thread.anchor.ref}</code>
+                    {#each thread.messages as message (message.id)}
+                      <p>{message.body}</p>
+                    {/each}
+                    {#if thread.state === "open"}
+                      <button
+                        type="button"
+                        disabled={reviewBusy}
+                        onclick={() => void resolveComment(thread.id)}>{t.resolve}</button
+                      >
+                    {/if}
+                  </li>
+                {/each}
+              </ol>
+            {:else}
+              <p class="empty-comments">{t.noComments}</p>
+            {/if}
+          </section>
         </article>
       {:else if activeHunkId}
         {@const hunk = report.hunks.find((entry) => entry.id === activeHunkId)}
@@ -1204,6 +1740,23 @@
             <section class="hunk active-hunk" id={domId("hunk", hunk.id)} tabindex="-1">
               <header>
                 <h3>@@ −{hunk.oldStart},{hunk.oldLines} +{hunk.newStart},{hunk.newLines} @@</h3>
+                {#if reviewStore}<div class="hunk-actions">
+                    <label class="viewed-control dark-control">
+                      <input
+                        type="checkbox"
+                        checked={viewed("hunk", hunk.id)}
+                        disabled={reviewBusy}
+                        onchange={(event) =>
+                          void updateViewed("hunk", hunk.id, event.currentTarget.checked)}
+                      />
+                      <span>{t.viewed}</span>
+                    </label>
+                    <button
+                      type="button"
+                      onclick={() => void startComment(currentAnchor("hunk", hunk.id))}
+                      >{t.comment}</button
+                    >
+                  </div>{/if}
               </header>
               <div class="diff-table">
                 {#each contextRows(hunk) as row, rowIndex (rowIndex)}

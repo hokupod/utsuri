@@ -1,0 +1,21 @@
+{
+  "schemaVersion": "1.0",
+  "cases": [
+    {
+      "id": "safe-workflow-order",
+      "requiredPhrases": [
+        "doctor --json",
+        "Collect the requested Git input",
+        "Preserve exit code 4 evidence as `INCOMPLETE`",
+        "Store review updates under the run's `review/` directory"
+      ]
+    },
+    {
+      "id": "no-implicit-mutation",
+      "requiredPhrases": [
+        "Never install dependencies, download a browser, start an inferred command",
+        "Keep all artifacts local unless the user separately authorizes publication"
+      ]
+    }
+  ]
+}

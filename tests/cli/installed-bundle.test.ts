@@ -4,11 +4,12 @@ import os from "node:os";
 import path from "node:path";
 import { spawnSync } from "node:child_process";
 import { fileURLToPath } from "node:url";
-import { captureConfig } from "../integration/capture-helpers";
+import { approvedBrowserAvailable, captureConfig } from "../integration/capture-helpers";
 
 const repositoryRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../..");
 const bundledCli = path.join(repositoryRoot, "skills/utsuri-review/scripts/utsuri.mjs");
 const temporaryDirectories: string[] = [];
+const browserTest = (await approvedBrowserAvailable()) ? test : test.skip;
 
 afterEach(async () => {
   await Promise.all(
@@ -52,30 +53,34 @@ describe("installed CLI bundle", () => {
     expect(copiedSchema.title).toBe("ReviewAnswer");
   });
 
-  test("captures static evidence without checkout-relative Playwright runtime files", async () => {
-    const project = await mkdtemp(path.join(os.tmpdir(), "utsuri-installed-capture-"));
-    temporaryDirectories.push(project);
-    await mkdir(path.join(project, "run"), { mode: 0o700 });
-    await Promise.all([
-      writeFile(path.join(project, "before.html"), "<main>before</main>\n"),
-      writeFile(path.join(project, "after.html"), "<main>after</main>\n")
-    ]);
-    const config = captureConfig({
-      mode: "static-fragment",
-      fragments: { before: "before.html", after: "after.html" }
-    });
-    await writeFile(path.join(project, "utsuri.yml"), `${JSON.stringify(config, null, 2)}\n`);
+  browserTest(
+    "captures static evidence without checkout-relative Playwright runtime files",
+    async () => {
+      const project = await mkdtemp(path.join(os.tmpdir(), "utsuri-installed-capture-"));
+      temporaryDirectories.push(project);
+      await mkdir(path.join(project, "run"), { mode: 0o700 });
+      await Promise.all([
+        writeFile(path.join(project, "before.html"), "<main>before</main>\n"),
+        writeFile(path.join(project, "after.html"), "<main>after</main>\n")
+      ]);
+      const config = captureConfig({
+        mode: "static-fragment",
+        fragments: { before: "before.html", after: "after.html" }
+      });
+      await writeFile(path.join(project, "utsuri.yml"), `${JSON.stringify(config, null, 2)}\n`);
 
-    const captured = runBundle(project, [
-      "capture",
-      "--run",
-      "run",
-      "--config",
-      "utsuri.yml",
-      "--json"
-    ]);
-    expect(captured.ok).toBe(true);
-    expect(captured.failedSides).toBe(0);
-    expect(captured.targets).toBe(1);
-  }, 30_000);
+      const captured = runBundle(project, [
+        "capture",
+        "--run",
+        "run",
+        "--config",
+        "utsuri.yml",
+        "--json"
+      ]);
+      expect(captured.ok).toBe(true);
+      expect(captured.failedSides).toBe(0);
+      expect(captured.targets).toBe(1);
+    },
+    30_000
+  );
 });

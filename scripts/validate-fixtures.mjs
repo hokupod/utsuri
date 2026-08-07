@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 
 import { spawnSync } from "node:child_process";
-import { readdir } from "node:fs/promises";
+import { readFile, readdir } from "node:fs/promises";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
@@ -25,6 +25,13 @@ if (reports.length === 0) throw new Error("No report fixtures were found");
 const failures = [];
 for (const report of reports.sort()) {
   const relativeReport = path.relative(root, report);
+  const rejectionPath = path.join(path.dirname(report), "rejection.json");
+  const rejection = await readFile(rejectionPath, "utf8")
+    .then((value) => JSON.parse(value))
+    .catch((error) => {
+      if (error?.code === "ENOENT") return null;
+      throw error;
+    });
   const execution = spawnSync(
     process.execPath,
     [cli, "validate", relativeReport, "--strict", "--json"],
@@ -42,6 +49,27 @@ for (const report of reports.sort()) {
     failures.push(
       `${path.relative(root, report)}: CLI returned invalid JSON (${execution.stderr.trim() || "no diagnostic"})`
     );
+    continue;
+  }
+  if (rejection) {
+    if (
+      rejection.strictValidation !== "rejected" ||
+      !Array.isArray(rejection.requiredDiagnostics)
+    ) {
+      failures.push(`${relativeReport}: invalid rejection.json contract`);
+      continue;
+    }
+    const diagnostics = result.errors ?? [result.error?.message ?? execution.stderr.trim()];
+    if (execution.status === 0 || result.ok) {
+      failures.push(`${relativeReport}: expected strict rejection but validation passed`);
+      continue;
+    }
+    const missing = rejection.requiredDiagnostics.filter(
+      (required) => !diagnostics.includes(required)
+    );
+    if (missing.length > 0) {
+      failures.push(`${relativeReport}: missing required diagnostics: ${missing.join("; ")}`);
+    }
     continue;
   }
   if (execution.status !== 0 || !result.ok) {

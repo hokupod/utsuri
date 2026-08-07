@@ -77,6 +77,20 @@
       "bin": {
         "utsuri": "dist/utsuri.mjs",
       },
+      "dependencies": {
+        "@utsu-ri/capture": "workspace:*",
+        "@utsu-ri/compare": "workspace:*",
+        "@utsu-ri/core": "workspace:*",
+        "@utsu-ri/discovery": "workspace:*",
+        "@utsu-ri/git-collector": "workspace:*",
+        "@utsu-ri/interactive-server": "workspace:*",
+        "@utsu-ri/report-builder": "workspace:*",
+        "@utsu-ri/report-model": "workspace:*",
+        "@utsu-ri/review-state": "workspace:*",
+        "@utsu-ri/security": "workspace:*",
+        "fflate": "0.8.2",
+        "yaml": "2.8.1",
+      },
     },
     "packages/compare": {
       "name": "@utsu-ri/compare",
@@ -121,6 +135,8 @@
       "name": "@utsu-ri/interactive-server",
       "version": "0.1.0",
       "dependencies": {
+        "@utsu-ri/core": "workspace:*",
+        "@utsu-ri/report-builder": "workspace:*",
         "@utsu-ri/security": "workspace:*",
       },
     },
@@ -147,6 +163,15 @@
     "packages/report-ui": {
       "name": "@utsu-ri/report-ui",
       "version": "0.1.0",
+    },
+    "packages/review-state": {
+      "name": "@utsu-ri/review-state",
+      "version": "0.1.0",
+      "dependencies": {
+        "@utsu-ri/core": "workspace:*",
+        "@utsu-ri/report-model": "workspace:*",
+        "@utsu-ri/security": "workspace:*",
+      },
     },
     "packages/security": {
       "name": "@utsu-ri/security",
@@ -370,11 +395,15 @@
 
     "@utsu-ri/git-collector": ["@utsu-ri/git-collector@workspace:packages/git-collector"],
 
+    "@utsu-ri/interactive-server": ["@utsu-ri/interactive-server@workspace:packages/interactive-server"],
+
     "@utsu-ri/report-builder": ["@utsu-ri/report-builder@workspace:packages/report-builder"],
 
     "@utsu-ri/report-model": ["@utsu-ri/report-model@workspace:packages/report-model"],
 
     "@utsu-ri/report-ui": ["@utsu-ri/report-ui@workspace:packages/report-ui"],
+
+    "@utsu-ri/review-state": ["@utsu-ri/review-state@workspace:packages/review-state"],
 
     "@utsu-ri/security": ["@utsu-ri/security@workspace:packages/security"],
 

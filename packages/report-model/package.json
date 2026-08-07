@@ -10,6 +10,7 @@
     "ajv-formats": "3.0.1"
   },
   "exports": {
-    ".": "./src/index.ts"
+    ".": "./src/index.ts",
+    "./browser-validator": "./src/browser-validator.ts"
   }
 }

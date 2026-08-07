@@ -18,9 +18,9 @@ The name joins the Japanese ideas of how a UI is reflected after a change and ho
 
 ## Status
 
-<!-- availability:phase-4-security-hardening -->
+<!-- availability:phase-5-distribution-candidate -->
 
-The Phase 4 security-hardened flow is available from this source checkout. It combines code review, isolated browser capture, comparison and coverage with hardened report boundaries, resource limits, capability-gated container execution, a self-contained ESM bundle, and deterministic supply-chain metadata. Persisted review state and Agent feedback are not implemented yet. The npm package and Plugin remain unpublished.
+The Phase 5 distribution-candidate flow is available from this source checkout. It adds persisted viewed/judgment/comment state, canonical review export/import, loopback-only static serving, deterministic CI packaging and policy, four-platform native-helper candidate assembly, exact-tarball verification, and host validation to the Phase 4 hardened review flow. Origin Session feedback remains unavailable until Phase 6. The npm packages and Plugin remain unpublished.
 
 <a id="capabilities"></a><!-- section:capabilities -->
 
@@ -42,15 +42,18 @@ Available now:
 - side-by-side, wipe, stoppable blink, pixel-diff, and after-only views with crop/full-page selection, synchronized scroll/zoom, region navigation, and code/finding cross-links.
 - separate static/interactive/iframe CSPs, bounded JSON, empty-sandbox sanitized previews, PNG-only visual evidence, expanded privacy declarations, and strict SHA-256 report validation;
 - fixed Docker/Podman isolation with digest-pinned local images, no network, a read-only root/project mount, dropped capabilities, a non-root user, and PID/CPU/memory/time/artifact limits; and
-- a single Node 22 ESM CLI bundle with source/schema/UI hashes plus deterministic SPDX 2.3 and dependency-license inventories.
+- a single Node 22 ESM CLI bundle with source/schema/UI hashes plus deterministic SPDX 2.3 and dependency-license inventories;
+- independently persisted viewed progress, human judgment, and anchored comments with canonical export/import and explicit matched/stale/orphaned re-anchoring;
+- loopback-only static serving plus deterministic `report.zip`, `report.json`, and `ci-summary.json` packaging with policy exit code `10`; and
+- exact CLI/native package contracts, four architecture-matched helper candidates, aggregate Plugin verification, Node 22/24 isolated-tarball smoke tests, and shared Skill evaluations.
 
-Later v1 phases add persisted review state and Origin Session feedback. A complete capture remains `UNCOVERED` until discovery and comparison run. Missing or malformed evidence, a failed side, exceeded resource limits, or unavailable container capability remains `INCOMPLETE`; an unknown denominator remains explicit and is never presented as a percentage. Pixel differences alone do not establish `REGRESSION`.
+Phase 6 adds the Origin Session feedback path. Phase 5 comments remain local and are never sent to an Agent. A complete capture remains `UNCOVERED` until discovery and comparison run. Missing or malformed evidence, a failed side, exceeded resource limits, or unavailable container capability remains `INCOMPLETE`; an unknown denominator remains explicit and is never presented as a percentage. Pixel differences alone do not establish `REGRESSION`.
 
 <a id="quick-start"></a><!-- section:quick-start -->
 
 ## Quick Start
 
-Prerequisites: Nix, Safe-chain 1.5.14 at its standard user location, and an existing system Chrome or Chromium for capture. The Nix shell supplies Node 24 and Bun; no absolute Safe-chain path is configured.
+Prerequisites: Nix, Safe-chain 1.5.14 at its standard user location, and an explicitly configured compatible Chrome/Chromium or an existing Playwright-managed browser for capture. The Nix shell supplies Node 24 and Bun; no absolute Safe-chain path is configured. Utsuri never downloads a browser automatically.
 
 <!-- sync-command:dev-shell -->
 
@@ -126,6 +129,19 @@ node skills/utsuri-review/scripts/utsuri.mjs finalize --run .artifacts/utsuri/re
 node skills/utsuri-review/scripts/utsuri.mjs validate .artifacts/utsuri/readme-example/report --strict --json
 ```
 
+Export mutable review state without changing the immutable report. Import into another run only after reviewing the source identity; `--reanchor` keeps changed or missing anchors visibly stale or orphaned.
+
+```bash
+node skills/utsuri-review/scripts/utsuri.mjs review export --run .artifacts/utsuri/readme-example --output .artifacts/utsuri/review-bundle.json --json
+node skills/utsuri-review/scripts/utsuri.mjs review import --run .artifacts/utsuri/updated-run --input .artifacts/utsuri/review-bundle.json --reanchor --json
+```
+
+Create local CI artifacts without uploading them:
+
+```bash
+node skills/utsuri-review/scripts/utsuri.mjs pack .artifacts/utsuri/readme-example/report --config utsuri.yml --output .artifacts/utsuri/ci-output --json
+```
+
 <a id="development"></a><!-- section:development -->
 
 ## Development
@@ -140,7 +156,7 @@ node scripts/safe-chain.mjs bun run check
 
 The bundled CLI protocol is verified natively so wrapper notices cannot corrupt JSON or NDJSON.
 
-The check and build gates compile the audited atomic-publication helper for the current macOS or Linux target. Distribution candidates assemble and verify all four supported OS/architecture helpers before publication.
+The check and build gates compile the audited atomic-publication helper for the current macOS or Linux target. The manually dispatched candidate workflow builds all four supported OS/architecture helpers on matching runners, assembles an aggregate Plugin and exact npm tarballs, and verifies isolated installs under Node 22 and 24. Candidate mode performs no registry write.
 
 <!-- sync-command:native-doctor -->
 
@@ -164,6 +180,8 @@ Every browser launch uses a random process token and must resolve to exactly one
 
 Generated `report/` content is immutable. Referenced capture and comparison evidence is independently digest-checked, copied into the report, restricted to validated PNG bytes for images, and covered by the report asset manifest. The stored `index.html` always has the offline static CSP. A local interactive server may replace exactly that canonical CSP boundary with the interactive CSP; static-fragment previews have a separate no-script/no-connect CSP. Strict validation rejects active HTML, direct SVG, unsafe references, unlisted files, missing files, and hash drift. Manifests declare that absolute paths, cookies, raw environment, raw DOM, raw headers, and traces are excluded.
 
+Viewed progress, human judgment, and comments are separate mutable records. Static mode uses Web Locks plus optimistic revisions, stores state per report in browser storage, and exports a schema-validated, catalog-bound bundle; a stale tab never overwrites newer state. CLI state uses immutable generations and atomic hard-linked revision records under `run/review/`, without a crash-stale process lock. Import never rewrites `report/`, requires explicit re-anchoring for another report, never activates probable anchors automatically, and keeps changed or missing anchors explicitly stale or orphaned. Phase 5 has no Agent-submission path.
+
 Discovery and comparison manifests are bound to the collected diff/capture hashes; substituted or unlisted artifacts fail finalization. Finalization reconstructs the complete report from validated run artifacts and annotations, records the exact source-byte snapshot hash in the manifest, publishes only an immutable snapshot, and rejects source or evidence drift during staging or reuse. Utsuri requires regular non-symlink run inputs, canonical contained paths, safe archive inventories, a publication path protected from other local principals, strict staging validation, and the bundled OS no-replace helper. Missing or unsupported helpers fail closed; failed generation can leave a private staging directory for manual diagnosis and never deletes it automatically. Mutable human-review data is stored separately in `run/review/`. The static viewer does not contact external services.
 
 Code diff content is parsed into structured lines and rendered only as text. Repository-controlled diff text is never injected as HTML.
@@ -176,6 +194,7 @@ Build output is one Node 22-compatible ESM file with no external JavaScript runt
 
 - [Canonical detailed design](https://github.com/hokupod/utsuri/blob/main/docs/design.md)
 - [Phase 4 threat model](https://github.com/hokupod/utsuri/blob/main/docs/threat-model.md)
+- [Release and distribution guide](https://github.com/hokupod/utsuri/blob/main/docs/release.md)
 - [UI guidelines and HIG/WCAG traceability](https://github.com/hokupod/utsuri/blob/main/docs/ui-guidelines.md)
 - [Capture modes and runtime boundary](https://github.com/hokupod/utsuri/blob/main/skills/utsuri-review/references/capture-modes.md)
 - [CLI contract](https://github.com/hokupod/utsuri/blob/main/skills/utsuri-review/references/cli-contract.md)
@@ -187,4 +206,4 @@ The design is canonical in English. User-facing README changes update English, J
 
 ## License and publication status
 
-The publisher is `hokupod`, the npm maintainer is `hokupod-npm`, publication uses GitHub Actions trusted publishing, and the SPDX license is `AGPL-3.0-or-later`. Packages remain unpublished until all release gates pass and a separate release is explicitly authorized. The v1 implementation plan does not publish, tag, push, or promote artifacts.
+The publisher is `hokupod`, the npm maintainer is `hokupod-npm`, publication uses GitHub Actions trusted publishing, and the SPDX license is `AGPL-3.0-or-later`. Phase 5 produces only a distribution candidate. Cross-job transport verifies manifest-bound regular files before restoring declared modes; it does not extract downloaded helper or Plugin tarballs. Packages remain unpublished until all release gates pass and a separate release is explicitly authorized. The v1 implementation plan does not publish, tag, push, or promote artifacts.

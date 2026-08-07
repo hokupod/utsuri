@@ -3,9 +3,19 @@ import { copyFile, mkdir } from "node:fs/promises";
 import { once } from "node:events";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
+import { resolveBrowserExecutable } from "../../packages/capture/src/browser";
 import type { UtsuriConfig } from "../../packages/report-model/src";
 
 export const repositoryRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../..");
+
+export async function approvedBrowserAvailable(): Promise<boolean> {
+  try {
+    await resolveBrowserExecutable();
+    return true;
+  } catch {
+    return false;
+  }
+}
 
 export async function freePort(): Promise<number> {
   const server = createServer();

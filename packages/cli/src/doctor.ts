@@ -32,22 +32,36 @@ async function isExecutable(filename: string): Promise<boolean> {
 }
 
 async function browserCheck(): Promise<DoctorCheck> {
-  if (
-    process.env.UTSURI_BROWSER_EXECUTABLE &&
-    (await isExecutable(process.env.UTSURI_BROWSER_EXECUTABLE))
-  ) {
-    return { id: "browser", status: "pass", detail: "explicit executable" };
+  if (process.env.UTSURI_BROWSER_EXECUTABLE) {
+    return (await isExecutable(process.env.UTSURI_BROWSER_EXECUTABLE))
+      ? { id: "browser", status: "pass", detail: "explicit executable" }
+      : {
+          id: "browser",
+          status: "invalid",
+          detail: "UTSURI_BROWSER_EXECUTABLE is not executable"
+        };
   }
-  if (platform() === "darwin") {
-    for (const [name, executable] of [
-      ["Google Chrome", "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome"],
-      ["Chromium", "/Applications/Chromium.app/Contents/MacOS/Chromium"]
-    ] as const) {
-      if (await isExecutable(executable)) return { id: "browser", status: "pass", detail: name };
+  try {
+    const { chromium } = await import("playwright-core");
+    if (await isExecutable(chromium.executablePath())) {
+      return { id: "browser", status: "pass", detail: "Playwright-managed Chromium" };
     }
+  } catch {
+    // Continue to an existing headless-compatible executable on PATH.
   }
-  for (const name of ["chromium", "chromium-browser", "google-chrome"]) {
+  for (const name of ["chrome-headless-shell", "chromium", "chromium-browser"]) {
     if (run("which", [name])) return { id: "browser", status: "pass", detail: name };
+  }
+  if (
+    platform() === "darwin" &&
+    (await isExecutable("/Applications/Google Chrome.app/Contents/MacOS/Google Chrome"))
+  ) {
+    return {
+      id: "browser",
+      status: "optional",
+      detail:
+        "Google Chrome detected but not selected automatically; explicit authorization required"
+    };
   }
   return { id: "browser", status: "optional", detail: "No existing Chrome or Chromium found" };
 }

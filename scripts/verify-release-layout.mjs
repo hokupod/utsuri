@@ -2,13 +2,18 @@
 
 import { createHash } from "node:crypto";
 import { constants } from "node:fs";
-import { access, lstat, readFile, readdir } from "node:fs/promises";
+import { access, lstat, mkdtemp, readFile, readdir, rm } from "node:fs/promises";
 import { builtinModules } from "node:module";
+import os from "node:os";
 import path from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
 import ts from "typescript";
+import { assembleCliPackage } from "./assemble-release-package.mjs";
 import { buildCliBundle } from "./build.mjs";
-import { validateCliManifest, validateExactFileInventory } from "./release-manifest-contract.mjs";
+import {
+  validateCliSourceManifest,
+  validateExactFileInventory
+} from "./release-manifest-contract.mjs";
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const errors = [];
@@ -144,6 +149,24 @@ if (scanIndex !== -1) {
   process.exit(0);
 }
 
+const candidateIndex = process.argv.indexOf("--candidate");
+if (candidateIndex !== -1) {
+  const candidate = process.argv[candidateIndex + 1];
+  if (!candidate) {
+    console.error("--candidate requires a directory");
+    process.exit(2);
+  }
+  try {
+    const { verifyDistributionCandidate } = await import("./assemble-distribution-candidate.mjs");
+    await verifyDistributionCandidate(path.resolve(candidate), root);
+    console.log("Distribution candidate contains all four verified native helpers");
+    process.exit(0);
+  } catch (error) {
+    console.error(error.message);
+    process.exit(5);
+  }
+}
+
 async function readRegular(relativePath) {
   const absolutePath = path.join(root, relativePath);
   try {
@@ -193,6 +216,8 @@ const schemaNames = [
   "origin-session.schema.json",
   "report.schema.json",
   "review-answer.schema.json",
+  "review-bundle.schema.json",
+  "review-event.schema.json",
   "review-plan.schema.json",
   "review-state.schema.json",
   "review-thread.schema.json"
@@ -472,10 +497,20 @@ const cliManifestContent = await readRegular("packages/cli/package.json");
 if (cliManifestContent) {
   try {
     const manifest = JSON.parse(cliManifestContent.toString("utf8"));
-    errors.push(...validateCliManifest(manifest, expectedVersion));
+    errors.push(...validateCliSourceManifest(manifest, expectedVersion));
   } catch (error) {
     errors.push(`packages/cli/package.json is not valid JSON: ${error.message}`);
   }
+}
+
+const releaseStagingParent = await mkdtemp(path.join(os.tmpdir(), "utsuri-release-layout-"));
+try {
+  const staged = await assembleCliPackage(path.join(releaseStagingParent, "cli"), root);
+  errors.push(...(await scanReleaseTree(staged.directory, "staged-cli")));
+} catch (error) {
+  errors.push(`public CLI staging is invalid: ${error.message}`);
+} finally {
+  await rm(releaseStagingParent, { recursive: true, force: true });
 }
 
 await readRegular("skills/utsuri-review/SKILL.md");

@@ -8,6 +8,8 @@ export type { FeedbackBatch } from "./generated/feedback-batch.schema";
 export type { OriginSessionBinding } from "./generated/origin-session.schema";
 export type { UtsuriReport } from "./generated/report.schema";
 export type { ReviewAnswer } from "./generated/review-answer.schema";
+export type { ReviewBundle } from "./generated/review-bundle.schema";
+export type { ReviewEvent } from "./generated/review-event.schema";
 export type { ReviewPlan } from "./generated/review-plan.schema";
 export type { ReviewState } from "./generated/review-state.schema";
 export type { ReviewThread } from "./generated/review-thread.schema";
@@ -17,6 +19,7 @@ export {
   validateArtifact,
   validateDiffReferences,
   validateReportReferences,
+  validateReviewBundle,
   validateReviewPlanReferences,
   type ArtifactValidationResult,
   type SchemaName

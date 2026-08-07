@@ -30,24 +30,34 @@ async function executable(pathname) {
 }
 
 async function detectBrowser() {
-  const explicit = await executable(process.env.UTSURI_BROWSER_EXECUTABLE);
-  if (explicit) return { available: true, source: "explicit", executable: explicit };
-
-  if (platform() === "darwin") {
-    const candidates = [
-      "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome",
-      "/Applications/Chromium.app/Contents/MacOS/Chromium"
-    ];
-    for (const candidate of candidates) {
-      const found = await executable(candidate);
-      if (found) return { available: true, source: "system-app", executable: found };
-    }
+  if (process.env.UTSURI_BROWSER_EXECUTABLE) {
+    const explicit = await executable(process.env.UTSURI_BROWSER_EXECUTABLE);
+    return explicit
+      ? { available: true, source: "explicit", executable: explicit }
+      : { available: false, source: "invalid-explicit", executable: null };
   }
 
-  for (const name of ["chromium", "chromium-browser", "google-chrome"]) {
+  try {
+    const { chromium } = await import("playwright-core");
+    const managed = await executable(chromium.executablePath());
+    if (managed) return { available: true, source: "playwright-managed", executable: managed };
+  } catch {
+    // Continue to an existing headless-compatible executable on PATH.
+  }
+
+  for (const name of ["chrome-headless-shell", "chromium", "chromium-browser"]) {
     const found = command("which", [name]);
     const resolved = await executable(found);
     if (resolved) return { available: true, source: "path", executable: resolved };
+  }
+
+  if (platform() === "darwin") {
+    const normalChrome = await executable(
+      "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome"
+    );
+    if (normalChrome) {
+      return { available: false, source: "system-app-requires-explicit", executable: null };
+    }
   }
 
   return { available: false, source: "none", executable: null };

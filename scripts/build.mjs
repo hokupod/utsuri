@@ -290,6 +290,8 @@ export async function buildReleaseArtifacts() {
     "origin-session.schema.json",
     "report.schema.json",
     "review-answer.schema.json",
+    "review-bundle.schema.json",
+    "review-event.schema.json",
     "review-plan.schema.json",
     "review-state.schema.json",
     "review-thread.schema.json"

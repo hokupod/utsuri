@@ -57,10 +57,40 @@ function reportReferencesAreValid(report) {
   return true;
 }
 
+function reviewBundleReferencesAreValid(bundle) {
+  const stateValidator = schemas.get("review-state");
+  const threadValidator = schemas.get("review-thread");
+  const eventValidator = schemas.get("review-event");
+  if (!stateValidator?.(bundle.state)) return false;
+  if (!(bundle.threads ?? []).every((thread) => threadValidator?.(thread))) return false;
+  if (!(bundle.events ?? []).every((event) => eventValidator?.(event))) return false;
+  if (bundle.state.reportId !== bundle.source.reportId) return false;
+  if (bundle.state.reportFingerprint !== bundle.source.reportFingerprint) return false;
+  const threadIds = (bundle.threads ?? []).map((thread) => thread.id);
+  if (new Set(threadIds).size !== threadIds.length) return false;
+  if ([...threadIds].sort().join("\n") !== [...bundle.state.threadIds].sort().join("\n")) {
+    return false;
+  }
+  const orphaned = new Set(bundle.state.orphanedThreadIds);
+  if (
+    (bundle.threads ?? []).some(
+      (thread) =>
+        thread.reportId !== bundle.source.reportId ||
+        (thread.state === "orphaned") !== orphaned.has(thread.id)
+    )
+  ) {
+    return false;
+  }
+  if ((bundle.events ?? []).some((event, index) => event.sequence !== index + 1)) return false;
+  return !(bundle.events ?? []).some((event) => event.reportId !== bundle.source.reportId);
+}
+
 function validateFixture(schemaName, validate, value) {
   const schemaValid = validate(value);
   if (!schemaValid) return false;
-  return schemaName !== "report" || reportReferencesAreValid(value);
+  if (schemaName === "report") return reportReferencesAreValid(value);
+  if (schemaName === "review-bundle") return reviewBundleReferencesAreValid(value);
+  return true;
 }
 
 for (const fixture of await loadCases(path.join(root, "fixtures/schemas/valid"))) {
