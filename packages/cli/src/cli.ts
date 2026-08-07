@@ -6,14 +6,27 @@ import { ExitCode, toUtsuriError, UtsuriError } from "@utsu-ri/core";
 import { discoverRun } from "@utsu-ri/discovery";
 import { collectGit } from "@utsu-ri/git-collector";
 import { buildReport, createInitialReport, validateReportDirectory } from "@utsu-ri/report-builder";
+import type { OriginSessionBinding, UtsuriReport } from "@utsu-ri/report-model";
 import { assertArtifact } from "@utsu-ri/report-model";
-import { resolveContainedPath } from "@utsu-ri/security";
+import {
+  parseBoundedJson,
+  readContainedRegularFile,
+  resolveContainedPath
+} from "@utsu-ri/security";
 import { optionString, parseArguments } from "./arguments";
 import { doctor } from "./doctor";
 import { initializeConfig } from "./init";
 import { packReport } from "./pack";
 import { reviewExport, reviewImport } from "./review";
 import { serveReport } from "./serve";
+import {
+  bindReportToCurrentSession,
+  feedbackAnswer,
+  feedbackGet,
+  feedbackHandoff,
+  feedbackList,
+  prepareFeedbackRuntime
+} from "./feedback";
 
 async function readArtifactJson(filename: string, label: string): Promise<unknown> {
   const content = await readFile(filename, "utf8");
@@ -22,6 +35,24 @@ async function readArtifactJson(filename: string, label: string): Promise<unknow
   } catch {
     throw new UtsuriError("ARTIFACT_JSON_INVALID", `${label} is not valid JSON`, ExitCode.Artifact);
   }
+}
+
+async function readPublishedOrigin(
+  runDirectory: string
+): Promise<OriginSessionBinding | undefined> {
+  const reportDirectory = path.join(runDirectory, "report");
+  const validation = await validateReportDirectory(reportDirectory, { strict: true });
+  if (!validation.ok) return undefined;
+  const report = parseBoundedJson(
+    (
+      await readContainedRegularFile(reportDirectory, "report.json", {
+        maximumBytes: 32 * 1024 * 1024
+      })
+    ).toString("utf8"),
+    { label: "published report", maximumBytes: 32 * 1024 * 1024 }
+  );
+  assertArtifact("report", report);
+  return structuredClone((report as UtsuriReport).origin);
 }
 
 const help = `Utsuri 0.1.0
@@ -42,6 +73,11 @@ Commands:
   pack <report>          Create deterministic CI artifacts and apply policy
   review export          Export review state, comments, and event journal
   review import          Import review state with optional --reanchor
+  feedback list          List pending Origin Session review batches
+  feedback get           Claim and read one batch in the current conversation
+  feedback answer        Write one structured answer per claimed item
+  feedback handoff       Print portable return-to-session text
+  review-mcp             Run the fixed-run Review Inbox MCP server over stdio
 
 Global options:
   --json                  Emit one strict JSON value
@@ -58,7 +94,8 @@ export interface CliExecution {
 
 export async function executeCli(
   argv: readonly string[],
-  cwd = process.cwd()
+  cwd = process.cwd(),
+  environment: NodeJS.ProcessEnv = process.env
 ): Promise<CliExecution> {
   let json = argv.includes("--json");
   try {
@@ -153,10 +190,18 @@ export async function executeCli(
         annotations = await readArtifactJson(filename, "annotations");
         assertArtifact("annotations", annotations);
       }
-      const report = await createInitialReport(runDirectory, annotations);
+      const initialReport = await createInitialReport(runDirectory, annotations);
+      const publishedOrigin = await readPublishedOrigin(runDirectory);
+      const report = await bindReportToCurrentSession(
+        cwd,
+        initialReport,
+        environment,
+        publishedOrigin
+      );
       const built = await buildReport(runDirectory, report, {
         toolVersion: "0.1.0",
-        annotations
+        annotations,
+        ...(report.origin.bindingMode === "unbound" ? {} : { origin: report.origin })
       });
       const relative = path.relative(cwd, built.reportDirectory).replaceAll(path.sep, "/");
       const data = {
@@ -363,6 +408,59 @@ export async function executeCli(
       throw new UtsuriError(
         "CLI_REVIEW_SUBCOMMAND",
         "review requires export or import",
+        ExitCode.Arguments
+      );
+    }
+
+    if (args.command === "feedback") {
+      const subcommand = args.positionals[0];
+      if (args.positionals.length !== 1) {
+        throw new UtsuriError(
+          "CLI_FEEDBACK_SUBCOMMAND",
+          "feedback requires exactly one of list, get, answer, or handoff",
+          ExitCode.Arguments
+        );
+      }
+      const runValue = optionString(args, "--run");
+      if (!runValue) {
+        throw new UtsuriError("CLI_RUN_REQUIRED", "feedback requires --run", ExitCode.Arguments);
+      }
+      const runtime = await prepareFeedbackRuntime(cwd, runValue, environment);
+      if (subcommand === "list") {
+        const result = await feedbackList(runtime, optionString(args, "--status"));
+        return { exitCode: ExitCode.Success, data: result.data, human: result.human, json };
+      }
+      if (subcommand === "get") {
+        const result = await feedbackGet(runtime, optionString(args, "--batch"));
+        return { exitCode: ExitCode.Success, data: result.data, human: result.human, json };
+      }
+      if (subcommand === "answer") {
+        const input = optionString(args, "--input");
+        if (!input) {
+          throw new UtsuriError(
+            "CLI_INPUT_REQUIRED",
+            "feedback answer requires --input",
+            ExitCode.Arguments
+          );
+        }
+        const result = await feedbackAnswer(cwd, runtime, optionString(args, "--batch"), input);
+        return { exitCode: ExitCode.Success, data: result.data, human: result.human, json };
+      }
+      if (subcommand === "handoff") {
+        const result = await feedbackHandoff(runtime, optionString(args, "--batch"));
+        return { exitCode: ExitCode.Success, data: result.data, human: result.human, json };
+      }
+      throw new UtsuriError(
+        "CLI_FEEDBACK_SUBCOMMAND",
+        "feedback requires list, get, answer, or handoff",
+        ExitCode.Arguments
+      );
+    }
+
+    if (args.command === "review-mcp") {
+      throw new UtsuriError(
+        "CLI_MCP_STDIO_REQUIRED",
+        "review-mcp must be launched through the CLI entrypoint with --run",
         ExitCode.Arguments
       );
     }

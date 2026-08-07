@@ -15,22 +15,65 @@
     "createdAt"
   ],
   "properties": {
-    "id": { "type": "string", "pattern": "^fb[-:]" },
-    "reportId": { "type": "string" },
+    "id": {
+      "type": "string",
+      "pattern": "^fb[-:][A-Za-z0-9._:-]+$",
+      "maxLength": 256
+    },
+    "reportId": {
+      "type": "string",
+      "pattern": "^report[-:][A-Za-z0-9._:-]+$",
+      "maxLength": 256
+    },
     "origin": { "$ref": "#/$defs/origin" },
     "items": {
       "type": "array",
       "minItems": 1,
-      "maxItems": 100,
+      "maxItems": 20,
       "items": { "$ref": "#/$defs/item" }
     },
     "state": { "enum": ["draft", "ready", "submitted", "consumed", "answered", "stale"] },
     "deliveryMode": { "enum": ["direct-same-session", "return-to-session", "export-only"] },
-    "contextHash": { "type": "string", "minLength": 8 },
+    "contextHash": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
     "createdAt": { "type": "string", "format": "date-time" },
     "submittedAt": { "type": "string", "format": "date-time" },
-    "consumedAt": { "type": "string", "format": "date-time" }
+    "consumedAt": { "type": "string", "format": "date-time" },
+    "answeredAt": { "type": "string", "format": "date-time" }
   },
+  "allOf": [
+    {
+      "if": { "properties": { "state": { "const": "submitted" } } },
+      "then": { "required": ["submittedAt"] }
+    },
+    {
+      "if": { "properties": { "state": { "const": "consumed" } } },
+      "then": { "required": ["consumedAt"] }
+    },
+    {
+      "if": { "properties": { "state": { "const": "answered" } } },
+      "then": { "required": ["answeredAt"] }
+    },
+    {
+      "if": { "properties": { "deliveryMode": { "const": "direct-same-session" } } },
+      "then": {
+        "properties": {
+          "origin": { "properties": { "bindingMode": { "const": "direct-same-session" } } }
+        }
+      }
+    },
+    {
+      "if": { "properties": { "deliveryMode": { "const": "return-to-session" } } },
+      "then": {
+        "properties": {
+          "origin": {
+            "properties": {
+              "bindingMode": { "enum": ["return-to-session", "direct-same-session"] }
+            }
+          }
+        }
+      }
+    }
+  ],
   "$defs": {
     "origin": {
       "type": "object",
@@ -38,12 +81,27 @@
       "required": ["host", "projectFingerprint", "reportId", "bindingMode", "createdAt"],
       "properties": {
         "host": { "enum": ["codex", "claude-code", "unknown"] },
-        "sessionRef": { "type": "string" },
-        "projectFingerprint": { "type": "string", "minLength": 8 },
-        "reportId": { "type": "string" },
+        "sessionRef": { "type": "string", "pattern": "^session:[a-f0-9]{64}$" },
+        "projectFingerprint": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
+        "reportId": {
+          "type": "string",
+          "pattern": "^report[-:][A-Za-z0-9._:-]+$",
+          "maxLength": 256
+        },
         "bindingMode": { "enum": ["direct-same-session", "return-to-session", "unbound"] },
         "createdAt": { "type": "string", "format": "date-time" }
-      }
+      },
+      "allOf": [
+        {
+          "if": { "properties": { "bindingMode": { "const": "unbound" } } },
+          "then": { "not": { "required": ["sessionRef"] } },
+          "else": { "required": ["sessionRef"] }
+        },
+        {
+          "if": { "properties": { "host": { "const": "unknown" } } },
+          "then": { "properties": { "bindingMode": { "const": "unbound" } } }
+        }
+      ]
     },
     "anchor": {
       "type": "object",
@@ -73,14 +131,14 @@
           "additionalProperties": false,
           "required": ["x", "y", "width", "height"],
           "properties": {
-            "x": { "type": "number", "minimum": 0 },
-            "y": { "type": "number", "minimum": 0 },
-            "width": { "type": "number", "exclusiveMinimum": 0 },
-            "height": { "type": "number", "exclusiveMinimum": 0 }
+            "x": { "type": "number", "minimum": 0, "maximum": 1 },
+            "y": { "type": "number", "minimum": 0, "maximum": 1 },
+            "width": { "type": "number", "exclusiveMinimum": 0, "maximum": 1 },
+            "height": { "type": "number", "exclusiveMinimum": 0, "maximum": 1 }
           }
         },
         "selectorHint": { "type": "string" },
-        "fingerprint": { "type": "string", "minLength": 8 }
+        "fingerprint": { "type": "string", "pattern": "^[a-f0-9]{64}$" }
       }
     },
     "item": {
@@ -97,10 +155,22 @@
         "state"
       ],
       "properties": {
-        "id": { "type": "string", "pattern": "^item[-:]" },
-        "threadId": { "type": "string" },
+        "id": {
+          "type": "string",
+          "pattern": "^item[-:][A-Za-z0-9._:-]+$",
+          "maxLength": 256
+        },
+        "threadId": {
+          "type": "string",
+          "pattern": "^thread[-:][A-Za-z0-9._:-]+$",
+          "maxLength": 256
+        },
         "anchor": { "$ref": "#/$defs/anchor" },
-        "sourceMessageId": { "type": "string" },
+        "sourceMessageId": {
+          "type": "string",
+          "pattern": "^message[-:][A-Za-z0-9._:-]+$",
+          "maxLength": 256
+        },
         "requestKind": {
           "enum": [
             "explain",
@@ -112,7 +182,7 @@
             "freeform"
           ]
         },
-        "question": { "type": "string", "minLength": 1 },
+        "question": { "type": "string", "minLength": 1, "maxLength": 16384 },
         "contextSelection": {
           "type": "object",
           "additionalProperties": false,

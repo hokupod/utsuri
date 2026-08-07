@@ -41,6 +41,9 @@ export interface Message {
   };
   body: string;
   feedbackItemId?: string;
+  /**
+   * @maxItems 100
+   */
   evidenceRefs?: string[];
   createdAt: string;
 }

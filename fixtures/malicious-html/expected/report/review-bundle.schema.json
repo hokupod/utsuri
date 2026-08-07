@@ -29,7 +29,8 @@
       "properties": {
         "reportId": {
           "type": "string",
-          "pattern": "^report[-:]"
+          "pattern": "^report[-:][A-Za-z0-9._:-]+$",
+          "maxLength": 256
         },
         "reportFingerprint": {
           "type": "string",
@@ -134,19 +135,23 @@
           "properties": {
             "x": {
               "type": "number",
-              "minimum": 0
+              "minimum": 0,
+              "maximum": 1
             },
             "y": {
               "type": "number",
-              "minimum": 0
+              "minimum": 0,
+              "maximum": 1
             },
             "width": {
               "type": "number",
-              "exclusiveMinimum": 0
+              "exclusiveMinimum": 0,
+              "maximum": 1
             },
             "height": {
               "type": "number",
-              "exclusiveMinimum": 0
+              "exclusiveMinimum": 0,
+              "maximum": 1
             }
           }
         },
@@ -155,7 +160,7 @@
         },
         "fingerprint": {
           "type": "string",
-          "minLength": 8
+          "pattern": "^[a-f0-9]{64}$"
         }
       }
     }

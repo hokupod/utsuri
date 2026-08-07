@@ -50,6 +50,40 @@ function stableHash(value) {
   return sha256(JSON.stringify(normalize(value)));
 }
 
+async function readOptionalJson(filename) {
+  try {
+    return JSON.parse(await readFile(filename, "utf8"));
+  } catch (error) {
+    if (error?.code === "ENOENT") return null;
+    throw error;
+  }
+}
+
+async function refreshFixtureOrigin(reportDirectory, reportDocument) {
+  if (reportDocument.origin?.bindingMode !== "unbound") return;
+  const runDirectory = path.dirname(reportDirectory);
+  const diff = await readOptionalJson(path.join(runDirectory, "diff.json"));
+  if (typeof diff?.repository?.fingerprint === "string") {
+    reportDocument.origin.projectFingerprint = stableHash({
+      repositoryFingerprint: diff.repository.fingerprint
+    });
+    return;
+  }
+  const input = await readOptionalJson(path.join(runDirectory, "input.json"));
+  if (input !== null) {
+    reportDocument.origin.projectFingerprint = stableHash({
+      cwd: path.basename(runDirectory),
+      input
+    });
+    return;
+  }
+  if (!/^[a-f0-9]{64}$/u.test(reportDocument.origin.projectFingerprint ?? "")) {
+    reportDocument.origin.projectFingerprint = stableHash({
+      fixtureOriginProjectFingerprint: reportDocument.origin.projectFingerprint ?? null
+    });
+  }
+}
+
 for (const relativeReport of fixtureReports) {
   const report = path.join(root, relativeReport);
   const manifestPath = path.join(report, "manifest.json");
@@ -68,6 +102,13 @@ for (const relativeReport of fixtureReports) {
     Object.entries(manifest.assetHashes).sort(([left], [right]) => left.localeCompare(right))
   );
   const reportDocument = JSON.parse(await readFile(path.join(report, "report.json"), "utf8"));
+  await refreshFixtureOrigin(report, reportDocument);
+  const reportBytes = Buffer.from(`${JSON.stringify(reportDocument, null, 2)}\n`);
+  await writeFile(path.join(report, "report.json"), reportBytes);
+  manifest.assetHashes["report.json"] = sha256(reportBytes);
+  manifest.assetHashes = Object.fromEntries(
+    Object.entries(manifest.assetHashes).sort(([left], [right]) => left.localeCompare(right))
+  );
   manifest.semanticHash = stableHash({
     report: reportDocument,
     sourceSnapshotHash: manifest.sourceSnapshotHash,

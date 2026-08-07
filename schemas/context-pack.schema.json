@@ -22,13 +22,25 @@
   ],
   "properties": {
     "schemaVersion": { "const": "1.1" },
-    "reportId": { "type": "string" },
-    "batchId": { "type": "string" },
-    "itemId": { "type": "string" },
+    "reportId": {
+      "type": "string",
+      "pattern": "^report[-:][A-Za-z0-9._:-]+$",
+      "maxLength": 256
+    },
+    "batchId": {
+      "type": "string",
+      "pattern": "^fb[-:][A-Za-z0-9._:-]+$",
+      "maxLength": 256
+    },
+    "itemId": {
+      "type": "string",
+      "pattern": "^item[-:][A-Za-z0-9._:-]+$",
+      "maxLength": 256
+    },
     "baseSha": { "type": "string" },
     "headSha": { "type": "string" },
     "anchor": { "$ref": "#/$defs/anchor" },
-    "question": { "type": "string", "minLength": 1 },
+    "question": { "type": "string", "minLength": 1, "maxLength": 16384 },
     "semanticChange": {
       "type": "object",
       "additionalProperties": false,
@@ -85,7 +97,11 @@
         }
       }
     },
-    "evidenceRefs": { "type": "array", "items": { "type": "string" }, "uniqueItems": true },
+    "evidenceRefs": {
+      "type": "array",
+      "items": { "type": "string" },
+      "uniqueItems": true
+    },
     "priorThreadMessages": {
       "type": "array",
       "items": {
@@ -110,7 +126,7 @@
         }
       }
     },
-    "contextHash": { "type": "string", "minLength": 8 }
+    "contextHash": { "type": "string", "pattern": "^[a-f0-9]{64}$" }
   },
   "$defs": {
     "anchor": {
@@ -138,7 +154,7 @@
         "targetRef": { "type": "string" },
         "region": { "$ref": "#/$defs/region" },
         "selectorHint": { "type": "string" },
-        "fingerprint": { "type": "string", "minLength": 8 }
+        "fingerprint": { "type": "string", "pattern": "^[a-f0-9]{64}$" }
       }
     },
     "region": {
@@ -146,10 +162,10 @@
       "additionalProperties": false,
       "required": ["x", "y", "width", "height"],
       "properties": {
-        "x": { "type": "number", "minimum": 0 },
-        "y": { "type": "number", "minimum": 0 },
-        "width": { "type": "number", "exclusiveMinimum": 0 },
-        "height": { "type": "number", "exclusiveMinimum": 0 }
+        "x": { "type": "number", "minimum": 0, "maximum": 1 },
+        "y": { "type": "number", "minimum": 0, "maximum": 1 },
+        "width": { "type": "number", "exclusiveMinimum": 0, "maximum": 1 },
+        "height": { "type": "number", "exclusiveMinimum": 0, "maximum": 1 }
       }
     }
   }

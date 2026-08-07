@@ -92,6 +92,14 @@ for (const entry of hostCases) {
     throw new Error(`Host compatibility resources are invalid: ${entry.id}`);
   }
   await access(path.join(root, entry.bundle));
+  if (
+    !entry.feedback ||
+    !Array.isArray(entry.feedback.sessionBindingInputs) ||
+    !["return-to-session", "export-only"].includes(entry.feedback.deliveryMode) ||
+    entry.feedback.directBridge !== false
+  ) {
+    throw new Error(`Host feedback compatibility is invalid: ${entry.id}`);
+  }
   if (entry.manifest) {
     const manifest = JSON.parse(await readFile(path.join(root, entry.manifest), "utf8"));
     if (

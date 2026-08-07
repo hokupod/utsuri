@@ -23,6 +23,7 @@ export interface ReviewStore {
   threads: ReviewThread[];
   events: ReviewEvent[];
   anchorCatalog: ReviewAnchor[];
+  sidecarFiles: Record<string, string>;
 }
 
 export type ReanchorResult = "exact" | "probable" | "changed" | "missing";

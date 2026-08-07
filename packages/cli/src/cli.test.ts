@@ -127,12 +127,50 @@ describe("CLI", () => {
   });
 
   test("finalizes and strictly validates an empty run", async () => {
-    const { root } = await createRun();
+    const { root, run } = await createRun();
 
-    const finalized = await executeCli(["finalize", "--run", "run", "--json"], root);
+    const finalized = await executeCli(["finalize", "--run", "run", "--json"], root, {});
     expect(finalized.exitCode).toBe(0);
+    const repeated = await executeCli(["finalize", "--run", "run", "--json"], root, {
+      UTSURI_CODEX_SESSION_ID: "late-origin-session"
+    });
+    expect(repeated).toMatchObject({ exitCode: 0, data: { reused: true } });
+    const report = JSON.parse(await readFile(path.join(run, "report/report.json"), "utf8")) as {
+      origin: { bindingMode: string };
+    };
+    expect(report.origin.bindingMode).toBe("unbound");
     const validated = await executeCli(["validate", "run/report", "--strict", "--json"], root);
     expect(validated.exitCode).toBe(0);
+  });
+
+  test("fixes an opaque Origin Session in the immutable report", async () => {
+    const { root, run } = await createRun();
+
+    const environment = {
+      UTSURI_CODEX_SESSION_ID: "fixture-origin-session"
+    };
+    const finalized = await executeCli(["finalize", "--run", "run", "--json"], root, environment);
+    const repeated = await executeCli(["finalize", "--run", "run", "--json"], root, environment);
+    const report = JSON.parse(await readFile(path.join(run, "report/report.json"), "utf8")) as {
+      origin: {
+        host: string;
+        sessionRef?: string;
+        bindingMode: string;
+      };
+    };
+
+    expect(finalized.exitCode, JSON.stringify(finalized.data)).toBe(0);
+    expect(repeated).toMatchObject({ exitCode: 0, data: { reused: true } });
+    expect(report.origin.host).toBe("codex");
+    expect(report.origin.bindingMode).toBe("return-to-session");
+    expect(report.origin.sessionRef).toMatch(/^session:[a-f0-9]{64}$/u);
+    expect(JSON.stringify(report.origin)).not.toContain("fixture-origin-session");
+
+    const mismatched = await executeCli(["finalize", "--run", "run", "--json"], root, {
+      UTSURI_CODEX_SESSION_ID: "another-origin-session"
+    });
+    expect(mismatched.exitCode).toBe(6);
+    expect(errorId(mismatched)).toBe("ORIGIN_SESSION_MISMATCH");
   });
 
   test("collects a patch and finalizes an uncovered code-only report", async () => {

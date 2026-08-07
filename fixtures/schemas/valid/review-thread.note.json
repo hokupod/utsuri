@@ -4,7 +4,7 @@
   "anchor": {
     "type": "change",
     "ref": "change-001",
-    "fingerprint": "00000000"
+    "fingerprint": "0000000000000000000000000000000000000000000000000000000000000000"
   },
   "kind": "note",
   "state": "open",

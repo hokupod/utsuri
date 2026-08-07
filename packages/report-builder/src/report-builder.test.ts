@@ -141,6 +141,40 @@ describe("immutable report generation", () => {
     });
   });
 
+  test("publishes a validated Origin Session binding without weakening source reconstruction", async () => {
+    const { run, report } = await createReportRun();
+    const origin = {
+      host: "codex" as const,
+      sessionRef: `session:${"a".repeat(64)}`,
+      projectFingerprint: "b".repeat(64),
+      reportId: report.reportId,
+      bindingMode: "return-to-session" as const,
+      createdAt: "2026-08-07T00:00:00.000Z"
+    };
+    const bound = { ...report, origin };
+
+    const { reportDirectory } = await buildReport(run, bound, { origin });
+    const published = JSON.parse(await readFile(path.join(reportDirectory, "report.json"), "utf8"));
+
+    expect(published.origin).toEqual(origin);
+  });
+
+  test("rejects an Origin Session option that differs from the supplied report", async () => {
+    const { run, report } = await createReportRun();
+    const origin = {
+      host: "codex" as const,
+      sessionRef: `session:${"a".repeat(64)}`,
+      projectFingerprint: "b".repeat(64),
+      reportId: report.reportId,
+      bindingMode: "return-to-session" as const,
+      createdAt: "2026-08-07T00:00:00.000Z"
+    };
+
+    await expect(buildReport(run, report, { origin })).rejects.toMatchObject({
+      diagnosticId: "REPORT_ORIGIN_MISMATCH"
+    });
+  });
+
   test("allows a sticky shared ancestor when its child belongs to the current user", async () => {
     const stickyRoot = process.platform === "darwin" ? "/private/tmp" : os.tmpdir();
     const root = await mkdtemp(path.join(stickyRoot, "utsuri-report-sticky-"));

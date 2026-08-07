@@ -18,9 +18,9 @@ The name joins the Japanese ideas of how a UI is reflected after a change and ho
 
 ## Status
 
-<!-- availability:phase-5-distribution-candidate -->
+<!-- availability:phase-6-origin-session-feedback -->
 
-The Phase 5 distribution-candidate flow is available from this source checkout. It adds persisted viewed/judgment/comment state, canonical review export/import, loopback-only static serving, deterministic CI packaging and policy, four-platform native-helper candidate assembly, exact-tarball verification, and host validation to the Phase 4 hardened review flow. Origin Session feedback remains unavailable until Phase 6. The npm packages and Plugin remain unpublished.
+The complete v1 source implementation is available as a stable-release candidate. Phase 6 adds capability-bound interactive review, Feedback Batch preview and storage, bounded Context Packs, Origin Session binding, Review Inbox CLI/MCP access, itemized answer writeback, and safe return-to-session fallback to the Phase 5 distribution candidate. No direct same-session bridge is enabled because neither supported host exposes every required authenticated binding and correlation guarantee. The npm packages and Plugin remain unpublished.
 
 <a id="capabilities"></a><!-- section:capabilities -->
 
@@ -45,9 +45,12 @@ Available now:
 - a single Node 22 ESM CLI bundle with source/schema/UI hashes plus deterministic SPDX 2.3 and dependency-license inventories;
 - independently persisted viewed progress, human judgment, and anchored comments with canonical export/import and explicit matched/stale/orphaned re-anchoring;
 - loopback-only static serving plus deterministic `report.zip`, `report.json`, and `ci-summary.json` packaging with policy exit code `10`; and
-- exact CLI/native package contracts, four architecture-matched helper candidates, aggregate Plugin verification, Node 22/24 isolated-tarball smoke tests, and shared Skill evaluations.
+- exact CLI/native package contracts, four architecture-matched helper candidates, aggregate Plugin verification, Node 22/24 isolated-tarball smoke tests, and shared Skill evaluations;
+- per-start capability-token interactive serving with exact Origin for mutations, same-origin Fetch Metadata for read-only GET requests, exact Referer validation when present, report-binding, and request-schema checks;
+- explicit Agent-attention selection, Feedback Batch preview, redacted and bounded Context Packs, immutable-generation Review Inbox sidecars, and unread answer state; and
+- fixed-run `feedback` CLI and Review Inbox MCP operations that require the originating host/session/project/report binding and write exactly one answer per item.
 
-Phase 6 adds the Origin Session feedback path. Phase 5 comments remain local and are never sent to an Agent. A complete capture remains `UNCOVERED` until discovery and comparison run. Missing or malformed evidence, a failed side, exceeded resource limits, or unavailable container capability remains `INCOMPLETE`; an unknown denominator remains explicit and is never presented as a percentage. Pixel differences alone do not establish `REGRESSION`.
+Selecting “Ask the current Agent” only records intent; it does not send, create a Context Pack, or start a process. Static/unbound reports export only. Interactive reports can store a batch for the originating conversation, but Utsuri never creates another Agent or session. A complete capture remains `UNCOVERED` until discovery and comparison run. Missing or malformed evidence, a failed side, exceeded resource limits, or unavailable container capability remains `INCOMPLETE`; an unknown denominator remains explicit and is never presented as a percentage. Pixel differences alone do not establish `REGRESSION`.
 
 <a id="quick-start"></a><!-- section:quick-start -->
 
@@ -136,6 +139,17 @@ node skills/utsuri-review/scripts/utsuri.mjs review export --run .artifacts/utsu
 node skills/utsuri-review/scripts/utsuri.mjs review import --run .artifacts/utsuri/updated-run --input .artifacts/utsuri/review-bundle.json --reanchor --json
 ```
 
+For an Origin Session-bound run, start the capability-protected viewer, preview selected items, and return the stored batch to this same conversation. Omit `--batch` only when exactly one eligible batch exists.
+
+```bash
+node skills/utsuri-review/scripts/utsuri.mjs serve .artifacts/utsuri/readme-example/report --interactive
+node skills/utsuri-review/scripts/utsuri.mjs feedback list --run .artifacts/utsuri/readme-example --status ready --json
+node skills/utsuri-review/scripts/utsuri.mjs feedback get --run .artifacts/utsuri/readme-example --batch fb_example --json
+node skills/utsuri-review/scripts/utsuri.mjs feedback answer --run .artifacts/utsuri/readme-example --batch fb_example --input answers.json --json
+```
+
+The current implementation intentionally uses `return-to-session`. If session binding is absent it uses `export-only`; it never invents a direct bridge or falls back to another conversation.
+
 Create local CI artifacts without uploading them:
 
 ```bash
@@ -180,7 +194,9 @@ Every browser launch uses a random process token and must resolve to exactly one
 
 Generated `report/` content is immutable. Referenced capture and comparison evidence is independently digest-checked, copied into the report, restricted to validated PNG bytes for images, and covered by the report asset manifest. The stored `index.html` always has the offline static CSP. A local interactive server may replace exactly that canonical CSP boundary with the interactive CSP; static-fragment previews have a separate no-script/no-connect CSP. Strict validation rejects active HTML, direct SVG, unsafe references, unlisted files, missing files, and hash drift. Manifests declare that absolute paths, cookies, raw environment, raw DOM, raw headers, and traces are excluded.
 
-Viewed progress, human judgment, and comments are separate mutable records. Static mode uses Web Locks plus optimistic revisions, stores state per report in browser storage, and exports a schema-validated, catalog-bound bundle; a stale tab never overwrites newer state. CLI state uses immutable generations and atomic hard-linked revision records under `run/review/`, without a crash-stale process lock. Import never rewrites `report/`, requires explicit re-anchoring for another report, never activates probable anchors automatically, and keeps changed or missing anchors explicitly stale or orphaned. Phase 5 has no Agent-submission path.
+Viewed progress, human judgment, comments, Agent attention, batch state, and answers are separate mutable records. Static mode uses Web Locks plus optimistic revisions, stores state per report in browser storage, and exports schema-validated, catalog-bound review and feedback documents; a stale tab never overwrites newer state. CLI state uses immutable generations and atomic hard-linked revision records under `run/review/`, including bounded inbox, batch, context, and answer sidecars. Import never rewrites `report/`, requires explicit re-anchoring for another report, never activates probable anchors automatically, and keeps changed or missing anchors explicitly stale or orphaned.
+
+Interactive mode binds only to loopback. Every API request requires the exact Host, same-origin Fetch Metadata, report ID, and per-start capability token. Mutations additionally require the exact Origin and exact request schema. A read-only GET may omit Origin under same-origin Fetch Metadata; if the browser sends Referer, its origin must match exactly. The token arrives only in the URL fragment and is removed from the address bar after capture; it is not written to report, review state, or events. Browser APIs accept no arbitrary destination, path, cwd, command, provider, or model. Feedback consumption additionally checks the opaque Origin Session reference and canonical project fingerprint. A mismatch fails closed. The server, CLI, and MCP service never spawn Codex, Claude Code, or another Agent, and Agent answers never mark human judgment or thread resolution.
 
 Discovery and comparison manifests are bound to the collected diff/capture hashes; substituted or unlisted artifacts fail finalization. Finalization reconstructs the complete report from validated run artifacts and annotations, records the exact source-byte snapshot hash in the manifest, publishes only an immutable snapshot, and rejects source or evidence drift during staging or reuse. Utsuri requires regular non-symlink run inputs, canonical contained paths, safe archive inventories, a publication path protected from other local principals, strict staging validation, and the bundled OS no-replace helper. Missing or unsupported helpers fail closed; failed generation can leave a private staging directory for manual diagnosis and never deletes it automatically. Mutable human-review data is stored separately in `run/review/`. The static viewer does not contact external services.
 
@@ -198,6 +214,7 @@ Build output is one Node 22-compatible ESM file with no external JavaScript runt
 - [UI guidelines and HIG/WCAG traceability](https://github.com/hokupod/utsuri/blob/main/docs/ui-guidelines.md)
 - [Capture modes and runtime boundary](https://github.com/hokupod/utsuri/blob/main/skills/utsuri-review/references/capture-modes.md)
 - [CLI contract](https://github.com/hokupod/utsuri/blob/main/skills/utsuri-review/references/cli-contract.md)
+- [Origin Session feedback workflow](https://github.com/hokupod/utsuri/blob/main/skills/utsuri-review/references/feedback.md)
 - [v1 implementation plan](https://github.com/hokupod/utsuri/blob/main/ai/plans/active/v1-%E5%AE%9F%E8%A3%85/README.md)
 
 The design is canonical in English. User-facing README changes update English, Japanese, and Simplified Chinese in the same change.
@@ -206,4 +223,4 @@ The design is canonical in English. User-facing README changes update English, J
 
 ## License and publication status
 
-The publisher is `hokupod`, the npm maintainer is `hokupod-npm`, publication uses GitHub Actions trusted publishing, and the SPDX license is `AGPL-3.0-or-later`. Phase 5 produces only a distribution candidate. Cross-job transport verifies manifest-bound regular files before restoring declared modes; it does not extract downloaded helper or Plugin tarballs. Packages remain unpublished until all release gates pass and a separate release is explicitly authorized. The v1 implementation plan does not publish, tag, push, or promote artifacts.
+The publisher is `hokupod`, the npm maintainer is `hokupod-npm`, publication uses GitHub Actions trusted publishing, and the SPDX license is `AGPL-3.0-or-later`. Phase 6 produces a complete v1 stable-release candidate. Cross-job transport verifies manifest-bound regular files before restoring declared modes; it does not extract downloaded helper or Plugin tarballs. Packages remain unpublished until all release gates pass and a separate release is explicitly authorized. The v1 implementation plan does not publish, tag, push, or promote artifacts.

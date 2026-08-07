@@ -16,24 +16,38 @@
   ],
   "properties": {
     "schemaVersion": { "const": "1.0" },
-    "batchId": { "type": "string", "minLength": 1 },
-    "itemId": { "type": "string", "minLength": 1 },
-    "directAnswer": { "type": "string" },
+    "batchId": {
+      "type": "string",
+      "pattern": "^fb[-:][A-Za-z0-9._:-]+$",
+      "maxLength": 256
+    },
+    "itemId": {
+      "type": "string",
+      "pattern": "^item[-:][A-Za-z0-9._:-]+$",
+      "maxLength": 256
+    },
+    "directAnswer": { "type": "string", "minLength": 1, "maxLength": 16384 },
     "evidence": {
       "type": "array",
+      "maxItems": 100,
       "items": {
         "type": "object",
         "additionalProperties": false,
         "required": ["ref", "explanation"],
         "properties": {
-          "ref": { "type": "string" },
-          "explanation": { "type": "string" }
+          "ref": { "type": "string", "minLength": 1 },
+          "explanation": { "type": "string", "minLength": 1, "maxLength": 16384 }
         }
       }
     },
-    "uncertainty": { "type": "array", "items": { "type": "string" } },
+    "uncertainty": {
+      "type": "array",
+      "maxItems": 100,
+      "items": { "type": "string", "maxLength": 16384 }
+    },
     "suggestedNextActions": {
       "type": "array",
+      "maxItems": 100,
       "items": {
         "type": "object",
         "additionalProperties": false,
@@ -51,9 +65,9 @@
       "required": ["host", "contextHash"],
       "properties": {
         "host": { "enum": ["codex", "claude-code", "unknown"] },
-        "originSessionRef": { "type": "string" },
+        "originSessionRef": { "type": "string", "pattern": "^session:[a-f0-9]{64}$" },
         "answerTurnRef": { "type": "string" },
-        "contextHash": { "type": "string", "minLength": 8 }
+        "contextHash": { "type": "string", "pattern": "^[a-f0-9]{64}$" }
       }
     }
   }

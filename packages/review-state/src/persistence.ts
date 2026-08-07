@@ -1,4 +1,4 @@
-import { constants } from "node:fs";
+import { constants, type Dirent } from "node:fs";
 import { link, lstat, mkdir, open, readdir, realpath, rename, rm, unlink } from "node:fs/promises";
 import { createHash, randomBytes } from "node:crypto";
 import path from "node:path";
@@ -14,6 +14,9 @@ const maximumStateBytes = 8 * 1024 * 1024;
 const maximumEventBytes = 16 * 1024 * 1024;
 const maximumThreadBytes = 1024 * 1024;
 const maximumCommitBytes = 64 * 1024;
+const maximumSidecarBytes = 64 * 1024 * 1024;
+const maximumSidecarFileBytes = 8 * 1024 * 1024;
+const sidecarDirectories = new Set(["answers", "batches", "contexts"]);
 
 interface ReviewCommitRecord {
   schemaVersion: "1.0";
@@ -33,6 +36,18 @@ function persistenceError(id: string, message: string): never {
 
 function threadFilename(threadId: string): string {
   return `${createHash("sha256").update(threadId).digest("hex")}.json`;
+}
+
+function assertSidecarPath(relative: string): void {
+  if (relative === "review-inbox.json") return;
+  const parts = relative.split("/");
+  if (
+    parts.length !== 2 ||
+    !sidecarDirectories.has(parts[0] ?? "") ||
+    !/^[a-f0-9]{64}\.json$/u.test(parts[1] ?? "")
+  ) {
+    persistenceError("REVIEW_SIDECAR_PATH", `Review sidecar path is invalid: ${relative}`);
+  }
 }
 
 async function assertPrivateDirectory(directory: string): Promise<void> {
@@ -144,6 +159,71 @@ async function syncDirectory(directory: string): Promise<void> {
     await handle.sync();
   } finally {
     await handle.close();
+  }
+}
+
+async function loadSidecarFiles(
+  review: string,
+  generationRoot: string
+): Promise<Record<string, string>> {
+  const files: Record<string, string> = {};
+  let totalBytes = 0;
+  const read = async (relative: string): Promise<void> => {
+    assertSidecarPath(relative);
+    const bytes = await optionalContainedFile(
+      review,
+      `${generationRoot}/${relative}`,
+      maximumSidecarFileBytes
+    );
+    if (!bytes) return;
+    totalBytes += bytes.byteLength;
+    if (totalBytes > maximumSidecarBytes) {
+      persistenceError("REVIEW_SIDECAR_LIMIT", "Review sidecars exceed 64 MiB");
+    }
+    files[relative] = bytes.toString("utf8");
+  };
+  await read("review-inbox.json");
+  for (const directory of [...sidecarDirectories].sort()) {
+    const absolute = path.join(review, generationRoot, directory);
+    let entries: Dirent[];
+    try {
+      const stat = await lstat(absolute);
+      if (!stat.isDirectory() || stat.isSymbolicLink()) {
+        persistenceError("REVIEW_SIDECAR_DIRECTORY", "Review sidecar directory is invalid");
+      }
+      entries = await readdir(absolute, { withFileTypes: true });
+    } catch (error) {
+      if ((error as NodeJS.ErrnoException).code === "ENOENT") continue;
+      throw error;
+    }
+    for (const entry of entries.sort((left, right) => left.name.localeCompare(right.name))) {
+      if (!entry.isFile() || entry.isSymbolicLink() || !/^[a-f0-9]{64}\.json$/u.test(entry.name)) {
+        persistenceError("REVIEW_SIDECAR_ENTRY", "Review sidecar entry is invalid");
+      }
+      await read(`${directory}/${entry.name}`);
+    }
+  }
+  return files;
+}
+
+async function writeSidecarFiles(
+  staging: string,
+  sidecarFiles: Readonly<Record<string, string>>
+): Promise<void> {
+  let totalBytes = 0;
+  for (const [relative, content] of Object.entries(sidecarFiles).sort(([left], [right]) =>
+    left.localeCompare(right)
+  )) {
+    assertSidecarPath(relative);
+    const bytes = Buffer.byteLength(content);
+    totalBytes += bytes;
+    if (bytes > maximumSidecarFileBytes || totalBytes > maximumSidecarBytes) {
+      persistenceError("REVIEW_SIDECAR_LIMIT", "Review sidecars exceed their byte limit");
+    }
+    const parts = relative.split("/");
+    const directory =
+      parts.length === 1 ? staging : await ensureDirectory(staging, parts[0] ?? "invalid");
+    await atomicWrite(directory, parts.at(-1) ?? "invalid", content);
   }
 }
 
@@ -289,12 +369,14 @@ export async function loadReviewStore(
   if (state.revision !== events.length) {
     persistenceError("REVIEW_REVISION_MISMATCH", "Review snapshot and event journal disagree");
   }
+  const sidecarFiles = await loadSidecarFiles(review, generationRoot);
   return {
     report: structuredClone(report),
     state,
     threads,
     events,
-    anchorCatalog: await buildAnchorCatalog(report, digest)
+    anchorCatalog: await buildAnchorCatalog(report, digest),
+    sidecarFiles
   };
 }
 
@@ -340,6 +422,7 @@ export async function persistReviewStore(
       store.events.map((event) => `${JSON.stringify(event)}\n`).join("")
     );
     await atomicWrite(staging, "review-state.json", `${JSON.stringify(store.state, null, 2)}\n`);
+    await writeSidecarFiles(staging, store.sidecarFiles);
     await syncDirectory(staging);
     await rename(staging, committed);
     renamed = true;

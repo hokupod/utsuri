@@ -18,9 +18,9 @@ Utsuri 将代码变更转换为有证据、便于人类理解的可视化评审�
 
 ## 状态
 
-<!-- availability:phase-5-distribution-candidate -->
+<!-- availability:phase-6-origin-session-feedback -->
 
-Phase 5 的 distribution-candidate flow 已可在此 source checkout 中使用。它在 Phase 4 hardened review flow 上加入持久化的 viewed / judgment / comment state、canonical review export/import、仅限 loopback 的 static serve、确定性的 CI package/policy、四个平台的 native helper candidate 组装、exact tarball 验证和 host 验证。Origin Session feedback 要到 Phase 6 才可用。npm package 与 Plugin 仍未发布。
+完整的 v1 source 实现现已作为 stable-release candidate 可用。Phase 6 在 Phase 5 distribution candidate 上增加受 capability 保护的 interactive review、Feedback Batch preview 与存储、bounded Context Pack、Origin Session binding、Review Inbox CLI / MCP access、itemized answer writeback，以及安全的 return-to-session fallback。两个受支持 host 都未公开满足全部 authenticated binding 与 response correlation 要求的 API，因此未启用 direct same-session bridge。npm package 与 Plugin 仍未发布。
 
 <a id="capabilities"></a><!-- section:capabilities -->
 
@@ -45,9 +45,12 @@ Phase 5 的 distribution-candidate flow 已可在此 source checkout 中使用�
 - 包含 source / schema / UI hash 与确定性 SPDX 2.3 / dependency license inventory 的单一 Node 22 ESM CLI bundle；
 - 独立持久化的 viewed progress、human judgment 和 anchored comment，以及 canonical export/import 与明确的 matched / stale / orphaned re-anchor；
 - 仅限 loopback 的 static serve，以及带有 policy exit code `10` 的确定性 `report.zip`、`report.json` 和 `ci-summary.json`；以及
-- exact CLI/native package contract、四种 architecture helper candidate、aggregate Plugin 验证、Node 22/24 isolated-tarball smoke 和共享 Skill eval。
+- exact CLI/native package contract、四种 architecture helper candidate、aggregate Plugin 验证、Node 22/24 isolated-tarball smoke 和共享 Skill eval；
+- 每次启动独立的 capability token，以及 mutation 的 exact Origin、read-only GET 的 same-origin Fetch Metadata、Referer 存在时的 exact 检查、report binding 和 request schema 检查；
+- 显式 Agent-attention 选择、Feedback Batch preview、经过 redaction 的 bounded Context Pack、immutable generation Review Inbox sidecar 与未读 answer state；以及
+- 要求 originating host / session / project / report binding，并为每个 item 写回一个 answer 的 fixed-run `feedback` CLI / Review Inbox MCP operation。
 
-Phase 6 将加入 Origin Session feedback 路径。Phase 5 的 comment 保持在本地，绝不会发送给 Agent。即使 capture 完整，在 discovery 和 comparison 前仍为 `UNCOVERED`。证据缺失、格式错误、任一侧失败、resource limit 超限或 container capability 不足时仍为 `INCOMPLETE`；分母未知时不显示 percentage。pixel 差异本身不能判定 `REGRESSION`。
+选择“Ask the current Agent”只记录意图，不会发送、创建 Context Pack 或启动 process。static / unbound report 仅执行 export。interactive report 可以为 originating conversation 存储 batch，但 Utsuri 绝不会创建其他 Agent 或 session。即使 capture 完整，在 discovery 和 comparison 前仍为 `UNCOVERED`。证据缺失、格式错误、任一侧失败、resource limit 超限或 container capability 不足时仍为 `INCOMPLETE`；分母未知时不显示 percentage。pixel 差异本身不能判定 `REGRESSION`。
 
 <a id="quick-start"></a><!-- section:quick-start -->
 
@@ -136,6 +139,17 @@ node skills/utsuri-review/scripts/utsuri.mjs review export --run .artifacts/utsu
 node skills/utsuri-review/scripts/utsuri.mjs review import --run .artifacts/utsuri/updated-run --input .artifacts/utsuri/review-bundle.json --reanchor --json
 ```
 
+对于已绑定 Origin Session 的 run，启动受 capability 保护的 viewer，在 preview 所选项目后，将保存的 batch 返回同一 conversation。只有在 eligible batch 唯一时才能省略 `--batch`。
+
+```bash
+node skills/utsuri-review/scripts/utsuri.mjs serve .artifacts/utsuri/readme-example/report --interactive
+node skills/utsuri-review/scripts/utsuri.mjs feedback list --run .artifacts/utsuri/readme-example --status ready --json
+node skills/utsuri-review/scripts/utsuri.mjs feedback get --run .artifacts/utsuri/readme-example --batch fb_example --json
+node skills/utsuri-review/scripts/utsuri.mjs feedback answer --run .artifacts/utsuri/readme-example --batch fb_example --input answers.json --json
+```
+
+当前实现有意采用 `return-to-session`。缺少 session binding 时使用 `export-only`；绝不会臆造 direct bridge 或 fallback 到其他 conversation。
+
 创建本地 CI artifact，但不上传：
 
 ```bash
@@ -180,7 +194,9 @@ Utsuri 将 repository content、diff、HTML、SVG、comment、Context Pack 和 c
 
 生成的 `report/` 是 immutable。引用的 capture / comparison evidence 会独立进行 digest 校验；图片仅限通过验证的 PNG byte，复制到 report 后纳入 asset manifest 的 hash。保存的 `index.html` 始终使用 offline static CSP；只有 local interactive server 可以通过 exact match 把该 canonical CSP 边界替换为 interactive CSP。static-fragment preview 使用独立的 no-script / no-connect CSP。strict validation 会拒绝 active HTML、direct SVG、不安全 reference、未列出或缺失的 file 与 hash drift。manifest 声明已排除 absolute path、cookie、raw environment、raw DOM、raw header 与 trace。
 
-viewed progress、human judgment 和 comment 是彼此独立的 mutable record。static mode 使用 Web Locks 与 optimistic revision，按 report 存入 browser storage，并 export 为通过 schema 验证且绑定 catalog 的 bundle；stale tab 不会覆盖更新的 state。CLI state 在 `run/review/` 下使用 immutable generation 与 atomic hard-linked revision record，不会留下因 crash 而失效的 process lock。import 不会重写 `report/`；对其他 report 的 re-anchor 必须显式选择；probable anchor 不会自动启用，变更或缺失的 anchor 会明确保持 stale / orphaned。Phase 5 没有 Agent 提交路径。
+viewed progress、human judgment、comment、Agent attention、batch state 和 answer 是彼此独立的 mutable record。static mode 使用 Web Locks 与 optimistic revision，按 report 存入 browser storage，并 export 为通过 schema 验证且绑定 catalog 的 review / feedback document；stale tab 不会覆盖更新的 state。CLI state 在 `run/review/` 下使用 immutable generation 与 atomic hard-linked revision record，并把 bounded inbox / batch / context / answer sidecar 写入同一 generation。import 不会重写 `report/`；对其他 report 的 re-anchor 必须显式选择；probable anchor 不会自动启用，变更或缺失的 anchor 会明确保持 stale / orphaned。
+
+interactive mode 只绑定 loopback。每个 API request 都要求 exact Host、same-origin Fetch Metadata、report ID 与每次启动独立的 capability token。mutation 还必须提供 exact Origin 与 exact request schema。read-only GET 可在 same-origin Fetch Metadata 下省略 Origin；如果 browser 发送 Referer，则其 origin 必须 exact match。token 只通过 URL fragment 传递，捕获后即从 address bar 移除，并且不会写入 report / review state / event。browser API 不接受任意 destination、path、cwd、command、provider 或 model。消费 feedback 时还会检查 opaque Origin Session ref 与 canonical project fingerprint；mismatch 会 fail closed。server / CLI / MCP service 绝不会启动 Codex、Claude Code 或其他 Agent，Agent answer 也不会更改 human judgment 或 thread resolution。
 
 discovery / comparison manifest 与收集到的 diff / capture hash 绑定；被替换或未列出的 artifact 会在 finalize 时被拒绝。finalize 会从已验证的 run artifact 与 annotations 重建完整 report，在 manifest 中记录精确的 source byte snapshot hash，只发布 immutable snapshot，并拒绝 staging 或 reuse 期间发生的 source / evidence 漂移。Utsuri 要求 run input 是普通文件且不是 symlink，并要求 canonical contained path、安全 archive inventory、不可被其他本地 principal 改名的 publication path、staging strict validation 与 OS no-replace helper。helper 缺失或 filesystem 不支持时会 fail closed。生成失败可能保留用于诊断的 private staging directory，Utsuri 不会自动删除它。可变的人工 review data 单独存储在 `run/review/`。static viewer 不连接外部服务。
 
@@ -198,6 +214,7 @@ build output 是不含 external JavaScript runtime import 的单一 Node 22 兼�
 - [UI guideline 与 HIG/WCAG traceability](https://github.com/hokupod/utsuri/blob/main/docs/ui-guidelines.md)
 - [Capture mode 与 runtime boundary](https://github.com/hokupod/utsuri/blob/main/skills/utsuri-review/references/capture-modes.md)
 - [CLI contract](https://github.com/hokupod/utsuri/blob/main/skills/utsuri-review/references/cli-contract.md)
+- [Origin Session feedback workflow](https://github.com/hokupod/utsuri/blob/main/skills/utsuri-review/references/feedback.md)
 - [v1 实现计划](https://github.com/hokupod/utsuri/blob/main/ai/plans/active/v1-%E5%AE%9F%E8%A3%85/README.md)
 
 详细设计以英文为正本。面向用户的 README 变更必须在同一个 change 中同步英文、日文和简体中文。
@@ -206,4 +223,4 @@ build output 是不含 external JavaScript runtime import 的单一 Node 22 兼�
 
 ## License 与发布状态
 
-publisher 为 `hokupod`，npm maintainer 为 `hokupod-npm`，发布使用 GitHub Actions trusted publishing，SPDX license 为 `AGPL-3.0-or-later`。Phase 5 只生成 distribution candidate。job 间传输会先验证 manifest 绑定的普通文件，再恢复声明的 mode；不会解压下载的 helper 或 Plugin tarball。在所有 release gate 通过并取得单独明确授权前，package 保持未发布。v1 实现计划不会执行 publish、tag、push 或 promotion。
+publisher 为 `hokupod`，npm maintainer 为 `hokupod-npm`，发布使用 GitHub Actions trusted publishing，SPDX license 为 `AGPL-3.0-or-later`。Phase 6 生成完整的 v1 stable-release candidate。job 间传输会先验证 manifest 绑定的普通文件，再恢复声明的 mode；不会解压下载的 helper 或 Plugin tarball。在所有 release gate 通过并取得单独明确授权前，package 保持未发布。v1 实现计划不会执行 publish、tag、push 或 promotion。

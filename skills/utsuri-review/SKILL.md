@@ -31,7 +31,7 @@ Do not invoke Utsuri for a one-line explanation, a repository with no reviewable
 7. Present the report path, verified coverage, failures, and gaps.
 8. Keep viewed progress, human judgment, and comments separate. Use `review export` before moving mutable state and `review import --reanchor` only when stale/orphaned classifications have been inspected.
 9. Use static `serve` only when a loopback viewer is useful, or `pack` when the user needs deterministic local CI artifacts. Do not upload them.
-10. Phase 5 has no Agent-feedback command. Keep comments local until the Phase 6 Origin Session interface is available.
+10. When comments explicitly request Agent attention, preview the Feedback Batch first. In the originating conversation only, use `feedback list`, `feedback get`, and `feedback answer` to return exactly one structured answer per item. Never start another Agent or guess a session.
 
 Invoke the bundled CLI with:
 
@@ -39,4 +39,4 @@ Invoke the bundled CLI with:
 node "${PLUGIN_ROOT}/skills/utsuri-review/scripts/utsuri.mjs" <command> [arguments]
 ```
 
-Read [CLI contract](references/cli-contract.md) before interpreting output, [review state](references/review-state.md) before importing or re-anchoring comments, [distribution](references/distribution.md) before packaging a candidate, [capture modes](references/capture-modes.md) before configuring browser evidence, [security rules](references/security.md) before capture or serving, and [failure continuation](references/failure-continuation.md) when any stage is incomplete.
+Read [CLI contract](references/cli-contract.md) before interpreting output, [review state](references/review-state.md) before importing or re-anchoring comments, [feedback](references/feedback.md) before consuming a Feedback Batch, [distribution](references/distribution.md) before packaging a candidate, [capture modes](references/capture-modes.md) before configuring browser evidence, [security rules](references/security.md) before capture or serving, and [failure continuation](references/failure-continuation.md) when any stage is incomplete.

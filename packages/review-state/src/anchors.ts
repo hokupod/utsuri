@@ -70,6 +70,7 @@ export async function buildAnchorCatalog(
     pending.push(anchor(digest, { type: "visual-target", ref: target.id }, target));
   }
   for (const comparison of report.comparisons) {
+    const target = report.targets.find((entry) => entry.id === comparison.targetRef);
     for (const image of comparison.images) {
       for (const region of image.regions) {
         pending.push(
@@ -80,13 +81,13 @@ export async function buildAnchorCatalog(
               ref: `${comparison.id}:${image.id}:${region.id}`,
               targetRef: comparison.targetRef,
               region: {
-                x: region.x,
-                y: region.y,
-                width: region.width,
-                height: region.height
+                x: region.x / image.width,
+                y: region.y / image.height,
+                width: region.width / image.width,
+                height: region.height / image.height
               }
             },
-            { comparisonId: comparison.id, imageId: image.id, region }
+            { target, comparison, image, region }
           )
         );
       }

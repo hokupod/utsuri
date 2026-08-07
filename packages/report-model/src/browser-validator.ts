@@ -1,9 +1,9 @@
 import Ajv, { type ErrorObject, type ValidateFunction } from "ajv";
 import addFormats from "ajv-formats";
-import reviewBundleSchema from "../../../schemas/review-bundle.schema.json";
-import reviewEventSchema from "../../../schemas/review-event.schema.json";
-import reviewStateSchema from "../../../schemas/review-state.schema.json";
-import reviewThreadSchema from "../../../schemas/review-thread.schema.json";
+import reviewBundleSchema from "../../../schemas/review-bundle.schema.json" with { type: "json" };
+import reviewEventSchema from "../../../schemas/review-event.schema.json" with { type: "json" };
+import reviewStateSchema from "../../../schemas/review-state.schema.json" with { type: "json" };
+import reviewThreadSchema from "../../../schemas/review-thread.schema.json" with { type: "json" };
 
 const schemas = {
   "review-bundle": reviewBundleSchema,

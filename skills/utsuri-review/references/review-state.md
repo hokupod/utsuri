@@ -9,6 +9,8 @@
 - CLI state is committed as an immutable generation through an atomic hard-linked revision record under `<run>/review/commits/`; no process lock can remain stale after a crash.
 - Viewed progress, human judgment, comments, and Agent-attention metadata are separate.
 - A plain comment never starts an Agent, creates a batch, or changes judgment.
+- Selecting Agent attention changes only thread metadata. Context Packs are created during preview or storage, never by the checkbox.
+- Feedback Inbox, batches, contexts, and answers are immutable-generation sidecars under `<run>/review/`; they never modify `report/`.
 
 ## Export and import
 
@@ -39,6 +41,10 @@ Interpret results conservatively:
 
 Never activate a probable anchor automatically. Preserve import conflicts in the generated diagnostic and ask the reviewer which human state to retain.
 
-## Phase 5 limit
+## Feedback and stale state
 
-There is no Origin Session submission path in Phase 5. Do not invent a `feedback` command or copy comments into another Agent session. Report the local bundle path and wait for an explicit Phase 6-capable handoff.
+- Preview shared and excluded evidence before storing a Feedback Batch.
+- Never submit stale, orphaned, or resolved threads as current feedback.
+- Agent answers append to their original threads but never mark a change viewed, reviewed, or resolved.
+- A changed screenshot fingerprint makes its visual-region anchor stale even when the region identity is unchanged.
+- Static mode exports an `export-only` batch. Interactive mode stores a fixed-destination batch for return to the Origin Session.

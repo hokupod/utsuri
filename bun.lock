@@ -71,6 +71,10 @@
         "yaml": "2.8.1",
       },
     },
+    "packages/clipboard-handoff": {
+      "name": "@utsu-ri/clipboard-handoff",
+      "version": "0.1.0",
+    },
     "packages/cli": {
       "name": "@utsu-ri/cli",
       "version": "0.1.0",
@@ -79,6 +83,7 @@
       },
       "dependencies": {
         "@utsu-ri/capture": "workspace:*",
+        "@utsu-ri/clipboard-handoff": "workspace:*",
         "@utsu-ri/compare": "workspace:*",
         "@utsu-ri/core": "workspace:*",
         "@utsu-ri/discovery": "workspace:*",
@@ -86,8 +91,11 @@
         "@utsu-ri/interactive-server": "workspace:*",
         "@utsu-ri/report-builder": "workspace:*",
         "@utsu-ri/report-model": "workspace:*",
+        "@utsu-ri/review-inbox": "workspace:*",
+        "@utsu-ri/review-mcp-server": "workspace:*",
         "@utsu-ri/review-state": "workspace:*",
         "@utsu-ri/security": "workspace:*",
+        "@utsu-ri/session-binding": "workspace:*",
         "fflate": "0.8.2",
         "yaml": "2.8.1",
       },
@@ -101,6 +109,16 @@
         "@utsu-ri/security": "workspace:*",
         "pixelmatch": "7.1.0",
         "pngjs": "7.0.0",
+      },
+    },
+    "packages/context-pack": {
+      "name": "@utsu-ri/context-pack",
+      "version": "0.1.0",
+      "dependencies": {
+        "@utsu-ri/core": "workspace:*",
+        "@utsu-ri/report-model": "workspace:*",
+        "@utsu-ri/review-state": "workspace:*",
+        "@utsu-ri/security": "workspace:*",
       },
     },
     "packages/core": {
@@ -137,7 +155,11 @@
       "dependencies": {
         "@utsu-ri/core": "workspace:*",
         "@utsu-ri/report-builder": "workspace:*",
+        "@utsu-ri/report-model": "workspace:*",
+        "@utsu-ri/review-inbox": "workspace:*",
+        "@utsu-ri/review-state": "workspace:*",
         "@utsu-ri/security": "workspace:*",
+        "@utsu-ri/session-binding": "workspace:*",
       },
     },
     "packages/report-builder": {
@@ -173,12 +195,52 @@
         "@utsu-ri/security": "workspace:*",
       },
     },
+    "packages/review-inbox": {
+      "name": "@utsu-ri/review-inbox",
+      "version": "0.1.0",
+      "dependencies": {
+        "@utsu-ri/context-pack": "workspace:*",
+        "@utsu-ri/core": "workspace:*",
+        "@utsu-ri/report-model": "workspace:*",
+        "@utsu-ri/review-state": "workspace:*",
+        "@utsu-ri/security": "workspace:*",
+        "@utsu-ri/session-binding": "workspace:*",
+      },
+    },
+    "packages/review-mcp-server": {
+      "name": "@utsu-ri/review-mcp-server",
+      "version": "0.1.0",
+      "dependencies": {
+        "@utsu-ri/core": "workspace:*",
+        "@utsu-ri/report-model": "workspace:*",
+        "@utsu-ri/review-inbox": "workspace:*",
+        "@utsu-ri/review-state": "workspace:*",
+        "@utsu-ri/session-binding": "workspace:*",
+      },
+    },
+    "packages/same-session-bridge": {
+      "name": "@utsu-ri/same-session-bridge",
+      "version": "0.1.0",
+      "dependencies": {
+        "@utsu-ri/clipboard-handoff": "workspace:*",
+        "@utsu-ri/report-model": "workspace:*",
+      },
+    },
     "packages/security": {
       "name": "@utsu-ri/security",
       "version": "0.1.0",
       "dependencies": {
         "@utsu-ri/core": "workspace:*",
         "pngjs": "7.0.0",
+      },
+    },
+    "packages/session-binding": {
+      "name": "@utsu-ri/session-binding",
+      "version": "0.1.0",
+      "dependencies": {
+        "@utsu-ri/core": "workspace:*",
+        "@utsu-ri/report-model": "workspace:*",
+        "@utsu-ri/review-state": "workspace:*",
       },
     },
   },

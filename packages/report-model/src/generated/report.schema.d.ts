@@ -1,5 +1,16 @@
 /* Generated from schemas/report.schema.json. Do not edit directly. */
 
+export type Origin = {
+  [k: string]: any;
+} & {
+  host: "codex" | "claude-code" | "unknown";
+  sessionRef?: string;
+  projectFingerprint: string;
+  reportId: string;
+  bindingMode: "direct-same-session" | "return-to-session" | "unbound";
+  createdAt: string;
+};
+
 export interface UtsuriReport {
   schemaVersion: "1.0";
   reportId: string;
@@ -207,12 +218,4 @@ export interface Finding {
   targetRef?: string;
   evidenceRefs: string[];
   hunkRefs: string[];
-}
-export interface Origin {
-  host: "codex" | "claude-code" | "unknown";
-  sessionRef?: string;
-  projectFingerprint: string;
-  reportId: string;
-  bindingMode: "direct-same-session" | "return-to-session" | "unbound";
-  createdAt: string;
 }

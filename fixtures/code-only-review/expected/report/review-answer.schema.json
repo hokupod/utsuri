@@ -20,17 +20,22 @@
     },
     "batchId": {
       "type": "string",
-      "minLength": 1
+      "pattern": "^fb[-:][A-Za-z0-9._:-]+$",
+      "maxLength": 256
     },
     "itemId": {
       "type": "string",
-      "minLength": 1
+      "pattern": "^item[-:][A-Za-z0-9._:-]+$",
+      "maxLength": 256
     },
     "directAnswer": {
-      "type": "string"
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 16384
     },
     "evidence": {
       "type": "array",
+      "maxItems": 100,
       "items": {
         "type": "object",
         "additionalProperties": false,
@@ -40,22 +45,28 @@
         ],
         "properties": {
           "ref": {
-            "type": "string"
+            "type": "string",
+            "minLength": 1
           },
           "explanation": {
-            "type": "string"
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 16384
           }
         }
       }
     },
     "uncertainty": {
       "type": "array",
+      "maxItems": 100,
       "items": {
-        "type": "string"
+        "type": "string",
+        "maxLength": 16384
       }
     },
     "suggestedNextActions": {
       "type": "array",
+      "maxItems": 100,
       "items": {
         "type": "object",
         "additionalProperties": false,
@@ -98,14 +109,15 @@
           ]
         },
         "originSessionRef": {
-          "type": "string"
+          "type": "string",
+          "pattern": "^session:[a-f0-9]{64}$"
         },
         "answerTurnRef": {
           "type": "string"
         },
         "contextHash": {
           "type": "string",
-          "minLength": 8
+          "pattern": "^[a-f0-9]{64}$"
         }
       }
     }

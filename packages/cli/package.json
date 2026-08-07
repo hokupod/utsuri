@@ -33,14 +33,18 @@
   "dependencies": {
     "@utsu-ri/capture": "workspace:*",
     "@utsu-ri/compare": "workspace:*",
+    "@utsu-ri/clipboard-handoff": "workspace:*",
     "@utsu-ri/core": "workspace:*",
     "@utsu-ri/discovery": "workspace:*",
     "@utsu-ri/git-collector": "workspace:*",
     "@utsu-ri/interactive-server": "workspace:*",
     "@utsu-ri/report-builder": "workspace:*",
     "@utsu-ri/report-model": "workspace:*",
+    "@utsu-ri/review-inbox": "workspace:*",
+    "@utsu-ri/review-mcp-server": "workspace:*",
     "@utsu-ri/review-state": "workspace:*",
     "@utsu-ri/security": "workspace:*",
+    "@utsu-ri/session-binding": "workspace:*",
     "fflate": "0.8.2",
     "yaml": "2.8.1"
   }

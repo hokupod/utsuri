@@ -1,29 +1,76 @@
 /* Generated from schemas/feedback-batch.schema.json. Do not edit directly. */
 
-export interface FeedbackBatch {
+export type FeedbackBatch = {
+  [k: string]: any;
+} & {
   id: string;
   reportId: string;
   origin: Origin;
   /**
    * @minItems 1
-   * @maxItems 100
+   * @maxItems 20
    */
-  items: [Item, ...Item[]];
+  items:
+    | [Item]
+    | [Item, Item]
+    | [Item, Item, Item]
+    | [Item, Item, Item, Item]
+    | [Item, Item, Item, Item, Item]
+    | [Item, Item, Item, Item, Item, Item]
+    | [Item, Item, Item, Item, Item, Item, Item]
+    | [Item, Item, Item, Item, Item, Item, Item, Item]
+    | [Item, Item, Item, Item, Item, Item, Item, Item, Item]
+    | [Item, Item, Item, Item, Item, Item, Item, Item, Item, Item]
+    | [Item, Item, Item, Item, Item, Item, Item, Item, Item, Item, Item]
+    | [Item, Item, Item, Item, Item, Item, Item, Item, Item, Item, Item, Item]
+    | [Item, Item, Item, Item, Item, Item, Item, Item, Item, Item, Item, Item, Item]
+    | [Item, Item, Item, Item, Item, Item, Item, Item, Item, Item, Item, Item, Item, Item]
+    | [Item, Item, Item, Item, Item, Item, Item, Item, Item, Item, Item, Item, Item, Item, Item]
+    | [Item, Item, Item, Item, Item, Item, Item, Item, Item, Item, Item, Item, Item, Item, Item, Item]
+    | [Item, Item, Item, Item, Item, Item, Item, Item, Item, Item, Item, Item, Item, Item, Item, Item, Item]
+    | [Item, Item, Item, Item, Item, Item, Item, Item, Item, Item, Item, Item, Item, Item, Item, Item, Item, Item]
+    | [Item, Item, Item, Item, Item, Item, Item, Item, Item, Item, Item, Item, Item, Item, Item, Item, Item, Item, Item]
+    | [
+        Item,
+        Item,
+        Item,
+        Item,
+        Item,
+        Item,
+        Item,
+        Item,
+        Item,
+        Item,
+        Item,
+        Item,
+        Item,
+        Item,
+        Item,
+        Item,
+        Item,
+        Item,
+        Item,
+        Item
+      ];
   state: "draft" | "ready" | "submitted" | "consumed" | "answered" | "stale";
   deliveryMode: "direct-same-session" | "return-to-session" | "export-only";
   contextHash: string;
   createdAt: string;
   submittedAt?: string;
   consumedAt?: string;
-}
-export interface Origin {
+  answeredAt?: string;
+};
+export type Origin = {
+  [k: string]: any;
+} & {
   host: "codex" | "claude-code" | "unknown";
   sessionRef?: string;
   projectFingerprint: string;
   reportId: string;
   bindingMode: "direct-same-session" | "return-to-session" | "unbound";
   createdAt: string;
-}
+};
+
 export interface Item {
   id: string;
   threadId: string;

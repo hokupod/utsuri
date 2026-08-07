@@ -3,7 +3,7 @@
   "reportId": "report-empty",
   "origin": {
     "host": "unknown",
-    "projectFingerprint": "00000000",
+    "projectFingerprint": "0000000000000000000000000000000000000000000000000000000000000000",
     "reportId": "report-empty",
     "bindingMode": "unbound",
     "createdAt": "2026-01-01T00:00:00.000Z"
@@ -15,7 +15,7 @@
       "anchor": {
         "type": "change",
         "ref": "change-001",
-        "fingerprint": "00000000"
+        "fingerprint": "0000000000000000000000000000000000000000000000000000000000000000"
       },
       "sourceMessageId": "message-001",
       "requestKind": "explain",
@@ -31,7 +31,7 @@
     }
   ],
   "state": "ready",
-  "deliveryMode": "return-to-session",
-  "contextHash": "00000000",
+  "deliveryMode": "export-only",
+  "contextHash": "0000000000000000000000000000000000000000000000000000000000000000",
   "createdAt": "2026-01-01T00:00:00.000Z"
 }

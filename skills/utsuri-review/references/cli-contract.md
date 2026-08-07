@@ -30,10 +30,14 @@ Do not discard an output path merely because a command reports a partial result.
 
 `compare` returns exit code 4 when a target or evidence class is incomplete. Finalize the preserved result and report the exact gaps; do not retry deterministic malformed evidence or treat a pixel-only difference as a regression.
 
-`serve <report>` enables only static loopback mode in Phase 5. It binds a random `127.0.0.1` port, does not open a browser without `--open`, and rejects `--interactive` until the capability-token feedback API exists.
+`serve <report>` binds a random loopback port and does not open a browser without `--open`. Add `--interactive` only when the run has an Origin Session binding. Interactive mode passes a per-start capability in the URL fragment, removes it from browser history after capture, and exposes only fixed-run review state, feedback, event, and export endpoints.
 
 `pack <report> --output <directory>` validates the immutable report and writes deterministic `report.zip`, `report.json`, and `ci-summary.json`. A configured `failOn` match returns exit code 10 after preserving all artifacts. The command never uploads them.
 
 `review export --run <run> --output <file>` writes a new canonical review bundle. `review import --run <run> --input <file>` requires matching source identity; add `--reanchor` to retain changed anchors as stale and missing anchors as orphaned. Neither command modifies `report/` or sends comments to an Agent.
+
+`feedback list --run <run>` lists fixed-run batches. `feedback get --run <run> [--batch <id>]` claims exactly one batch only when the current host, opaque session reference, project fingerprint, and report match. `feedback answer --run <run> [--batch <id>] --input <file>` requires exactly one schema-valid answer per item. `feedback handoff --run <run> [--batch <id>]` prints a copyable return-to-session prompt. Omit `--batch` only when exactly one eligible batch exists.
+
+`review-mcp --run <run>` starts the same fixed-run inbox service over strict NDJSON JSON-RPC. Its tools accept no path, command, cwd, provider, model, or arbitrary session destination.
 
 `--version --json` emits exactly one JSON object with `ok`, `command`, `package`, `version`, and `protocolVersion`. Published-artifact verification rejects notices, extra stdout, version ranges, tags, and ambient executable fallback.

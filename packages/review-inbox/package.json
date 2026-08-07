@@ -1,0 +1,19 @@
+{
+  "name": "@utsu-ri/review-inbox",
+  "version": "0.1.0",
+  "private": true,
+  "license": "AGPL-3.0-or-later",
+  "type": "module",
+  "dependencies": {
+    "@utsu-ri/context-pack": "workspace:*",
+    "@utsu-ri/core": "workspace:*",
+    "@utsu-ri/report-model": "workspace:*",
+    "@utsu-ri/review-state": "workspace:*",
+    "@utsu-ri/security": "workspace:*",
+    "@utsu-ri/session-binding": "workspace:*"
+  },
+  "exports": {
+    ".": "./src/index.ts",
+    "./browser": "./src/browser.ts"
+  }
+}

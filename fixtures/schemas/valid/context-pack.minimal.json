@@ -8,7 +8,7 @@
   "anchor": {
     "type": "change",
     "ref": "change-001",
-    "fingerprint": "00000000"
+    "fingerprint": "0000000000000000000000000000000000000000000000000000000000000000"
   },
   "question": "Why did this change?",
   "code": [],
@@ -16,5 +16,5 @@
   "evidenceRefs": [],
   "priorThreadMessages": [{ "role": "human", "text": "Why did this change?" }],
   "redactions": [],
-  "contextHash": "00000000"
+  "contextHash": "0000000000000000000000000000000000000000000000000000000000000000"
 }

@@ -25,13 +25,19 @@
       "const": "1.1"
     },
     "reportId": {
-      "type": "string"
+      "type": "string",
+      "pattern": "^report[-:][A-Za-z0-9._:-]+$",
+      "maxLength": 256
     },
     "batchId": {
-      "type": "string"
+      "type": "string",
+      "pattern": "^fb[-:][A-Za-z0-9._:-]+$",
+      "maxLength": 256
     },
     "itemId": {
-      "type": "string"
+      "type": "string",
+      "pattern": "^item[-:][A-Za-z0-9._:-]+$",
+      "maxLength": 256
     },
     "baseSha": {
       "type": "string"
@@ -44,7 +50,8 @@
     },
     "question": {
       "type": "string",
-      "minLength": 1
+      "minLength": 1,
+      "maxLength": 16384
     },
     "semanticChange": {
       "type": "object",
@@ -226,7 +233,7 @@
     },
     "contextHash": {
       "type": "string",
-      "minLength": 8
+      "pattern": "^[a-f0-9]{64}$"
     }
   },
   "$defs": {
@@ -283,7 +290,7 @@
         },
         "fingerprint": {
           "type": "string",
-          "minLength": 8
+          "pattern": "^[a-f0-9]{64}$"
         }
       }
     },
@@ -299,19 +306,23 @@
       "properties": {
         "x": {
           "type": "number",
-          "minimum": 0
+          "minimum": 0,
+          "maximum": 1
         },
         "y": {
           "type": "number",
-          "minimum": 0
+          "minimum": 0,
+          "maximum": 1
         },
         "width": {
           "type": "number",
-          "exclusiveMinimum": 0
+          "exclusiveMinimum": 0,
+          "maximum": 1
         },
         "height": {
           "type": "number",
-          "exclusiveMinimum": 0
+          "exclusiveMinimum": 0,
+          "maximum": 1
         }
       }
     }

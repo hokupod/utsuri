@@ -1,12 +1,14 @@
 <script lang="ts">
-  import { onMount, tick } from "svelte";
+  import { onDestroy, onMount, tick } from "svelte";
   import type { UtsuriReport } from "../../report-model/src";
   import {
     anchorKey,
     browserCreateComment,
     browserResolveThread,
+    browserSetAgentAttention,
     browserSetJudgment,
     browserSetViewed,
+    createBrowserReviewStore,
     createBrowserReviewBundle,
     findAnchor,
     importBrowserReviewBundle,
@@ -18,6 +20,10 @@
     type ReviewStore,
     type ReviewThreadKind
   } from "../../review-state/src/browser";
+  import {
+    createBrowserFeedbackPreview,
+    type BrowserFeedbackPreview
+  } from "../../review-inbox/src/browser";
 
   type Change = UtsuriReport["changes"][number];
   type Hunk = UtsuriReport["hunks"][number];
@@ -28,6 +34,11 @@
   type QueueKind = "action-required" | "needs-confirmation" | "no-issue";
   type VisualMode = "side-by-side" | "wipe" | "blink" | "pixel-diff" | "after-only";
   type DiffRow = { kind: "line"; line: DiffLine; index: number } | { kind: "fold"; count: number };
+  interface InteractiveRequestOptions {
+    method?: "GET" | "POST";
+    body?: string;
+    headers?: Record<string, string>;
+  }
 
   const copy = {
     en: {
@@ -101,6 +112,19 @@
       resolved: "Resolved",
       noComments: "No comments for this change",
       localOnly: "Saved locally. Plain comments are never sent to an Agent.",
+      askAgent: "Ask the current Agent",
+      askAgentHelp: "This only saves the selection. It does not submit or create a conversation.",
+      selectedItems: "Items for Agent review",
+      reviewItems: "Review items",
+      feedbackPreview: "Feedback Batch preview",
+      shared: "Shared",
+      notShared: "Not shared",
+      delivery: "Delivery",
+      returnConversation: "Return to current conversation",
+      prepareRequest: "Prepare review request",
+      copyHandoff: "Copy handoff",
+      handoffCopied: "Handoff copied",
+      unreadAnswers: "Unread answers",
       exportReview: "Export review",
       importReview: "Import review",
       reanchorImport: "Re-anchor another report",
@@ -181,6 +205,19 @@
       resolved: "解決済み",
       noComments: "この変更へのコメントはありません",
       localOnly: "ローカルに保存します。通常コメントを Agent へ送信することはありません。",
+      askAgent: "現在の Agent に確認を依頼",
+      askAgentHelp: "選択状態だけを保存します。送信や新しい会話の作成は行いません。",
+      selectedItems: "Agent 確認対象",
+      reviewItems: "確認項目をレビュー",
+      feedbackPreview: "Feedback Batch プレビュー",
+      shared: "共有する情報",
+      notShared: "共有しない情報",
+      delivery: "受け渡し",
+      returnConversation: "現在の会話へ戻す",
+      prepareRequest: "レビュー依頼を準備",
+      copyHandoff: "引き継ぎ文をコピー",
+      handoffCopied: "引き継ぎ文をコピーしました",
+      unreadAnswers: "未読回答",
       exportReview: "レビューを書き出す",
       importReview: "レビューを読み込む",
       reanchorImport: "別レポートへ再アンカーする",
@@ -231,9 +268,17 @@
   let commentAnchor: ReviewAnchor | null = null;
   let commentBody = "";
   let commentKind: ReviewThreadKind = "note";
+  let commentAgentAttention = false;
   let commentInput: HTMLTextAreaElement;
   let reviewImportInput: HTMLInputElement;
   let selectedThreads: ReviewStore["threads"] = [];
+  let interactiveToken = "";
+  let reviewInboxEntries: Array<{ unreadAnswerItemIds: string[] }> = [];
+  let feedbackPreview: BrowserFeedbackPreview | null = null;
+  let feedbackHandoff = "";
+  let feedbackIdempotencyKey = "";
+  let feedbackBusy = false;
+  let eventAbort: AbortController | null = null;
 
   $: t = copy[locale];
   $: selectedChange = report?.changes.find((change) => change.id === selectedChangeId);
@@ -281,9 +326,30 @@
           threadBelongsToChange(thread.anchor, selectedChange!)
         )
       : [];
+  $: activeVisualThreads = selectedThreads.filter(
+    (thread) =>
+      thread.state !== "resolved" &&
+      thread.anchor.type === "visual-region" &&
+      Boolean(thread.anchor.region) &&
+      Boolean(activeComparison && activeImage) &&
+      thread.anchor.ref.startsWith(`${activeComparison!.id}:${activeImage!.id}:`)
+  );
+  $: selectedAttentionCount =
+    reviewStore?.threads.filter((thread) => thread.agentAttention.state === "requested").length ??
+    0;
+  $: unreadAnswerCount = reviewInboxEntries.reduce(
+    (count, entry) => count + entry.unreadAnswerItemIds.length,
+    0
+  );
 
   function domId(prefix: string, value: string): string {
     return `${prefix}-${value.replace(/[^a-zA-Z0-9_-]/gu, "-")}`;
+  }
+
+  function visualPinStyle(anchor: ReviewAnchor): string {
+    const region = anchor.region;
+    if (!region) return "display:none";
+    return `left:${(region.x + region.width / 2) * 100}%;top:${(region.y + region.height / 2) * 100}%`;
   }
 
   function queueKind(change: Change): QueueKind {
@@ -344,6 +410,117 @@
     return false;
   }
 
+  function captureInteractiveToken(): void {
+    const parameters = new URLSearchParams(
+      location.hash.startsWith("#") ? location.hash.slice(1) : ""
+    );
+    const token = parameters.get("token") ?? "";
+    if (!token) return;
+    if (!/^[A-Za-z0-9_-]{32,128}$/u.test(token)) {
+      reviewFailure = "Interactive capability token is invalid";
+      history.replaceState(null, "", `${location.pathname}${location.search}`);
+      return;
+    }
+    interactiveToken = token;
+    history.replaceState(null, "", `${location.pathname}${location.search}`);
+  }
+
+  async function interactiveRequest(
+    relative: string,
+    init: InteractiveRequestOptions = {}
+  ): Promise<any> {
+    if (!interactiveToken || !report)
+      throw new Error("Interactive review capability is unavailable");
+    const response = await fetch(`./api/v1/${relative}`, {
+      ...init,
+      credentials: "omit",
+      headers: {
+        authorization: `Bearer ${interactiveToken}`,
+        "x-utsuri-report-id": report.reportId,
+        ...(init.body ? { "content-type": "application/json" } : {}),
+        ...(init.headers ?? {})
+      }
+    });
+    const value = await response.json();
+    if (!response.ok) throw new Error(value?.error?.message ?? `HTTP ${response.status}`);
+    return value;
+  }
+
+  function applyInteractiveState(value: {
+    state: ReviewStore["state"];
+    threads: ReviewStore["threads"];
+    inbox?: { entries?: Array<{ unreadAnswerItemIds: string[] }> };
+  }): void {
+    if (!reviewStore) return;
+    reviewStore = {
+      ...reviewStore,
+      state: structuredClone(value.state),
+      threads: structuredClone(value.threads),
+      events: reviewStore.events
+    };
+    reviewInboxEntries = structuredClone(value.inbox?.entries ?? reviewInboxEntries);
+  }
+
+  async function refreshInteractiveReview(): Promise<void> {
+    const value = await interactiveRequest("review-state");
+    applyInteractiveState(value);
+  }
+
+  async function interactiveMutation(action: Record<string, unknown>): Promise<void> {
+    if (!reviewStore || !report) return;
+    const value = await interactiveRequest("review-events", {
+      method: "POST",
+      body: JSON.stringify({
+        schemaVersion: "1.0",
+        reportId: report.reportId,
+        expectedRevision: reviewStore.state.revision,
+        action
+      })
+    });
+    applyInteractiveState(value);
+  }
+
+  async function listenForInteractiveEvents(): Promise<void> {
+    if (!interactiveToken || !report) return;
+    eventAbort?.abort();
+    const controller = new AbortController();
+    eventAbort = controller;
+    try {
+      const response = await fetch("./api/v1/events", {
+        credentials: "omit",
+        headers: {
+          authorization: `Bearer ${interactiveToken}`,
+          "x-utsuri-report-id": report.reportId
+        },
+        signal: controller.signal
+      });
+      if (!response.ok || !response.body) return;
+      const reader = response.body.getReader();
+      const decoder = new TextDecoder();
+      let pending = "";
+      while (!controller.signal.aborted) {
+        const { value, done } = await reader.read();
+        if (done) break;
+        pending += decoder.decode(value, { stream: true });
+        const messages = pending.split("\n\n");
+        pending = messages.pop() ?? "";
+        if (
+          messages.some(
+            (message) => message.startsWith("data:") && !message.includes('"type":"ready"')
+          )
+        ) {
+          await refreshInteractiveReview();
+        }
+      }
+    } catch (error) {
+      if (!controller.signal.aborted) {
+        reviewNotice = error instanceof Error ? error.message : String(error);
+      }
+    }
+  }
+
+  onDestroy(() => eventAbort?.abort());
+
   async function persistReview(next: ReviewStore): Promise<void> {
     await saveBrowserReviewStore(next, next.state.revision - 1);
     reviewStore = next;
@@ -359,9 +536,17 @@
     if (!reviewStore || !anchor) return;
     reviewBusy = true;
     try {
-      await persistReview(
-        await browserSetViewed(reviewStore, anchor, checked ? "viewed" : "unseen")
-      );
+      if (interactiveToken) {
+        await interactiveMutation({
+          type: "viewed.changed",
+          anchor: { type: anchor.type, ref: anchor.ref, fingerprint: anchor.fingerprint },
+          viewState: checked ? "viewed" : "unseen"
+        });
+      } else {
+        await persistReview(
+          await browserSetViewed(reviewStore, anchor, checked ? "viewed" : "unseen")
+        );
+      }
     } catch (error) {
       reviewNotice = error instanceof Error ? error.message : String(error);
     } finally {
@@ -373,7 +558,11 @@
     if (!reviewStore || value === "stale") return;
     reviewBusy = true;
     try {
-      await persistReview(await browserSetJudgment(reviewStore, changeId, value));
+      if (interactiveToken) {
+        await interactiveMutation({ type: "judgment.changed", changeId, judgmentState: value });
+      } else {
+        await persistReview(await browserSetJudgment(reviewStore, changeId, value));
+      }
     } catch (error) {
       reviewNotice = error instanceof Error ? error.message : String(error);
     } finally {
@@ -385,6 +574,7 @@
     if (!anchor) return;
     commentAnchor = anchor;
     commentBody = "";
+    commentAgentAttention = false;
     await tick();
     commentInput?.focus();
   }
@@ -393,11 +583,33 @@
     if (!reviewStore || !commentAnchor) return;
     reviewBusy = true;
     try {
-      await persistReview(
-        await browserCreateComment(reviewStore, commentAnchor, commentBody, commentKind)
-      );
+      if (interactiveToken) {
+        await interactiveMutation({
+          type: "thread.created",
+          anchor: {
+            type: commentAnchor.type,
+            ref: commentAnchor.ref,
+            fingerprint: commentAnchor.fingerprint
+          },
+          body: commentBody,
+          kind: commentKind,
+          requestAgentAttention: commentAgentAttention
+        });
+      } else {
+        await persistReview(
+          await browserCreateComment(
+            reviewStore,
+            commentAnchor,
+            commentBody,
+            commentKind,
+            new Date().toISOString(),
+            commentAgentAttention
+          )
+        );
+      }
       commentAnchor = null;
       commentBody = "";
+      commentAgentAttention = false;
     } catch (error) {
       reviewNotice = error instanceof Error ? error.message : String(error);
     } finally {
@@ -409,7 +621,11 @@
     if (!reviewStore) return;
     reviewBusy = true;
     try {
-      await persistReview(await browserResolveThread(reviewStore, threadId));
+      if (interactiveToken) {
+        await interactiveMutation({ type: "thread.resolved", threadId });
+      } else {
+        await persistReview(await browserResolveThread(reviewStore, threadId));
+      }
     } catch (error) {
       reviewNotice = error instanceof Error ? error.message : String(error);
     } finally {
@@ -417,22 +633,145 @@
     }
   }
 
-  function exportReview(): void {
+  async function updateAgentAttention(threadId: string, requested: boolean): Promise<void> {
     if (!reviewStore) return;
-    const bundle = createBrowserReviewBundle(reviewStore, reviewSource);
-    const blob = new Blob([`${JSON.stringify(bundle, null, 2)}\n`], {
+    reviewBusy = true;
+    try {
+      if (interactiveToken) {
+        await interactiveMutation({ type: "agent-attention.changed", threadId, requested });
+      } else {
+        await persistReview(await browserSetAgentAttention(reviewStore, threadId, requested));
+      }
+      feedbackPreview = null;
+      feedbackHandoff = "";
+    } catch (error) {
+      reviewNotice = error instanceof Error ? error.message : String(error);
+    } finally {
+      reviewBusy = false;
+    }
+  }
+
+  async function exportReview(): Promise<void> {
+    if (!reviewStore || !report) return;
+    reviewBusy = true;
+    try {
+      const bundle = interactiveToken
+        ? await interactiveRequest("review/export", {
+            method: "POST",
+            body: JSON.stringify({
+              schemaVersion: "1.0",
+              reportId: report.reportId,
+              expectedRevision: reviewStore.state.revision
+            })
+          })
+        : createBrowserReviewBundle(reviewStore, reviewSource);
+      downloadJson(`${report?.reportId ?? "utsuri"}-review.json`, bundle);
+    } catch (error) {
+      reviewNotice = error instanceof Error ? error.message : String(error);
+    } finally {
+      reviewBusy = false;
+    }
+  }
+
+  function downloadJson(filename: string, value: unknown): void {
+    const blob = new Blob([`${JSON.stringify(value, null, 2)}\n`], {
       type: "application/json"
     });
     const url = URL.createObjectURL(blob);
     const link = document.createElement("a");
     link.href = url;
-    link.download = `${report?.reportId ?? "utsuri"}-review.json`;
+    link.download = filename;
     link.click();
     URL.revokeObjectURL(url);
   }
 
+  function handoffText(batch: { reportId: string; id: string }): string {
+    return `Process the pending Utsuri review items.\nReport: ${batch.reportId}\nBatch: ${batch.id}`;
+  }
+
+  async function reviewFeedbackItems(): Promise<void> {
+    if (!reviewStore || !report) return;
+    feedbackBusy = true;
+    try {
+      if (interactiveToken) {
+        const value = await interactiveRequest("feedback-batches/preview", {
+          method: "POST",
+          body: JSON.stringify({
+            schemaVersion: "1.0",
+            reportId: report.reportId,
+            expectedRevision: reviewStore.state.revision,
+            deliveryMode: "return-to-session"
+          })
+        });
+        feedbackPreview = value.preview as BrowserFeedbackPreview;
+      } else {
+        feedbackPreview = await createBrowserFeedbackPreview(reviewStore);
+      }
+      feedbackIdempotencyKey = `ui:${feedbackPreview.batch.id}`;
+      feedbackHandoff = "";
+    } catch (error) {
+      reviewNotice = error instanceof Error ? error.message : String(error);
+    } finally {
+      feedbackBusy = false;
+    }
+  }
+
+  async function prepareFeedbackRequest(): Promise<void> {
+    if (!feedbackPreview || !reviewStore || !report) return;
+    feedbackBusy = true;
+    try {
+      if (interactiveToken) {
+        const value = await interactiveRequest("feedback-batches", {
+          method: "POST",
+          body: JSON.stringify({
+            schemaVersion: "1.0",
+            reportId: report.reportId,
+            expectedRevision: reviewStore.state.revision,
+            idempotencyKey: feedbackIdempotencyKey,
+            deliveryMode: "return-to-session"
+          })
+        });
+        feedbackPreview = value.preview as BrowserFeedbackPreview;
+        applyInteractiveState(value);
+      } else {
+        downloadJson(`${report.reportId}-${feedbackPreview.batch.id.replace(":", "-")}.json`, {
+          schemaVersion: "1.0",
+          batch: feedbackPreview.batch,
+          contexts: feedbackPreview.contexts,
+          preview: {
+            shared: feedbackPreview.shared,
+            excluded: feedbackPreview.excluded,
+            redactionCount: feedbackPreview.redactionCount,
+            contextBytes: feedbackPreview.contextBytes,
+            destination: feedbackPreview.destination
+          }
+        });
+      }
+      feedbackHandoff = handoffText(feedbackPreview.batch);
+    } catch (error) {
+      reviewNotice = error instanceof Error ? error.message : String(error);
+    } finally {
+      feedbackBusy = false;
+    }
+  }
+
+  async function copyFeedbackHandoff(): Promise<void> {
+    if (!feedbackHandoff) return;
+    try {
+      await navigator.clipboard.writeText(feedbackHandoff);
+      reviewNotice = t.handoffCopied;
+    } catch (error) {
+      reviewNotice = error instanceof Error ? error.message : String(error);
+    }
+  }
+
   async function importReview(file: File | undefined): Promise<void> {
     if (!reviewStore || !file) return;
+    if (interactiveToken) {
+      reviewNotice = "Import is available only in static report mode";
+      reviewImportInput.value = "";
+      return;
+    }
     reviewBusy = true;
     try {
       if (file.size > 16 * 1024 * 1024) throw new Error("Review bundle exceeds 16 MiB");
@@ -638,6 +977,7 @@
 
   async function loadReport(): Promise<void> {
     try {
+      captureInteractiveToken();
       const embeddedReport = document.querySelector<HTMLScriptElement>("[data-utsuri-report]");
       const embeddedManifest = document.querySelector<HTMLScriptElement>("[data-utsuri-manifest]");
       let manifest: { source?: { base?: string | null; head?: string | null } } | null = null;
@@ -668,7 +1008,13 @@
         };
       }
       try {
-        reviewStore = await loadBrowserReviewStore(report);
+        if (interactiveToken) {
+          reviewStore = await createBrowserReviewStore(report, new Date().toISOString());
+          await refreshInteractiveReview();
+          void listenForInteractiveEvents();
+        } else {
+          reviewStore = await loadBrowserReviewStore(report);
+        }
       } catch (error) {
         reviewFailure = error instanceof Error ? error.message : String(error);
       }
@@ -992,15 +1338,21 @@
               </div>
               <div class="review-transfer-actions">
                 <label>
-                  <input type="checkbox" bind:checked={reviewReanchor} disabled={reviewBusy} />
+                  <input
+                    type="checkbox"
+                    bind:checked={reviewReanchor}
+                    disabled={reviewBusy || Boolean(interactiveToken)}
+                  />
                   <span>{t.reanchorImport}</span>
                 </label>
-                <button type="button" disabled={!reviewStore || reviewBusy} onclick={exportReview}
-                  >{t.exportReview}</button
-                >
                 <button
                   type="button"
                   disabled={!reviewStore || reviewBusy}
+                  onclick={() => void exportReview()}>{t.exportReview}</button
+                >
+                <button
+                  type="button"
+                  disabled={!reviewStore || reviewBusy || Boolean(interactiveToken)}
                   onclick={() => reviewImportInput?.click()}>{t.importReview}</button
                 >
                 <input
@@ -1282,6 +1634,16 @@
                               onclick={() => void jumpRegion(index)}>{index + 1}</button
                             >
                           {/each}
+                          {#each activeVisualThreads as thread, index (thread.id)}
+                            <button
+                              class="visual-comment-pin"
+                              type="button"
+                              style={visualPinStyle(thread.anchor)}
+                              aria-label={`${t.comment} pin ${index + 1}: ${thread.state}`}
+                              onclick={() => void focusElement(domId("thread", thread.id))}
+                              >{index + 1}</button
+                            >
+                          {/each}
                         </div>
                       </div>
                     </figure>
@@ -1305,6 +1667,16 @@
                           src={`./${activeImage.afterRef}`}
                           alt={`After capture revealed to ${wipePosition}%`}
                         />
+                        {#each activeVisualThreads as thread, index (thread.id)}
+                          <button
+                            class="visual-comment-pin"
+                            type="button"
+                            style={visualPinStyle(thread.anchor)}
+                            aria-label={`${t.comment} pin ${index + 1}: ${thread.state}`}
+                            onclick={() => void focusElement(domId("thread", thread.id))}
+                            >{index + 1}</button
+                          >
+                        {/each}
                       </div>
                     </div>
                   </figure>
@@ -1326,6 +1698,16 @@
                           src={`./${activeImage.afterRef}`}
                           alt={`After capture for ${activeImage.label}`}
                         />
+                        {#each activeVisualThreads as thread, index (thread.id)}
+                          <button
+                            class="visual-comment-pin"
+                            type="button"
+                            style={visualPinStyle(thread.anchor)}
+                            aria-label={`${t.comment} pin ${index + 1}: ${thread.state}`}
+                            onclick={() => void focusElement(domId("thread", thread.id))}
+                            >{index + 1}</button
+                          >
+                        {/each}
                       </div>
                     </div>
                   </figure>
@@ -1338,6 +1720,16 @@
                           src={`./${activeImage.diffRef}`}
                           alt={`Pixel difference bitmap with ${activeImage.diffPixelCount} changed pixels`}
                         />
+                        {#each activeVisualThreads as thread, index (thread.id)}
+                          <button
+                            class="visual-comment-pin"
+                            type="button"
+                            style={visualPinStyle(thread.anchor)}
+                            aria-label={`${t.comment} pin ${index + 1}: ${thread.state}`}
+                            onclick={() => void focusElement(domId("thread", thread.id))}
+                            >{index + 1}</button
+                          >
+                        {/each}
                       </div>
                     </div>
                   </figure>
@@ -1359,6 +1751,16 @@
                             aria-label={`Changed region ${index + 1}, ${region.pixels} pixels`}
                             style={`left:${(region.x / activeImage.width) * 100}%;top:${(region.y / activeImage.height) * 100}%;width:${(region.width / activeImage.width) * 100}%;height:${(region.height / activeImage.height) * 100}%`}
                             onclick={() => void jumpRegion(index)}>{index + 1}</button
+                          >
+                        {/each}
+                        {#each activeVisualThreads as thread, index (thread.id)}
+                          <button
+                            class="visual-comment-pin"
+                            type="button"
+                            style={visualPinStyle(thread.anchor)}
+                            aria-label={`${t.comment} pin ${index + 1}: ${thread.state}`}
+                            onclick={() => void focusElement(domId("thread", thread.id))}
+                            >{index + 1}</button
                           >
                         {/each}
                       </div>
@@ -1683,6 +2085,15 @@
                     disabled={reviewBusy}
                   ></textarea>
                 </label>
+                <label class="agent-attention-control">
+                  <input
+                    type="checkbox"
+                    bind:checked={commentAgentAttention}
+                    disabled={reviewBusy}
+                  />
+                  <span>{t.askAgent}</span>
+                  <small>{t.askAgentHelp}</small>
+                </label>
                 <p>{t.localOnly}</p>
                 <div class="comment-actions">
                   <button type="submit" disabled={reviewBusy || !commentBody.trim()}
@@ -1694,6 +2105,7 @@
                     onclick={() => {
                       commentAnchor = null;
                       commentBody = "";
+                      commentAgentAttention = false;
                     }}>{t.cancel}</button
                   >
                 </div>
@@ -1703,7 +2115,11 @@
             {#if selectedThreads.length > 0}
               <ol class="thread-list">
                 {#each selectedThreads as thread (thread.id)}
-                  <li data-thread-state={thread.state}>
+                  <li
+                    id={domId("thread", thread.id)}
+                    tabindex="-1"
+                    data-thread-state={thread.state}
+                  >
                     <header>
                       <div>
                         <span>{thread.kind}</span>
@@ -1715,6 +2131,20 @@
                     {#each thread.messages as message (message.id)}
                       <p>{message.body}</p>
                     {/each}
+                    {#if thread.agentAttention.state === "none" || thread.agentAttention.state === "requested"}
+                      <label class="agent-attention-control compact-attention">
+                        <input
+                          type="checkbox"
+                          checked={thread.agentAttention.state === "requested"}
+                          disabled={reviewBusy || thread.state !== "open"}
+                          onchange={(event) =>
+                            void updateAgentAttention(thread.id, event.currentTarget.checked)}
+                        />
+                        <span>{t.askAgent}</span>
+                      </label>
+                    {:else}
+                      <p class="attention-state">Agent attention: {thread.agentAttention.state}</p>
+                    {/if}
                     {#if thread.state === "open"}
                       <button
                         type="button"
@@ -1786,6 +2216,79 @@
         <section class="focused-change empty-focus"><h2>{t.empty}</h2></section>
       {/if}
     </main>
+    {#if reviewStore && (selectedAttentionCount > 0 || unreadAnswerCount > 0 || feedbackPreview)}
+      <aside class="feedback-dock" aria-live="polite" aria-label={t.selectedItems}>
+        <header>
+          <div>
+            <strong>{t.selectedItems}: {selectedAttentionCount}</strong>
+            {#if unreadAnswerCount > 0}<span class="unread-badge"
+                >{t.unreadAnswers}: {unreadAnswerCount}</span
+              >{/if}
+          </div>
+          {#if selectedAttentionCount > 0}
+            <button
+              type="button"
+              disabled={feedbackBusy || reviewBusy}
+              onclick={() => void reviewFeedbackItems()}>{t.reviewItems}</button
+            >
+          {/if}
+        </header>
+        {#if feedbackPreview}
+          <section class="feedback-preview" aria-labelledby="feedback-preview-heading">
+            <h2 id="feedback-preview-heading">{t.feedbackPreview}</h2>
+            <ol>
+              {#each feedbackPreview.batch.items as item (item.id)}
+                <li>
+                  <strong>{item.question}</strong>
+                  <code>{item.anchor.type}: {item.anchor.ref}</code>
+                  <span>{item.state}</span>
+                </li>
+              {/each}
+            </ol>
+            <div class="feedback-preview-grid">
+              <section>
+                <h3>{t.shared}</h3>
+                <p>
+                  {feedbackPreview.shared.comments} comments · {feedbackPreview.shared.codeRanges}
+                  code ranges · {feedbackPreview.shared.imageCrops} image crops ·
+                  {feedbackPreview.shared.evidenceReferences} evidence refs
+                </p>
+              </section>
+              <section>
+                <h3>{t.notShared}</h3>
+                <p>{feedbackPreview.excluded.join(" · ")}</p>
+              </section>
+              <section>
+                <h3>{t.delivery}</h3>
+                <p>
+                  {feedbackPreview.destination.deliveryMode} · {feedbackPreview.contextBytes} bytes ·
+                  {feedbackPreview.redactionCount} redactions
+                </p>
+              </section>
+            </div>
+            {#each feedbackPreview.warnings as warning (warning)}<p class="feedback-warning">
+                {warning}
+              </p>{/each}
+            <div class="feedback-actions">
+              <button
+                type="button"
+                disabled={feedbackBusy}
+                onclick={() => void prepareFeedbackRequest()}
+                >{interactiveToken ? t.returnConversation : t.prepareRequest}</button
+              >
+              {#if feedbackHandoff}
+                <button
+                  type="button"
+                  disabled={feedbackBusy}
+                  onclick={() => void copyFeedbackHandoff()}>{t.copyHandoff}</button
+                >
+              {/if}
+            </div>
+            {#if feedbackHandoff}<pre>{feedbackHandoff}</pre>{/if}
+          </section>
+        {/if}
+      </aside>
+    {/if}
   </div>
 {:else}
   <p class="loading" role={failure ? "alert" : "status"} aria-live="polite">

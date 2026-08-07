@@ -28,7 +28,7 @@ function exactVersion(value) {
   return value;
 }
 
-async function resolveExecutable(name, pathValue) {
+async function resolveExecutable(name, pathValue, options = {}) {
   for (const directory of (pathValue ?? "").split(path.delimiter)) {
     if (!directory || !path.isAbsolute(directory)) continue;
     const candidate = path.join(directory, name);
@@ -36,7 +36,9 @@ async function resolveExecutable(name, pathValue) {
       await access(candidate, constants.X_OK);
       const resolved = await realpath(candidate);
       const fileStat = await lstat(resolved);
-      if (fileStat.isFile() && !fileStat.isSymbolicLink()) return resolved;
+      if (fileStat.isFile() && !fileStat.isSymbolicLink()) {
+        return options.preserveInvocationPath ? candidate : resolved;
+      }
     } catch {
       // Continue to the next PATH entry.
     }
@@ -45,7 +47,9 @@ async function resolveExecutable(name, pathValue) {
 }
 
 async function signalProcessGroupWithNativeKill(pid, signal) {
-  const executable = await resolveExecutable("kill", process.env.PATH ?? "/bin:/usr/bin");
+  const executable = await resolveExecutable("kill", process.env.PATH ?? "/bin:/usr/bin", {
+    preserveInvocationPath: true
+  });
   const child = spawn(executable, ["-s", signal.replace(/^SIG/u, ""), `-${pid}`], {
     shell: false,
     stdio: ["ignore", "ignore", "pipe"]

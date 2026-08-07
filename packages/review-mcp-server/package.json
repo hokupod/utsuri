@@ -1,0 +1,17 @@
+{
+  "name": "@utsu-ri/review-mcp-server",
+  "version": "0.1.0",
+  "private": true,
+  "license": "AGPL-3.0-or-later",
+  "type": "module",
+  "dependencies": {
+    "@utsu-ri/core": "workspace:*",
+    "@utsu-ri/report-model": "workspace:*",
+    "@utsu-ri/review-inbox": "workspace:*",
+    "@utsu-ri/review-state": "workspace:*",
+    "@utsu-ri/session-binding": "workspace:*"
+  },
+  "exports": {
+    ".": "./src/index.ts"
+  }
+}

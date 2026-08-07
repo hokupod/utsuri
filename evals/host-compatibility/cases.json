@@ -6,21 +6,36 @@
       "manifest": ".codex-plugin/plugin.json",
       "pluginName": "utsuri",
       "skill": "skills/utsuri-review/SKILL.md",
-      "bundle": "skills/utsuri-review/scripts/utsuri.mjs"
+      "bundle": "skills/utsuri-review/scripts/utsuri.mjs",
+      "feedback": {
+        "sessionBindingInputs": ["UTSURI_CODEX_SESSION_ID", "UTSURI_CODEX_SESSION_REF"],
+        "deliveryMode": "return-to-session",
+        "directBridge": false
+      }
     },
     {
       "id": "claude-plugin-dir",
       "manifest": ".claude-plugin/plugin.json",
       "pluginName": "utsuri",
       "skill": "skills/utsuri-review/SKILL.md",
-      "bundle": "skills/utsuri-review/scripts/utsuri.mjs"
+      "bundle": "skills/utsuri-review/scripts/utsuri.mjs",
+      "feedback": {
+        "sessionBindingInputs": ["CLAUDE_SESSION_ID", "UTSURI_CLAUDE_SESSION_REF"],
+        "deliveryMode": "return-to-session",
+        "directBridge": false
+      }
     },
     {
       "id": "standalone-skill",
       "manifest": null,
       "pluginName": "utsuri",
       "skill": "skills/utsuri-review/SKILL.md",
-      "bundle": "skills/utsuri-review/scripts/utsuri.mjs"
+      "bundle": "skills/utsuri-review/scripts/utsuri.mjs",
+      "feedback": {
+        "sessionBindingInputs": [],
+        "deliveryMode": "export-only",
+        "directBridge": false
+      }
     }
   ]
 }

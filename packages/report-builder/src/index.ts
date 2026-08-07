@@ -13,6 +13,7 @@ import {
   type Annotations,
   type EvidenceIndex,
   type GitDiffDocument,
+  type OriginSessionBinding,
   type ReviewPlan,
   type UtsuriReport
 } from "@utsu-ri/report-model";
@@ -89,6 +90,7 @@ export interface BuildReportOptions {
   now?: Date;
   toolVersion?: string;
   annotations?: unknown | null;
+  origin?: OriginSessionBinding;
 }
 
 function deepFreezeJson<T>(value: T, seen = new WeakSet<object>()): T {
@@ -1500,7 +1502,7 @@ function createCodeOnlyReport(
     },
     origin: {
       host: "unknown",
-      projectFingerprint: diff.repository.fingerprint,
+      projectFingerprint: stableHash({ repositoryFingerprint: diff.repository.fingerprint }),
       reportId,
       bindingMode: "unbound",
       createdAt: new Date(0).toISOString()
@@ -1648,7 +1650,7 @@ async function reconstructReportFromSourceSnapshot(
     },
     origin: {
       host: "unknown",
-      projectFingerprint: stableHash({ cwd: path.basename(runDirectory), input }).slice(0, 16),
+      projectFingerprint: stableHash({ cwd: path.basename(runDirectory), input }),
       reportId,
       bindingMode: "unbound",
       createdAt: new Date(0).toISOString()
@@ -2020,6 +2022,21 @@ export async function buildReport(
     assertArtifact("annotations", options.annotations);
     annotations = immutableJsonSnapshot(options.annotations as Annotations);
   }
+  let origin: OriginSessionBinding | null = null;
+  if (options.origin !== undefined) {
+    assertArtifact("origin-session", options.origin);
+    origin = immutableJsonSnapshot(options.origin);
+    if (
+      origin.reportId !== suppliedReport.reportId ||
+      canonicalJson(origin) !== canonicalJson(suppliedReport.origin)
+    ) {
+      throw new UtsuriError(
+        "REPORT_ORIGIN_MISMATCH",
+        "The supplied Origin Session binding does not match the report",
+        ExitCode.Artifact
+      );
+    }
+  }
   const publicationOptions: BuildReportOptions = {
     ...(options.now ? { now: new Date(options.now.getTime()) } : {}),
     ...(options.toolVersion !== undefined ? { toolVersion: options.toolVersion } : {})
@@ -2069,7 +2086,9 @@ export async function buildReport(
     );
     await assertReportSourcesUnchanged(runDirectory, source.digests);
 
-    const publicationReport = immutableJsonSnapshot(reconstructed.report);
+    const publicationReport = immutableJsonSnapshot(
+      origin === null ? reconstructed.report : { ...reconstructed.report, origin }
+    );
     const artifactDigests = reconstructed.artifactDigests;
     if (canonicalJson(publicationReport) !== canonicalJson(suppliedReport)) {
       throw new UtsuriError(

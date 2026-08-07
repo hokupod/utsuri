@@ -8,6 +8,6 @@
   "suggestedNextActions": [{ "type": "inspect", "label": "Inspect the associated hunk." }],
   "metadata": {
     "host": "unknown",
-    "contextHash": "00000000"
+    "contextHash": "0000000000000000000000000000000000000000000000000000000000000000"
   }
 }

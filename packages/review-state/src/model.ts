@@ -70,6 +70,29 @@ function nextState(store: ReviewStore, updatedAt: string): ReviewState {
   return { ...clone(store.state), revision: store.state.revision + 1, updatedAt };
 }
 
+export async function appendReviewEvent(
+  store: ReviewStore,
+  fields: Omit<ReviewEvent, "schemaVersion" | "id" | "reportId" | "sequence" | "createdAt">,
+  updatedAt: string,
+  updates: {
+    threads?: ReviewThread[];
+    sidecarFiles?: Record<string, string>;
+  } = {},
+  digest: ReviewDigest = nodeReviewDigest
+): Promise<ReviewStore> {
+  requireIsoDate(updatedAt);
+  const state = nextState(store, updatedAt);
+  const event = await eventFor(store, digest, updatedAt, fields);
+  assertArtifact("review-event", event);
+  return {
+    ...store,
+    state,
+    threads: updates.threads ? clone(updates.threads) : store.threads,
+    sidecarFiles: updates.sidecarFiles ? clone(updates.sidecarFiles) : store.sidecarFiles,
+    events: [...store.events, event]
+  };
+}
+
 export async function createReviewStore(
   report: UtsuriReport,
   updatedAt: string,
@@ -98,7 +121,8 @@ export async function createReviewStore(
     state,
     threads: [],
     events: [],
-    anchorCatalog: await buildAnchorCatalog(report, digest)
+    anchorCatalog: await buildAnchorCatalog(report, digest),
+    sidecarFiles: {}
   };
 }
 
@@ -151,7 +175,8 @@ export async function createHumanComment(
   body: string,
   kind: ReviewThreadKind,
   createdAt: string,
-  digest: ReviewDigest = nodeReviewDigest
+  digest: ReviewDigest = nodeReviewDigest,
+  requestAgentAttention = false
 ): Promise<ReviewStore> {
   requireIsoDate(createdAt);
   const normalizedBody = requireCommentBody(body);
@@ -180,7 +205,9 @@ export async function createHumanComment(
         createdAt
       }
     ],
-    agentAttention: { state: "none" },
+    agentAttention: requestAgentAttention
+      ? { state: "requested", updatedAt: createdAt }
+      : { state: "none" },
     createdAt,
     updatedAt: createdAt
   };
@@ -191,9 +218,59 @@ export async function createHumanComment(
     type: "thread.created",
     anchor: clone(anchor),
     threadId,
-    messageId
+    messageId,
+    attentionState: requestAgentAttention ? "requested" : "none"
   });
   return { ...store, state, threads: [...store.threads, thread], events: [...store.events, event] };
+}
+
+export async function setAgentAttention(
+  store: ReviewStore,
+  threadId: string,
+  requested: boolean,
+  updatedAt: string,
+  digest: ReviewDigest = nodeReviewDigest
+): Promise<ReviewStore> {
+  requireIsoDate(updatedAt);
+  const index = store.threads.findIndex((thread) => thread.id === threadId);
+  if (index === -1) {
+    throw new UtsuriError(
+      "REVIEW_THREAD_MISSING",
+      "Review thread does not exist",
+      ExitCode.Artifact
+    );
+  }
+  const existing = store.threads[index]!;
+  if (new Set(["stale", "orphaned", "resolved"]).has(existing.state)) {
+    throw new UtsuriError(
+      "REVIEW_THREAD_NOT_CURRENT",
+      "Stale, orphaned, or resolved threads cannot request Agent attention",
+      ExitCode.Artifact
+    );
+  }
+  const nextAttention = requested ? "requested" : "none";
+  if (existing.agentAttention.state !== "none" && existing.agentAttention.state !== "requested") {
+    throw new UtsuriError(
+      "REVIEW_ATTENTION_SUBMITTED",
+      "Submitted Agent attention cannot be cleared or requested again",
+      ExitCode.Artifact
+    );
+  }
+  if (existing.agentAttention.state === nextAttention) return store;
+  const threads = clone(store.threads);
+  threads[index] = {
+    ...threads[index]!,
+    agentAttention: { state: nextAttention, updatedAt },
+    updatedAt
+  };
+  assertArtifact("review-thread", threads[index]);
+  return appendReviewEvent(
+    store,
+    { type: "agent-attention.changed", threadId, attentionState: nextAttention },
+    updatedAt,
+    { threads },
+    digest
+  );
 }
 
 export async function resolveThread(

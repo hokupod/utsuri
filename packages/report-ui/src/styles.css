@@ -643,6 +643,7 @@ main {
 .review-controls button,
 .comment-actions button,
 .thread-list button,
+.feedback-dock button,
 .inline-comment-action {
   min-height: 2.25rem;
   border: 1px solid var(--line-strong);
@@ -658,7 +659,8 @@ main {
 .review-transfer-actions button:disabled,
 .review-controls button:disabled,
 .comment-actions button:disabled,
-.thread-list button:disabled {
+.thread-list button:disabled,
+.feedback-dock button:disabled {
   cursor: not-allowed;
   opacity: 0.55;
 }
@@ -1031,6 +1033,28 @@ main {
 .region-marker.active-region {
   border-width: 4px;
   background: rgb(183 63 45 / 50%);
+}
+
+.visual-comment-pin {
+  position: absolute;
+  z-index: 4;
+  display: grid;
+  width: 2rem;
+  height: 2rem;
+  place-items: center;
+  transform: translate(-50%, -50%);
+  border: 2px solid #fff;
+  border-radius: 50%;
+  padding: 0;
+  background: var(--blue);
+  box-shadow: 0 0 0 3px rgb(14 17 23 / 65%);
+  color: #fff;
+  font-size: 0.72rem;
+  font-weight: 820;
+}
+
+.visual-comment-pin:hover {
+  background: var(--coral);
 }
 
 .wipe-control {
@@ -1413,6 +1437,7 @@ main {
 }
 
 .comment-body,
+.agent-attention-control,
 .comment-composer > p,
 .comment-actions {
   grid-column: 1 / -1;
@@ -1429,6 +1454,162 @@ main {
   margin: 0;
   color: var(--ink-muted);
   font-size: 0.75rem;
+}
+
+.agent-attention-control {
+  grid-template-columns: 1.15rem minmax(0, 1fr);
+  align-items: center;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  padding: 0.65rem 0.75rem;
+  background: var(--blue-soft);
+  color: var(--ink);
+  font-size: 0.78rem;
+  font-weight: 720;
+}
+
+.agent-attention-control small {
+  grid-column: 2;
+  color: var(--ink-muted);
+  font-size: 0.68rem;
+  font-weight: 500;
+}
+
+.compact-attention {
+  display: inline-grid;
+  margin-top: 0.4rem;
+  padding: 0.45rem 0.55rem;
+}
+
+.attention-state {
+  color: var(--blue);
+  font-size: 0.72rem !important;
+  font-weight: 720;
+}
+
+.feedback-dock {
+  position: fixed;
+  z-index: 20;
+  right: 1rem;
+  bottom: 1rem;
+  width: min(44rem, calc(100vw - 22rem));
+  max-height: min(70vh, 42rem);
+  overflow: auto;
+  border: 1px solid var(--line-strong);
+  border-top: 0.35rem solid var(--blue);
+  border-radius: var(--radius);
+  padding: 0.9rem 1rem;
+  background: var(--paper-raised);
+  box-shadow: 0 1.1rem 3rem rgb(20 30 45 / 20%);
+}
+
+.feedback-dock > header,
+.feedback-dock > header > div,
+.feedback-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.55rem;
+  align-items: center;
+}
+
+.feedback-dock > header {
+  justify-content: space-between;
+}
+
+.unread-badge {
+  border-radius: 999px;
+  padding: 0.25rem 0.5rem;
+  background: var(--blue);
+  color: #fff;
+  font-size: 0.68rem;
+  font-weight: 750;
+}
+
+.feedback-preview {
+  margin-top: 0.8rem;
+  border-top: 1px solid var(--line);
+  padding-top: 0.8rem;
+}
+
+.feedback-preview h2,
+.feedback-preview h3,
+.feedback-preview p {
+  margin: 0;
+}
+
+.feedback-preview h2 {
+  font-size: 0.95rem;
+}
+
+.feedback-preview ol {
+  display: grid;
+  gap: 0.35rem;
+  margin: 0.65rem 0;
+  padding-left: 1.3rem;
+}
+
+.feedback-preview li {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 0.2rem 0.7rem;
+  font-size: 0.75rem;
+}
+
+.feedback-preview li code {
+  overflow-wrap: anywhere;
+  color: var(--ink-muted);
+  font-size: 0.66rem;
+}
+
+.feedback-preview li span {
+  grid-row: 1 / 3;
+  grid-column: 2;
+  color: var(--ink-muted);
+  font-size: 0.64rem;
+  text-transform: uppercase;
+}
+
+.feedback-preview-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.55rem;
+}
+
+.feedback-preview-grid section {
+  border: 1px solid var(--line);
+  padding: 0.6rem;
+  background: var(--paper);
+}
+
+.feedback-preview-grid h3 {
+  margin-bottom: 0.25rem;
+  font-size: 0.7rem;
+}
+
+.feedback-preview-grid p,
+.feedback-warning {
+  color: var(--ink-muted);
+  font-size: 0.66rem;
+  line-height: 1.45;
+}
+
+.feedback-warning {
+  margin-top: 0.55rem !important;
+  color: var(--amber);
+}
+
+.feedback-actions {
+  margin-top: 0.65rem;
+}
+
+.feedback-preview pre {
+  overflow: auto;
+  margin: 0.65rem 0 0;
+  border: 1px solid var(--line);
+  padding: 0.65rem;
+  background: var(--paper);
+  white-space: pre-wrap;
+  font-size: 0.67rem;
 }
 
 .thread-list {
@@ -1560,6 +1741,17 @@ main {
 
   main {
     padding: 0.8rem;
+  }
+
+  .feedback-dock {
+    right: 0.5rem;
+    bottom: 0.5rem;
+    left: 0.5rem;
+    width: auto;
+  }
+
+  .feedback-preview-grid {
+    grid-template-columns: 1fr;
   }
 
   .decision-summary,

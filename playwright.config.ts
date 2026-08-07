@@ -73,6 +73,26 @@ export default defineConfig({
       testMatch: /e2e\/review-state\.spec\.ts/u
     },
     {
+      name: "feedback-compose",
+      testMatch: /e2e\/feedback-compose\.spec\.ts/u
+    },
+    {
+      name: "interactive-review",
+      testMatch: /e2e\/interactive-review\.spec\.ts/u
+    },
+    {
+      name: "return-to-session",
+      testMatch: /e2e\/return-to-session\.spec\.ts/u
+    },
+    {
+      name: "reanchor",
+      testMatch: /e2e\/reanchor\.spec\.ts/u
+    },
+    {
+      name: "direct-bridge",
+      testMatch: /e2e\/direct-bridge\.spec\.ts/u
+    },
+    {
       name: "a11y",
       testMatch: /a11y\/.*\.spec\.ts/u
     }

@@ -1,0 +1,124 @@
+{
+  "schemaVersion": "1.0",
+  "designSection": "46.25",
+  "cases": [
+    {
+      "id": "13-viewed-vs-reviewed",
+      "assertion": "viewed state never changes human judgment",
+      "evidence": ["tests/e2e/review-state.spec.ts"]
+    },
+    {
+      "id": "14-inline-code-comment",
+      "assertion": "line comments retain their exact line-range anchor",
+      "evidence": ["tests/e2e/feedback-compose.spec.ts"]
+    },
+    {
+      "id": "15-visual-region-comment",
+      "assertion": "visual comments use normalized regions and report image references",
+      "evidence": ["tests/e2e/reanchor.spec.ts", "packages/context-pack/src/context-pack.test.ts"]
+    },
+    {
+      "id": "16-agent-attention-checkbox",
+      "assertion": "checkbox selection creates neither context sidecars nor an Agent turn",
+      "evidence": [
+        "tests/e2e/feedback-compose.spec.ts",
+        "packages/review-inbox/src/review-inbox.test.ts"
+      ]
+    },
+    {
+      "id": "17-feedback-batch-preview",
+      "assertion": "preview exposes items, anchors, inclusion, exclusion, redaction, size, binding, and delivery",
+      "evidence": ["tests/e2e/feedback-compose.spec.ts", "tests/e2e/interactive-review.spec.ts"]
+    },
+    {
+      "id": "18-origin-session-binding",
+      "assertion": "binding stores only an opaque session reference and canonical project fingerprint",
+      "evidence": ["packages/session-binding/src/session-binding.test.ts"]
+    },
+    {
+      "id": "19-session-mismatch",
+      "assertion": "another session cannot claim the batch",
+      "evidence": [
+        "packages/review-inbox/src/review-inbox.test.ts",
+        "packages/session-binding/src/session-binding.test.ts"
+      ]
+    },
+    {
+      "id": "20-return-to-session-handoff",
+      "assertion": "Codex and Claude Code consume the batch in their originating conversation",
+      "evidence": ["tests/e2e/return-to-session.spec.ts"]
+    },
+    {
+      "id": "21-direct-bridge-fallback",
+      "assertion": "unsupported direct delivery returns an idempotent handoff and creates no session",
+      "evidence": ["tests/e2e/direct-bridge.spec.ts"]
+    },
+    {
+      "id": "22-no-new-agent-process",
+      "assertion": "interactive, CLI, and MCP surfaces never expose or invoke an Agent spawn command",
+      "evidence": [
+        "tests/security/localhost.test.ts",
+        "packages/review-mcp-server/src/review-mcp-server.test.ts"
+      ]
+    },
+    {
+      "id": "23-no-provider-selector",
+      "assertion": "feedback UI has no provider, model, or Agent selector",
+      "evidence": ["tests/e2e/feedback-compose.spec.ts", "tests/e2e/interactive-review.spec.ts"]
+    },
+    {
+      "id": "24-literal-provider-token-in-comment",
+      "assertion": "provider-like mentions remain ordinary comment text",
+      "evidence": [
+        "tests/e2e/feedback-compose.spec.ts",
+        "packages/review-inbox/src/review-inbox.test.ts"
+      ]
+    },
+    {
+      "id": "25-stale-hunk-reanchor",
+      "assertion": "changed and probable hunk anchors become stale",
+      "evidence": ["tests/e2e/reanchor.spec.ts"]
+    },
+    {
+      "id": "26-orphaned-visual-anchor",
+      "assertion": "a visual anchor without a candidate becomes orphaned",
+      "evidence": ["tests/e2e/reanchor.spec.ts"]
+    },
+    {
+      "id": "27-context-pack-redaction",
+      "assertion": "secrets are redacted and outside files, raw environment, and raw DOM are excluded by default",
+      "evidence": ["packages/context-pack/src/context-pack.test.ts"]
+    },
+    {
+      "id": "28-localhost-csrf",
+      "assertion": "capability, Origin, Fetch Metadata, report identity, and loopback are enforced",
+      "evidence": ["tests/security/localhost.test.ts"]
+    },
+    {
+      "id": "29-arbitrary-session-api-attempt",
+      "assertion": "feedback APIs reject arbitrary session, path, cwd, command, provider, and model fields",
+      "evidence": [
+        "tests/security/localhost.test.ts",
+        "packages/review-mcp-server/src/review-mcp-server.test.ts"
+      ]
+    },
+    {
+      "id": "30-duplicate-batch-submit",
+      "assertion": "one idempotency key returns one immutable Feedback Batch",
+      "evidence": [
+        "tests/security/localhost.test.ts",
+        "packages/review-inbox/src/review-inbox.test.ts"
+      ]
+    },
+    {
+      "id": "31-itemized-answer-writeback",
+      "assertion": "exactly one answer returns to every original thread without changing reviewed or resolved",
+      "evidence": ["tests/e2e/return-to-session.spec.ts"]
+    },
+    {
+      "id": "32-static-mode-export",
+      "assertion": "static mode exports a bounded Feedback Batch and Context Packs",
+      "evidence": ["tests/e2e/feedback-compose.spec.ts"]
+    }
+  ]
+}

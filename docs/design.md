@@ -6,15 +6,15 @@
 - **Plugin name**: `utsuri`
 - **Skill name**: `utsuri-review`
 - **CLI name**: `utsuri`
-- **Document version**: 2.4
+- **Document version**: 2.5
 - **Created**: 2026-08-06
-- **Last updated**: 2026-08-07
+- **Last updated**: 2026-08-08
 - **Language**: English (canonical)
 - **Targets**: Codex / Claude Code / local CLI / CI
 - **Implementation language**: TypeScript
 - **Development environment**: Bun
 - **Report UI**: a static application built with Svelte
-- **v2.4 changes**: hardened Phase 5 review persistence with canonical browser validation, explicit cross-report re-anchoring, concurrent-tab conflict rejection, and crash-consistent immutable generations
+- **v2.5 changes**: implemented the Phase 6 Origin Session feedback loop with capability-bound interactive review, bounded Context Packs, fixed-run Review Inbox CLI/MCP access, itemized answer writeback, and fail-closed return-to-session delivery
 
 ---
 
@@ -1066,6 +1066,8 @@ Enable `Same-session Bridge` only as an option when the host officially provides
 | `direct-same-session` | Submit the Feedback Batch explicitly to the bound Origin Session          | Never created        |
 | `export-only`         | Copy or export the Context Pack and handoff text                          | Never created        |
 
+The v1 source implementation enables `return-to-session` for bound interactive runs and `export-only` for static or unbound runs. `direct-same-session` remains explicitly unsupported until a host provides every authenticated binding and response-correlation guarantee in §46.16.
+
 Design decisions:
 
 - Do not provide Codex, Claude Code, or model selection in the UI.
@@ -1130,15 +1132,18 @@ sequenceDiagram
     Agent-->>User: report location and important limitations
 ```
 
-Phase 5 adds a local review handoff after strict report validation:
+Phase 6 completes the review handoff after strict report validation:
 
 1. Open the immutable report directly or with loopback-only `serve`.
 2. Keep viewed progress, human judgment, and comments as independent state.
 3. Export a canonical review bundle before moving review state between runs.
 4. Import only after base/head and report validation; use `--reanchor` to classify changed anchors as `matched`, `stale`, or `orphaned`.
 5. Never activate a probable anchor automatically and never treat viewing as approval.
+6. Preview comments selected for Agent attention before storing a Feedback Batch.
+7. In the originating conversation only, claim the batch through the fixed-run Skill, CLI, or MCP service and write exactly one structured answer per item.
+8. Leave viewed, human judgment, and resolution unchanged when answers arrive.
 
-Origin Session submission remains unavailable until Phase 6. Phase 5 comments stay local and are never sent to an Agent.
+The checkbox alone remains local metadata. It neither creates a Context Pack nor submits anything. Bound interactive runs use `return-to-session`; static or unbound runs use `export-only`. No current host qualifies for the optional direct bridge.
 
 ### 12.4 Policy for partial failure
 
@@ -1328,7 +1333,7 @@ With `--interactive`:
 - Stream review, Feedback Batch, and answer events over SSE.
 - Never start an Agent process from the Review Server.
 
-The Phase 5 implementation enables only static mode. `--interactive` fails closed until the Phase 6 capability-token API is enabled. Static mode binds only a random `127.0.0.1` port, rejects an untrusted Host header and traversal, and opens a browser only with `--open`.
+The Phase 6 implementation enables both static and capability-protected interactive modes. Static mode binds only a random loopback port, rejects an untrusted Host header and traversal, and opens a browser only with `--open`. Interactive mode additionally requires exact Host, same-origin Fetch Metadata, report ID, and bearer capability for every API call. Mutations require exact Origin and request shape. A read-only GET may omit Origin under same-origin Fetch Metadata; if Referer is present, its origin must match exactly. It exposes no arbitrary destination, path, cwd, command, provider, or model field.
 
 ### 13.10 `validate`
 
@@ -1418,7 +1423,7 @@ utsuri feedback handoff \
 - `handoff` creates short natural-language text and a report ID for the originating conversation.
 - None accepts a provider or model.
 - The CLI never starts an Agent process or new session.
-- On a host that exposes Origin Session binding, the current session reference may be supplied and checked for equality.
+- The host integration supplies the current session identity through its recognized runtime input; the CLI converts raw IDs to opaque references and checks equality without accepting a browser-selected destination.
 - A mismatch fails closed and must not be consumed in another session without explicit rebinding.
 
 ### 13.14 Exit codes
@@ -3651,6 +3656,8 @@ The Phase 5 source checkout implements independent viewed/judgment/comment state
 
 **Completion**: inquiries selected in the report return to the originating conversation without creating another Agent or session, and answers plus evidence return to their original anchors. Updated diffs never make stale judgments appear valid.
 
+The Phase 6 source checkout implements append-only review events and immutable-generation sidecars under `run/review/`; explicit Agent-attention selection; Feedback Batch preview and idempotent storage; bounded, redacted code/visual Context Packs; opaque host/session/project/report binding; fixed-run CLI and strict NDJSON MCP tools; one answer per original thread; normalized visual anchors and stale/orphaned re-anchoring; and a loopback interactive API protected by a per-start fragment capability, exact Host/Fetch Metadata/report checks, exact Origin on mutations, exact Referer validation when present on read-only GET, and strict request shapes. Static mode exports without claiming a session. Codex and Claude Code use `return-to-session`; the unsupported direct bridge creates no session and returns the same handoff fallback.
+
 ---
 
 ## 41. Release gate
@@ -3729,6 +3736,8 @@ The Phase 5 source checkout implements independent viewed/judgment/comment state
 
 ## 42. Definition of Done
 
+The v1 source implementation maps every item below to an automated gate or an explicitly recorded operator/human gate. Completion of source implementation does not authorize publication, browser download, host mutation, or substitution of unavailable real-browser evidence.
+
 1. Every public identifier and user-facing label follows the Utsuri naming rules.
 2. A user can invoke the Skill in Codex or Claude Code.
 3. Git diffs are organized semantically.
@@ -3752,6 +3761,8 @@ The Phase 5 source checkout implements independent viewed/judgment/comment state
 21. Stale and orphaned states remain unambiguous after report updates.
 22. The English canonical design and all three READMEs remain synchronized and independently reviewed.
 23. Node 24, both required Bun versions, Safe-chain 1.5.14, both hosts, and the release-candidate layout pass their full gates.
+
+Phase 6 adds executable coverage for all §46.25 fixtures, the three-item return-to-session acceptance scenario on both hosts, explicit unsupported-bridge fallback, localhost API boundaries, and independent review-state semantics. A stable public release still requires the separate publication authorization and any environment-specific gates recorded as unavailable in the candidate evidence.
 
 ---
 
@@ -3890,6 +3901,8 @@ Researched: 2026-08-06
 ---
 
 ## 46. Detailed interactive review and Origin Session feedback specification
+
+**v1 implementation status**: available in the source stable-release candidate through `return-to-session` and `export-only`. The optional direct bridge is deliberately disabled because no configured host meets the authenticated same-session API and response-correlation requirements. This status never permits a new Agent/session fallback.
 
 ### 46.1 Purpose
 
@@ -4388,7 +4401,7 @@ The UI distributes answers to their original threads and does not duplicate the 
 | `GET /api/v1/feedback-batches/:id`      | Retrieve batch state                                      |
 | `GET /api/v1/events`                    | SSE event stream                                          |
 | `POST /api/v1/review/export`            | Generate review bundle                                    |
-| `POST /api/v1/origin-session/deliver`   | Optional direct bridge for the bound session only         |
+| `POST /api/v1/origin-session/deliver`   | Optional; absent unless a supported host qualifies        |
 
 APIs not provided:
 
@@ -4398,12 +4411,14 @@ APIs not provided:
 - arbitrary session-ID input; and
 - command, executable, or cwd input.
 
+The v1 implementation does not expose `origin-session/deliver` because neither supported host currently satisfies the authenticated binding and response-correlation requirements.
+
 ### 46.15 Localhost security
 
 - Bind only to `127.0.0.1` or `::1`.
 - Require a capability token.
 - Disable CORS.
-- Validate Origin and Fetch Metadata.
+- Validate exact Origin on mutations. A read-only GET may omit Origin under same-origin Fetch Metadata; when Referer is present, validate its origin exactly. Validate same-origin Fetch Metadata on every API request.
 - Fix report ID and server root at startup.
 - Reject arbitrary paths.
 - Reject arbitrary sessions.
@@ -4684,6 +4699,8 @@ Scenario: The host provides a same-session bridge
 
 The MVP is complete through `return-to-session`. A direct bridge is not an MVP completion condition.
 
+The implementation keeps the preview separate from storage, writes inbox/batch/context/answer files only through the review generation commit, and shares the same claim/binding/answer service across CLI and MCP. The browser cannot choose a destination. A stale or orphaned thread is excluded from normal submission, and an Agent answer never changes viewed, human judgment, or resolution.
+
 ---
 
 ## 47. Final definition
@@ -4692,20 +4709,23 @@ The MVP is complete through `return-to-session`. A direct bridge is not an MVP c
 
 A feature outside this definition is accepted only when it makes review decisions faster, strengthens the relationship between a question and its evidence, increases evidence reliability, or improves security.
 
+The v1 source stable-release candidate satisfies this definition through local immutable reports and mutable review generations, with `return-to-session` as the host-neutral feedback path. Publication is a separate operator action; direct same-session submission and a shared remote review store remain optional future capabilities.
+
 ---
 
 ## Document change log
 
-| Entry ID                                   | Version | Date       | Change                                                                                                                                                                                                                                                                                                                                                                                                                     |
-| ------------------------------------------ | ------: | ---------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| design-v2.4-review-state-integrity         |     2.4 | 2026-08-07 | Hardened browser import/export with canonical schemas, anchor-catalog binding, and byte limits; required explicit cross-report re-anchoring; rejected stale-tab writes through Web Locks plus optimistic revisions; made CLI persistence crash-consistent through immutable generations and hard-linked revision records; and removed downloaded-tar extraction from cross-job distribution transport.                     |
-| design-v2.3-review-distribution-candidate  |     2.3 | 2026-08-07 | Implemented independent viewed/judgment/comment persistence, canonical review export/import and re-anchoring, loopback-only static serving, deterministic CI artifacts and policy exit code 10, four-platform native-helper and aggregate Plugin candidates, exact package contracts, isolated tarball verification, strict host validation, and approval-gated trusted-publishing workflows.                              |
-| design-v2.2-security-hardening             |     2.2 | 2026-08-07 | Implemented static/interactive/iframe CSP boundaries, bounded untrusted data and decoded PNG validation, descriptor-chain reads, immutable-ID container proxying, delegated Linux cgroup v2 browser memory limits, token-bound browser process cleanup, immutable asset checks, an independently rebuilt Node-compatible ESM bundle with embedded Playwright runtime metadata, and deterministic SPDX/license inventories. |
-| design-v2.1-comparison-coverage            |     2.1 | 2026-08-07 | Implemented content-addressed pixel comparison and changed regions; DOM, ARIA, style, accessibility, runtime, and overflow classification; prioritized target discovery and structured unknown coverage; whole-report source binding; cross-linked measured evidence; and Phase 3 visual/accessibility fixture gates.                                                                                                      |
-| design-v2.0-browser-capture                |     2.0 | 2026-08-07 | Implemented isolated dual-url, static-fragment, and explicitly authorized worktree capture; deterministic stabilization and safe actions; redirect-aware external and mutation request blocking; typed partial failures; URL redaction; digest-validated reuse; and independently validated immutable capture evidence.                                                                                                    |
-| design-v1.9-code-diff-mvp                  |     1.9 | 2026-08-07 | Implemented four explicit Git collection modes, structured diff/evidence/review-plan contracts, deterministic full-hunk coverage, schema-validated annotations, mandatory code-only verification gaps, and the keyboard-accessible Diff Ledger report UI.                                                                                                                                                                  |
-| design-v1.8-exact-cli-tarball              |     1.8 | 2026-08-07 | Required a clean exact-inventory npm CLI tarball with bundled JavaScript dependencies, no registry dependency on private workspace packages, no install lifecycle scripts, isolated exact-tarball smoke tests, and version-tagged documentation links.                                                                                                                                                                     |
-| design-v1.7-atomic-report-publication-gate |     1.7 | 2026-08-07 | Added fail-closed atomic no-replace report publication, protected-ancestor and inode checks, regular non-symlink run inputs, current-platform source builds, four-platform release assembly, and explicit Phase 0 rejection of non-empty diff or annotation evidence.                                                                                                                                                      |
-| design-v1.6-publication-and-safe-chain     |     1.6 | 2026-08-07 | Fixed publisher, npm maintainer, trusted-publishing, and SPDX metadata; replaced the local absolute-path Safe-chain requirement with exact-version discovery at the standard user installation; pinned official platform SHA-256 digests for verification before first execution.                                                                                                                                          |
-| design-v1.5-english-canonical              |     1.5 | 2026-08-06 | Established English as the living canonical design; retained the verified Japanese v1.4 source for review; fixed npm identifiers at `@utsu-ri/*`; selected `review-answer.schema.json` and `run/review/`; added the locked Nix, Bun, Safe-chain, Apple HIG, synchronized README, and documentation-review gates.                                                                                                           |
-| design-v1.4-product-name                   |     1.4 | 2026-08-06 | Established Utsuri as the product name and unified Plugin, Skill, CLI, configuration, artifact, and display identifiers.                                                                                                                                                                                                                                                                                                   |
+| Entry ID                                   | Version | Date       | Change                                                                                                                                                                                                                                                                                                                                                                                                                                 |
+| ------------------------------------------ | ------: | ---------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| design-v2.5-origin-session-feedback        |     2.5 | 2026-08-08 | Implemented capability-bound loopback interactive review, explicit Agent-attention selection, Feedback Batch preview and idempotent Review Inbox storage, bounded and redacted Context Packs, opaque Origin Session binding, fixed-run feedback CLI and strict NDJSON MCP tools, itemized answer writeback, stale visual/code re-anchoring, and safe return-to-session/export-only fallback without creating another Agent or session. |
+| design-v2.4-review-state-integrity         |     2.4 | 2026-08-07 | Hardened browser import/export with canonical schemas, anchor-catalog binding, and byte limits; required explicit cross-report re-anchoring; rejected stale-tab writes through Web Locks plus optimistic revisions; made CLI persistence crash-consistent through immutable generations and hard-linked revision records; and removed downloaded-tar extraction from cross-job distribution transport.                                 |
+| design-v2.3-review-distribution-candidate  |     2.3 | 2026-08-07 | Implemented independent viewed/judgment/comment persistence, canonical review export/import and re-anchoring, loopback-only static serving, deterministic CI artifacts and policy exit code 10, four-platform native-helper and aggregate Plugin candidates, exact package contracts, isolated tarball verification, strict host validation, and approval-gated trusted-publishing workflows.                                          |
+| design-v2.2-security-hardening             |     2.2 | 2026-08-07 | Implemented static/interactive/iframe CSP boundaries, bounded untrusted data and decoded PNG validation, descriptor-chain reads, immutable-ID container proxying, delegated Linux cgroup v2 browser memory limits, token-bound browser process cleanup, immutable asset checks, an independently rebuilt Node-compatible ESM bundle with embedded Playwright runtime metadata, and deterministic SPDX/license inventories.             |
+| design-v2.1-comparison-coverage            |     2.1 | 2026-08-07 | Implemented content-addressed pixel comparison and changed regions; DOM, ARIA, style, accessibility, runtime, and overflow classification; prioritized target discovery and structured unknown coverage; whole-report source binding; cross-linked measured evidence; and Phase 3 visual/accessibility fixture gates.                                                                                                                  |
+| design-v2.0-browser-capture                |     2.0 | 2026-08-07 | Implemented isolated dual-url, static-fragment, and explicitly authorized worktree capture; deterministic stabilization and safe actions; redirect-aware external and mutation request blocking; typed partial failures; URL redaction; digest-validated reuse; and independently validated immutable capture evidence.                                                                                                                |
+| design-v1.9-code-diff-mvp                  |     1.9 | 2026-08-07 | Implemented four explicit Git collection modes, structured diff/evidence/review-plan contracts, deterministic full-hunk coverage, schema-validated annotations, mandatory code-only verification gaps, and the keyboard-accessible Diff Ledger report UI.                                                                                                                                                                              |
+| design-v1.8-exact-cli-tarball              |     1.8 | 2026-08-07 | Required a clean exact-inventory npm CLI tarball with bundled JavaScript dependencies, no registry dependency on private workspace packages, no install lifecycle scripts, isolated exact-tarball smoke tests, and version-tagged documentation links.                                                                                                                                                                                 |
+| design-v1.7-atomic-report-publication-gate |     1.7 | 2026-08-07 | Added fail-closed atomic no-replace report publication, protected-ancestor and inode checks, regular non-symlink run inputs, current-platform source builds, four-platform release assembly, and explicit Phase 0 rejection of non-empty diff or annotation evidence.                                                                                                                                                                  |
+| design-v1.6-publication-and-safe-chain     |     1.6 | 2026-08-07 | Fixed publisher, npm maintainer, trusted-publishing, and SPDX metadata; replaced the local absolute-path Safe-chain requirement with exact-version discovery at the standard user installation; pinned official platform SHA-256 digests for verification before first execution.                                                                                                                                                      |
+| design-v1.5-english-canonical              |     1.5 | 2026-08-06 | Established English as the living canonical design; retained the verified Japanese v1.4 source for review; fixed npm identifiers at `@utsu-ri/*`; selected `review-answer.schema.json` and `run/review/`; added the locked Nix, Bun, Safe-chain, Apple HIG, synchronized README, and documentation-review gates.                                                                                                                       |
+| design-v1.4-product-name                   |     1.4 | 2026-08-06 | Established Utsuri as the product name and unified Plugin, Skill, CLI, configuration, artifact, and display identifiers.                                                                                                                                                                                                                                                                                                               |

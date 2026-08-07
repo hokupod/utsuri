@@ -18,9 +18,9 @@ Utsuriは、コード変更を、根拠と意図を伴う人間向けの視覚�
 
 ## 状態
 
-<!-- availability:phase-5-distribution-candidate -->
+<!-- availability:phase-6-origin-session-feedback -->
 
-Phase 5のdistribution-candidate flowは、このsource checkoutで利用できます。Phase 4のhardened review flowに、viewed / judgment / comment stateの永続化、canonical review export/import、loopback限定static serve、決定論的CI package/policy、4 platform native helper candidateのassemble、exact tarball検証、host検証を追加します。Origin Session feedbackはPhase 6まで利用できません。npm packageとPluginは未公開です。
+完全なv1 source実装をstable-release candidateとして利用できます。Phase 6では、Phase 5 distribution candidateへ、capabilityで保護したinteractive review、Feedback Batchのpreview / 保存、bounded Context Pack、Origin Session binding、Review InboxのCLI / MCP access、itemized answer writeback、安全なreturn-to-session fallbackを追加しました。対応hostのどちらも、認証済みbindingとresponse correlationの全要件を満たすAPIを公開していないため、direct same-session bridgeは有効化していません。npm packageとPluginは未公開です。
 
 <a id="capabilities"></a><!-- section:capabilities -->
 
@@ -46,8 +46,11 @@ Phase 5のdistribution-candidate flowは、このsource checkoutで利用でき�
 - 独立して永続化するviewed progress、human judgment、anchored comment、canonical export/import、明示的なmatched / stale / orphaned re-anchor
 - loopback限定static serve、policy exit code `10`を持つ決定論的`report.zip` / `report.json` / `ci-summary.json`
 - exact CLI/native package契約、4 architecture helper candidate、aggregate Plugin検証、Node 22/24 isolated-tarball smoke、共通Skill eval
+- 起動ごとのcapability tokenと、mutationのexact Origin、read-only GETのsame-origin Fetch Metadata、Referer存在時のexact検証、report binding、request schema検証を持つinteractive serve
+- 明示的Agent-attention選択、Feedback Batch preview、redaction済みbounded Context Pack、immutable generationのReview Inbox sidecar、未読answer state
+- 生成元のhost / session / project / report bindingを必須とし、itemごとに1 answerを書き戻すfixed-run `feedback` CLI / Review Inbox MCP operation
 
-Phase 6でOrigin Session feedback経路を追加します。Phase 5のcommentはlocalに留まり、Agentへ送信されません。captureが完了してもdiscoveryとcomparison前は`UNCOVERED`です。証拠の欠落・不正、片側失敗、resource limit超過、container capability不足は`INCOMPLETE`のままです。分母が不明なら割合を表示せず、pixel差分だけで`REGRESSION`とは判定しません。
+「Ask the current Agent」の選択は意図を記録するだけで、送信、Context Pack生成、process起動を行いません。static / unbound reportはexportだけを行います。interactive reportは生成元の会話用batchを保存できますが、Utsuriは別Agentやsessionを作成しません。captureが完了してもdiscoveryとcomparison前は`UNCOVERED`です。証拠の欠落・不正、片側失敗、resource limit超過、container capability不足は`INCOMPLETE`のままです。分母が不明なら割合を表示せず、pixel差分だけで`REGRESSION`とは判定しません。
 
 <a id="quick-start"></a><!-- section:quick-start -->
 
@@ -136,6 +139,17 @@ node skills/utsuri-review/scripts/utsuri.mjs review export --run .artifacts/utsu
 node skills/utsuri-review/scripts/utsuri.mjs review import --run .artifacts/utsuri/updated-run --input .artifacts/utsuri/review-bundle.json --reanchor --json
 ```
 
+Origin Sessionへbindされたrunでは、capabilityで保護したviewerを起動し、選択項目をpreviewしてから、保存したbatchを同じ会話へ戻します。対象batchが一意の場合だけ`--batch`を省略できます。
+
+```bash
+node skills/utsuri-review/scripts/utsuri.mjs serve .artifacts/utsuri/readme-example/report --interactive
+node skills/utsuri-review/scripts/utsuri.mjs feedback list --run .artifacts/utsuri/readme-example --status ready --json
+node skills/utsuri-review/scripts/utsuri.mjs feedback get --run .artifacts/utsuri/readme-example --batch fb_example --json
+node skills/utsuri-review/scripts/utsuri.mjs feedback answer --run .artifacts/utsuri/readme-example --batch fb_example --input answers.json --json
+```
+
+現在の実装は意図的に`return-to-session`を使います。session bindingがなければ`export-only`とし、direct bridgeを推測したり別の会話へfallbackしたりしません。
+
 外部uploadせずにlocal CI artifactを作成します。
 
 ```bash
@@ -180,7 +194,9 @@ Utsuriはrepository content、diff、HTML、SVG、comment、Context Pack、captu
 
 生成済み`report/`はimmutableです。参照するcapture / comparison evidenceは独立してdigest検証し、画像を検証済みPNG byteに限定してreport内部へcopyし、asset manifestのhash対象にします。保存される`index.html`は常にoffline static CSPです。local interactive serverだけが、そのcanonical CSP境界をexact matchでinteractive CSPへ置換できます。static-fragment previewには別のno-script / no-connect CSPを適用します。strict validationはactive HTML、direct SVG、unsafeな参照、未列挙・欠落file、hash driftを拒否します。manifestはabsolute path、cookie、raw environment、raw DOM、raw header、traceを除外したことを宣言します。
 
-viewed progress、human judgment、commentは別々のmutable recordです。static modeはWeb Locksとoptimistic revisionを使ってreportごとにbrowser storageへ保存し、schema検証とcatalog bindingを通過したbundleへexportします。staleなtabが新しいstateを上書きすることはありません。CLI stateは`run/review/`配下のimmutable generationとatomic hard link済みrevision recordを使い、crashで残るprocess lockを持ちません。importは`report/`を書き換えず、別reportへのre-anchorを明示的な選択とし、probable anchorを自動有効化せず、変更・欠落anchorをstale / orphanedとして明示します。Phase 5にAgent送信経路はありません。
+viewed progress、human judgment、comment、Agent attention、batch state、answerは別々のmutable recordです。static modeはWeb Locksとoptimistic revisionを使ってreportごとにbrowser storageへ保存し、schema検証とcatalog bindingを通過したreview / feedback documentへexportします。staleなtabが新しいstateを上書きすることはありません。CLI stateは`run/review/`配下のimmutable generationとatomic hard link済みrevision recordを使い、boundedなinbox / batch / context / answer sidecarも同じgenerationへ保存します。importは`report/`を書き換えず、別reportへのre-anchorを明示的な選択とし、probable anchorを自動有効化せず、変更・欠落anchorをstale / orphanedとして明示します。
+
+interactive modeはloopbackだけへbindします。全API requestにexact Host、same-origin Fetch Metadata、report ID、起動ごとのcapability tokenを要求します。mutationはさらにexact Originとexact request schemaを必須とします。read-only GETはsame-origin Fetch MetadataのもとでOriginを省略でき、browserがRefererを送る場合はそのoriginのexact一致も要求します。tokenはURL fragmentだけで渡し、取得後にaddress barから除去し、report / review state / eventへ記録しません。browser APIは任意のdestination、path、cwd、command、provider、modelを受け付けません。feedbackのconsumeではopaqueなOrigin Session refとcanonical project fingerprintも検証し、mismatchはfail closedとします。server / CLI / MCP serviceはCodex、Claude Code、別Agentを起動せず、Agent answerはhuman judgmentやthread resolutionを変更しません。
 
 discovery / comparison manifestは収集diff / capture hashへbindされ、差し替え・未列挙artifactはfinalizeで拒否します。finalizeは検証済みrun artifactとannotationsからreport全体を再構築し、正確なsource byte snapshot hashをmanifestへ記録し、immutable snapshotだけを公開します。stagingまたはreuse中のsource / evidenceの変化は拒否します。Utsuriは、通常fileかつsymlinkではないrun input、canonicalなcontained path、安全なarchive inventory、他のlocal principalから保護されたpublication path、stagingのstrict validation、OSのno-replace helperを必須とします。helperが存在しない、またはfilesystemが対応しない場合はfail closedとします。生成失敗時には診断用のprivate staging directoryが残る場合がありますが、自動削除はしません。人間のmutable review dataは`run/review/`へ分離します。static viewerは外部serviceへ通信しません。
 
@@ -198,6 +214,7 @@ build outputはexternal JavaScript runtime importを持たない単一のNode 22
 - [UI guidelineとHIG/WCAG traceability](https://github.com/hokupod/utsuri/blob/main/docs/ui-guidelines.md)
 - [Capture modeとruntime boundary](https://github.com/hokupod/utsuri/blob/main/skills/utsuri-review/references/capture-modes.md)
 - [CLI contract](https://github.com/hokupod/utsuri/blob/main/skills/utsuri-review/references/cli-contract.md)
+- [Origin Session feedback workflow](https://github.com/hokupod/utsuri/blob/main/skills/utsuri-review/references/feedback.md)
 - [v1実装計画](https://github.com/hokupod/utsuri/blob/main/ai/plans/active/v1-%E5%AE%9F%E8%A3%85/README.md)
 
 詳細設計は英語を正本とします。user-facingなREADME変更は英語・日本語・簡体字中国語を同じchangeで更新します。
@@ -206,4 +223,4 @@ build outputはexternal JavaScript runtime importを持たない単一のNode 22
 
 ## License・公開状態
 
-publisherは`hokupod`、npm maintainerは`hokupod-npm`、公開方式はGitHub Actions trusted publishing、SPDX licenseは`AGPL-3.0-or-later`です。Phase 5はdistribution candidateだけを生成します。job間ではmanifestにbindされた通常fileを検証してから宣言済みmodeだけを復元し、downloadしたhelper / Plugin tarballは展開しません。全release gate通過と別途の明示承認までpackageは未公開に保ちます。v1実装計画ではpublish、tag、push、promotionを行いません。
+publisherは`hokupod`、npm maintainerは`hokupod-npm`、公開方式はGitHub Actions trusted publishing、SPDX licenseは`AGPL-3.0-or-later`です。Phase 6は完全なv1 stable-release candidateを生成します。job間ではmanifestにbindされた通常fileを検証してから宣言済みmodeだけを復元し、downloadしたhelper / Plugin tarballは展開しません。全release gate通過と別途の明示承認までpackageは未公開に保ちます。v1実装計画ではpublish、tag、push、promotionを行いません。

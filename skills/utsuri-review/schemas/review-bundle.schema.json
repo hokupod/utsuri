@@ -20,7 +20,11 @@
       "additionalProperties": false,
       "required": ["reportId", "reportFingerprint", "base", "head"],
       "properties": {
-        "reportId": { "type": "string", "pattern": "^report[-:]" },
+        "reportId": {
+          "type": "string",
+          "pattern": "^report[-:][A-Za-z0-9._:-]+$",
+          "maxLength": 256
+        },
         "reportFingerprint": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
         "base": { "type": ["string", "null"] },
         "head": { "type": ["string", "null"] }
@@ -64,14 +68,14 @@
           "additionalProperties": false,
           "required": ["x", "y", "width", "height"],
           "properties": {
-            "x": { "type": "number", "minimum": 0 },
-            "y": { "type": "number", "minimum": 0 },
-            "width": { "type": "number", "exclusiveMinimum": 0 },
-            "height": { "type": "number", "exclusiveMinimum": 0 }
+            "x": { "type": "number", "minimum": 0, "maximum": 1 },
+            "y": { "type": "number", "minimum": 0, "maximum": 1 },
+            "width": { "type": "number", "exclusiveMinimum": 0, "maximum": 1 },
+            "height": { "type": "number", "exclusiveMinimum": 0, "maximum": 1 }
           }
         },
         "selectorHint": { "type": "string" },
-        "fingerprint": { "type": "string", "minLength": 8 }
+        "fingerprint": { "type": "string", "pattern": "^[a-f0-9]{64}$" }
       }
     }
   }

@@ -1,7 +1,7 @@
 # Utsuri report UI guidelines
 
-- **Status**: Phase 5 implemented baseline
-- **Scope**: static code, visual, structural, runtime, coverage, and local human-review state UI
+- **Status**: Phase 6 implemented baseline
+- **Scope**: static and interactive code, visual, structural, runtime, coverage, human-review, and Origin Session feedback UI
 - **Reference date**: 2026-08-07
 - **Normative accessibility baseline**: WCAG 2.2 Level AA
 
@@ -186,3 +186,42 @@ Browser-backed E2E execution requires an already installed compatible Playwright
 - [ ] **Browser evidence**: execute the Phase 5 E2E matrix with a compatible preinstalled browser without launching the user's normal Chrome profile.
 
 The implementation checklist has one environment-dependent browser-evidence item. It remains a release gate and is not represented as PASS while the compatible Playwright browser is absent.
+
+## 15. Phase 6 feedback rules
+
+1. “Ask the current Agent” is a labeled checkbox inside the comment composer. Its help text states that selection alone does not submit or create a conversation.
+2. The sticky footer shows only the selected-item count and unread-answer count until the reviewer opens the preview.
+3. Preview lists every question and anchor, then separates shared evidence from excluded data and states context bytes, redactions, binding, and delivery mode.
+4. Static mode labels the action `Prepare review request` and exports an `export-only` batch. Interactive mode labels it `Return to current conversation` and stores the batch before exposing handoff text.
+5. No provider, model, Agent, session, permission, command, cwd, or path selector appears in the feedback surface.
+6. A response appears under its original thread without moving keyboard focus. Unread state uses text and count, not color alone.
+7. Viewed, human judgment, Agent attention, answer, and resolution controls remain independent. Only the human can resolve a thread or mark a change reviewed.
+8. Stale and orphaned items are not presented as ready feedback. A changed screenshot fingerprint keeps the prior answer but marks its visual anchor stale.
+9. Interactive import and re-anchor controls remain disabled because the fixed-run server exposes no import API. Review export comes from the server event journal.
+10. Copying handoff text is an explicit user action. Clipboard failure remains visible and never triggers an alternate delivery route.
+
+## 16. Phase 6 verification matrix
+
+| Evidence       | Condition                               | Expected result                                                                                      | Location                                                        |
+| -------------- | --------------------------------------- | ---------------------------------------------------------------------------------------------------- | --------------------------------------------------------------- |
+| Unit           | Checkbox, preview, context, idempotency | Selection creates no Context Pack; preview is bounded/redacted; duplicate storage returns one batch. | `packages/review-inbox/src/review-inbox.test.ts`                |
+| Security       | Localhost capability API                | Missing token, cross-origin, arbitrary destination, and non-loopback binding fail closed.            | `tests/security/localhost.test.ts`                              |
+| E2E            | Static feedback compose/export          | Literal provider text persists; preview has no selector; export contains batch and contexts.         | `tests/e2e/feedback-compose.spec.ts`                            |
+| E2E            | Interactive three-item workflow         | Count, preview, storage, handoff, event export, and immutable report boundary persist.               | `tests/e2e/interactive-review.spec.ts`                          |
+| E2E            | Codex and Claude Code return-to-session | One answer per item returns to each thread without review or resolution changes.                     | `tests/e2e/return-to-session.spec.ts`                           |
+| E2E            | Re-anchor and unsupported direct bridge | Exact/probable/changed/missing remain distinct; fallback creates no session.                         | `tests/e2e/reanchor.spec.ts`, `tests/e2e/direct-bridge.spec.ts` |
+| Fixture ledger | All design §46.25 cases                 | Every named fixture points to executable assertion evidence.                                         | `fixtures/origin-session-feedback/cases.json`                   |
+
+Browser-backed E2E execution uses only a compatible preinstalled Playwright-managed browser or an explicitly configured test executable. It never launches the user's normal Chrome profile.
+
+## 17. Phase 6 Must checklist
+
+- [x] **Selection boundary**: checkbox selection alone creates no batch, Context Pack, clipboard write, process, or session.
+- [x] **Preview clarity**: items, anchors, shared/excluded evidence, redaction, size, binding, and delivery mode are visible before storage/export.
+- [x] **Destination safety**: UI and API expose no provider/model/session/path/command destination controls.
+- [x] **State separation**: Agent answers do not change viewed, human judgment, or resolution.
+- [x] **Failure fallback**: unsupported direct delivery remains `return-to-session` and creates no session.
+- [x] **Interactive security**: loopback, capability, exact Origin for mutations, same-origin Fetch Metadata for read-only GET, exact Referer validation when present, report binding, and exact schema are required.
+- [ ] **Browser evidence**: execute the Phase 6 static and interactive Playwright projects with a compatible managed browser and retain the result.
+
+The browser-evidence item remains environment-dependent and cannot be represented as PASS when the required managed browser is unavailable or crashes.

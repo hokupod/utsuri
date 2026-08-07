@@ -5,11 +5,20 @@ export interface ReviewAnswer {
   batchId: string;
   itemId: string;
   directAnswer: string;
+  /**
+   * @maxItems 100
+   */
   evidence: {
     ref: string;
     explanation: string;
   }[];
+  /**
+   * @maxItems 100
+   */
   uncertainty: string[];
+  /**
+   * @maxItems 100
+   */
   suggestedNextActions: {
     type: "inspect" | "test" | "recapture" | "propose-patch" | "none";
     label: string;

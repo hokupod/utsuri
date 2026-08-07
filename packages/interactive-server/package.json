@@ -7,7 +7,11 @@
   "dependencies": {
     "@utsu-ri/core": "workspace:*",
     "@utsu-ri/report-builder": "workspace:*",
-    "@utsu-ri/security": "workspace:*"
+    "@utsu-ri/report-model": "workspace:*",
+    "@utsu-ri/review-inbox": "workspace:*",
+    "@utsu-ri/review-state": "workspace:*",
+    "@utsu-ri/security": "workspace:*",
+    "@utsu-ri/session-binding": "workspace:*"
   },
   "exports": {
     ".": "./src/index.ts"

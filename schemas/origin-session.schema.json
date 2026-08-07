@@ -7,10 +7,25 @@
   "required": ["host", "projectFingerprint", "reportId", "bindingMode", "createdAt"],
   "properties": {
     "host": { "enum": ["codex", "claude-code", "unknown"] },
-    "sessionRef": { "type": "string", "minLength": 1 },
-    "projectFingerprint": { "type": "string", "minLength": 8 },
-    "reportId": { "type": "string", "minLength": 1 },
+    "sessionRef": { "type": "string", "pattern": "^session:[a-f0-9]{64}$" },
+    "projectFingerprint": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
+    "reportId": {
+      "type": "string",
+      "pattern": "^report[-:][A-Za-z0-9._:-]+$",
+      "maxLength": 256
+    },
     "bindingMode": { "enum": ["direct-same-session", "return-to-session", "unbound"] },
     "createdAt": { "type": "string", "format": "date-time" }
-  }
+  },
+  "allOf": [
+    {
+      "if": { "properties": { "bindingMode": { "const": "unbound" } } },
+      "then": { "not": { "required": ["sessionRef"] } },
+      "else": { "required": ["sessionRef"] }
+    },
+    {
+      "if": { "properties": { "host": { "const": "unknown" } } },
+      "then": { "properties": { "bindingMode": { "const": "unbound" } } }
+    }
+  ]
 }

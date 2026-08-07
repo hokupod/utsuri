@@ -23,7 +23,11 @@
   ],
   "properties": {
     "schemaVersion": { "const": "1.0" },
-    "reportId": { "type": "string", "pattern": "^report[-:]" },
+    "reportId": {
+      "type": "string",
+      "pattern": "^report[-:][A-Za-z0-9._:-]+$",
+      "maxLength": 256
+    },
     "status": { "enum": ["PASS", "CHANGED", "REGRESSION", "INCOMPLETE", "UNCOVERED", "SKIPPED"] },
     "summary": {
       "type": "object",
@@ -472,12 +476,26 @@
       "required": ["host", "projectFingerprint", "reportId", "bindingMode", "createdAt"],
       "properties": {
         "host": { "enum": ["codex", "claude-code", "unknown"] },
-        "sessionRef": { "type": "string" },
-        "projectFingerprint": { "type": "string", "minLength": 8 },
-        "reportId": { "type": "string" },
+        "sessionRef": { "type": "string", "pattern": "^session:[a-f0-9]{64}$" },
+        "projectFingerprint": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
+        "reportId": {
+          "type": "string",
+          "pattern": "^report[-:][A-Za-z0-9._:-]+$",
+          "maxLength": 256
+        },
         "bindingMode": { "enum": ["direct-same-session", "return-to-session", "unbound"] },
         "createdAt": { "type": "string", "format": "date-time" }
-      }
+      },
+      "allOf": [
+        {
+          "if": { "properties": { "bindingMode": { "const": "unbound" } } },
+          "then": { "not": { "required": ["sessionRef"] } },
+          "else": {
+            "required": ["sessionRef"],
+            "properties": { "host": { "enum": ["codex", "claude-code"] } }
+          }
+        }
+      ]
     }
   }
 }

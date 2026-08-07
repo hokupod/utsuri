@@ -236,7 +236,8 @@ export async function createBrowserReviewStore(
     },
     threads: [],
     events: [],
-    anchorCatalog: await buildAnchorCatalog(report, browserReviewDigest)
+    anchorCatalog: await buildAnchorCatalog(report, browserReviewDigest),
+    sidecarFiles: {}
   };
 }
 
@@ -331,7 +332,8 @@ export async function browserCreateComment(
   anchor: ReviewAnchor,
   body: string,
   kind: ReviewThreadKind,
-  createdAt = new Date().toISOString()
+  createdAt = new Date().toISOString(),
+  requestAgentAttention = false
 ): Promise<ReviewStore> {
   const normalized = body.trim();
   if (!normalized) throw browserError("REVIEW_COMMENT_EMPTY", "Review comments must not be empty");
@@ -365,7 +367,9 @@ export async function browserCreateComment(
         createdAt
       }
     ],
-    agentAttention: { state: "none" },
+    agentAttention: requestAgentAttention
+      ? { state: "requested", updatedAt: createdAt }
+      : { state: "none" },
     createdAt,
     updatedAt: createdAt
   };
@@ -375,9 +379,45 @@ export async function browserCreateComment(
     type: "thread.created",
     anchor: clone(anchor),
     threadId,
-    messageId
+    messageId,
+    attentionState: requestAgentAttention ? "requested" : "none"
   });
   return { ...store, state, threads: [...store.threads, thread], events: [...store.events, event] };
+}
+
+export async function browserSetAgentAttention(
+  store: ReviewStore,
+  threadId: string,
+  requested: boolean,
+  updatedAt = new Date().toISOString()
+): Promise<ReviewStore> {
+  const index = store.threads.findIndex((thread) => thread.id === threadId);
+  if (index === -1) throw browserError("REVIEW_THREAD_MISSING", "Review thread does not exist");
+  const existing = store.threads[index]!;
+  if (new Set(["stale", "orphaned", "resolved"]).has(existing.state)) {
+    throw browserError(
+      "REVIEW_THREAD_NOT_CURRENT",
+      "Stale, orphaned, or resolved comments cannot request Agent attention"
+    );
+  }
+  const nextAttention = requested ? "requested" : "none";
+  if (existing.agentAttention.state !== "none" && existing.agentAttention.state !== "requested") {
+    throw browserError("REVIEW_ATTENTION_SUBMITTED", "Submitted Agent attention cannot be changed");
+  }
+  if (existing.agentAttention.state === nextAttention) return store;
+  const threads = clone(store.threads);
+  threads[index] = {
+    ...threads[index]!,
+    agentAttention: { state: nextAttention, updatedAt },
+    updatedAt
+  };
+  const state = nextState(store, updatedAt);
+  const event = await eventFor(store, updatedAt, {
+    type: "agent-attention.changed",
+    threadId,
+    attentionState: nextAttention
+  });
+  return { ...store, state, threads, events: [...store.events, event] };
 }
 
 export async function browserResolveThread(
