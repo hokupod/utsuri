@@ -10,10 +10,14 @@ export interface ParsedArguments {
 const valueOptions = new Set([
   "--annotations",
   "--batch",
+  "--base",
   "--config",
   "--format",
+  "--head",
   "--input",
+  "--merge-base",
   "--output",
+  "--patch",
   "--run",
   "--status"
 ]);
@@ -23,7 +27,8 @@ const booleanOptions = new Set([
   "--json",
   "--open",
   "--strict",
-  "--version"
+  "--version",
+  "--worktree"
 ]);
 
 export function parseArguments(argv: readonly string[]): ParsedArguments {
@@ -38,6 +43,13 @@ export function parseArguments(argv: readonly string[]): ParsedArguments {
       const separator = value.indexOf("=");
       const name = separator === -1 ? value : value.slice(0, separator);
       const inline = separator === -1 ? undefined : value.slice(separator + 1);
+      if (options.has(name)) {
+        throw new UtsuriError(
+          "CLI_DUPLICATE_OPTION",
+          `${name} may be provided only once`,
+          ExitCode.Arguments
+        );
+      }
       if (booleanOptions.has(name)) {
         if (inline !== undefined)
           throw new UtsuriError(

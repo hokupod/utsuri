@@ -1,4 +1,4 @@
-import { afterEach, describe, expect, test } from "bun:test";
+import { afterAll, describe, expect, test } from "bun:test";
 import { constants } from "node:fs";
 import {
   chmod,
@@ -26,7 +26,7 @@ import { publishDirectoryNoReplace } from "./native-publish";
 
 const temporaryDirectories: string[] = [];
 
-afterEach(async () => {
+afterAll(async () => {
   await Promise.all(
     temporaryDirectories
       .splice(0)
@@ -143,7 +143,7 @@ describe("immutable report generation", () => {
 
     expect(result.ok).toBe(false);
     expect(result.errors).toContain("Unregistered asset: unexpected.txt");
-    expect(result.errors).toContain("Strict Phase 0 artifact inventory mismatch");
+    expect(result.errors).toContain("Strict report artifact inventory mismatch");
   });
 
   test("does not reuse a report whose bundled asset was modified", async () => {

@@ -1,0 +1,44 @@
+diff --git a/src/navigation.ts b/src/navigation.ts
+index 1111111111111111111111111111111111111111..2222222222222222222222222222222222222222 100644
+--- a/src/navigation.ts
++++ b/src/navigation.ts
+@@ -1,12 +1,13 @@ export function navigation() {
+ const desktop = true;
+ const mobile = true;
+ const keyboard = true;
+ const pointer = true;
+ const aria = true;
+-const breakpoint = 640;
++const breakpoint = 768;
++const menuButton = "Menu";
+ const focusReturn = true;
+ const escapeKey = true;
+ const outsideClick = true;
+ const reducedMotion = true;
+ const darkMode = true;
+ const lightMode = true;
+diff --git a/src/navigation.test.ts b/src/navigation.test.ts
+index 3333333333333333333333333333333333333333..4444444444444444444444444444444444444444 100644
+--- a/src/navigation.test.ts
++++ b/src/navigation.test.ts
+@@ -1,3 +1,4 @@
+ test("mobile navigation", () => {
++  expect(breakpoint).toBe(768);
+   expect(menuButton).toBeVisible();
+ });
+diff --git a/styles/navigation.css b/styles/navigation.css
+index 5555555555555555555555555555555555555555..6666666666666666666666666666666666666666 100644
+--- a/styles/navigation.css
++++ b/styles/navigation.css
+@@ -1,3 +1,3 @@
+ .navigation {
+-  gap: 8px;
++  gap: 12px;
+ }
+diff --git a/src/malicious.ts b/src/malicious.ts
+new file mode 100644
+index 0000000000000000000000000000000000000000..7777777777777777777777777777777777777777
+--- /dev/null
++++ b/src/malicious.ts
+@@ -0,0 +1 @@
++export const payload = '<img src=x onerror="window.__utsuriXss=1">';

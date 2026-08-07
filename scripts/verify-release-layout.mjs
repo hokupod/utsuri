@@ -51,10 +51,13 @@ const schemaNames = [
   "annotations.schema.json",
   "config.schema.json",
   "context-pack.schema.json",
+  "diff.schema.json",
+  "evidence-index.schema.json",
   "feedback-batch.schema.json",
   "origin-session.schema.json",
   "report.schema.json",
   "review-answer.schema.json",
+  "review-plan.schema.json",
   "review-state.schema.json",
   "review-thread.schema.json"
 ];

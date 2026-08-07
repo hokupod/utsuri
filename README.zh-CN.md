@@ -18,24 +18,23 @@ Utsuri 将代码变更转换为有证据、便于人类理解的可视化评审�
 
 ## 状态
 
-<!-- availability:phase-0-documentation -->
+<!-- availability:phase-1-code-review -->
 
-Utsuri v1 正在实现。npm package 和 Plugin 尚未发布，以下命令仅适用于此 source checkout。
+Phase 1 的 code-only review flow 已可在此 source checkout 中使用。它可收集 patch、worktree、range 或 merge-base 变更，并生成 immutable local report。browser capture、visual/runtime comparison、持久化 review state 和 Agent feedback 尚未实现。npm package 与 Plugin 也尚未发布。
 
 <a id="capabilities"></a><!-- section:capabilities -->
 
 ## 功能
 
-v1 的目标包括：
+当前可用功能：
 
-- 对所有 Git hunk 进行语义分组；
-- 隔离的 before / after 浏览器捕获；
-- visual、DOM、ARIA、style、accessibility、runtime 和 coverage 证据；
-- 自包含并符合 WCAG 2.2 AA 的 report；
-- review state、锚定 comment 和 Origin Session feedback；以及
-- Codex Plugin、Claude Code Plugin、standalone Skill、local CLI 和 CI。
+- 明确的 patch、worktree、range 和 merge-base 收集 mode；
+- 保留 rename、delete、binary、submodule、mode 与 low-signal metadata 的稳定 structured hunk；
+- 将每个 hunk 保留在 candidate 或 `unclassified` 中的确定性初始 change candidate；
+- 经过 schema 验证的 annotation 与 evidence reference；以及
+- 包含 summary、三状态 queue、Focus mode、evidence drawer、unified/side-by-side diff、deep link 和 keyboard focus 恢复的自包含 code review。
 
-每项功能仅在对应 Phase gate 通过后可用。捕获失败或未覆盖绝不会显示为“无差异”。
+后续 v1 Phase 将加入隔离 browser capture、visual/DOM/ARIA/style/accessibility/runtime comparison、持久化 review state 与 Origin Session feedback。在执行 capture 之前，每份 report 都是 `UNCOVERED`，并明确列出 visual 与 runtime verification gap。
 
 <a id="quick-start"></a><!-- section:quick-start -->
 
@@ -62,6 +61,26 @@ node scripts/safe-chain.mjs bun install --frozen-lockfile
 ```
 
 setup script、Skill 或 CLI 都不会自动安装依赖或下载浏览器。
+
+创建一个新的 code-only example run。output directory 不得预先存在。
+
+<!-- sync-command:collect-patch -->
+
+```bash
+node skills/utsuri-review/scripts/utsuri.mjs collect --patch fixtures/code-only-review/changes.patch --output .artifacts/utsuri/readme-example --json
+```
+
+<!-- sync-command:finalize-report -->
+
+```bash
+node skills/utsuri-review/scripts/utsuri.mjs finalize --run .artifacts/utsuri/readme-example --json
+```
+
+<!-- sync-command:validate-report -->
+
+```bash
+node skills/utsuri-review/scripts/utsuri.mjs validate .artifacts/utsuri/readme-example/report --strict --json
+```
 
 <a id="development"></a><!-- section:development -->
 
@@ -95,11 +114,14 @@ Utsuri 将 repository content、diff、HTML、SVG、comment、Context Pack 和 c
 
 生成的 `report/` 是 immutable。Utsuri 要求 run input 是普通文件且不是 symlink，publication path 不可被其他本地 principal 改名，staging 必须通过 strict validation，并使用 OS 的 no-replace helper。helper 缺失或 filesystem 不支持时会 fail closed。生成失败可能保留用于诊断的 private staging directory，Utsuri 不会自动删除它。可变的人工 review data 单独存储在 `run/review/`。static viewer 不连接外部服务。
 
+code diff content 会解析为 structured line，并且只以 text 方式渲染。由 repository 控制的 diff text 永远不会作为 HTML 注入。
+
 <a id="documentation"></a><!-- section:documentation -->
 
 ## 文档
 
 - [英文详细设计正本](https://github.com/hokupod/utsuri/blob/main/docs/design.md)
+- [UI guideline 与 HIG/WCAG traceability](https://github.com/hokupod/utsuri/blob/main/docs/ui-guidelines.md)
 - [v1 实现计划](https://github.com/hokupod/utsuri/blob/main/ai/plans/active/v1-%E5%AE%9F%E8%A3%85/README.md)
 
 详细设计以英文为正本。面向用户的 README 变更必须在同一个 change 中同步英文、日文和简体中文。

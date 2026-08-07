@@ -20,6 +20,7 @@ const expectedManifestKeys = [
 ].sort();
 const expectedDependencies = {
   "@utsu-ri/core": "workspace:*",
+  "@utsu-ri/git-collector": "workspace:*",
   "@utsu-ri/report-builder": "workspace:*",
   "@utsu-ri/report-model": "workspace:*",
   "@utsu-ri/security": "workspace:*",

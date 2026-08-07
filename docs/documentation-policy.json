@@ -38,7 +38,16 @@
     "documentation",
     "license-status"
   ],
-  "syncCommandIds": ["dev-shell", "dev-env-check", "install", "check", "native-doctor"],
+  "syncCommandIds": [
+    "dev-shell",
+    "dev-env-check",
+    "install",
+    "collect-patch",
+    "finalize-report",
+    "validate-report",
+    "check",
+    "native-doctor"
+  ],
   "allowedEnglishCjk": {
     "designHtmlLangs": ["ja"],
     "stripMarkdownLinkDestinations": true,

@@ -1,0 +1,168 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://utsu-ri.dev/schemas/diff/v1",
+  "title": "GitDiffDocument",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion",
+    "input",
+    "repository",
+    "sourceDigests",
+    "summary",
+    "files",
+    "hunks"
+  ],
+  "properties": {
+    "schemaVersion": { "const": "1.0" },
+    "input": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["mode", "base", "head", "mergeBase", "patchPath"],
+      "properties": {
+        "mode": { "enum": ["worktree", "range", "merge-base", "patch"] },
+        "base": { "type": ["string", "null"] },
+        "head": { "type": ["string", "null"] },
+        "mergeBase": { "type": ["string", "null"] },
+        "patchPath": { "type": ["string", "null"] }
+      }
+    },
+    "repository": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["fingerprint"],
+      "properties": {
+        "fingerprint": { "type": "string", "minLength": 8 }
+      }
+    },
+    "sourceDigests": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["patch", "numstat", "nameStatus", "summary", "raw", "commits"],
+      "properties": {
+        "patch": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
+        "numstat": { "type": ["string", "null"], "pattern": "^[a-f0-9]{64}$" },
+        "nameStatus": { "type": ["string", "null"], "pattern": "^[a-f0-9]{64}$" },
+        "summary": { "type": ["string", "null"], "pattern": "^[a-f0-9]{64}$" },
+        "raw": { "type": ["string", "null"], "pattern": "^[a-f0-9]{64}$" },
+        "commits": { "type": ["string", "null"], "pattern": "^[a-f0-9]{64}$" }
+      }
+    },
+    "summary": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["filesChanged", "additions", "deletions", "binaryFiles", "lowSignalFiles"],
+      "properties": {
+        "filesChanged": { "type": "integer", "minimum": 0 },
+        "additions": { "type": "integer", "minimum": 0 },
+        "deletions": { "type": "integer", "minimum": 0 },
+        "binaryFiles": { "type": "integer", "minimum": 0 },
+        "lowSignalFiles": { "type": "integer", "minimum": 0 }
+      }
+    },
+    "files": { "type": "array", "items": { "$ref": "#/$defs/file" } },
+    "hunks": { "type": "array", "items": { "$ref": "#/$defs/hunk" } }
+  },
+  "$defs": {
+    "file": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "status",
+        "oldPath",
+        "newPath",
+        "additions",
+        "deletions",
+        "binary",
+        "submodule",
+        "oldMode",
+        "newMode",
+        "oldOid",
+        "newOid",
+        "similarity",
+        "lowSignal",
+        "lowSignalReasons",
+        "hunkRefs"
+      ],
+      "properties": {
+        "id": { "type": "string", "pattern": "^file:" },
+        "status": {
+          "enum": [
+            "added",
+            "modified",
+            "deleted",
+            "renamed",
+            "copied",
+            "type-changed",
+            "unmerged",
+            "unknown"
+          ]
+        },
+        "oldPath": { "type": ["string", "null"] },
+        "newPath": { "type": ["string", "null"] },
+        "additions": { "type": ["integer", "null"], "minimum": 0 },
+        "deletions": { "type": ["integer", "null"], "minimum": 0 },
+        "binary": { "type": "boolean" },
+        "submodule": { "type": "boolean" },
+        "oldMode": { "type": ["string", "null"], "pattern": "^[0-7]{6}$" },
+        "newMode": { "type": ["string", "null"], "pattern": "^[0-7]{6}$" },
+        "oldOid": { "type": ["string", "null"], "pattern": "^[a-f0-9]{7,64}$" },
+        "newOid": { "type": ["string", "null"], "pattern": "^[a-f0-9]{7,64}$" },
+        "similarity": { "type": ["integer", "null"], "minimum": 0, "maximum": 100 },
+        "lowSignal": { "type": "boolean" },
+        "lowSignalReasons": {
+          "type": "array",
+          "items": { "type": "string", "minLength": 1 },
+          "uniqueItems": true
+        },
+        "hunkRefs": {
+          "type": "array",
+          "items": { "type": "string", "pattern": "^hunk:" },
+          "uniqueItems": true
+        }
+      }
+    },
+    "line": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["kind", "content", "oldLine", "newLine"],
+      "properties": {
+        "kind": { "enum": ["context", "addition", "deletion", "no-newline"] },
+        "content": { "type": "string" },
+        "oldLine": { "type": ["integer", "null"], "minimum": 1 },
+        "newLine": { "type": ["integer", "null"], "minimum": 1 }
+      }
+    },
+    "hunk": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "path",
+        "oldPath",
+        "newPath",
+        "oldStart",
+        "oldLines",
+        "newStart",
+        "newLines",
+        "heading",
+        "lines",
+        "lowSignal"
+      ],
+      "properties": {
+        "id": { "type": "string", "pattern": "^hunk:" },
+        "path": { "type": "string", "minLength": 1 },
+        "oldPath": { "type": ["string", "null"] },
+        "newPath": { "type": ["string", "null"] },
+        "oldStart": { "type": "integer", "minimum": 0 },
+        "oldLines": { "type": "integer", "minimum": 0 },
+        "newStart": { "type": "integer", "minimum": 0 },
+        "newLines": { "type": "integer", "minimum": 0 },
+        "heading": { "type": "string" },
+        "lines": { "type": "array", "items": { "$ref": "#/$defs/line" } },
+        "lowSignal": { "type": "boolean" }
+      }
+    }
+  }
+}

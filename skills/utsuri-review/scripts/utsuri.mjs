@@ -3229,8 +3229,8 @@ var require_utils = __commonJS({
       }
       return ind;
     }
-    function removeDotSegments(path6) {
-      let input = path6;
+    function removeDotSegments(path12) {
+      let input = path12;
       const output = [];
       let nextSlash = -1;
       let len = 0;
@@ -3482,8 +3482,8 @@ var require_schemes = __commonJS({
         wsComponent.secure = void 0;
       }
       if (wsComponent.resourceName) {
-        const [path6, query] = wsComponent.resourceName.split("?");
-        wsComponent.path = path6 && path6 !== "/" ? path6 : void 0;
+        const [path12, query] = wsComponent.resourceName.split("?");
+        wsComponent.path = path12 && path12 !== "/" ? path12 : void 0;
         wsComponent.query = query;
         wsComponent.resourceName = void 0;
       }
@@ -6983,17 +6983,17 @@ var require_visit = __commonJS({
     visit.BREAK = BREAK;
     visit.SKIP = SKIP;
     visit.REMOVE = REMOVE;
-    function visit_(key, node, visitor, path6) {
-      const ctrl = callVisitor(key, node, visitor, path6);
+    function visit_(key, node, visitor, path12) {
+      const ctrl = callVisitor(key, node, visitor, path12);
       if (identity.isNode(ctrl) || identity.isPair(ctrl)) {
-        replaceNode(key, path6, ctrl);
-        return visit_(key, ctrl, visitor, path6);
+        replaceNode(key, path12, ctrl);
+        return visit_(key, ctrl, visitor, path12);
       }
       if (typeof ctrl !== "symbol") {
         if (identity.isCollection(node)) {
-          path6 = Object.freeze(path6.concat(node));
+          path12 = Object.freeze(path12.concat(node));
           for (let i = 0; i < node.items.length; ++i) {
-            const ci = visit_(i, node.items[i], visitor, path6);
+            const ci = visit_(i, node.items[i], visitor, path12);
             if (typeof ci === "number")
               i = ci - 1;
             else if (ci === BREAK)
@@ -7004,13 +7004,13 @@ var require_visit = __commonJS({
             }
           }
         } else if (identity.isPair(node)) {
-          path6 = Object.freeze(path6.concat(node));
-          const ck = visit_("key", node.key, visitor, path6);
+          path12 = Object.freeze(path12.concat(node));
+          const ck = visit_("key", node.key, visitor, path12);
           if (ck === BREAK)
             return BREAK;
           else if (ck === REMOVE)
             node.key = null;
-          const cv = visit_("value", node.value, visitor, path6);
+          const cv = visit_("value", node.value, visitor, path12);
           if (cv === BREAK)
             return BREAK;
           else if (cv === REMOVE)
@@ -7031,17 +7031,17 @@ var require_visit = __commonJS({
     visitAsync.BREAK = BREAK;
     visitAsync.SKIP = SKIP;
     visitAsync.REMOVE = REMOVE;
-    async function visitAsync_(key, node, visitor, path6) {
-      const ctrl = await callVisitor(key, node, visitor, path6);
+    async function visitAsync_(key, node, visitor, path12) {
+      const ctrl = await callVisitor(key, node, visitor, path12);
       if (identity.isNode(ctrl) || identity.isPair(ctrl)) {
-        replaceNode(key, path6, ctrl);
-        return visitAsync_(key, ctrl, visitor, path6);
+        replaceNode(key, path12, ctrl);
+        return visitAsync_(key, ctrl, visitor, path12);
       }
       if (typeof ctrl !== "symbol") {
         if (identity.isCollection(node)) {
-          path6 = Object.freeze(path6.concat(node));
+          path12 = Object.freeze(path12.concat(node));
           for (let i = 0; i < node.items.length; ++i) {
-            const ci = await visitAsync_(i, node.items[i], visitor, path6);
+            const ci = await visitAsync_(i, node.items[i], visitor, path12);
             if (typeof ci === "number")
               i = ci - 1;
             else if (ci === BREAK)
@@ -7052,13 +7052,13 @@ var require_visit = __commonJS({
             }
           }
         } else if (identity.isPair(node)) {
-          path6 = Object.freeze(path6.concat(node));
-          const ck = await visitAsync_("key", node.key, visitor, path6);
+          path12 = Object.freeze(path12.concat(node));
+          const ck = await visitAsync_("key", node.key, visitor, path12);
           if (ck === BREAK)
             return BREAK;
           else if (ck === REMOVE)
             node.key = null;
-          const cv = await visitAsync_("value", node.value, visitor, path6);
+          const cv = await visitAsync_("value", node.value, visitor, path12);
           if (cv === BREAK)
             return BREAK;
           else if (cv === REMOVE)
@@ -7085,23 +7085,23 @@ var require_visit = __commonJS({
       }
       return visitor;
     }
-    function callVisitor(key, node, visitor, path6) {
+    function callVisitor(key, node, visitor, path12) {
       if (typeof visitor === "function")
-        return visitor(key, node, path6);
+        return visitor(key, node, path12);
       if (identity.isMap(node))
-        return visitor.Map?.(key, node, path6);
+        return visitor.Map?.(key, node, path12);
       if (identity.isSeq(node))
-        return visitor.Seq?.(key, node, path6);
+        return visitor.Seq?.(key, node, path12);
       if (identity.isPair(node))
-        return visitor.Pair?.(key, node, path6);
+        return visitor.Pair?.(key, node, path12);
       if (identity.isScalar(node))
-        return visitor.Scalar?.(key, node, path6);
+        return visitor.Scalar?.(key, node, path12);
       if (identity.isAlias(node))
-        return visitor.Alias?.(key, node, path6);
+        return visitor.Alias?.(key, node, path12);
       return void 0;
     }
-    function replaceNode(key, path6, node) {
-      const parent = path6[path6.length - 1];
+    function replaceNode(key, path12, node) {
+      const parent = path12[path12.length - 1];
       if (identity.isCollection(parent)) {
         parent.items[key] = node;
       } else if (identity.isPair(parent)) {
@@ -7709,10 +7709,10 @@ var require_Collection = __commonJS({
     var createNode = require_createNode();
     var identity = require_identity();
     var Node = require_Node();
-    function collectionFromPath(schema, path6, value) {
+    function collectionFromPath(schema, path12, value) {
       let v = value;
-      for (let i = path6.length - 1; i >= 0; --i) {
-        const k = path6[i];
+      for (let i = path12.length - 1; i >= 0; --i) {
+        const k = path12[i];
         if (typeof k === "number" && Number.isInteger(k) && k >= 0) {
           const a = [];
           a[k] = v;
@@ -7731,7 +7731,7 @@ var require_Collection = __commonJS({
         sourceObjects: /* @__PURE__ */ new Map()
       });
     }
-    var isEmptyPath = (path6) => path6 == null || typeof path6 === "object" && !!path6[Symbol.iterator]().next().done;
+    var isEmptyPath = (path12) => path12 == null || typeof path12 === "object" && !!path12[Symbol.iterator]().next().done;
     var Collection = class extends Node.NodeBase {
       constructor(type, schema) {
         super(type);
@@ -7761,11 +7761,11 @@ var require_Collection = __commonJS({
        * be a Pair instance or a `{ key, value }` object, which may not have a key
        * that already exists in the map.
        */
-      addIn(path6, value) {
-        if (isEmptyPath(path6))
+      addIn(path12, value) {
+        if (isEmptyPath(path12))
           this.add(value);
         else {
-          const [key, ...rest] = path6;
+          const [key, ...rest] = path12;
           const node = this.get(key, true);
           if (identity.isCollection(node))
             node.addIn(rest, value);
@@ -7779,8 +7779,8 @@ var require_Collection = __commonJS({
        * Removes a value from the collection.
        * @returns `true` if the item was found and removed.
        */
-      deleteIn(path6) {
-        const [key, ...rest] = path6;
+      deleteIn(path12) {
+        const [key, ...rest] = path12;
         if (rest.length === 0)
           return this.delete(key);
         const node = this.get(key, true);
@@ -7794,8 +7794,8 @@ var require_Collection = __commonJS({
        * scalar values from their surrounding node; to disable set `keepScalar` to
        * `true` (collections are always returned intact).
        */
-      getIn(path6, keepScalar) {
-        const [key, ...rest] = path6;
+      getIn(path12, keepScalar) {
+        const [key, ...rest] = path12;
         const node = this.get(key, true);
         if (rest.length === 0)
           return !keepScalar && identity.isScalar(node) ? node.value : node;
@@ -7813,8 +7813,8 @@ var require_Collection = __commonJS({
       /**
        * Checks if the collection includes a value with the key `key`.
        */
-      hasIn(path6) {
-        const [key, ...rest] = path6;
+      hasIn(path12) {
+        const [key, ...rest] = path12;
         if (rest.length === 0)
           return this.has(key);
         const node = this.get(key, true);
@@ -7824,8 +7824,8 @@ var require_Collection = __commonJS({
        * Sets a value in this collection. For `!!set`, `value` needs to be a
        * boolean to add/remove the item from the set.
        */
-      setIn(path6, value) {
-        const [key, ...rest] = path6;
+      setIn(path12, value) {
+        const [key, ...rest] = path12;
         if (rest.length === 0) {
           this.set(key, value);
         } else {
@@ -10329,9 +10329,9 @@ var require_Document = __commonJS({
           this.contents.add(value);
       }
       /** Adds a value to the document. */
-      addIn(path6, value) {
+      addIn(path12, value) {
         if (assertCollection(this.contents))
-          this.contents.addIn(path6, value);
+          this.contents.addIn(path12, value);
       }
       /**
        * Create a new `Alias` node, ensuring that the target `node` has the required anchor.
@@ -10406,14 +10406,14 @@ var require_Document = __commonJS({
        * Removes a value from the document.
        * @returns `true` if the item was found and removed.
        */
-      deleteIn(path6) {
-        if (Collection.isEmptyPath(path6)) {
+      deleteIn(path12) {
+        if (Collection.isEmptyPath(path12)) {
           if (this.contents == null)
             return false;
           this.contents = null;
           return true;
         }
-        return assertCollection(this.contents) ? this.contents.deleteIn(path6) : false;
+        return assertCollection(this.contents) ? this.contents.deleteIn(path12) : false;
       }
       /**
        * Returns item at `key`, or `undefined` if not found. By default unwraps
@@ -10428,10 +10428,10 @@ var require_Document = __commonJS({
        * scalar values from their surrounding node; to disable set `keepScalar` to
        * `true` (collections are always returned intact).
        */
-      getIn(path6, keepScalar) {
-        if (Collection.isEmptyPath(path6))
+      getIn(path12, keepScalar) {
+        if (Collection.isEmptyPath(path12))
           return !keepScalar && identity.isScalar(this.contents) ? this.contents.value : this.contents;
-        return identity.isCollection(this.contents) ? this.contents.getIn(path6, keepScalar) : void 0;
+        return identity.isCollection(this.contents) ? this.contents.getIn(path12, keepScalar) : void 0;
       }
       /**
        * Checks if the document includes a value with the key `key`.
@@ -10442,10 +10442,10 @@ var require_Document = __commonJS({
       /**
        * Checks if the document includes a value at `path`.
        */
-      hasIn(path6) {
-        if (Collection.isEmptyPath(path6))
+      hasIn(path12) {
+        if (Collection.isEmptyPath(path12))
           return this.contents !== void 0;
-        return identity.isCollection(this.contents) ? this.contents.hasIn(path6) : false;
+        return identity.isCollection(this.contents) ? this.contents.hasIn(path12) : false;
       }
       /**
        * Sets a value in this document. For `!!set`, `value` needs to be a
@@ -10462,13 +10462,13 @@ var require_Document = __commonJS({
        * Sets a value in this document. For `!!set`, `value` needs to be a
        * boolean to add/remove the item from the set.
        */
-      setIn(path6, value) {
-        if (Collection.isEmptyPath(path6)) {
+      setIn(path12, value) {
+        if (Collection.isEmptyPath(path12)) {
           this.contents = value;
         } else if (this.contents == null) {
-          this.contents = Collection.collectionFromPath(this.schema, Array.from(path6), value);
+          this.contents = Collection.collectionFromPath(this.schema, Array.from(path12), value);
         } else if (assertCollection(this.contents)) {
-          this.contents.setIn(path6, value);
+          this.contents.setIn(path12, value);
         }
       }
       /**
@@ -12420,9 +12420,9 @@ var require_cst_visit = __commonJS({
     visit.BREAK = BREAK;
     visit.SKIP = SKIP;
     visit.REMOVE = REMOVE;
-    visit.itemAtPath = (cst, path6) => {
+    visit.itemAtPath = (cst, path12) => {
       let item = cst;
-      for (const [field, index] of path6) {
+      for (const [field, index] of path12) {
         const tok = item?.[field];
         if (tok && "items" in tok) {
           item = tok.items[index];
@@ -12431,23 +12431,23 @@ var require_cst_visit = __commonJS({
       }
       return item;
     };
-    visit.parentCollection = (cst, path6) => {
-      const parent = visit.itemAtPath(cst, path6.slice(0, -1));
-      const field = path6[path6.length - 1][0];
+    visit.parentCollection = (cst, path12) => {
+      const parent = visit.itemAtPath(cst, path12.slice(0, -1));
+      const field = path12[path12.length - 1][0];
       const coll = parent?.[field];
       if (coll && "items" in coll)
         return coll;
       throw new Error("Parent collection not found");
     };
-    function _visit(path6, item, visitor) {
-      let ctrl = visitor(item, path6);
+    function _visit(path12, item, visitor) {
+      let ctrl = visitor(item, path12);
       if (typeof ctrl === "symbol")
         return ctrl;
       for (const field of ["key", "value"]) {
         const token = item[field];
         if (token && "items" in token) {
           for (let i = 0; i < token.items.length; ++i) {
-            const ci = _visit(Object.freeze(path6.concat([[field, i]])), token.items[i], visitor);
+            const ci = _visit(Object.freeze(path12.concat([[field, i]])), token.items[i], visitor);
             if (typeof ci === "number")
               i = ci - 1;
             else if (ci === BREAK)
@@ -12458,10 +12458,10 @@ var require_cst_visit = __commonJS({
             }
           }
           if (typeof ctrl === "function" && field === "key")
-            ctrl = ctrl(item, path6);
+            ctrl = ctrl(item, path12);
         }
       }
-      return typeof ctrl === "function" ? ctrl(item, path6) : ctrl;
+      return typeof ctrl === "function" ? ctrl(item, path12) : ctrl;
     }
     exports.visit = visit;
   }
@@ -14196,8 +14196,8 @@ var require_dist2 = __commonJS({
 });
 
 // packages/cli/src/cli.ts
-import { readFile as readFile2 } from "node:fs/promises";
-import path5 from "node:path";
+import { readFile as readFile3 } from "node:fs/promises";
+import path11 from "node:path";
 
 // packages/core/src/errors.ts
 var ExitCode = {
@@ -14230,8 +14230,12 @@ function toUtsuriError(error) {
   );
 }
 
+// packages/core/src/git.ts
+import path2 from "node:path";
+
 // packages/core/src/hash.ts
 import { createHash } from "node:crypto";
+import path from "node:path";
 var defaultOmittedKeys = /* @__PURE__ */ new Set([
   "generatedAt",
   "generationTime",
@@ -14271,12 +14275,158 @@ function sha256(value) {
 function stableHash(value) {
   return sha256(canonicalJson(value));
 }
+function stableId(prefix, value, length = 16) {
+  return `${prefix}:${stableHash(value).slice(0, length)}`;
+}
+function normalizeRepositoryPath(input) {
+  const normalized = input.replaceAll("\\", "/").replace(/^\.\//u, "");
+  return path.posix.normalize(normalized);
+}
+function hunkId(filePath, oldStart, newStart, content) {
+  const normalizedPath = normalizeRepositoryPath(filePath);
+  const digest = stableHash({ normalizedPath, oldStart, newStart, content }).slice(0, 16);
+  return `hunk:${normalizedPath}:${oldStart}:${newStart}:${digest}`;
+}
 
-// packages/report-builder/src/index.ts
-import { createHash as createHash2, randomUUID } from "node:crypto";
-import { constants as constants2 } from "node:fs";
-import { access as access2, lstat as lstat3, mkdir, open, readdir, realpath as realpath2, stat, writeFile } from "node:fs/promises";
+// packages/core/src/git.ts
+var lowSignalPathPatterns = [
+  ["vendor", /(?:^|\/)(?:vendor|vendors|third[_-]party|node_modules)(?:\/|$)/iu],
+  ["generated-path", /(?:^|\/)(?:dist|build|coverage|generated)(?:\/|$)/iu],
+  ["minified", /\.min\.(?:css|js|mjs|cjs)$/iu],
+  [
+    "lockfile",
+    /(?:^|\/)(?:bun\.lock|package-lock\.json|npm-shrinkwrap\.json|pnpm-lock\.yaml|yarn\.lock|Cargo\.lock|Gemfile\.lock|go\.sum)$/u
+  ],
+  ["snapshot", /(?:\.snap$|(?:^|\/)__snapshots__(?:\/|$))/u],
+  ["source-map", /\.map$/u]
+];
+function classifyLowSignal(filePath, options = {}) {
+  const normalized = normalizeRepositoryPath(filePath);
+  const reasons = lowSignalPathPatterns.filter(([, pattern]) => pattern.test(normalized)).map(([reason]) => reason);
+  if (options.binary) reasons.push("binary");
+  const header = (options.content ?? []).slice(0, 8).join("\n");
+  if (/(?:@generated|generated (?:code|file)|do not edit)/iu.test(header))
+    reasons.push("generated-header");
+  return [...new Set(reasons)].sort();
+}
+function createGitHunk(input) {
+  const selectedPath = normalizeRepositoryPath(input.path);
+  const content = input.lines.map((line) => `${line.kind}:${line.content}`);
+  return {
+    ...input,
+    path: selectedPath,
+    oldPath: input.oldPath ? normalizeRepositoryPath(input.oldPath) : null,
+    newPath: input.newPath ? normalizeRepositoryPath(input.newPath) : null,
+    id: hunkId(selectedPath, input.oldStart, input.newStart, content),
+    lowSignal: classifyLowSignal(selectedPath, { content }).length > 0
+  };
+}
+function createGitFileId(oldPath, newPath) {
+  const selectedPath = normalizeRepositoryPath(newPath ?? oldPath ?? "unknown");
+  return stableId("file", { oldPath, newPath, selectedPath });
+}
+function displayPath(file) {
+  if (file.oldPath && file.newPath && file.oldPath !== file.newPath) {
+    return `${file.oldPath} → ${file.newPath}`;
+  }
+  return file.newPath ?? file.oldPath ?? "unknown";
+}
+function fileStem(filePath) {
+  const normalized = normalizeRepositoryPath(filePath);
+  const extension = path2.posix.extname(normalized);
+  return path2.posix.join(path2.posix.dirname(normalized), path2.posix.basename(normalized, extension)).replace(/(?:\.(?:test|spec|stories)|[-_.](?:test|spec)|\.module)$/iu, "").replace(/(?:^|\/)__tests__\//u, "/").replace(/\/index$/u, "");
+}
+
+// packages/core/src/semantic.ts
 import path3 from "node:path";
+function evidenceType(file) {
+  const selected = file.newPath ?? file.oldPath ?? "";
+  if (file.binary) return "binary";
+  if (file.lowSignal) return "generated";
+  if (/(?:^|\/)(?:tests?|__tests__|spec)(?:\/|$)|\.(?:test|spec)\.[^.]+$/iu.test(selected)) {
+    return "test";
+  }
+  if (/\.(?:css|scss|sass|less|styl)$/iu.test(selected)) return "style";
+  if (/(?:^|\/)(?:package\.json|tsconfig[^/]*\.json|[^/]+\.config\.[^/]+)$/iu.test(selected)) {
+    return "configuration";
+  }
+  return "code";
+}
+function candidateKey(file) {
+  const selected = file.newPath ?? file.oldPath ?? "unknown";
+  const stem = fileStem(selected);
+  const basename = path3.posix.basename(stem);
+  const directory = path3.posix.dirname(stem);
+  return basename ? `${directory}/${basename}` : selected;
+}
+function candidateTitle(files) {
+  if (files.length === 1) return displayPath(files[0]);
+  const paths = files.map(displayPath);
+  const sharedStem = path3.posix.basename(fileStem(paths[0] ?? "change"));
+  return sharedStem ? `${sharedStem} and related files` : `${files.length} related files`;
+}
+function createEvidenceIndex(diff) {
+  const evidence = diff.files.flatMap((file) => {
+    const selected = file.newPath ?? file.oldPath ?? "unknown";
+    const hunks = file.hunkRefs.map((reference) => diff.hunks.find((hunk) => hunk.id === reference)).filter((hunk) => hunk !== void 0);
+    if (hunks.length === 0) {
+      return [
+        {
+          id: stableId("evidence", { file: file.id, kind: evidenceType(file) }),
+          type: evidenceType(file),
+          path: selected,
+          range: null,
+          summary: `${file.status} ${displayPath(file)}`,
+          hunkRefs: []
+        }
+      ];
+    }
+    return hunks.map((hunk) => {
+      const usesNewRange = hunk.newLines > 0;
+      const start = usesNewRange ? hunk.newStart : hunk.oldStart;
+      const count = usesNewRange ? hunk.newLines : hunk.oldLines;
+      return {
+        id: stableId("evidence", { hunk: hunk.id }),
+        type: evidenceType(file),
+        path: selected,
+        range: { start, end: start + Math.max(count - 1, 0) },
+        summary: `${file.status} hunk in ${displayPath(file)}`,
+        hunkRefs: [hunk.id]
+      };
+    });
+  });
+  return { schemaVersion: "1.0", evidence };
+}
+function createReviewPlan(diff, evidenceIndex = createEvidenceIndex(diff)) {
+  const grouped = /* @__PURE__ */ new Map();
+  for (const file of diff.files) {
+    if (file.hunkRefs.length === 0) continue;
+    const key = candidateKey(file);
+    grouped.set(key, [...grouped.get(key) ?? [], file]);
+  }
+  const candidates = [...grouped.entries()].sort(([left], [right]) => left.localeCompare(right)).map(([key, files]) => {
+    const fileRefs = files.map((file) => file.id).sort();
+    const sortedHunkRefs = files.flatMap((file) => file.hunkRefs).sort();
+    const hunkRefs = sortedHunkRefs;
+    const hunkSet = new Set(hunkRefs);
+    const evidenceRefs = evidenceIndex.evidence.filter((evidence) => evidence.hunkRefs.some((reference) => hunkSet.has(reference))).map((evidence) => evidence.id).sort();
+    return {
+      id: stableId("change", { key, hunkRefs }),
+      title: candidateTitle(files),
+      reason: files.length === 1 ? "Hunks are close within one file." : "Implementation, test, style, or companion files share a stable path stem.",
+      fileRefs,
+      hunkRefs,
+      evidenceRefs
+    };
+  });
+  const classified = new Set(candidates.flatMap((candidate) => candidate.hunkRefs));
+  const unclassifiedHunkRefs = diff.hunks.map((hunk) => hunk.id).filter((reference) => !classified.has(reference)).sort();
+  return { schemaVersion: "1.0", candidates, unclassifiedHunkRefs };
+}
+
+// packages/git-collector/src/index.ts
+import { mkdir, readFile, realpath as realpath3, writeFile } from "node:fs/promises";
+import path7 from "node:path";
 
 // packages/report-model/src/validator.ts
 var import_ajv = __toESM(require_ajv(), 1);
@@ -14729,6 +14879,222 @@ var context_pack_schema_default = {
   }
 };
 
+// schemas/diff.schema.json
+var diff_schema_default = {
+  $schema: "http://json-schema.org/draft-07/schema#",
+  $id: "https://utsu-ri.dev/schemas/diff/v1",
+  title: "GitDiffDocument",
+  type: "object",
+  additionalProperties: false,
+  required: [
+    "schemaVersion",
+    "input",
+    "repository",
+    "sourceDigests",
+    "summary",
+    "files",
+    "hunks"
+  ],
+  properties: {
+    schemaVersion: { const: "1.0" },
+    input: {
+      type: "object",
+      additionalProperties: false,
+      required: ["mode", "base", "head", "mergeBase", "patchPath"],
+      properties: {
+        mode: { enum: ["worktree", "range", "merge-base", "patch"] },
+        base: { type: ["string", "null"] },
+        head: { type: ["string", "null"] },
+        mergeBase: { type: ["string", "null"] },
+        patchPath: { type: ["string", "null"] }
+      }
+    },
+    repository: {
+      type: "object",
+      additionalProperties: false,
+      required: ["fingerprint"],
+      properties: {
+        fingerprint: { type: "string", minLength: 8 }
+      }
+    },
+    sourceDigests: {
+      type: "object",
+      additionalProperties: false,
+      required: ["patch", "numstat", "nameStatus", "summary", "raw", "commits"],
+      properties: {
+        patch: { type: "string", pattern: "^[a-f0-9]{64}$" },
+        numstat: { type: ["string", "null"], pattern: "^[a-f0-9]{64}$" },
+        nameStatus: { type: ["string", "null"], pattern: "^[a-f0-9]{64}$" },
+        summary: { type: ["string", "null"], pattern: "^[a-f0-9]{64}$" },
+        raw: { type: ["string", "null"], pattern: "^[a-f0-9]{64}$" },
+        commits: { type: ["string", "null"], pattern: "^[a-f0-9]{64}$" }
+      }
+    },
+    summary: {
+      type: "object",
+      additionalProperties: false,
+      required: ["filesChanged", "additions", "deletions", "binaryFiles", "lowSignalFiles"],
+      properties: {
+        filesChanged: { type: "integer", minimum: 0 },
+        additions: { type: "integer", minimum: 0 },
+        deletions: { type: "integer", minimum: 0 },
+        binaryFiles: { type: "integer", minimum: 0 },
+        lowSignalFiles: { type: "integer", minimum: 0 }
+      }
+    },
+    files: { type: "array", items: { $ref: "#/$defs/file" } },
+    hunks: { type: "array", items: { $ref: "#/$defs/hunk" } }
+  },
+  $defs: {
+    file: {
+      type: "object",
+      additionalProperties: false,
+      required: [
+        "id",
+        "status",
+        "oldPath",
+        "newPath",
+        "additions",
+        "deletions",
+        "binary",
+        "submodule",
+        "oldMode",
+        "newMode",
+        "oldOid",
+        "newOid",
+        "similarity",
+        "lowSignal",
+        "lowSignalReasons",
+        "hunkRefs"
+      ],
+      properties: {
+        id: { type: "string", pattern: "^file:" },
+        status: {
+          enum: [
+            "added",
+            "modified",
+            "deleted",
+            "renamed",
+            "copied",
+            "type-changed",
+            "unmerged",
+            "unknown"
+          ]
+        },
+        oldPath: { type: ["string", "null"] },
+        newPath: { type: ["string", "null"] },
+        additions: { type: ["integer", "null"], minimum: 0 },
+        deletions: { type: ["integer", "null"], minimum: 0 },
+        binary: { type: "boolean" },
+        submodule: { type: "boolean" },
+        oldMode: { type: ["string", "null"], pattern: "^[0-7]{6}$" },
+        newMode: { type: ["string", "null"], pattern: "^[0-7]{6}$" },
+        oldOid: { type: ["string", "null"], pattern: "^[a-f0-9]{7,64}$" },
+        newOid: { type: ["string", "null"], pattern: "^[a-f0-9]{7,64}$" },
+        similarity: { type: ["integer", "null"], minimum: 0, maximum: 100 },
+        lowSignal: { type: "boolean" },
+        lowSignalReasons: {
+          type: "array",
+          items: { type: "string", minLength: 1 },
+          uniqueItems: true
+        },
+        hunkRefs: {
+          type: "array",
+          items: { type: "string", pattern: "^hunk:" },
+          uniqueItems: true
+        }
+      }
+    },
+    line: {
+      type: "object",
+      additionalProperties: false,
+      required: ["kind", "content", "oldLine", "newLine"],
+      properties: {
+        kind: { enum: ["context", "addition", "deletion", "no-newline"] },
+        content: { type: "string" },
+        oldLine: { type: ["integer", "null"], minimum: 1 },
+        newLine: { type: ["integer", "null"], minimum: 1 }
+      }
+    },
+    hunk: {
+      type: "object",
+      additionalProperties: false,
+      required: [
+        "id",
+        "path",
+        "oldPath",
+        "newPath",
+        "oldStart",
+        "oldLines",
+        "newStart",
+        "newLines",
+        "heading",
+        "lines",
+        "lowSignal"
+      ],
+      properties: {
+        id: { type: "string", pattern: "^hunk:" },
+        path: { type: "string", minLength: 1 },
+        oldPath: { type: ["string", "null"] },
+        newPath: { type: ["string", "null"] },
+        oldStart: { type: "integer", minimum: 0 },
+        oldLines: { type: "integer", minimum: 0 },
+        newStart: { type: "integer", minimum: 0 },
+        newLines: { type: "integer", minimum: 0 },
+        heading: { type: "string" },
+        lines: { type: "array", items: { $ref: "#/$defs/line" } },
+        lowSignal: { type: "boolean" }
+      }
+    }
+  }
+};
+
+// schemas/evidence-index.schema.json
+var evidence_index_schema_default = {
+  $schema: "http://json-schema.org/draft-07/schema#",
+  $id: "https://utsu-ri.dev/schemas/evidence-index/v1",
+  title: "EvidenceIndex",
+  type: "object",
+  additionalProperties: false,
+  required: ["schemaVersion", "evidence"],
+  properties: {
+    schemaVersion: { const: "1.0" },
+    evidence: { type: "array", items: { $ref: "#/$defs/evidence" } }
+  },
+  $defs: {
+    evidence: {
+      type: "object",
+      additionalProperties: false,
+      required: ["id", "type", "path", "range", "summary", "hunkRefs"],
+      properties: {
+        id: { type: "string", pattern: "^evidence:" },
+        type: { enum: ["code", "test", "style", "configuration", "generated", "binary"] },
+        path: { type: "string", minLength: 1 },
+        range: {
+          oneOf: [
+            { type: "null" },
+            {
+              type: "object",
+              additionalProperties: false,
+              required: ["start", "end"],
+              properties: {
+                start: { type: "integer", minimum: 0 },
+                end: { type: "integer", minimum: 0 }
+              }
+            }
+          ]
+        },
+        summary: { type: "string" },
+        hunkRefs: {
+          type: "array",
+          items: { type: "string", pattern: "^hunk:" },
+          uniqueItems: true
+        }
+      }
+    }
+  }
+};
+
 // schemas/feedback-batch.schema.json
 var feedback_batch_schema_default = {
   $schema: "http://json-schema.org/draft-07/schema#",
@@ -14899,7 +15265,9 @@ var report_schema_default = {
     "reportId",
     "status",
     "summary",
+    "files",
     "hunks",
+    "evidence",
     "unclassifiedHunkRefs",
     "changes",
     "targets",
@@ -14923,7 +15291,9 @@ var report_schema_default = {
         deletions: { type: "integer", minimum: 0 }
       }
     },
+    files: { type: "array", items: { $ref: "#/$defs/file" } },
     hunks: { type: "array", items: { $ref: "#/$defs/hunk" } },
+    evidence: { type: "array", items: { $ref: "#/$defs/evidence" } },
     unclassifiedHunkRefs: { type: "array", items: { type: "string" }, uniqueItems: true },
     changes: { type: "array", items: { $ref: "#/$defs/change" } },
     targets: { type: "array", items: { $ref: "#/$defs/target" } },
@@ -14960,17 +15330,132 @@ var report_schema_default = {
     }
   },
   $defs: {
+    file: {
+      type: "object",
+      additionalProperties: false,
+      required: [
+        "id",
+        "status",
+        "oldPath",
+        "newPath",
+        "additions",
+        "deletions",
+        "binary",
+        "submodule",
+        "oldMode",
+        "newMode",
+        "oldOid",
+        "newOid",
+        "lowSignal",
+        "lowSignalReasons",
+        "hunkRefs"
+      ],
+      properties: {
+        id: { type: "string", pattern: "^file:" },
+        status: {
+          enum: [
+            "added",
+            "modified",
+            "deleted",
+            "renamed",
+            "copied",
+            "type-changed",
+            "unmerged",
+            "unknown"
+          ]
+        },
+        oldPath: { type: ["string", "null"] },
+        newPath: { type: ["string", "null"] },
+        additions: { type: ["integer", "null"], minimum: 0 },
+        deletions: { type: ["integer", "null"], minimum: 0 },
+        binary: { type: "boolean" },
+        submodule: { type: "boolean" },
+        oldMode: { type: ["string", "null"], pattern: "^[0-7]{6}$" },
+        newMode: { type: ["string", "null"], pattern: "^[0-7]{6}$" },
+        oldOid: { type: ["string", "null"], pattern: "^[a-f0-9]{7,64}$" },
+        newOid: { type: ["string", "null"], pattern: "^[a-f0-9]{7,64}$" },
+        lowSignal: { type: "boolean" },
+        lowSignalReasons: {
+          type: "array",
+          items: { type: "string" },
+          uniqueItems: true
+        },
+        hunkRefs: {
+          type: "array",
+          items: { type: "string", pattern: "^hunk:" },
+          uniqueItems: true
+        }
+      }
+    },
+    line: {
+      type: "object",
+      additionalProperties: false,
+      required: ["kind", "content", "oldLine", "newLine"],
+      properties: {
+        kind: { enum: ["context", "addition", "deletion", "no-newline"] },
+        content: { type: "string" },
+        oldLine: { type: ["integer", "null"], minimum: 1 },
+        newLine: { type: ["integer", "null"], minimum: 1 }
+      }
+    },
     hunk: {
       type: "object",
       additionalProperties: false,
-      required: ["id", "path", "oldStart", "newStart", "lines", "lowSignal"],
+      required: [
+        "id",
+        "path",
+        "oldPath",
+        "newPath",
+        "oldStart",
+        "oldLines",
+        "newStart",
+        "newLines",
+        "heading",
+        "lines",
+        "lowSignal"
+      ],
       properties: {
         id: { type: "string", pattern: "^hunk:" },
         path: { type: "string", minLength: 1 },
+        oldPath: { type: ["string", "null"] },
+        newPath: { type: ["string", "null"] },
         oldStart: { type: "integer", minimum: 0 },
+        oldLines: { type: "integer", minimum: 0 },
         newStart: { type: "integer", minimum: 0 },
-        lines: { type: "array", items: { type: "string" } },
+        newLines: { type: "integer", minimum: 0 },
+        heading: { type: "string" },
+        lines: { type: "array", items: { $ref: "#/$defs/line" } },
         lowSignal: { type: "boolean" }
+      }
+    },
+    evidence: {
+      type: "object",
+      additionalProperties: false,
+      required: ["id", "type", "path", "range", "summary", "hunkRefs"],
+      properties: {
+        id: { type: "string", pattern: "^evidence:" },
+        type: { enum: ["code", "test", "style", "configuration", "generated", "binary"] },
+        path: { type: "string", minLength: 1 },
+        range: {
+          oneOf: [
+            { type: "null" },
+            {
+              type: "object",
+              additionalProperties: false,
+              required: ["start", "end"],
+              properties: {
+                start: { type: "integer", minimum: 0 },
+                end: { type: "integer", minimum: 0 }
+              }
+            }
+          ]
+        },
+        summary: { type: "string" },
+        hunkRefs: {
+          type: "array",
+          items: { type: "string", pattern: "^hunk:" },
+          uniqueItems: true
+        }
       }
     },
     change: {
@@ -15213,6 +15698,53 @@ var review_answer_schema_default = {
   }
 };
 
+// schemas/review-plan.schema.json
+var review_plan_schema_default = {
+  $schema: "http://json-schema.org/draft-07/schema#",
+  $id: "https://utsu-ri.dev/schemas/review-plan/v1",
+  title: "ReviewPlan",
+  type: "object",
+  additionalProperties: false,
+  required: ["schemaVersion", "candidates", "unclassifiedHunkRefs"],
+  properties: {
+    schemaVersion: { const: "1.0" },
+    candidates: { type: "array", items: { $ref: "#/$defs/candidate" } },
+    unclassifiedHunkRefs: {
+      type: "array",
+      items: { type: "string", pattern: "^hunk:" },
+      uniqueItems: true
+    }
+  },
+  $defs: {
+    candidate: {
+      type: "object",
+      additionalProperties: false,
+      required: ["id", "title", "reason", "fileRefs", "hunkRefs", "evidenceRefs"],
+      properties: {
+        id: { type: "string", pattern: "^change[-:]" },
+        title: { type: "string", minLength: 1 },
+        reason: { type: "string", minLength: 1 },
+        fileRefs: {
+          type: "array",
+          items: { type: "string", pattern: "^file:" },
+          uniqueItems: true
+        },
+        hunkRefs: {
+          type: "array",
+          items: { type: "string", pattern: "^hunk:" },
+          minItems: 1,
+          uniqueItems: true
+        },
+        evidenceRefs: {
+          type: "array",
+          items: { type: "string", pattern: "^evidence:" },
+          uniqueItems: true
+        }
+      }
+    }
+  }
+};
+
 // schemas/review-state.schema.json
 var review_state_schema_default = {
   $schema: "http://json-schema.org/draft-07/schema#",
@@ -15418,10 +15950,13 @@ var schemaMap = {
   annotations: annotations_schema_default,
   config: config_schema_default,
   "context-pack": context_pack_schema_default,
+  diff: diff_schema_default,
+  "evidence-index": evidence_index_schema_default,
   "feedback-batch": feedback_batch_schema_default,
   "origin-session": origin_session_schema_default,
   report: report_schema_default,
   "review-answer": review_answer_schema_default,
+  "review-plan": review_plan_schema_default,
   "review-state": review_state_schema_default,
   "review-thread": review_thread_schema_default
 };
@@ -15430,6 +15965,29 @@ var ajv = new import_ajv.default({ allErrors: true, strict: false, validateForma
 (0, import_ajv_formats.default)(ajv);
 var validators = /* @__PURE__ */ new Map();
 for (const name of schemaNames) validators.set(name, ajv.compile(schemaMap[name]));
+function validateStructuredHunks(hunks) {
+  const errors = [];
+  for (const hunk of hunks) {
+    let oldCursor = hunk.oldStart;
+    let newCursor = hunk.newStart;
+    let oldObserved = 0;
+    let newObserved = 0;
+    for (const line of hunk.lines) {
+      const expectedOld = line.kind === "context" || line.kind === "deletion" ? oldCursor++ : null;
+      const expectedNew = line.kind === "context" || line.kind === "addition" ? newCursor++ : null;
+      if (expectedOld !== null) oldObserved += 1;
+      if (expectedNew !== null) newObserved += 1;
+      if (line.oldLine !== expectedOld || line.newLine !== expectedNew) {
+        errors.push(`${hunk.id} contains inconsistent line numbers`);
+        break;
+      }
+    }
+    if (oldObserved !== hunk.oldLines || newObserved !== hunk.newLines) {
+      errors.push(`${hunk.id} contains inconsistent range counts`);
+    }
+  }
+  return errors;
+}
 function formatError(error) {
   const location = error.instancePath || "/";
   return `${location} ${error.message ?? "is invalid"}`;
@@ -15454,9 +16012,39 @@ function assertArtifact(name, value) {
 function validateReportReferences(report) {
   const errors = [];
   const hunkIds = new Set(report.hunks.map((hunk) => hunk.id));
+  const hunksById = new Map(report.hunks.map((hunk) => [hunk.id, hunk]));
+  const evidenceIds = new Set(report.evidence.map((evidence) => evidence.id));
   const targetIds = new Set(report.targets.map((target) => target.id));
   const findingIds = new Set(report.findings.map((finding) => finding.id));
   const assigned = /* @__PURE__ */ new Map();
+  errors.push(...validateStructuredHunks(report.hunks));
+  const requireUniqueIds = (label, values) => {
+    if (new Set(values).size !== values.length) errors.push(`${label} contains duplicate IDs`);
+  };
+  requireUniqueIds(
+    "files",
+    report.files.map((file) => file.id)
+  );
+  requireUniqueIds(
+    "hunks",
+    report.hunks.map((hunk) => hunk.id)
+  );
+  requireUniqueIds(
+    "evidence",
+    report.evidence.map((evidence) => evidence.id)
+  );
+  requireUniqueIds(
+    "changes",
+    report.changes.map((change) => change.id)
+  );
+  requireUniqueIds(
+    "targets",
+    report.targets.map((target) => target.id)
+  );
+  requireUniqueIds(
+    "findings",
+    report.findings.map((finding) => finding.id)
+  );
   const unique = (label, values) => {
     if (new Set(values).size !== values.length)
       errors.push(`${label} contains duplicate references`);
@@ -15477,6 +16065,39 @@ function validateReportReferences(report) {
     for (const ref of change.findingRefs) {
       if (!findingIds.has(ref)) errors.push(`${change.id} references missing finding ${ref}`);
     }
+    for (const ref of change.intent.evidenceRefs) {
+      if (!evidenceIds.has(ref)) errors.push(`${change.id} references missing evidence ${ref}`);
+    }
+  }
+  const fileAssignments = /* @__PURE__ */ new Map();
+  for (const file of report.files) {
+    unique(`${file.id}.hunkRefs`, file.hunkRefs);
+    for (const ref of file.hunkRefs) {
+      if (!hunkIds.has(ref)) errors.push(`${file.id} references missing hunk ${ref}`);
+      const previous = fileAssignments.get(ref);
+      if (previous) errors.push(`${ref} belongs to both ${previous} and ${file.id}`);
+      fileAssignments.set(ref, file.id);
+      const hunk = hunksById.get(ref);
+      const selectedPath = file.newPath ?? file.oldPath;
+      if (hunk && (hunk.path !== selectedPath || hunk.oldPath !== file.oldPath || hunk.newPath !== file.newPath)) {
+        errors.push(`${ref} path metadata does not match ${file.id}`);
+      }
+      if (hunk && hunk.lowSignal !== file.lowSignal) {
+        errors.push(`${ref} low-signal classification does not match ${file.id}`);
+      }
+    }
+    if (file.lowSignal !== file.lowSignalReasons.length > 0) {
+      errors.push(`${file.id} low-signal reasons are inconsistent`);
+    }
+  }
+  for (const hunkId2 of hunkIds) {
+    if (!fileAssignments.has(hunkId2)) errors.push(`${hunkId2} does not belong to a file`);
+  }
+  for (const evidence of report.evidence) {
+    unique(`${evidence.id}.hunkRefs`, evidence.hunkRefs);
+    for (const ref of evidence.hunkRefs) {
+      if (!hunkIds.has(ref)) errors.push(`${evidence.id} references missing hunk ${ref}`);
+    }
   }
   unique("unclassifiedHunkRefs", report.unclassifiedHunkRefs);
   for (const ref of report.unclassifiedHunkRefs) {
@@ -15485,8 +16106,8 @@ function validateReportReferences(report) {
     if (previous) errors.push(`${ref} is both ${previous} and unclassified`);
     assigned.set(ref, "unclassified");
   }
-  for (const hunkId of hunkIds) {
-    if (!assigned.has(hunkId)) errors.push(`${hunkId} is neither classified nor unclassified`);
+  for (const hunkId2 of hunkIds) {
+    if (!assigned.has(hunkId2)) errors.push(`${hunkId2} is neither classified nor unclassified`);
   }
   for (const finding of report.findings) {
     if (finding.targetRef && !targetIds.has(finding.targetRef)) {
@@ -15495,31 +16116,143 @@ function validateReportReferences(report) {
     for (const ref of finding.hunkRefs) {
       if (!hunkIds.has(ref)) errors.push(`${finding.id} references missing hunk ${ref}`);
     }
+    for (const ref of finding.evidenceRefs) {
+      if (!evidenceIds.has(ref)) errors.push(`${finding.id} references missing evidence ${ref}`);
+    }
   }
   if (report.origin.reportId !== report.reportId)
     errors.push("origin.reportId does not match reportId");
+  if (report.summary.filesChanged !== report.files.length)
+    errors.push("summary.filesChanged is inconsistent");
+  if (report.summary.additions !== report.files.reduce((sum, file) => sum + (file.additions ?? 0), 0)) {
+    errors.push("summary.additions is inconsistent");
+  }
+  if (report.summary.deletions !== report.files.reduce((sum, file) => sum + (file.deletions ?? 0), 0)) {
+    errors.push("summary.deletions is inconsistent");
+  }
+  return { ok: errors.length === 0, errors };
+}
+function validateDiffReferences(diff) {
+  const errors = [];
+  const hunkIds = new Set(diff.hunks.map((hunk) => hunk.id));
+  const hunksById = new Map(diff.hunks.map((hunk) => [hunk.id, hunk]));
+  errors.push(...validateStructuredHunks(diff.hunks));
+  if (hunkIds.size !== diff.hunks.length) errors.push("hunks contains duplicate IDs");
+  const fileIds = new Set(diff.files.map((file) => file.id));
+  if (fileIds.size !== diff.files.length) errors.push("files contains duplicate IDs");
+  const assigned = /* @__PURE__ */ new Map();
+  for (const file of diff.files) {
+    if (new Set(file.hunkRefs).size !== file.hunkRefs.length) {
+      errors.push(`${file.id}.hunkRefs contains duplicate references`);
+    }
+    for (const reference of file.hunkRefs) {
+      if (!hunkIds.has(reference)) errors.push(`${file.id} references missing hunk ${reference}`);
+      const previous = assigned.get(reference);
+      if (previous) errors.push(`${reference} belongs to both ${previous} and ${file.id}`);
+      assigned.set(reference, file.id);
+      const hunk = hunksById.get(reference);
+      const selectedPath = file.newPath ?? file.oldPath;
+      if (hunk && (hunk.path !== selectedPath || hunk.oldPath !== file.oldPath || hunk.newPath !== file.newPath)) {
+        errors.push(`${reference} path metadata does not match ${file.id}`);
+      }
+      if (hunk && hunk.lowSignal !== file.lowSignal) {
+        errors.push(`${reference} low-signal classification does not match ${file.id}`);
+      }
+    }
+    if (file.lowSignal !== file.lowSignalReasons.length > 0) {
+      errors.push(`${file.id} low-signal reasons are inconsistent`);
+    }
+  }
+  for (const reference of hunkIds) {
+    if (!assigned.has(reference)) errors.push(`${reference} does not belong to a file`);
+  }
+  const additions = diff.files.reduce((sum, file) => sum + (file.additions ?? 0), 0);
+  const deletions = diff.files.reduce((sum, file) => sum + (file.deletions ?? 0), 0);
+  const binaryFiles = diff.files.filter((file) => file.binary).length;
+  const lowSignalFiles = diff.files.filter((file) => file.lowSignal).length;
+  if (diff.summary.filesChanged !== diff.files.length)
+    errors.push("summary.filesChanged is inconsistent");
+  if (diff.summary.additions !== additions) errors.push("summary.additions is inconsistent");
+  if (diff.summary.deletions !== deletions) errors.push("summary.deletions is inconsistent");
+  if (diff.summary.binaryFiles !== binaryFiles) errors.push("summary.binaryFiles is inconsistent");
+  if (diff.summary.lowSignalFiles !== lowSignalFiles)
+    errors.push("summary.lowSignalFiles is inconsistent");
+  return { ok: errors.length === 0, errors };
+}
+function validateReviewPlanReferences(plan, diff, evidenceIndex) {
+  const errors = [];
+  const hunkIds = new Set(diff.hunks.map((hunk) => hunk.id));
+  const fileIds = new Set(diff.files.map((file) => file.id));
+  const evidenceIds = new Set(evidenceIndex.evidence.map((evidence) => evidence.id));
+  const hunkOwners = new Map(
+    diff.files.flatMap((file) => file.hunkRefs.map((reference) => [reference, file.id]))
+  );
+  const assigned = /* @__PURE__ */ new Map();
+  if (new Set(plan.candidates.map((candidate) => candidate.id)).size !== plan.candidates.length) {
+    errors.push("candidates contains duplicate IDs");
+  }
+  if (evidenceIds.size !== evidenceIndex.evidence.length) {
+    errors.push("evidence contains duplicate IDs");
+  }
+  for (const evidence of evidenceIndex.evidence) {
+    for (const reference of evidence.hunkRefs) {
+      if (!hunkIds.has(reference)) {
+        errors.push(`${evidence.id} references missing hunk ${reference}`);
+      }
+    }
+  }
+  for (const candidate of plan.candidates) {
+    for (const reference of candidate.fileRefs) {
+      if (!fileIds.has(reference))
+        errors.push(`${candidate.id} references missing file ${reference}`);
+    }
+    for (const reference of candidate.evidenceRefs) {
+      if (!evidenceIds.has(reference))
+        errors.push(`${candidate.id} references missing evidence ${reference}`);
+    }
+    for (const reference of candidate.hunkRefs) {
+      if (!hunkIds.has(reference))
+        errors.push(`${candidate.id} references missing hunk ${reference}`);
+      const owner = hunkOwners.get(reference);
+      if (owner && !candidate.fileRefs.includes(owner)) {
+        errors.push(`${candidate.id} omits owning file ${owner} for ${reference}`);
+      }
+      const previous = assigned.get(reference);
+      if (previous) errors.push(`${reference} is assigned to both ${previous} and ${candidate.id}`);
+      assigned.set(reference, candidate.id);
+    }
+  }
+  for (const reference of plan.unclassifiedHunkRefs) {
+    if (!hunkIds.has(reference)) errors.push(`unclassified references missing hunk ${reference}`);
+    const previous = assigned.get(reference);
+    if (previous) errors.push(`${reference} is both ${previous} and unclassified`);
+    assigned.set(reference, "unclassified");
+  }
+  for (const reference of hunkIds) {
+    if (!assigned.has(reference)) errors.push(`${reference} is missing from the review plan`);
+  }
   return { ok: errors.length === 0, errors };
 }
 
 // packages/security/src/index.ts
 import { lstat, realpath } from "node:fs/promises";
-import path from "node:path";
+import path4 from "node:path";
 function securityError(id, message) {
   throw new UtsuriError(id, message, ExitCode.Security);
 }
 async function resolveContainedPath(rootInput, relativeInput, options = {}) {
-  if (path.isAbsolute(relativeInput) || relativeInput.includes("\0")) {
+  if (path4.isAbsolute(relativeInput) || relativeInput.includes("\0")) {
     securityError("SEC_PATH_RELATIVE", "Repository paths must be relative");
   }
   const root = await realpath(rootInput);
-  const candidate = path.resolve(root, relativeInput);
-  const relative = path.relative(root, candidate);
-  if (relative === ".." || relative.startsWith(`..${path.sep}`) || path.isAbsolute(relative)) {
+  const candidate = path4.resolve(root, relativeInput);
+  const relative = path4.relative(root, candidate);
+  if (relative === ".." || relative.startsWith(`..${path4.sep}`) || path4.isAbsolute(relative)) {
     securityError("SEC_PATH_TRAVERSAL", "Path escapes the allowed root");
   }
   let current = root;
-  for (const segment of relative.split(path.sep).filter(Boolean)) {
-    current = path.join(current, segment);
+  for (const segment of relative.split(path4.sep).filter(Boolean)) {
+    current = path4.join(current, segment);
     try {
       const stat2 = await lstat(current);
       if (stat2.isSymbolicLink())
@@ -15534,15 +16267,847 @@ async function resolveContainedPath(rootInput, relativeInput, options = {}) {
   return candidate;
 }
 
+// packages/git-collector/src/git-command.ts
+import { spawn } from "node:child_process";
+import { realpath as realpath2 } from "node:fs/promises";
+import path5 from "node:path";
+var maximumGitOutputBytes = 64 * 1024 * 1024;
+var gitTimeoutMilliseconds = 6e4;
+async function execute(cwd, args, options = {}) {
+  return await new Promise((resolve, reject) => {
+    const child = spawn("git", args, {
+      cwd,
+      shell: false,
+      stdio: ["pipe", "pipe", "pipe"]
+    });
+    const stdout = [];
+    const stderr = [];
+    let bytes = 0;
+    let settled = false;
+    const timeout = { value: void 0 };
+    const finish = (error, result2) => {
+      if (settled) return;
+      settled = true;
+      if (timeout.value) clearTimeout(timeout.value);
+      if (error) reject(error);
+      else resolve(result2);
+    };
+    const collect = (target, chunk) => {
+      bytes += chunk.length;
+      if (bytes > maximumGitOutputBytes) {
+        child.kill("SIGKILL");
+        finish(
+          new UtsuriError(
+            "GIT_OUTPUT_LIMIT",
+            `Git output exceeds ${maximumGitOutputBytes} bytes`,
+            ExitCode.Artifact
+          )
+        );
+        return;
+      }
+      target.push(chunk);
+    };
+    child.stdout.on("data", (chunk) => collect(stdout, chunk));
+    child.stderr.on("data", (chunk) => collect(stderr, chunk));
+    child.stdin.on("error", (error) => {
+      if (error.code !== "EPIPE" && error.code !== "ERR_STREAM_DESTROYED") finish(error);
+    });
+    child.on("error", (error) => finish(error));
+    child.on("close", (status) => {
+      const result2 = {
+        stdout: Buffer.concat(stdout),
+        stderr: Buffer.concat(stderr),
+        status: status ?? 1
+      };
+      const expected = options.expectedStatuses ?? [0];
+      if (!expected.includes(result2.status)) {
+        const diagnostic = result2.stderr.toString("utf8").trim().slice(0, 2e3);
+        finish(
+          new UtsuriError(
+            "GIT_COMMAND_FAILED",
+            diagnostic || `git ${args[0] ?? "command"} exited ${result2.status}`,
+            ExitCode.Artifact
+          )
+        );
+      } else finish(void 0, result2);
+    });
+    timeout.value = setTimeout(() => {
+      child.kill("SIGKILL");
+      finish(
+        new UtsuriError(
+          "GIT_COMMAND_TIMEOUT",
+          `Git command exceeded ${gitTimeoutMilliseconds} ms`,
+          ExitCode.Environment
+        )
+      );
+    }, gitTimeoutMilliseconds);
+    child.stdin.end(options.stdin ?? "");
+  });
+}
+async function repositoryRoot(cwd) {
+  const requested = await realpath2(cwd);
+  const result2 = await execute(requested, ["rev-parse", "--show-toplevel"]);
+  const root = await realpath2(result2.stdout.toString("utf8").trim());
+  const relative = path5.relative(root, requested);
+  if (relative === ".." || relative.startsWith(`..${path5.sep}`) || path5.isAbsolute(relative)) {
+    throw new UtsuriError(
+      "GIT_ROOT_MISMATCH",
+      "Current directory is outside the resolved repository root",
+      ExitCode.Security
+    );
+  }
+  return root;
+}
+async function resolveCommit(root, reference) {
+  const containsControlCharacter = [...reference].some((character) => {
+    const code = character.codePointAt(0);
+    return code <= 31 || code === 127;
+  });
+  if (!reference || reference.length > 1024 || containsControlCharacter || reference.startsWith("-")) {
+    throw new UtsuriError(
+      "GIT_REF_INVALID",
+      "Git references must be plain non-option values",
+      ExitCode.Arguments
+    );
+  }
+  const result2 = await execute(root, [
+    "rev-parse",
+    "--verify",
+    "--quiet",
+    "--end-of-options",
+    `${reference}^{commit}`
+  ]);
+  return result2.stdout.toString("utf8").trim();
+}
+async function emptyTree(root) {
+  const result2 = await execute(root, ["mktree"], { stdin: "" });
+  return result2.stdout.toString("utf8").trim();
+}
+async function gitBuffer(root, args, expectedStatuses = [0], stdin) {
+  return (await execute(root, args, { expectedStatuses, stdin })).stdout;
+}
+
+// packages/git-collector/src/patch.ts
+import path6 from "node:path";
+var maximumPatchBytes = 64 * 1024 * 1024;
+var maximumFiles = 2e4;
+var maximumHunks = 1e5;
+var maximumLines = 2e6;
+var utf8Decoder = new TextDecoder("utf-8", { fatal: true });
+function patchError(id, message) {
+  throw new UtsuriError(id, message, ExitCode.Artifact);
+}
+function decodeGitQuoted(value) {
+  if (!value.startsWith('"')) return value;
+  if (!value.endsWith('"')) patchError("PATCH_PATH_QUOTE", "Git path has an unterminated quote");
+  const buffers = [];
+  const literal = [];
+  const flush = () => {
+    if (literal.length > 0) buffers.push(Buffer.from(literal.splice(0).join(""), "utf8"));
+  };
+  for (let index = 1; index < value.length - 1; index += 1) {
+    const character = value[index];
+    if (character !== "\\") {
+      literal.push(character);
+      continue;
+    }
+    flush();
+    const escaped = value[++index];
+    if (escaped === void 0) patchError("PATCH_PATH_ESCAPE", "Git path has an invalid escape");
+    const simple = {
+      a: 7,
+      b: 8,
+      t: 9,
+      n: 10,
+      v: 11,
+      f: 12,
+      r: 13,
+      '"': 34,
+      "\\": 92
+    };
+    if (simple[escaped] !== void 0) {
+      buffers.push(Buffer.from([simple[escaped]]));
+      continue;
+    }
+    if (/[0-7]/u.test(escaped)) {
+      let octal = escaped;
+      while (octal.length < 3 && /[0-7]/u.test(value[index + 1] ?? "")) {
+        octal += value[++index];
+      }
+      buffers.push(Buffer.from([Number.parseInt(octal, 8)]));
+      continue;
+    }
+    patchError("PATCH_PATH_ESCAPE", `Git path contains unsupported escape \\${escaped}`);
+  }
+  flush();
+  try {
+    return utf8Decoder.decode(Buffer.concat(buffers));
+  } catch {
+    return patchError("PATCH_PATH_ENCODING", "Git path is not valid UTF-8");
+  }
+}
+function tokenizeGitHeader(value) {
+  const tokens = [];
+  for (let index = 0; index < value.length; ) {
+    while (value[index] === " ") index += 1;
+    if (index >= value.length) break;
+    const start = index;
+    if (value[index] === '"') {
+      index += 1;
+      let escaped = false;
+      while (index < value.length) {
+        const character = value[index++];
+        if (character === '"' && !escaped) break;
+        if (character === "\\" && !escaped) escaped = true;
+        else escaped = false;
+      }
+    } else {
+      while (index < value.length && value[index] !== " ") index += 1;
+    }
+    tokens.push(decodeGitQuoted(value.slice(start, index)));
+  }
+  return tokens;
+}
+function normalizePatchPath(value, prefix) {
+  const decoded = decodeGitQuoted(value);
+  if (decoded === "/dev/null") return null;
+  const withoutPrefix = prefix && decoded.startsWith(prefix) ? decoded.slice(prefix.length) : decoded;
+  if (withoutPrefix.includes("\\")) {
+    throw new UtsuriError(
+      "PATCH_PATH_BACKSLASH",
+      "Git patch paths must use forward slashes",
+      ExitCode.Security
+    );
+  }
+  const slashPath = withoutPrefix;
+  if (path6.posix.isAbsolute(slashPath) || slashPath.includes("\0") || slashPath.split("/").includes("..")) {
+    throw new UtsuriError(
+      "PATCH_PATH_INVALID",
+      `Patch path escapes the repository: ${withoutPrefix}`,
+      ExitCode.Security
+    );
+  }
+  const normalized = normalizeRepositoryPath(slashPath);
+  if (!normalized || normalized === ".") patchError("PATCH_PATH_INVALID", "Patch path is empty");
+  return normalized;
+}
+function initialFile(oldPath, newPath) {
+  return {
+    status: "modified",
+    oldPath,
+    newPath,
+    binary: false,
+    submodule: false,
+    oldMode: null,
+    newMode: null,
+    oldOid: null,
+    newOid: null,
+    similarity: null,
+    hunks: []
+  };
+}
+function statusFromCode(code) {
+  if (code === "A") return "added";
+  if (code === "D") return "deleted";
+  if (code.startsWith("R")) return "renamed";
+  if (code.startsWith("C")) return "copied";
+  if (code === "T") return "type-changed";
+  if (code === "U") return "unmerged";
+  if (code === "M") return "modified";
+  return "unknown";
+}
+function finalizeHunk(file, hunk) {
+  if (!hunk) return null;
+  const oldObserved = hunk.lines.filter(
+    (line) => line.kind === "context" || line.kind === "deletion"
+  ).length;
+  const newObserved = hunk.lines.filter(
+    (line) => line.kind === "context" || line.kind === "addition"
+  ).length;
+  if (oldObserved !== hunk.oldLines || newObserved !== hunk.newLines) {
+    patchError(
+      "PATCH_HUNK_RANGE",
+      `Hunk range declares -${hunk.oldLines}/+${hunk.newLines} but contains -${oldObserved}/+${newObserved}`
+    );
+  }
+  const selectedPath = file.newPath ?? file.oldPath;
+  if (!selectedPath) patchError("PATCH_PATH_MISSING", "Hunk has no repository path");
+  file.hunks.push(
+    createGitHunk({
+      path: selectedPath,
+      oldPath: file.oldPath,
+      newPath: file.newPath,
+      oldStart: hunk.oldStart,
+      oldLines: hunk.oldLines,
+      newStart: hunk.newStart,
+      newLines: hunk.newLines,
+      heading: hunk.heading,
+      lines: hunk.lines
+    })
+  );
+  return null;
+}
+function materializeFile(file) {
+  const selectedPath = file.newPath ?? file.oldPath;
+  if (!selectedPath) patchError("PATCH_PATH_MISSING", "Diff file has no repository path");
+  const additions = file.binary ? null : file.hunks.flatMap((hunk) => hunk.lines).filter((line) => line.kind === "addition").length;
+  const deletions = file.binary ? null : file.hunks.flatMap((hunk) => hunk.lines).filter((line) => line.kind === "deletion").length;
+  const content = file.hunks.flatMap((hunk) => hunk.lines.map((line) => line.content));
+  const lowSignalReasons = classifyLowSignal(selectedPath, { binary: file.binary, content });
+  const hunks = file.hunks.map((hunk) => ({ ...hunk, lowSignal: lowSignalReasons.length > 0 }));
+  return {
+    file: {
+      id: createGitFileId(file.oldPath, file.newPath),
+      status: file.status,
+      oldPath: file.oldPath,
+      newPath: file.newPath,
+      additions,
+      deletions,
+      binary: file.binary,
+      submodule: file.submodule || file.oldMode === "160000" || file.newMode === "160000",
+      oldMode: file.oldMode,
+      newMode: file.newMode,
+      oldOid: file.oldOid,
+      newOid: file.newOid,
+      similarity: file.similarity,
+      lowSignal: lowSignalReasons.length > 0,
+      lowSignalReasons,
+      hunkRefs: hunks.map((hunk) => hunk.id)
+    },
+    hunks
+  };
+}
+function applyNameStatus(document, raw) {
+  const tokens = raw.split("\0");
+  for (let index = 0; index < tokens.length; index += 1) {
+    const token = tokens[index];
+    if (!token) continue;
+    const separator = token.indexOf("	");
+    const code = separator === -1 ? token : token.slice(0, separator);
+    const encodedFirstPath = separator === -1 ? tokens[++index] ?? "" : token.slice(separator + 1);
+    const firstPath = normalizePatchPath(encodedFirstPath);
+    const secondPath = code.startsWith("R") || code.startsWith("C") ? normalizePatchPath(tokens[++index] ?? "") : null;
+    const oldPath = secondPath ? firstPath : code === "D" ? firstPath : null;
+    const newPath = secondPath ?? (code === "D" ? null : firstPath);
+    const match = document.files.find(
+      (file) => (oldPath === null || file.oldPath === oldPath) && (newPath === null || file.newPath === newPath)
+    );
+    if (!match) continue;
+    match.status = statusFromCode(code[0] ?? "?");
+    if ((code.startsWith("R") || code.startsWith("C")) && /^\d+$/u.test(code.slice(1))) {
+      match.similarity = Number(code.slice(1));
+    }
+  }
+  return document;
+}
+function applyNumstat(document, raw) {
+  const tokens = raw.split("\0");
+  const appliedFileIds = /* @__PURE__ */ new Set();
+  for (let index = 0; index < tokens.length; index += 1) {
+    const token = tokens[index];
+    if (!token) continue;
+    const firstTab = token.indexOf("	");
+    const secondTab = token.indexOf("	", firstTab + 1);
+    if (firstTab === -1 || secondTab === -1) {
+      patchError("GIT_NUMSTAT", "numstat output is malformed");
+    }
+    const added = token.slice(0, firstTab);
+    const deleted = token.slice(firstTab + 1, secondTab);
+    const pathname = token.slice(secondTab + 1);
+    const renamed = pathname === "";
+    const oldPath = normalizePatchPath(renamed ? tokens[++index] ?? "" : pathname);
+    const newPath = renamed ? normalizePatchPath(tokens[++index] ?? "") : oldPath;
+    const match = document.files.find(
+      (file) => !appliedFileIds.has(file.id) && (renamed ? file.oldPath === oldPath && file.newPath === newPath : file.newPath === null ? file.oldPath === oldPath : file.newPath === newPath)
+    );
+    if (!match) {
+      patchError("GIT_NUMSTAT_MATCH", "numstat entry does not match a parsed diff file");
+    }
+    appliedFileIds.add(match.id);
+    match.additions = added === "-" ? null : Number(added);
+    match.deletions = deleted === "-" ? null : Number(deleted);
+    match.binary = added === "-" || deleted === "-";
+  }
+  if (appliedFileIds.size !== document.files.length) {
+    patchError("GIT_NUMSTAT_MATCH", "numstat entries do not cover every parsed diff file");
+  }
+  document.summary.additions = document.files.reduce((sum, file) => sum + (file.additions ?? 0), 0);
+  document.summary.deletions = document.files.reduce((sum, file) => sum + (file.deletions ?? 0), 0);
+  document.summary.binaryFiles = document.files.filter((file) => file.binary).length;
+  return document;
+}
+function parseGitPatch(patch, input) {
+  if (Buffer.byteLength(patch) > maximumPatchBytes) {
+    patchError("PATCH_TOO_LARGE", `Patch exceeds ${maximumPatchBytes} bytes`);
+  }
+  const lines = patch.replaceAll("\r\n", "\n").split("\n");
+  const materialized = [];
+  let file = null;
+  let hunk = null;
+  let lineCount = 0;
+  const closeFile = () => {
+    if (!file) return;
+    hunk = finalizeHunk(file, hunk);
+    materialized.push(materializeFile(file));
+    file = null;
+    if (materialized.length > maximumFiles)
+      patchError("PATCH_FILE_LIMIT", "Patch has too many files");
+  };
+  for (const line of lines) {
+    if (line.startsWith("diff --git ")) {
+      closeFile();
+      const paths = tokenizeGitHeader(line.slice("diff --git ".length));
+      if (paths.length !== 2)
+        patchError("PATCH_DIFF_HEADER", "diff --git header must contain two paths");
+      file = initialFile(normalizePatchPath(paths[0], "a/"), normalizePatchPath(paths[1], "b/"));
+      continue;
+    }
+    if (!file) {
+      if (line.trim() !== "") patchError("PATCH_PREAMBLE", "Only Git-format patches are accepted");
+      continue;
+    }
+    const hunkHeader = line.match(/^@@ -(\d+)(?:,(\d+))? \+(\d+)(?:,(\d+))? @@(?: ?(.*))?$/u);
+    if (hunkHeader) {
+      hunk = finalizeHunk(file, hunk);
+      const oldStart = Number(hunkHeader[1]);
+      const oldLines = Number(hunkHeader[2] ?? "1");
+      const newStart = Number(hunkHeader[3]);
+      const newLines = Number(hunkHeader[4] ?? "1");
+      hunk = {
+        oldStart,
+        oldLines,
+        newStart,
+        newLines,
+        heading: hunkHeader[5] ?? "",
+        oldCursor: oldStart,
+        newCursor: newStart,
+        lines: []
+      };
+      continue;
+    }
+    if (hunk) {
+      const prefix = line[0];
+      if (prefix === " " || prefix === "+" || prefix === "-" || line === "\\ No newline at end of file") {
+        if (line === "\\ No newline at end of file") {
+          hunk.lines.push({ kind: "no-newline", content: line, oldLine: null, newLine: null });
+        } else if (prefix === " ") {
+          hunk.lines.push({
+            kind: "context",
+            content: line.slice(1),
+            oldLine: hunk.oldCursor++,
+            newLine: hunk.newCursor++
+          });
+        } else if (prefix === "+") {
+          hunk.lines.push({
+            kind: "addition",
+            content: line.slice(1),
+            oldLine: null,
+            newLine: hunk.newCursor++
+          });
+        } else {
+          hunk.lines.push({
+            kind: "deletion",
+            content: line.slice(1),
+            oldLine: hunk.oldCursor++,
+            newLine: null
+          });
+        }
+        lineCount += 1;
+        if (lineCount > maximumLines) patchError("PATCH_LINE_LIMIT", "Patch has too many lines");
+        continue;
+      }
+      hunk = finalizeHunk(file, hunk);
+    }
+    if (line.startsWith("new file mode ")) {
+      file.status = "added";
+      file.oldPath = null;
+      file.newMode = line.slice("new file mode ".length);
+    } else if (line.startsWith("deleted file mode ")) {
+      file.status = "deleted";
+      file.newPath = null;
+      file.oldMode = line.slice("deleted file mode ".length);
+    } else if (line.startsWith("old mode ")) {
+      file.oldMode = line.slice("old mode ".length);
+    } else if (line.startsWith("new mode ")) {
+      file.newMode = line.slice("new mode ".length);
+    } else if (line.startsWith("similarity index ")) {
+      file.similarity = Number.parseInt(line.slice("similarity index ".length), 10);
+    } else if (line.startsWith("rename from ")) {
+      file.status = "renamed";
+      file.oldPath = normalizePatchPath(line.slice("rename from ".length));
+    } else if (line.startsWith("rename to ")) {
+      file.status = "renamed";
+      file.newPath = normalizePatchPath(line.slice("rename to ".length));
+    } else if (line.startsWith("copy from ")) {
+      file.status = "copied";
+      file.oldPath = normalizePatchPath(line.slice("copy from ".length));
+    } else if (line.startsWith("copy to ")) {
+      file.status = "copied";
+      file.newPath = normalizePatchPath(line.slice("copy to ".length));
+    } else if (line.startsWith("index ")) {
+      const match = line.match(/^index ([a-f0-9]+)\.\.([a-f0-9]+)(?: ([0-7]{6}))?$/u);
+      if (!match) patchError("PATCH_INDEX", "Git index metadata is malformed");
+      file.oldOid = match[1];
+      file.newOid = match[2];
+      if (match[3]) {
+        file.oldMode ??= match[3];
+        file.newMode ??= match[3];
+      }
+    } else if (line.startsWith("--- ")) {
+      file.oldPath = normalizePatchPath(line.slice(4), "a/");
+    } else if (line.startsWith("+++ ")) {
+      file.newPath = normalizePatchPath(line.slice(4), "b/");
+    } else if (line.startsWith("Binary files ") || line === "GIT binary patch") {
+      file.binary = true;
+    } else if (line.startsWith("Subproject commit ")) {
+      file.submodule = true;
+    }
+  }
+  closeFile();
+  const hunks = materialized.flatMap((entry) => entry.hunks);
+  if (hunks.length > maximumHunks) patchError("PATCH_HUNK_LIMIT", "Patch has too many hunks");
+  const files = materialized.map((entry) => entry.file);
+  return {
+    schemaVersion: "1.0",
+    input: {
+      mode: input.mode,
+      base: input.base,
+      head: input.head,
+      mergeBase: input.mergeBase,
+      patchPath: input.patchPath
+    },
+    repository: { fingerprint: input.repositoryFingerprint },
+    sourceDigests: input.sourceDigests,
+    summary: {
+      filesChanged: files.length,
+      additions: files.reduce((sum, entry) => sum + (entry.additions ?? 0), 0),
+      deletions: files.reduce((sum, entry) => sum + (entry.deletions ?? 0), 0),
+      binaryFiles: files.filter((entry) => entry.binary).length,
+      lowSignalFiles: files.filter((entry) => entry.lowSignal).length
+    },
+    files,
+    hunks
+  };
+}
+
+// packages/git-collector/src/index.ts
+var patchFlags = [
+  "--binary",
+  "--full-index",
+  "--no-ext-diff",
+  "--no-color",
+  "--find-renames",
+  "--find-copies",
+  "--unified=20"
+];
+var utf8Decoder2 = new TextDecoder("utf-8", { fatal: true });
+function decodeGitText(value, label) {
+  try {
+    return utf8Decoder2.decode(value);
+  } catch {
+    throw new UtsuriError("GIT_OUTPUT_ENCODING", `${label} is not valid UTF-8`, ExitCode.Artifact);
+  }
+}
+function selectMode(options) {
+  const modes = [
+    options.patch ? "patch" : null,
+    options.worktree ? "worktree" : null,
+    options.mergeBase ? "merge-base" : null,
+    options.base ? "range" : null
+  ].filter((mode2) => mode2 !== null);
+  if (modes.length !== 1) {
+    throw new UtsuriError(
+      "COLLECT_MODE_REQUIRED",
+      "Select exactly one input mode: --patch, --worktree, --base/--head, or --merge-base/--head",
+      ExitCode.Arguments
+    );
+  }
+  const mode = modes[0];
+  if (mode === "patch" && (options.worktree || options.base !== void 0 || options.head !== void 0 || options.mergeBase !== void 0) || mode === "worktree" && (options.patch !== void 0 || options.base !== void 0 || options.head !== void 0 || options.mergeBase !== void 0)) {
+    throw new UtsuriError(
+      "COLLECT_MODE_CONFLICT",
+      `${mode} mode does not accept options from another input mode`,
+      ExitCode.Arguments
+    );
+  }
+  if ((mode === "range" || mode === "merge-base") && !options.head) {
+    throw new UtsuriError(
+      "COLLECT_HEAD_REQUIRED",
+      `${mode} mode requires --head`,
+      ExitCode.Arguments
+    );
+  }
+  return mode;
+}
+async function appendUntracked(root, patch, numstat) {
+  const untracked = decodeGitText(
+    await gitBuffer(root, ["ls-files", "--others", "--exclude-standard", "-z"]),
+    "Untracked path list"
+  ).split("\0").filter(Boolean).sort();
+  const patchParts = [patch];
+  const numstatParts = [numstat];
+  for (const relative of untracked) {
+    if (relative.includes("\\") || relative.split("/").includes("..") || path7.posix.isAbsolute(relative)) {
+      throw new UtsuriError(
+        "GIT_UNTRACKED_PATH",
+        "Git returned an unsafe untracked path",
+        ExitCode.Security
+      );
+    }
+    const normalized = relative;
+    const [patchOutput, numstatOutput] = await Promise.all([
+      gitBuffer(root, ["diff", "--no-index", ...patchFlags, "--", "/dev/null", normalized], [0, 1]),
+      gitBuffer(
+        root,
+        [
+          "diff",
+          "--no-index",
+          "--no-ext-diff",
+          "--no-color",
+          "--numstat",
+          "-z",
+          "--",
+          "/dev/null",
+          normalized
+        ],
+        [0, 1]
+      )
+    ]);
+    patchParts.push(patchOutput);
+    numstatParts.push(numstatOutput);
+  }
+  return {
+    patch: Buffer.concat(
+      patchParts.map(
+        (part, index) => index > 0 && patchParts[index - 1]?.at(-1) !== 10 ? Buffer.concat([Buffer.from("\n"), part]) : part
+      )
+    ),
+    numstat: Buffer.concat(numstatParts)
+  };
+}
+async function collectSource(root, options) {
+  const mode = selectMode(options);
+  if (mode === "patch") {
+    const filename = await resolveContainedPath(root, options.patch);
+    const patch2 = await readFile(filename);
+    return {
+      mode,
+      patch: patch2,
+      base: null,
+      head: null,
+      mergeBase: null,
+      patchPath: path7.relative(root, filename).replaceAll(path7.sep, "/"),
+      numstat: null,
+      nameStatus: null,
+      summary: null,
+      raw: null,
+      commits: null
+    };
+  }
+  let base;
+  let head;
+  let mergeBase = null;
+  let workingTree = false;
+  if (mode === "worktree") {
+    base = await resolveCommit(root, "HEAD").catch(() => emptyTree(root));
+    head = "worktree";
+    workingTree = true;
+  } else if (mode === "range") {
+    base = await resolveCommit(root, options.base);
+    workingTree = options.head === "worktree";
+    head = workingTree ? "worktree" : await resolveCommit(root, options.head);
+  } else {
+    const comparisonBase = await resolveCommit(root, options.mergeBase);
+    workingTree = options.head === "worktree";
+    const headCommit = workingTree ? await resolveCommit(root, "HEAD") : await resolveCommit(root, options.head);
+    mergeBase = (await gitBuffer(root, ["merge-base", comparisonBase, headCommit])).toString("utf8").trim();
+    base = comparisonBase;
+    head = workingTree ? "worktree" : headCommit;
+  }
+  const diffBase = mergeBase ?? base;
+  const revisions = workingTree ? [diffBase] : [diffBase, head];
+  const common = ["diff", ...patchFlags, ...revisions, "--"];
+  let patch = await gitBuffer(root, common);
+  const metadataBase = ["diff", "--no-ext-diff", "--no-color", "--find-renames", "--find-copies"];
+  const [trackedNumstat, nameStatus, summary, raw, commits] = await Promise.all([
+    gitBuffer(root, [...metadataBase, "--numstat", "-z", ...revisions, "--"]),
+    gitBuffer(root, [...metadataBase, "--name-status", "-z", ...revisions, "--"]),
+    gitBuffer(root, [...metadataBase, "--summary", ...revisions, "--"]),
+    gitBuffer(root, [...metadataBase, "--raw", "--full-index", "-z", ...revisions, "--"]),
+    gitBuffer(root, [
+      "log",
+      "--format=%H%x00%P%x00%s%x00",
+      `${diffBase}..${workingTree ? "HEAD" : head}`
+    ])
+  ]);
+  let numstat = trackedNumstat;
+  if (workingTree) {
+    const withUntracked = await appendUntracked(root, patch, numstat);
+    patch = withUntracked.patch;
+    numstat = withUntracked.numstat;
+  }
+  return {
+    mode,
+    patch,
+    base,
+    head,
+    mergeBase,
+    patchPath: null,
+    numstat,
+    nameStatus,
+    summary,
+    raw,
+    commits
+  };
+}
+function sourceDigests(source) {
+  const digest = (value) => value === null ? null : sha256(value);
+  return {
+    patch: sha256(source.patch),
+    numstat: digest(source.numstat),
+    nameStatus: digest(source.nameStatus),
+    summary: digest(source.summary),
+    raw: digest(source.raw),
+    commits: digest(source.commits)
+  };
+}
+async function writeRun(root, output, source, diff, evidenceIndex, reviewPlan) {
+  const outputPath = await resolveContainedPath(root, output, { allowMissing: true });
+  const relative = path7.relative(root, outputPath);
+  if (relative === ".git" || relative.startsWith(`.git${path7.sep}`)) {
+    throw new UtsuriError(
+      "COLLECT_OUTPUT_GIT",
+      "Run output must not be inside .git",
+      ExitCode.Security
+    );
+  }
+  const parent = path7.dirname(outputPath);
+  await resolveContainedPath(root, path7.relative(root, parent), { allowMissing: true });
+  await mkdir(parent, { recursive: true, mode: 448 });
+  await resolveContainedPath(root, path7.relative(root, parent));
+  await mkdir(outputPath, { mode: 448 }).catch((error) => {
+    if (error.code === "EEXIST") {
+      throw new UtsuriError(
+        "COLLECT_OUTPUT_EXISTS",
+        "Run output already exists and will not be replaced",
+        ExitCode.Artifact
+      );
+    }
+    throw error;
+  });
+  try {
+    await mkdir(path7.join(outputPath, "logs"));
+    const input = {
+      schemaVersion: "1.0",
+      mode: source.mode,
+      base: source.base,
+      head: source.head,
+      mergeBase: source.mergeBase,
+      patchPath: source.patchPath
+    };
+    const writes = [
+      ["input.json", `${JSON.stringify(input, null, 2)}
+`],
+      ["diff.patch", source.patch],
+      ["diff.json", `${JSON.stringify(diff, null, 2)}
+`],
+      ["evidence-index.json", `${JSON.stringify(evidenceIndex, null, 2)}
+`],
+      ["review-plan.json", `${JSON.stringify(reviewPlan, null, 2)}
+`],
+      [
+        "logs/collect.ndjson",
+        `${JSON.stringify({
+          event: "collect.completed",
+          mode: source.mode,
+          filesChanged: diff.summary.filesChanged,
+          hunks: diff.hunks.length,
+          sourceDigests: diff.sourceDigests
+        })}
+`
+      ]
+    ];
+    await Promise.all(
+      writes.map(([name, value]) => writeFile(path7.join(outputPath, name), value, { flag: "wx" }))
+    );
+  } catch (error) {
+    await writeFile(
+      path7.join(outputPath, "logs/collect-error.ndjson"),
+      `${JSON.stringify({ event: "collect.failed", message: error instanceof Error ? error.message : String(error) })}
+`,
+      { flag: "wx" }
+    ).catch(() => void 0);
+    throw error;
+  }
+  return await realpath3(outputPath);
+}
+async function collectGit(options) {
+  const root = await repositoryRoot(options.cwd);
+  const source = await collectSource(root, options);
+  const patch = decodeGitText(source.patch, "Git patch");
+  const fingerprint = stableHash({ repositoryRoot: root }).slice(0, 32);
+  let diff = parseGitPatch(patch, {
+    mode: source.mode,
+    base: source.base,
+    head: source.head,
+    mergeBase: source.mergeBase,
+    patchPath: source.patchPath,
+    repositoryFingerprint: fingerprint,
+    sourceDigests: sourceDigests(source)
+  });
+  if (source.nameStatus) {
+    diff = applyNameStatus(diff, decodeGitText(source.nameStatus, "Git name-status output"));
+  }
+  if (source.numstat) {
+    diff = applyNumstat(diff, decodeGitText(source.numstat, "Git numstat output"));
+  }
+  assertArtifact("diff", diff);
+  const diffReferences = validateDiffReferences(diff);
+  if (!diffReferences.ok) {
+    throw new UtsuriError(
+      "DIFF_REFERENCE_INVALID",
+      diffReferences.errors.join("; "),
+      ExitCode.Artifact
+    );
+  }
+  const evidenceIndex = createEvidenceIndex(diff);
+  const reviewPlan = createReviewPlan(diff, evidenceIndex);
+  assertArtifact("evidence-index", evidenceIndex);
+  assertArtifact("review-plan", reviewPlan);
+  const reviewReferences = validateReviewPlanReferences(reviewPlan, diff, evidenceIndex);
+  if (!reviewReferences.ok) {
+    throw new UtsuriError(
+      "REVIEW_PLAN_INVALID",
+      reviewReferences.errors.join("; "),
+      ExitCode.Artifact
+    );
+  }
+  const runDirectory = await writeRun(
+    root,
+    options.output,
+    source,
+    diff,
+    evidenceIndex,
+    reviewPlan
+  );
+  return { root, runDirectory, patch, diff, evidenceIndex, reviewPlan };
+}
+
+// packages/report-builder/src/index.ts
+import { createHash as createHash2, randomUUID } from "node:crypto";
+import { constants as constants2 } from "node:fs";
+import { access as access2, lstat as lstat3, mkdir as mkdir2, open, readdir, realpath as realpath4, stat, writeFile as writeFile2 } from "node:fs/promises";
+import path9 from "node:path";
+
 // packages/report-builder/src/generated-ui-assets.ts
-var reportUiJavaScript = 'typeof window<"u"&&((window.__svelte??={}).v??=new Set).add("5");let _t=!1,ur=!1;function cr(){_t=!0}cr();const dr=1,hr=2,dn=4,vr=8,_r=16,pr=2,R=Symbol("uninitialized"),gr="http://www.w3.org/1999/xhtml",hn=!1;var vn=Array.isArray,mr=Array.prototype.indexOf,ot=Array.prototype.includes,pt=Array.from,wr=Object.defineProperty,We=Object.getOwnPropertyDescriptor,_n=Object.getOwnPropertyDescriptors,yr=Object.prototype,br=Array.prototype,It=Object.getPrototypeOf,Xt=Object.isExtensible;const Er=()=>{};function kr(e){return e()}function Tt(e){for(var t=0;t<e.length;t++)e[t]()}function pn(){var e,t,n=new Promise((r,i)=>{e=r,t=i});return{promise:n,resolve:e,reject:t}}const D=2,Je=4,et=8,gn=1<<24,X=16,Y=32,fe=64,At=128,z=512,M=1024,S=2048,Q=4096,L=8192,V=16384,He=32768,Zt=1<<25,Fe=65536,ut=1<<17,xr=1<<18,qe=1<<19,mn=1<<20,ee=1<<25,Re=65536,ct=1<<21,Ie=1<<22,me=1<<23,Xe=Symbol("$state"),Sr=Symbol(""),wn=Symbol("attributes"),Tr=Symbol("class"),Ar=Symbol("style"),Ct=Symbol("text"),tt=new class extends Error{name="StaleReactionError";message="The reaction that called `getAbortSignal()` was re-run or destroyed"};function Cr(){throw new Error("https://svelte.dev/e/async_derived_orphan")}function Rr(e,t,n){throw new Error("https://svelte.dev/e/each_key_duplicate")}function Mr(e){throw new Error("https://svelte.dev/e/effect_in_teardown")}function Nr(){throw new Error("https://svelte.dev/e/effect_in_unowned_derived")}function Or(e){throw new Error("https://svelte.dev/e/effect_orphan")}function Dr(){throw new Error("https://svelte.dev/e/effect_update_depth_exceeded")}function Ir(){throw new Error("https://svelte.dev/e/state_descriptors_fixed")}function Fr(){throw new Error("https://svelte.dev/e/state_prototype_fixed")}function Pr(){throw new Error("https://svelte.dev/e/state_unsafe_mutation")}function Lr(){throw new Error("https://svelte.dev/e/svelte_boundary_reset_onerror")}function jr(){console.warn("https://svelte.dev/e/derived_inert")}function Hr(){console.warn("https://svelte.dev/e/svelte_boundary_reset_noop")}function yn(e){return e===this.v}function qr(e,t){return e!=e?t==t:e!==t||e!==null&&typeof e=="object"||typeof e=="function"}function bn(e){return!qr(e,this.v)}let T=null;function Pe(e){T=e}function En(e,t=!1,n){T={p:T,i:!1,c:null,e:null,s:e,x:null,r:w,l:_t&&!t?{s:null,u:null,$:[]}:null}}function kn(e){var t=T,n=t.e;if(n!==null){t.e=null;for(var r of n)$n(r)}return t.i=!0,T=t.p,{}}function nt(){return!_t||T!==null&&T.l===null}let Oe=[];function $r(){var e=Oe;Oe=[],Tt(e)}function pe(e){if(Oe.length===0){var t=Oe;queueMicrotask(()=>{t===Oe&&$r()})}Oe.push(e)}function xn(e){var t=w;if(t===null)return m.f|=me,e;if((t.f&He)===0&&(t.f&Je)===0)throw e;ge(e,t)}function ge(e,t){if(!(t!==null&&(t.f&V)!==0)){for(;t!==null;){if((t.f&At)!==0){if((t.f&He)===0)throw e;try{t.b.error(e);return}catch(n){e=n}}t=t.parent}throw e}}const Ur=-7169;function x(e,t){e.f=e.f&Ur|t}function Ft(e){(e.f&z)!==0||e.deps===null?x(e,M):x(e,Q)}function Sn(e){if(e!==null)for(const t of e)(t.f&D)===0||(t.f&Re)===0||(t.f^=Re,Sn(t.deps))}function Tn(e,t,n){(e.f&S)!==0?t.add(e):(e.f&Q)!==0&&n.add(e),Sn(e.deps),x(e,M)}function gt(e){var t=m,n=w;G(null),ne(null);try{return e()}finally{G(t),ne(n)}}function Br(e){let t=0,n=Me(0),r;return()=>{$t()&&(p(n),ui(()=>(t===0&&(r=Jn(()=>e(()=>Ze(n)))),t+=1,()=>{pe(()=>{t-=1,t===0&&(r?.(),r=void 0,Ze(n))})})))}}var zr=Fe|qe;function Vr(e,t,n,r){new Yr(e,t,n,r)}class Yr{parent;is_pending=!1;transform_error;#t;#l=null;#e;#a;#r;#s=null;#n=null;#f=null;#i=null;#_=0;#o=0;#u=!1;#d=new Set;#p=new Set;#c=null;#m=Br(()=>(this.#c=Me(this.#_),()=>{this.#c=null}));constructor(t,n,r,i){this.#t=t,this.#e=n,this.#a=s=>{var f=w;f.b=this,f.f|=At,r(s)},this.parent=w.b,this.transform_error=i??this.parent?.transform_error??(s=>s),this.#r=Ut(()=>{this.#h()},zr)}#g(){try{this.#s=B(()=>this.#a(this.#t))}catch(t){this.error(t)}}#b(t){const n=this.#e.failed,{reset:r,invoke_onerror:i}=this.#w(t);pe(i),n&&(this.#f=B(()=>{n(this.#t,()=>t,()=>r)}))}#w(t){var n=!1,r=!1;const i=()=>{if(n){Hr();return}n=!0,r&&Lr(),this.#f!==null&&Ae(this.#f,()=>{this.#f=null}),this.#v(()=>{this.#h()})};return{reset:i,invoke_onerror:()=>{try{r=!0,this.#e.onerror?.(t,i),r=!1}catch(f){ge(f,this.#r&&this.#r.parent)}}}}#E(){const t=this.#e.pending;t&&(this.is_pending=!0,this.#n=B(()=>t(this.#t)),pe(()=>{var n=this.#i=document.createDocumentFragment(),r=we();n.append(r),this.#s=this.#v(()=>B(()=>this.#a(r))),this.#o===0&&(this.#t.before(n),this.#i=null,Ae(this.#n,()=>{this.#n=null}),this.#y(b))}))}#h(){try{if(this.is_pending=this.has_pending_snippet(),this.#o=0,this.#_=0,this.#s=B(()=>{this.#a(this.#t)}),this.#o>0){var t=this.#i=document.createDocumentFragment();zt(this.#s,t);const n=this.#e.pending;this.#n=B(()=>n(this.#t))}else this.#y(b)}catch(n){this.error(n)}}#y(t){this.is_pending=!1,t.transfer_effects(this.#d,this.#p)}defer_effect(t){Tn(t,this.#d,this.#p)}is_rendered(){return!this.is_pending&&(!this.parent||this.parent.is_rendered())}has_pending_snippet(){return!!this.#e.pending}#v(t){var n=w,r=m,i=T;ne(this.#r),G(this.#r),Pe(this.#r.ctx);try{return ye.ensure(),t()}catch(s){return xn(s),null}finally{ne(n),G(r),Pe(i)}}#k(t,n){if(!this.has_pending_snippet()){this.parent&&this.parent.#k(t,n);return}this.#o+=t,this.#o===0&&(this.#y(n),this.#n&&Ae(this.#n,()=>{this.#n=null}),this.#i&&(this.#t.before(this.#i),this.#i=null))}update_pending_count(t,n){this.#k(t,n),this.#_+=t,!(!this.#c||this.#u)&&(this.#u=!0,pe(()=>{this.#u=!1,this.#c&&Le(this.#c,this.#_)}))}get_effect_pending(){return this.#m(),p(this.#c)}error(t){if(!this.#e.onerror&&!this.#e.failed)throw t;b?.is_fork?(this.#s&&b.skip_effect(this.#s),this.#n&&b.skip_effect(this.#n),this.#f&&b.skip_effect(this.#f),b.oncommit(()=>{this.#x(t)})):this.#x(t)}#x(t){this.#s&&(q(this.#s),this.#s=null),this.#n&&(q(this.#n),this.#n=null),this.#f&&(q(this.#f),this.#f=null);let n=this.#e.failed;const r=i=>{const{reset:s,invoke_onerror:f}=this.#w(i);f(),n&&(this.#f=this.#v(()=>{try{return B(()=>{var a=w;a.b=this,a.f|=At,n(this.#t,()=>i,()=>s)})}catch(a){return ge(a,this.#r.parent),null}}))};pe(()=>{var i;try{i=this.transform_error(t)}catch(s){ge(s,this.#r&&this.#r.parent);return}i!==null&&typeof i=="object"&&typeof i.then=="function"?i.then(r,s=>ge(s,this.#r&&this.#r.parent)):r(i)})}}function Gr(e,t,n,r){const i=nt()?Pt:Cn;var s=e.filter(h=>!h.settled),f=t.map(i);if(n.length===0&&s.length===0){r(f);return}var a=w,l=Kr(),o=s.length===1?s[0].promise:s.length>1?Promise.all(s.map(h=>h.promise)):null;function u(h){if((a.f&V)===0){l();try{r([...f,...h])}catch(v){ge(v,a)}dt()}}var d=An();if(n.length===0){o.then(()=>u([])).finally(d);return}function c(){Promise.all(n.map(h=>Wr(h))).then(u).catch(h=>ge(h,a)).finally(d)}o?o.then(()=>{l(),c(),dt()}):c()}function Kr(){var e=w,t=m,n=T,r=b;return function(s=!0){ne(e),G(t),Pe(n),s&&(e.f&V)===0&&(r?.activate(),r?.apply())}}function dt(e=!0){ne(null),G(null),Pe(null),e&&b?.deactivate()}function An(){var e=w,t=e.b,n=b,r=!!t?.is_rendered();return t?.update_pending_count(1,n),n.increment(r,e),()=>{t?.update_pending_count(-1,n),n.decrement(r,e)}}function Pt(e){var t=D|S;return w!==null&&(w.f|=qe),{ctx:T,deps:null,effects:null,equals:yn,f:t,fn:e,reactions:null,rv:0,v:R,wv:0,parent:w,ac:null}}const Ye=Symbol("obsolete");function Wr(e,t,n){let r=w;r===null&&Cr();var i=void 0,s=Me(R),f=!m,a=new Set;return oi(()=>{var l=w,o=pn();i=o.promise;try{Promise.resolve(e()).then(o.resolve,h=>{h!==tt&&o.reject(h)}).finally(dt)}catch(h){o.reject(h),dt()}var u=b;if(f){if((l.f&He)!==0)var d=An();if(r.b?.is_rendered())u.async_deriveds.get(l)?.reject(Ye);else for(const h of a.values())h.reject(Ye);a.add(o),u.async_deriveds.set(l,o)}const c=(h,v=void 0)=>{d?.(),a.delete(o),v!==Ye&&(u.activate(),v?(s.f|=me,Le(s,v)):((s.f&me)!==0&&(s.f^=me),Le(s,h)),u.deactivate())};o.promise.then(c,h=>c(null,h||"unknown"))}),li(()=>{for(const l of a)l.reject(Ye)}),new Promise(l=>{function o(u){function d(){u===i?l(s):o(i)}u.then(d,d)}o(i)})}function Cn(e){const t=Pt(e);return t.equals=bn,t}function Xr(e){var t=e.effects;if(t!==null){e.effects=null;for(var n=0;n<t.length;n+=1)q(t[n])}}function Lt(e){var t,n=w,r=e.parent;if(!be&&r!==null&&e.v!==R&&(r.f&(V|L))!==0)return jr(),e.v;ne(r);try{e.f&=~Re,Xr(e),t=Wn(e)}finally{ne(n)}return t}function Rn(e){var t=Lt(e);if(!e.equals(t)&&(e.wv=Gn(),(!b?.is_fork||e.deps===null)&&(b!==null?(b.capture(e,t,!0),Rt?.capture(e,t,!0)):e.v=t,e.deps===null))){x(e,M);return}be||(Z!==null?($t()||b?.is_fork)&&Z.set(e,t):Ft(e))}function Zr(e){if(e.effects!==null)for(const t of e.effects)(t.teardown||t.ac)&&(t.teardown?.(),t.ac!==null&&gt(()=>{t.ac.abort(tt),t.ac=null}),t.fn!==null&&(t.teardown=Er),Qe(t,0),Bt(t))}function Mn(e){if(e.effects!==null)for(const t of e.effects)t.teardown&&t.fn!==null&&je(t)}let bt=null,Ne=null,b=null,Rt=null,Z=null,Mt=null,Et=!1,De=null,ft=null;var Jt=0;let Jr=1;class ye{id=Jr++;#t=!1;linked=!0;#l=null;#e=null;async_deriveds=new Map;current=new Map;previous=new Map;#a=new Set;#r=new Set;#s=0;#n=new Map;#f=null;#i=[];#_=[];#o=new Set;#u=new Set;#d=new Map;#p=new Set;is_fork=!1;#c=!1;constructor(){Ne===null?bt=Ne=this:(Ne.#e=this,this.#l=Ne),Ne=this}#m(){if(this.is_fork)return!0;for(const r of this.#n.keys()){for(var t=r,n=!1;t.parent!==null;){if(this.#d.has(t)){n=!0;break}t=t.parent}if(!n)return!0}return!1}skip_effect(t){this.#d.has(t)||this.#d.set(t,{d:[],m:[]}),this.#p.delete(t)}unskip_effect(t,n=r=>this.schedule(r)){var r=this.#d.get(t);if(r){this.#d.delete(t);for(var i of r.d)x(i,S),n(i);for(i of r.m)x(i,Q),n(i)}this.#p.add(t)}#g(){this.#t=!0,Jt++>1e3&&(this.#v(),Qr());for(const l of this.#o)this.#u.delete(l),x(l,S),this.schedule(l);for(const l of this.#u)x(l,Q),this.schedule(l);const t=this.#i;this.#i=[],this.apply();var n=De=[],r=[],i=ft=[];for(const l of t)try{this.#b(l,n,r)}catch(o){throw Dn(l),this.#m()||this.discard(),o}if(b=null,i.length>0){var s=ye.ensure();for(const l of i)s.schedule(l)}if(De=null,ft=null,this.#m()){this.#h(r),this.#h(n);for(const[l,o]of this.#d)On(l,o);i.length>0&&b.#g();return}const f=this.#w();if(f){this.#h(r),this.#h(n),f.#E(this);return}this.#o.clear(),this.#u.clear();for(const l of this.#a)l(this);this.#a.clear(),Rt=this,Qt(r),Qt(n),Rt=null,this.#f?.resolve();var a=b;if(this.#s===0&&(this.#i.length===0||a!==null)&&this.#v(),this.#i.length>0)if(a!==null){const l=a;l.#i.push(...this.#i.filter(o=>!l.#i.includes(o)))}else a=this;a!==null&&a.#g()}#b(t,n,r){t.f^=M;for(var i=t.first;i!==null;){var s=i.f,f=(s&(Y|fe))!==0,a=f&&(s&M)!==0,l=a||(s&L)!==0||this.#d.has(i);if(!l&&i.fn!==null){f?i.f^=M:(s&Je)!==0?n.push(i):it(i)&&((s&X)!==0&&this.#u.add(i),je(i));var o=i.first;if(o!==null){i=o;continue}}for(;i!==null;){var u=i.next;if(u!==null){i=u;break}i=i.parent}}}#w(){for(var t=this.#l;t!==null;){if(!t.is_fork){for(const[n,[,r]]of this.current)if(t.current.has(n)&&!r)return t}t=t.#l}return null}#E(t){for(const[r,i]of t.current)!this.previous.has(r)&&t.previous.has(r)&&this.previous.set(r,t.previous.get(r)),this.current.set(r,i);for(const[r,i]of t.async_deriveds){const s=this.async_deriveds.get(r);s&&i.promise.then(s.resolve).catch(s.reject)}t.async_deriveds.clear(),this.transfer_effects(t.#o,t.#u);const n=r=>{var i=r.reactions;if(i!==null&&!((r.f&D)!==0&&(r.f&(S|Q))===0))for(const a of i){var s=a.f;if((s&D)!==0)n(a);else{var f=a;s&(Ie|X)&&!this.async_deriveds.has(f)&&(this.#u.delete(f),x(f,S),this.schedule(f))}}};for(const r of this.current.keys())n(r);this.oncommit(()=>t.discard()),t.#v(),b=this,this.#g()}#h(t){for(var n=0;n<t.length;n+=1)Tn(t[n],this.#o,this.#u)}capture(t,n,r=!1){t.v!==R&&!this.previous.has(t)&&this.previous.set(t,t.v),(t.f&me)===0&&(this.current.set(t,[n,r]),Z?.set(t,n)),this.is_fork||(t.v=n)}activate(){b=this}deactivate(){b=null,Z=null}flush(){try{Et=!0,b=this,this.#g()}finally{Jt=0,Mt=null,De=null,ft=null,Et=!1,b=null,Z=null,Te.clear()}}discard(){for(const t of this.#r)t(this);this.#r.clear();for(const t of this.async_deriveds.values())t.reject(Ye);this.#v(),this.#f?.resolve()}register_created_effect(t){this.#_.push(t)}#y(){for(let d=bt;d!==null;d=d.#e){var t=d.id<this.id,n=[];for(const[c,[h,v]]of this.current){if(d.current.has(c)){var r=d.current.get(c)[0];if(t&&h!==r)d.current.set(c,[h,v]);else continue}n.push(c)}if(t)for(const[c,h]of this.async_deriveds){const v=d.async_deriveds.get(c);v&&h.promise.then(v.resolve).catch(v.reject)}var i=[...d.current.keys()].filter(c=>!d.current.get(c)[1]);if(!(!d.#t||i.length===0)){var s=i.filter(c=>!this.current.has(c));if(s.length===0)t&&d.discard();else if(n.length>0){if(t)for(const c of this.#p)d.unskip_effect(c,h=>{(h.f&(X|Ie))!==0?d.schedule(h):d.#h([h])});d.activate();var f=new Set,a=new Map;for(var l of n)Nn(l,s,f,a);a=new Map;var o=[...d.current].filter(([c,h])=>{const v=this.current.get(c);return v?v[0]!==h[0]||v[1]!==h[1]:!0}).map(([c])=>c);if(o.length>0)for(const c of this.#_)(c.f&(V|L|ut))===0&&jt(c,o,a)&&((c.f&(Ie|X))!==0?(x(c,S),d.schedule(c)):d.#o.add(c));if(d.#i.length>0&&!d.#c){d.apply();for(var u of d.#i)d.#b(u,[],[]);d.#i=[]}d.deactivate()}}}}increment(t,n){if(this.#s+=1,t){let r=this.#n.get(n)??0;this.#n.set(n,r+1)}}decrement(t,n){if(this.#s-=1,t){let r=this.#n.get(n)??0;r===1?this.#n.delete(n):this.#n.set(n,r-1)}this.#c||(this.#c=!0,pe(()=>{this.#c=!1,this.linked&&this.flush()}))}transfer_effects(t,n){for(const r of t)this.#o.add(r);for(const r of n)this.#u.add(r);t.clear(),n.clear()}oncommit(t){this.#a.add(t)}ondiscard(t){this.#r.add(t)}settled(){return(this.#f??=pn()).promise}static ensure(){if(b===null){const t=b=new ye;Et||pe(()=>{t.#t||t.flush()})}return b}apply(){{Z=null;return}}schedule(t){if(Mt=t,t.b?.is_pending&&(t.f&(Je|et|gn))!==0&&(t.f&He)===0){t.b.defer_effect(t);return}for(var n=t;n.parent!==null;){n=n.parent;var r=n.f;if(De!==null&&n===w&&(m===null||(m.f&D)===0))return;if((r&(fe|Y))!==0){if((r&M)===0)return;n.f^=M}}this.#i.push(n)}#v(){if(this.linked){var t=this.#l,n=this.#e;t===null?bt=n:t.#e=n,n===null?Ne=t:n.#l=t,this.linked=!1}}}function Qr(){try{Dr()}catch(e){ge(e,Mt)}}let se=null;function Qt(e){var t=e.length;if(t!==0){for(var n=0;n<t;){var r=e[n++];if((r.f&(V|L))===0&&it(r)&&(se=new Set,je(r),r.deps===null&&r.first===null&&r.nodes===null&&r.teardown===null&&r.ac===null&&Bn(r),se?.size>0)){Te.clear();for(const i of se){if((i.f&(V|L))!==0)continue;const s=[i];let f=i.parent;for(;f!==null;)se.has(f)&&(se.delete(f),s.push(f)),f=f.parent;for(let a=s.length-1;a>=0;a--){const l=s[a];(l.f&(V|L))===0&&je(l)}}se.clear()}}se=null}}function Nn(e,t,n,r){if(!n.has(e)&&(n.add(e),e.reactions!==null))for(const i of e.reactions){const s=i.f;(s&D)!==0?Nn(i,t,n,r):(s&(Ie|X))!==0&&(s&S)===0&&jt(i,t,r)&&(x(i,S),Ht(i))}}function jt(e,t,n){const r=n.get(e);if(r!==void 0)return r;if(e.deps!==null)for(const i of e.deps){if(ot.call(t,i))return!0;if((i.f&D)!==0&&jt(i,t,n))return n.set(i,!0),!0}return n.set(e,!1),!1}function Ht(e){b.schedule(e)}function On(e,t){if(!((e.f&Y)!==0&&(e.f&M)!==0)){(e.f&S)!==0?t.d.push(e):(e.f&Q)!==0&&t.m.push(e),x(e,M);for(var n=e.first;n!==null;)On(n,t),n=n.next}}function Dn(e){x(e,M);for(var t=e.first;t!==null;)Dn(t),t=t.next}let ht=new Set;const Te=new Map;let In=!1;function Me(e,t){var n={f:0,v:e,reactions:null,equals:yn,rv:0,wv:0};return n}function ve(e,t){const n=Me(e);return hi(n),n}function Nt(e,t=!1,n=!0){const r=Me(e);return t||(r.equals=bn),_t&&n&&T!==null&&T.l!==null&&(T.l.s??=[]).push(r),r}function le(e,t,n=!1){m!==null&&(!J||(m.f&ut)!==0)&&nt()&&(m.f&(D|X|Ie|ut))!==0&&(te===null||!te.has(e))&&Pr();let r=n?Ge(t):t;return Le(e,r,ft)}function Le(e,t,n=null){if(!e.equals(t)){Te.set(e,be?t:e.v);var r=ye.ensure();if(r.capture(e,t),(e.f&D)!==0){const i=e;(e.f&S)!==0&&Lt(i),Z===null&&Ft(i)}e.wv=Gn(),Fn(e,S,n),nt()&&w!==null&&(w.f&M)!==0&&(w.f&(Y|fe))===0&&(U===null?vi([e]):U.push(e)),!r.is_fork&&ht.size>0&&!In&&ei()}return t}function ei(){In=!1;for(const e of ht){(e.f&M)!==0&&x(e,Q);let t;try{t=it(e)}catch{t=!0}t&&je(e)}ht.clear()}function Ze(e){le(e,e.v+1)}function Fn(e,t,n){var r=e.reactions;if(r!==null)for(var i=nt(),s=r.length,f=0;f<s;f++){var a=r[f],l=a.f;if(!(!i&&a===w)){var o=(l&S)===0;if(o&&x(a,t),(l&ut)!==0)ht.add(a);else if((l&D)!==0){var u=a;Z?.delete(u),(l&Re)===0&&(l&z&&(w===null||(w.f&ct)===0)&&(a.f|=Re),Fn(u,Q,n))}else if(o){var d=a;(l&X)!==0&&se!==null&&se.add(d),n!==null?n.push(d):Ht(d)}}}}function Ge(e){if(typeof e!="object"||e===null||Xe in e)return e;const t=It(e);if(t!==yr&&t!==br)return e;var n=new Map,r=vn(e),i=ve(0),s=Ce,f=a=>{if(Ce===s)return a();var l=m,o=Ce;G(null),rn(s);var u=a();return G(l),rn(o),u};return r&&n.set("length",ve(e.length)),new Proxy(e,{defineProperty(a,l,o){(!("value"in o)||o.configurable===!1||o.enumerable===!1||o.writable===!1)&&Ir();var u=n.get(l);return u===void 0?f(()=>{var d=ve(o.value);return n.set(l,d),d}):le(u,o.value,!0),!0},deleteProperty(a,l){var o=n.get(l);if(o===void 0){if(l in a){const u=f(()=>ve(R));n.set(l,u),Ze(i)}}else le(o,R),Ze(i);return!0},get(a,l,o){if(l===Xe)return e;var u=n.get(l),d=l in a;if(u===void 0&&(!d||We(a,l)?.writable)&&(u=f(()=>{var h=Ge(d?a[l]:R),v=ve(h);return v}),n.set(l,u)),u!==void 0){var c=p(u);return c===R?void 0:c}return Reflect.get(a,l,o)},getOwnPropertyDescriptor(a,l){var o=Reflect.getOwnPropertyDescriptor(a,l);if(o&&"value"in o){var u=n.get(l);u&&(o.value=p(u))}else if(o===void 0){var d=n.get(l),c=d?.v;if(d!==void 0&&c!==R)return{enumerable:!0,configurable:!0,value:c,writable:!0}}return o},has(a,l){if(l===Xe)return!0;var o=n.get(l),u=o!==void 0&&o.v!==R||Reflect.has(a,l);if(o!==void 0||w!==null&&(!u||We(a,l)?.writable)){o===void 0&&(o=f(()=>{var c=u?Ge(a[l]):R,h=ve(c);return h}),n.set(l,o));var d=p(o);if(d===R)return!1}return u},set(a,l,o,u){var d=n.get(l),c=l in a;if(r&&l==="length")for(var h=o;h<d.v;h+=1){var v=n.get(h+"");v!==void 0?le(v,R):h in a&&(v=f(()=>ve(R)),n.set(h+"",v))}if(d===void 0)(!c||We(a,l)?.writable)&&(d=f(()=>ve(void 0)),le(d,Ge(o)),n.set(l,d));else{c=d.v!==R;var g=f(()=>Ge(o));le(d,g)}var _=Reflect.getOwnPropertyDescriptor(a,l);if(_?.set&&_.set.call(u,o),!c){if(r&&typeof l=="string"){var y=n.get("length"),N=Number(l);Number.isInteger(N)&&N>=y.v&&le(y,N+1)}Ze(i)}return!0},ownKeys(a){p(i);var l=Reflect.ownKeys(a).filter(d=>{var c=n.get(d);return c===void 0||c.v!==R});for(var[o,u]of n)u.v!==R&&!(o in a)&&l.push(o);return l},setPrototypeOf(){Fr()}})}var en,Pn,Ln,jn;function ti(){if(en===void 0){en=window,Pn=/Firefox/.test(navigator.userAgent);var e=Element.prototype,t=Node.prototype,n=Text.prototype;Ln=We(t,"firstChild").get,jn=We(t,"nextSibling").get,Xt(e)&&(e[Tr]=void 0,e[wn]=null,e[Ar]=void 0,e.__e=void 0),Xt(n)&&(n[Ct]=void 0)}}function we(e=""){return document.createTextNode(e)}function qt(e){return Ln.call(e)}function rt(e){return jn.call(e)}function E(e,t){return qt(e)}function ni(e,t=!1){{var n=qt(e);return n instanceof Comment&&n.data===""?rt(n):n}}function C(e,t=1,n=!1){let r=e;for(;t--;)r=rt(r);return r}function ri(e){e.textContent=""}function Hn(){return!1}function ii(e,t,n){return n?document.createElement(e,{is:n}):document.createElement(e)}function qn(e){w===null&&(m===null&&Or(),Nr()),be&&Mr()}function si(e,t){var n=t.last;n===null?t.last=t.first=e:(n.next=e,e.prev=n,t.last=e)}function ae(e,t){var n=w;n!==null&&(n.f&L)!==0&&(e|=L);var r={ctx:T,deps:null,nodes:null,f:e|S|z,first:null,fn:t,last:null,next:null,parent:n,b:n&&n.b,prev:null,teardown:null,wv:0,ac:null};b?.register_created_effect(r);var i=r;if((e&Je)!==0)De!==null?De.push(r):ye.ensure().schedule(r);else if(t!==null){try{je(r)}catch(f){throw q(r),f}i.deps===null&&i.teardown===null&&i.nodes===null&&i.first===i.last&&(i.f&qe)===0&&(i=i.first,(e&X)!==0&&(e&Fe)!==0&&i!==null&&(i.f|=Fe))}if(i!==null&&(i.parent=n,n!==null&&si(i,n),m!==null&&(m.f&D)!==0&&(e&fe)===0)){var s=m;(s.effects??=[]).push(i)}return r}function $t(){return m!==null&&!J}function li(e){const t=ae(et,null);return x(t,M),t.teardown=e,t}function tn(e){qn();var t=w.f,n=!m&&(t&Y)!==0&&T!==null&&!T.i;if(n){var r=T;(r.e??=[]).push(e)}else return $n(e)}function $n(e){return ae(Je|mn,e)}function fi(e){return qn(),ae(et|mn,e)}function ai(e){ye.ensure();const t=ae(fe|qe,e);return(n={})=>new Promise(r=>{n.outro?Ae(t,()=>{q(t),r(void 0)}):(q(t),r(void 0))})}function oi(e){return ae(Ie|qe,e)}function ui(e,t=0){return ae(et|t,e)}function xe(e,t=[],n=[],r=[]){Gr(r,t,n,i=>{ae(et,()=>{e(...i.map(p))})})}function Ut(e,t=0){var n=ae(X|t,e);return n}function B(e){return ae(Y|qe,e)}function Un(e){var t=e.teardown;if(t!==null){const n=be,r=m;nn(!0),G(null);try{t.call(null)}finally{nn(n),G(r)}}}function Bt(e,t=!1){var n=e.first;for(e.first=e.last=null;n!==null;){const i=n.ac;i!==null&&gt(()=>{i.abort(tt)});var r=n.next;(n.f&fe)!==0?n.parent=null:q(n,t),n=r}}function ci(e){for(var t=e.first;t!==null;){var n=t.next;(t.f&Y)===0&&q(t),t=n}}function q(e,t=!0){var n=!1;(t||(e.f&xr)!==0)&&e.nodes!==null&&e.nodes.end!==null&&(di(e.nodes.start,e.nodes.end),n=!0),e.f|=Zt,Bt(e,t&&!n),Qe(e,0);var r=e.nodes&&e.nodes.t;if(r!==null)for(const s of r)s.stop();Un(e),e.f^=Zt,e.f|=V;var i=e.parent;i!==null&&i.first!==null&&Bn(e),e.next=e.prev=e.teardown=e.ctx=e.deps=e.fn=e.nodes=e.ac=e.b=null}function di(e,t){for(;e!==null;){var n=e===t?null:rt(e);e.remove(),e=n}}function Bn(e){var t=e.parent,n=e.prev,r=e.next;n!==null&&(n.next=r),r!==null&&(r.prev=n),t!==null&&(t.first===e&&(t.first=r),t.last===e&&(t.last=n))}function Ae(e,t,n=!0){var r=[];zn(e,r,!0);var i=()=>{n&&q(e),t&&t()},s=r.length;if(s>0){var f=()=>--s||i();for(var a of r)a.out(f)}else i()}function zn(e,t,n){if((e.f&L)===0){e.f^=L;var r=e.nodes&&e.nodes.t;if(r!==null)for(const a of r)(a.is_global||n)&&t.push(a);for(var i=e.first;i!==null;){var s=i.next;if((i.f&fe)===0){var f=(i.f&Fe)!==0||(i.f&Y)!==0&&(e.f&X)!==0;zn(i,t,f?n:!1)}i=s}}}function vt(e){Vn(e,!0)}function Vn(e,t){if((e.f&L)!==0){e.f^=L,(e.f&M)===0&&(x(e,S),ye.ensure().schedule(e));for(var n=e.first;n!==null;){var r=n.next,i=(n.f&Fe)!==0||(n.f&Y)!==0;Vn(n,i?t:!1),n=r}var s=e.nodes&&e.nodes.t;if(s!==null)for(const f of s)(f.is_global||t)&&f.in()}}function zt(e,t){if(e.nodes)for(var n=e.nodes.start,r=e.nodes.end;n!==null;){var i=n===r?null:rt(n);t.append(n),n=i}}let at=!1,be=!1;function nn(e){be=e}let m=null,J=!1;function G(e){m=e}let w=null;function ne(e){w=e}let te=null;function hi(e){m!==null&&(te??=new Set).add(e)}let H=null,$=0,U=null;function vi(e){U=e}let Yn=1,Se=0,Ce=Se;function rn(e){Ce=e}function Gn(){return++Yn}function it(e){var t=e.f;if((t&S)!==0)return!0;if(t&D&&(e.f&=~Re),(t&Q)!==0){for(var n=e.deps,r=n.length,i=0;i<r;i++){var s=n[i];if(it(s)&&Rn(s),s.wv>e.wv)return!0}(t&z)!==0&&Z===null&&x(e,M)}return!1}function Kn(e,t,n=!0){var r=e.reactions;if(r!==null&&!(te!==null&&te.has(e)))for(var i=0;i<r.length;i++){var s=r[i];(s.f&D)!==0?Kn(s,t,!1):t===s&&(n?x(s,S):(s.f&M)!==0&&x(s,Q),Ht(s))}}function Wn(e){var t=H,n=$,r=U,i=m,s=te,f=T,a=J,l=Ce,o=e.f;H=null,$=0,U=null,m=(o&(Y|fe))===0?e:null,te=null,Pe(e.ctx),J=!1,Ce=++Se,e.ac!==null&&(gt(()=>{e.ac.abort(tt)}),e.ac=null);try{e.f|=ct;var u=e.fn,d=u();e.f|=He;var c=e.deps,h=b?.is_fork;if(H!==null){var v;if(h||Qe(e,$),c!==null&&$>0)for(c.length=$+H.length,v=0;v<H.length;v++)c[$+v]=H[v];else e.deps=c=H;if($t()&&(e.f&z)!==0)for(v=$;v<c.length;v++)(c[v].reactions??=[]).push(e)}else!h&&c!==null&&$<c.length&&(Qe(e,$),c.length=$);if(nt()&&U!==null&&!J&&c!==null&&(e.f&(D|Q|S))===0)for(v=0;v<U.length;v++)Kn(U[v],e);if(i!==null&&i!==e){if(Se++,i.deps!==null)for(let g=0;g<n;g+=1)i.deps[g].rv=Se;if(t!==null)for(const g of t)g.rv=Se;U!==null&&(r===null?r=U:r.push(...U))}return(e.f&me)!==0&&(e.f^=me),d}catch(g){return xn(g)}finally{e.f^=ct,H=t,$=n,U=r,m=i,te=s,Pe(f),J=a,Ce=l}}function _i(e,t){let n=t.reactions;if(n!==null){var r=mr.call(n,e);if(r!==-1){var i=n.length-1;i===0?n=t.reactions=null:(n[r]=n[i],n.pop())}}if(n===null&&(t.f&D)!==0&&(H===null||!ot.call(H,t))){var s=t;(s.f&z)!==0&&(s.f^=z,s.f&=~Re),s.v!==R&&Ft(s),s.ac!==null&&gt(()=>{s.ac.abort(tt),s.ac=null,x(s,S)}),Zr(s),Qe(s,0)}}function Qe(e,t){var n=e.deps;if(n!==null)for(var r=t;r<n.length;r++)_i(e,n[r])}function je(e){var t=e.f;if((t&V)===0){x(e,M);var n=w,r=at;w=e,at=(t&(Y|fe))===0;try{(t&(X|gn))!==0?ci(e):Bt(e),Un(e);var i=Wn(e);e.teardown=typeof i=="function"?i:null,e.wv=Yn;var s;hn&&ur&&(e.f&S)!==0&&e.deps}finally{at=r,w=n}}}function p(e){var t=e.f,n=(t&D)!==0;if(m!==null&&!J){var r=w!==null&&(w.f&V)!==0;if(!r&&(te===null||!te.has(e))){var i=m.deps;if((m.f&ct)!==0)e.rv<Se&&(e.rv=Se,H===null&&i!==null&&i[$]===e?$++:H===null?H=[e]:H.push(e));else{m.deps??=[],ot.call(m.deps,e)||m.deps.push(e);var s=e.reactions;s===null?e.reactions=[m]:ot.call(s,m)||s.push(m)}}}if(be&&Te.has(e))return Te.get(e);if(n){var f=e;if(be){var a=f.v;return((f.f&M)===0&&f.reactions!==null||Zn(f))&&(a=Lt(f)),Te.set(f,a),a}var l=(f.f&z)===0&&!J&&m!==null&&(at||(m.f&z)!==0),o=(f.f&He)===0;it(f)&&(l&&(f.f|=z),Rn(f)),l&&!o&&(Mn(f),Xn(f))}if(Z?.has(e))return Z.get(e);if((e.f&me)!==0)throw e.v;return e.v}function Xn(e){if(e.f|=z,e.deps!==null)for(const t of e.deps)(t.reactions??=[]).push(e),(t.f&D)!==0&&(t.f&z)===0&&(Mn(t),Xn(t))}function Zn(e){if(e.v===R)return!0;if(e.deps===null)return!1;for(const t of e.deps)if(Te.has(t)||(t.f&D)!==0&&Zn(t))return!0;return!1}function Jn(e){var t=J;try{return J=!0,e()}finally{J=t}}function pi(e){if(!(typeof e!="object"||!e||e instanceof EventTarget)){if(Xe in e)Ot(e);else if(!Array.isArray(e))for(let t in e){const n=e[t];typeof n=="object"&&n&&Xe in n&&Ot(n)}}}function Ot(e,t=new Set){if(typeof e=="object"&&e!==null&&!(e instanceof EventTarget)&&!t.has(e)){t.add(e),e instanceof Date&&e.getTime();for(let r in e)try{Ot(e[r],t)}catch{}const n=It(e);if(n!==Object.prototype&&n!==Array.prototype&&n!==Map.prototype&&n!==Set.prototype&&n!==Date.prototype){const r=_n(n);for(let i in r){const s=r[i].get;if(s)try{s.call(e)}catch{}}}}}const st=Symbol("events"),gi=new Set,sn=new Set;let ln=null;function fn(e){var t=this,n=t.ownerDocument,r=e.type,i=e.composedPath?.()||[],s=i[0]||e.target;ln=e;var f=0,a=ln===e&&e[st];if(a){var l=i.indexOf(a);if(l!==-1&&(t===document||t===window)){e[st]=t;return}var o=i.indexOf(t);if(o===-1)return;l<=o&&(f=l)}if(s=i[f]||e.target,s!==t){wr(e,"currentTarget",{configurable:!0,get(){return s||n}});var u=m,d=w;G(null),ne(null);try{for(var c,h=[];s!==null&&s!==t;){try{var v=s[st]?.[r];v!=null&&(!s.disabled||e.target===s)&&v.call(s,e)}catch(g){c?h.push(g):c=g}if(e.cancelBubble)break;f++,s=f<i.length?i[f]:null}if(c){for(let g of h)queueMicrotask(()=>{throw g});throw c}}finally{e[st]=t,delete e.currentTarget,G(u),ne(d)}}}const mi=globalThis?.window?.trustedTypes&&globalThis.window.trustedTypes.createPolicy("svelte-trusted-html",{createHTML:e=>e});function wi(e){return mi?.createHTML(e)??e}function yi(e){var t=ii("template");return t.innerHTML=wi(e.replaceAll("<!>","<!---->")),t.content}function Qn(e,t){var n=w;n.nodes===null&&(n.nodes={start:e,end:t,a:null,t:null})}function Ee(e,t){var n=(t&pr)!==0,r,i=!e.startsWith("<!>");return()=>{r===void 0&&(r=yi(i?e:"<!>"+e),r=qt(r));var s=n||Pn?document.importNode(r,!0):r.cloneNode(!0);return Qn(s,s),s}}function bi(){var e=document.createDocumentFragment(),t=document.createComment(""),n=we();return e.append(t,n),Qn(t,n),e}function W(e,t){e!==null&&e.before(t)}const Ei=["touchstart","touchmove"];function ki(e){return Ei.includes(e)}function P(e,t){var n=t==null?"":typeof t=="object"?`${t}`:t;n!==(e[Ct]??=e.nodeValue)&&(e[Ct]=n,e.nodeValue=`${n}`)}function xi(e,t){return Si(e,t)}const lt=new Map;function Si(e,{target:t,anchor:n,props:r={},events:i,context:s,intro:f=!0,transformError:a}){ti();var l=void 0,o=ai(()=>{var u=n??t.appendChild(we());Vr(u,{pending:()=>{}},h=>{En({});var v=T;s&&(v.c=s),i&&(r.$$events=i),l=e(h,r)||{},kn()},a);var d=new Set,c=h=>{for(var v=0;v<h.length;v++){var g=h[v];if(!d.has(g)){d.add(g);var _=ki(g);for(const k of[t,document]){var y=lt.get(k);y===void 0&&(y=new Map,lt.set(k,y));var N=y.get(g);N===void 0?(k.addEventListener(g,fn,{passive:_}),y.set(g,1)):y.set(g,N+1)}}}};return c(pt(gi)),sn.add(c),()=>{for(var h of d)for(const _ of[t,document]){var v=lt.get(_),g=v.get(h);--g==0?(_.removeEventListener(h,fn),v.delete(h),v.size===0&&lt.delete(_)):v.set(h,g)}sn.delete(c),u!==n&&u.parentNode?.removeChild(u)}});return Ti.set(l,o),l}let Ti=new WeakMap;class Ai{anchor;#t=new Map;#l=new Map;#e=new Map;#a=new Set;#r=!0;constructor(t,n=!0){this.anchor=t,this.#r=n}#s=t=>{if(this.#t.has(t)){var n=this.#t.get(t),r=this.#l.get(n);if(r)vt(r),this.#a.delete(n);else{var i=this.#e.get(n);i&&(vt(i.effect),this.#l.set(n,i.effect),this.#e.delete(n),i.fragment.lastChild.remove(),this.anchor.before(i.fragment),r=i.effect)}for(const[s,f]of this.#t){if(this.#t.delete(s),s===t)break;const a=this.#e.get(f);a&&(q(a.effect),this.#e.delete(f))}for(const[s,f]of this.#l){if(s===n||this.#a.has(s))continue;const a=()=>{if(Array.from(this.#t.values()).includes(s)){var o=document.createDocumentFragment();zt(f,o),o.append(we()),this.#e.set(s,{effect:f,fragment:o})}else q(f);this.#a.delete(s),this.#l.delete(s)};this.#r||!r?(this.#a.add(s),Ae(f,a,!1)):a()}}};#n=t=>{this.#t.delete(t);const n=Array.from(this.#t.values());for(const[r,i]of this.#e)n.includes(r)||(q(i.effect),this.#e.delete(r))};ensure(t,n){var r=b,i=Hn();if(n&&!this.#l.has(t)&&!this.#e.has(t))if(i){var s=document.createDocumentFragment(),f=we();s.append(f),this.#e.set(t,{effect:B(()=>n(f)),fragment:s})}else this.#l.set(t,B(()=>n(this.anchor)));if(this.#t.set(r,t),i){for(const[a,l]of this.#l)a===t?r.unskip_effect(l):r.skip_effect(l);for(const[a,l]of this.#e)a===t?r.unskip_effect(l.effect):r.skip_effect(l.effect);r.oncommit(this.#s),r.ondiscard(this.#n)}else this.#s(r)}}function kt(e,t,n=!1){var r=new Ai(e),i=n?Fe:0;function s(f,a){r.ensure(f,a)}Ut(()=>{var f=!1;t((a,l=0)=>{f=!0,s(l,a)}),f||s(-1,null)},i)}function Ci(e,t,n){for(var r=[],i=t.length,s,f=t.length,a=0;a<i;a++){let d=t[a];Ae(d,()=>{if(s){if(s.pending.delete(d),s.done.add(d),s.pending.size===0){var c=e.outrogroups;Dt(e,pt(s.done)),c.delete(s),c.size===0&&(e.outrogroups=null)}}else f-=1},!1)}if(f===0){var l=r.length===0&&n!==null;if(l){var o=n,u=o.parentNode;ri(u),u.append(o),e.items.clear()}Dt(e,t,!l)}else s={pending:new Set(t),done:new Set},(e.outrogroups??=new Set).add(s)}function Dt(e,t,n=!0){var r;if(e.pending.size>0){r=new Set;for(const f of e.pending.values())for(const a of f)r.add(e.items.get(a).e)}for(var i=0;i<t.length;i++){var s=t[i];if(r?.has(s)){s.f|=ee;const f=document.createDocumentFragment();zt(s,f)}else q(t[i],n)}}var an;function ze(e,t,n,r,i,s=null){var f=e,a=new Map,l=(t&dn)!==0;if(l){var o=e;f=o.appendChild(we())}var u=null,d=Cn(()=>{var k=n();return vn(k)?k:k==null?[]:pt(k)}),c,h=new Map,v=!0;function g(k){(N.effect.f&V)===0&&(N.pending.delete(k),N.fallback=u,Ri(N,c,f,t,r),u!==null&&(c.length===0?(u.f&ee)===0?vt(u):(u.f^=ee,Ke(u,null,f)):Ae(u,()=>{u=null})))}function _(k){N.pending.delete(k)}var y=Ut(()=>{c=p(d);for(var k=c.length,I=new Set,K=b,oe=Hn(),F=0;F<k;F+=1){var re=c[F],ue=r(re,F),A=v?null:a.get(ue);A?(A.v&&Le(A.v,re),A.i&&Le(A.i,F),oe&&K.unskip_effect(A.e)):(A=Mi(a,v?f:an??=we(),re,ue,F,i,t,n),v||(A.e.f|=ee),a.set(ue,A)),I.add(ue)}if(k===0&&s&&!u&&(v?u=B(()=>s(f)):(u=B(()=>s(an??=we())),u.f|=ee)),k>I.size&&Rr(),!v)if(h.set(K,I),oe){for(const[mt,wt]of a)I.has(mt)||K.skip_effect(wt.e);K.oncommit(g),K.ondiscard(_)}else g(K);p(d)}),N={effect:y,items:a,pending:h,outrogroups:null,fallback:u};v=!1}function Ve(e){for(;e!==null&&(e.f&Y)===0;)e=e.next;return e}function Ri(e,t,n,r,i){var s=(r&vr)!==0,f=t.length,a=e.items,l=Ve(e.effect.first),o,u=null,d,c=[],h=[],v,g,_,y;if(s)for(y=0;y<f;y+=1)v=t[y],g=i(v,y),_=a.get(g).e,(_.f&ee)===0&&(_.nodes?.a?.measure(),(d??=new Set).add(_));for(y=0;y<f;y+=1){if(v=t[y],g=i(v,y),_=a.get(g).e,e.outrogroups!==null)for(const A of e.outrogroups)A.pending.delete(_),A.done.delete(_);if((_.f&L)!==0&&(vt(_),s&&(_.nodes?.a?.unfix(),(d??=new Set).delete(_))),(_.f&ee)!==0)if(_.f^=ee,_===l)Ke(_,null,n);else{var N=u?u.next:l;_===e.effect.last&&(e.effect.last=_.prev),_.prev&&(_.prev.next=_.next),_.next&&(_.next.prev=_.prev),_e(e,u,_),_e(e,_,N),Ke(_,N,n),u=_,c=[],h=[],l=Ve(u.next);continue}if(_!==l){if(o!==void 0&&o.has(_)){if(c.length<h.length){var k=h[0],I;u=k.prev;var K=c[0],oe=c[c.length-1];for(I=0;I<c.length;I+=1)Ke(c[I],k,n);for(I=0;I<h.length;I+=1)o.delete(h[I]);_e(e,K.prev,oe.next),_e(e,u,K),_e(e,oe,k),l=k,u=oe,y-=1,c=[],h=[]}else o.delete(_),Ke(_,l,n),_e(e,_.prev,_.next),_e(e,_,u===null?e.effect.first:u.next),_e(e,u,_),u=_;continue}for(c=[],h=[];l!==null&&l!==_;)(o??=new Set).add(l),h.push(l),l=Ve(l.next);if(l===null)continue}(_.f&ee)===0&&c.push(_),u=_,l=Ve(_.next)}if(e.outrogroups!==null){for(const A of e.outrogroups)A.pending.size===0&&(Dt(e,pt(A.done)),e.outrogroups?.delete(A));e.outrogroups.size===0&&(e.outrogroups=null)}if(l!==null||o!==void 0){var F=[];if(o!==void 0)for(_ of o)(_.f&L)===0&&F.push(_);for(;l!==null;)(l.f&L)===0&&l!==e.fallback&&F.push(l),l=Ve(l.next);var re=F.length;if(re>0){var ue=(r&dn)!==0&&f===0?n:null;if(s){for(y=0;y<re;y+=1)F[y].nodes?.a?.measure();for(y=0;y<re;y+=1)F[y].nodes?.a?.fix()}Ci(e,F,ue)}}s&&pe(()=>{if(d!==void 0)for(_ of d)_.nodes?.a?.apply()})}function Mi(e,t,n,r,i,s,f,a){var l=(f&dr)!==0?(f&_r)===0?Nt(n,!1,!1):Me(n):null,o=(f&hr)!==0?Me(i):null;return{v:l,i:o,e:B(()=>(s(t,l??n,o??i,a),()=>{e.delete(r)}))}}function Ke(e,t,n){if(e.nodes)for(var r=e.nodes.start,i=e.nodes.end,s=t&&(t.f&ee)===0?t.nodes.start:n;r!==null;){var f=rt(r);if(s.before(r),r===i)return;r=f}}function _e(e,t,n){t===null?e.effect.first=n:t.next=n,n===null?e.effect.last=t:n.prev=t}const Ni=Symbol("is custom element"),Oi=Symbol("is html");function xt(e,t,n,r){var i=Di(e);i[t]!==(i[t]=n)&&(t==="loading"&&(e[Sr]=n),n==null?e.removeAttribute(t):typeof n!="string"&&Ii(e).includes(t)?e[t]=n:e.setAttribute(t,n))}function Di(e){return e[wn]??={[Ni]:e.nodeName.includes("-"),[Oi]:e.namespaceURI===gr}}var on=new Map;function Ii(e){var t=e.getAttribute("is")||e.nodeName,n=on.get(t);if(n)return n;on.set(t,n=[]);for(var r,i=e,s=Element.prototype;s!==i;){r=_n(i);for(var f in r)r[f].set&&f!=="innerHTML"&&f!=="textContent"&&f!=="innerText"&&n.push(f);i=It(i)}return n}function Fi(e=!1){const t=T,n=t.l.u;if(!n)return;let r=()=>pi(t.s);if(e){let i=0,s={};const f=Pt(()=>{let a=!1;const l=t.s;for(const o in l)l[o]!==s[o]&&(s[o]=l[o],a=!0);return a&&i++,i});r=()=>p(f)}n.b.length&&fi(()=>{un(t,r),Tt(n.b)}),tn(()=>{const i=Jn(()=>n.m.map(kr));return()=>{for(const s of i)typeof s=="function"&&s()}}),n.a.length&&tn(()=>{un(t,r),Tt(n.a)})}function un(e,t){if(e.l.s)for(const n of e.l.s)p(n);t()}var Pi=Ee(\'<p class="empty-state">No semantic changes</p>\'),Li=Ee("<li><a> </a></li>"),ji=Ee("<ol></ol>"),St=Ee("<li> </li>"),Hi=Ee(\'<section aria-labelledby="gaps-heading" class="gap-card"><h2 id="gaps-heading">Not verified</h2> <ul></ul></section>\'),qi=Ee(\'<article tabindex="-1"><p class="eyebrow"> </p> <h2> </h2> <p> </p> <h3>Why</h3> <p> </p> <h3>Risk</h3> <ul></ul> <h3>Not verified</h3> <ul></ul></article>\'),$i=Ee(\'<div class="app-shell"><aside aria-label="Review queue"><p class="eyebrow">Review queue</p> <nav aria-label="Semantic changes"><!></nav></aside> <main id="main-content" tabindex="-1"><section aria-labelledby="summary-heading" class="summary-card"><p class="eyebrow"> </p> <h1 id="summary-heading">Utsuri review</h1> <p class="lead"> </p> <dl class="metrics"><div><dt>Files</dt> <dd> </dd></div> <div><dt>Additions</dt> <dd> </dd></div> <div><dt>Deletions</dt> <dd> </dd></div> <div><dt>Targets verified</dt> <dd> </dd></div></dl></section> <!> <!></main></div>\'),Ui=Ee(\'<p class="loading" aria-live="polite"> </p>\');function Bi(e,t){En(t,!1);let n=Nt(null),r=Nt("");async function i(){try{const o=await fetch("./report.json",{credentials:"omit"});if(!o.ok)throw new Error(`HTTP ${o.status}`);le(n,await o.json()),document.querySelector("[data-static-fallback]")?.remove()}catch(o){le(r,`Interactive data unavailable: ${o instanceof Error?o.message:String(o)}`)}}i(),Fi();var s=bi(),f=ni(s);{var a=o=>{var u=$i(),d=E(u),c=C(E(d),2),h=E(c);{var v=j=>{var O=Pi();W(j,O)},g=j=>{var O=ji();ze(O,5,()=>p(n).changes,ie=>ie.id,(ie,ce)=>{var de=Li(),he=E(de),$e=E(he);xe(()=>{xt(he,"href",`#${p(ce).id}`),P($e,p(ce).title)}),W(ie,de)}),W(j,O)};kt(h,j=>{p(n).changes.length===0?j(v):j(g,-1)})}var _=C(d,2),y=E(_),N=E(y),k=E(N),I=C(N,4),K=E(I),oe=C(I,2),F=E(oe),re=C(E(F),2),ue=E(re),A=C(F,2),mt=C(E(A),2),wt=E(mt),Vt=C(A,2),er=C(E(Vt),2),tr=E(er),nr=C(Vt,2),rr=C(E(nr),2),ir=E(rr),Yt=C(y,2);{var sr=j=>{var O=Hi(),ie=C(E(O),2);ze(ie,7,()=>p(n).diagnostics.incompleteReasons,(ce,de)=>`incomplete-${de}`,(ce,de)=>{var he=St(),$e=E(he);xe(()=>P($e,p(de))),W(ce,he)}),W(j,O)};kt(Yt,j=>{p(n).diagnostics.incompleteReasons.length>0&&j(sr)})}var lr=C(Yt,2);ze(lr,1,()=>p(n).changes,j=>j.id,(j,O)=>{var ie=qi(),ce=E(ie),de=E(ce),he=C(ce,2),$e=E(he),Gt=C(he,2),fr=E(Gt),Kt=C(Gt,4),ar=E(Kt),Wt=C(Kt,4);ze(Wt,7,()=>p(O).risk.reasons,(Ue,ke)=>`risk-${p(O).id}-${ke}`,(Ue,ke)=>{var Be=St(),yt=E(Be);xe(()=>P(yt,p(ke))),W(Ue,Be)});var or=C(Wt,4);ze(or,7,()=>p(O).verification.gaps,(Ue,ke)=>`gap-${p(O).id}-${ke}`,(Ue,ke)=>{var Be=St(),yt=E(Be);xe(()=>P(yt,p(ke))),W(Ue,Be)}),xe(()=>{xt(ie,"id",p(O).id),P(de,`${p(O).risk.level??""} risk · ${p(O).kind??""}`),P($e,p(O).title),P(fr,p(O).summary),P(ar,p(O).intent.text||"Intent unknown")}),W(j,ie)}),xe(()=>{P(k,p(n).status),P(K,p(n).summary.statement),P(ue,p(n).summary.filesChanged),P(wt,`+${p(n).summary.additions??""}`),P(tr,`−${p(n).summary.deletions??""}`),P(ir,`${p(n).coverage.succeeded??""}/${p(n).coverage.planned??""}`)}),W(o,u)},l=o=>{var u=Ui(),d=E(u);xe(()=>{xt(u,"role",p(r)?"alert":"status"),P(d,p(r)||"Loading review data…")}),W(o,u)};kt(f,o=>{p(n)?o(a):o(l,-1)})}W(e,s),kn()}const cn=document.querySelector("[data-utsuri-app]");cn&&xi(Bi,{target:cn});\n';
-var reportUiCss = ":root{color-scheme:light dark;font-family:-apple-system,BlinkMacSystemFont,Segoe UI,sans-serif;font-size:16px;--bg: #f5f5f2;--surface: #ffffff;--surface-muted: #ecece7;--text: #191918;--muted: #5d5d58;--border: #d4d4cd;--accent: #17634a;--warning: #8a4b08;--focus: #006adc}@media (prefers-color-scheme: dark){:root{--bg: #111210;--surface: #1b1d1a;--surface-muted: #252824;--text: #f4f5f2;--muted: #b7bbb3;--border: #3a3e38;--accent: #7bdcb5;--warning: #f5b86a;--focus: #70b8ff}}*{box-sizing:border-box}html{background:var(--bg);color:var(--text)}body{margin:0;min-width:320px}a{color:var(--accent);text-underline-offset:.18em}:focus-visible{outline:3px solid var(--focus);outline-offset:3px}.skip-link{position:fixed;inset:0 auto auto 0;transform:translateY(-120%);padding:.75rem 1rem;background:var(--surface);z-index:10}.skip-link:focus{transform:translateY(0)}.app-shell{display:grid;grid-template-columns:minmax(13rem,19rem) minmax(0,1fr);min-height:100vh}aside{border-right:1px solid var(--border);padding:2rem 1.25rem;background:var(--surface-muted)}aside ol{list-style:decimal-leading-zero;padding-left:1.75rem}aside li+li{margin-top:.75rem}main{width:min(100%,72rem);padding:clamp(1.5rem,4vw,4rem)}.summary-card,article,.gap-card{background:var(--surface);border:1px solid var(--border);border-radius:1rem;padding:clamp(1.25rem,3vw,2.25rem)}article,.gap-card{margin-top:1.25rem}.gap-card{border-left:.4rem solid var(--warning)}.eyebrow{color:var(--muted);font-size:.8125rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase}h1{font-size:clamp(2rem,5vw,3.5rem);letter-spacing:-.035em;line-height:1.05;margin:.25rem 0 1rem}h2{font-size:clamp(1.35rem,3vw,2rem);line-height:1.2}h3{margin-top:1.5rem}.lead{color:var(--muted);font-size:1.125rem;line-height:1.55;max-width:55rem}.metrics{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:1px;background:var(--border);border:1px solid var(--border);border-radius:.75rem;overflow:hidden;margin:2rem 0 0}.metrics div{background:var(--surface-muted);padding:1rem}.metrics dt{color:var(--muted);font-size:.75rem}.metrics dd{font-size:1.35rem;font-weight:700;margin:.25rem 0 0}.loading{margin:3rem}.empty-state{color:var(--muted)}@media (max-width: 800px){.app-shell{display:block}aside{border-bottom:1px solid var(--border);border-right:0}.metrics{grid-template-columns:repeat(2,minmax(0,1fr))}}@media (prefers-reduced-motion: reduce){*,*:before,*:after{scroll-behavior:auto!important;transition-duration:.01ms!important;animation-duration:.01ms!important}}\n";
+var reportUiJavaScript = 'typeof window<"u"&&((window.__svelte??={}).v??=new Set).add("5");let hn=!1,Na=!1;function Oa(){hn=!0}Oa();const $a=1,Fa=2,Ti=4,Pa=8,Ha=16,Ua=2,J=Symbol("uninitialized"),ja="http://www.w3.org/1999/xhtml",Ci=!1;var Ai=Array.isArray,Ba=Array.prototype.indexOf,In=Array.prototype.includes,Fn=Array.from,Va=Object.defineProperty,on=Object.getOwnPropertyDescriptor,Ri=Object.getOwnPropertyDescriptors,za=Object.prototype,Ya=Array.prototype,hr=Object.getPrototypeOf,fi=Object.isExtensible;const Ga=()=>{};function Wa(e){return e()}function ir(e){for(var t=0;t<e.length;t++)e[t]()}function Li(){var e,t,n=new Promise((s,i)=>{e=s,t=i});return{promise:n,resolve:e,reject:t}}const ne=2,dn=4,_n=8,Ii=1<<24,Pe=16,Re=32,rt=64,sr=128,Te=512,K=1024,Q=2048,Ce=4096,ue=8192,Ae=16384,Bt=32768,ui=1<<25,Ht=65536,Mn=1<<17,Ka=1<<18,Vt=1<<19,Mi=1<<20,ze=1<<25,At=65536,qn=1<<21,Pt=1<<22,dt=1<<23,fn=Symbol("$state"),Qa=Symbol(""),qi=Symbol("attributes"),ar=Symbol("class"),Xa=Symbol("style"),lr=Symbol("text"),An=Symbol("form reset"),pn=new class extends Error{name="StaleReactionError";message="The reaction that called `getAbortSignal()` was re-run or destroyed"};function Za(e){throw new Error("https://svelte.dev/e/lifecycle_outside_component")}function Ja(){throw new Error("https://svelte.dev/e/async_derived_orphan")}function el(e,t,n){throw new Error("https://svelte.dev/e/each_key_duplicate")}function tl(e){throw new Error("https://svelte.dev/e/effect_in_teardown")}function nl(){throw new Error("https://svelte.dev/e/effect_in_unowned_derived")}function rl(e){throw new Error("https://svelte.dev/e/effect_orphan")}function il(){throw new Error("https://svelte.dev/e/effect_update_depth_exceeded")}function sl(){throw new Error("https://svelte.dev/e/state_descriptors_fixed")}function al(){throw new Error("https://svelte.dev/e/state_prototype_fixed")}function ll(){throw new Error("https://svelte.dev/e/state_unsafe_mutation")}function ol(){throw new Error("https://svelte.dev/e/svelte_boundary_reset_onerror")}function fl(){console.warn("https://svelte.dev/e/derived_inert")}function ul(){console.warn("https://svelte.dev/e/svelte_boundary_reset_noop")}function Di(e){return e===this.v}function cl(e,t){return e!=e?t==t:e!==t||e!==null&&typeof e=="object"||typeof e=="function"}function Ni(e){return!cl(e,this.v)}let H=null;function Ut(e){H=e}function Oi(e,t=!1,n){H={p:H,i:!1,c:null,e:null,s:e,x:null,r:L,l:hn&&!t?{s:null,u:null,$:[]}:null}}function $i(e){var t=H,n=t.e;if(n!==null){t.e=null;for(var s of n)ts(s)}return t.i=!0,H=t.p,{}}function gn(){return!hn||H!==null&&H.l===null}let kt=[];function Fi(){var e=kt;kt=[],ir(e)}function ut(e){if(kt.length===0&&!un){var t=kt;queueMicrotask(()=>{t===kt&&Fi()})}kt.push(e)}function dl(){for(;kt.length>0;)Fi()}function Pi(e){var t=L;if(t===null)return I.f|=dt,e;if((t.f&Bt)===0&&(t.f&dn)===0)throw e;ct(e,t)}function ct(e,t){if(!(t!==null&&(t.f&Ae)!==0)){for(;t!==null;){if((t.f&sr)!==0){if((t.f&Bt)===0)throw e;try{t.b.error(e);return}catch(n){e=n}}t=t.parent}throw e}}const vl=-7169;function z(e,t){e.f=e.f&vl|t}function _r(e){(e.f&Te)!==0||e.deps===null?z(e,K):z(e,Ce)}function Hi(e){if(e!==null)for(const t of e)(t.f&ne)===0||(t.f&At)===0||(t.f^=At,Hi(t.deps))}function Ui(e,t,n){(e.f&Q)!==0?t.add(e):(e.f&Ce)!==0&&n.add(e),Hi(e.deps),z(e,K)}let ci=!1;function hl(){ci||(ci=!0,document.addEventListener("reset",e=>{Promise.resolve().then(()=>{if(!e.defaultPrevented)for(const t of e.target.elements)t[An]?.()})},{capture:!0}))}function mn(e){var t=I,n=L;Le(null),Ie(null);try{return e()}finally{Le(t),Ie(n)}}function _l(e,t,n,s=n){e.addEventListener(t,()=>mn(n));const i=e[An];i?e[An]=()=>{i(),s(!0)}:e[An]=()=>s(!0),hl()}function pl(e){let t=0,n=Rt(0),s;return()=>{wr()&&(r(n),Pn(()=>(t===0&&(s=f(()=>e(()=>cn(n)))),t+=1,()=>{ut(()=>{t-=1,t===0&&(s?.(),s=void 0,cn(n))})})))}}var gl=Ht|Vt;function ml(e,t,n,s){new yl(e,t,n,s)}class yl{parent;is_pending=!1;transform_error;#t;#a=null;#e;#o;#r;#s=null;#n=null;#l=null;#i=null;#_=0;#f=0;#u=!1;#d=new Set;#p=new Set;#c=null;#m=pl(()=>(this.#c=Rt(this.#_),()=>{this.#c=null}));constructor(t,n,s,i){this.#t=t,this.#e=n,this.#o=a=>{var u=L;u.b=this,u.f|=sr,s(a)},this.parent=L.b,this.transform_error=i??this.parent?.transform_error??(a=>a),this.#r=xr(()=>{this.#v()},gl)}#g(){try{this.#s=Se(()=>this.#o(this.#t))}catch(t){this.error(t)}}#w(t){const n=this.#e.failed,{reset:s,invoke_onerror:i}=this.#y(t);ut(i),n&&(this.#l=Se(()=>{n(this.#t,()=>t,()=>s)}))}#y(t){var n=!1,s=!1;const i=()=>{if(n){ul();return}n=!0,s&&ol(),this.#l!==null&&Tt(this.#l,()=>{this.#l=null}),this.#h(()=>{this.#v()})};return{reset:i,invoke_onerror:()=>{try{s=!0,this.#e.onerror?.(t,i),s=!1}catch(u){ct(u,this.#r&&this.#r.parent)}}}}#x(){const t=this.#e.pending;t&&(this.is_pending=!0,this.#n=Se(()=>t(this.#t)),ut(()=>{var n=this.#i=document.createDocumentFragment(),s=vt();n.append(s),this.#s=this.#h(()=>Se(()=>this.#o(s))),this.#f===0&&(this.#t.before(n),this.#i=null,Tt(this.#n,()=>{this.#n=null}),this.#b(A))}))}#v(){try{if(this.is_pending=this.has_pending_snippet(),this.#f=0,this.#_=0,this.#s=Se(()=>{this.#o(this.#t)}),this.#f>0){var t=this.#i=document.createDocumentFragment();Er(this.#s,t);const n=this.#e.pending;this.#n=Se(()=>n(this.#t))}else this.#b(A)}catch(n){this.error(n)}}#b(t){this.is_pending=!1,t.transfer_effects(this.#d,this.#p)}defer_effect(t){Ui(t,this.#d,this.#p)}is_rendered(){return!this.is_pending&&(!this.parent||this.parent.is_rendered())}has_pending_snippet(){return!!this.#e.pending}#h(t){var n=L,s=I,i=H;Ie(this.#r),Le(this.#r),Ut(this.#r.ctx);try{return ht.ensure(),t()}catch(a){return Pi(a),null}finally{Ie(n),Le(s),Ut(i)}}#k(t,n){if(!this.has_pending_snippet()){this.parent&&this.parent.#k(t,n);return}this.#f+=t,this.#f===0&&(this.#b(n),this.#n&&Tt(this.#n,()=>{this.#n=null}),this.#i&&(this.#t.before(this.#i),this.#i=null))}update_pending_count(t,n){this.#k(t,n),this.#_+=t,!(!this.#c||this.#u)&&(this.#u=!0,ut(()=>{this.#u=!1,this.#c&&jt(this.#c,this.#_)}))}get_effect_pending(){return this.#m(),r(this.#c)}error(t){if(!this.#e.onerror&&!this.#e.failed)throw t;A?.is_fork?(this.#s&&A.skip_effect(this.#s),this.#n&&A.skip_effect(this.#n),this.#l&&A.skip_effect(this.#l),A.oncommit(()=>{this.#E(t)})):this.#E(t)}#E(t){this.#s&&(ve(this.#s),this.#s=null),this.#n&&(ve(this.#n),this.#n=null),this.#l&&(ve(this.#l),this.#l=null);let n=this.#e.failed;const s=i=>{const{reset:a,invoke_onerror:u}=this.#y(i);u(),n&&(this.#l=this.#h(()=>{try{return Se(()=>{var c=L;c.b=this,c.f|=sr,n(this.#t,()=>i,()=>a)})}catch(c){return ct(c,this.#r.parent),null}}))};ut(()=>{var i;try{i=this.transform_error(t)}catch(a){ct(a,this.#r&&this.#r.parent);return}i!==null&&typeof i=="object"&&typeof i.then=="function"?i.then(s,a=>ct(a,this.#r&&this.#r.parent)):s(i)})}}function bl(e,t,n,s){const i=gn()?pr:Nn;var a=e.filter(v=>!v.settled),u=t.map(i);if(n.length===0&&a.length===0){s(u);return}var c=L,l=wl(),d=a.length===1?a[0].promise:a.length>1?Promise.all(a.map(v=>v.promise)):null;function g(v){if((c.f&Ae)===0){l();try{s([...u,...v])}catch(b){ct(b,c)}Dn()}}var m=ji();if(n.length===0){d.then(()=>g([])).finally(m);return}function _(){Promise.all(n.map(v=>xl(v))).then(g).catch(v=>ct(v,c)).finally(m)}d?d.then(()=>{l(),_(),Dn()}):_()}function wl(){var e=L,t=I,n=H,s=A;return function(a=!0){Ie(e),Le(t),Ut(n),a&&(e.f&Ae)===0&&(s?.activate(),s?.apply())}}function Dn(e=!0){Ie(null),Le(null),Ut(null),e&&A?.deactivate()}function ji(){var e=L,t=e.b,n=A,s=!!t?.is_rendered();return t?.update_pending_count(1,n),n.increment(s,e),()=>{t?.update_pending_count(-1,n),n.decrement(s,e)}}function pr(e){var t=ne|Q;return L!==null&&(L.f|=Vt),{ctx:H,deps:null,effects:null,equals:Di,f:t,fn:e,reactions:null,rv:0,v:J,wv:0,parent:L,ac:null}}const rn=Symbol("obsolete");function xl(e,t,n){let s=L;s===null&&Ja();var i=void 0,a=Rt(J),u=!I,c=new Set;return $l(()=>{var l=L,d=Li();i=d.promise;try{Promise.resolve(e()).then(d.resolve,v=>{v!==pn&&d.reject(v)}).finally(Dn)}catch(v){d.reject(v),Dn()}var g=A;if(u){if((l.f&Bt)!==0)var m=ji();if(s.b?.is_rendered())g.async_deriveds.get(l)?.reject(rn);else for(const v of c.values())v.reject(rn);c.add(d),g.async_deriveds.set(l,d)}const _=(v,b=void 0)=>{m?.(),c.delete(d),b!==rn&&(g.activate(),b?(a.f|=dt,jt(a,b)):((a.f&dt)!==0&&(a.f^=dt),jt(a,v)),g.deactivate())};d.promise.then(_,v=>_(null,v||"unknown"))}),ql(()=>{for(const l of c)l.reject(rn)}),new Promise(l=>{function d(g){function m(){g===i?l(a):d(i)}g.then(m,m)}d(i)})}function Nn(e){const t=pr(e);return t.equals=Ni,t}function kl(e){var t=e.effects;if(t!==null){e.effects=null;for(var n=0;n<t.length;n+=1)ve(t[n])}}function gr(e){var t,n=L,s=e.parent;if(!_t&&s!==null&&e.v!==J&&(s.f&(Ae|ue))!==0)return fl(),e.v;Ie(s);try{e.f&=~At,kl(e),t=fs(e)}finally{Ie(n)}return t}function Bi(e){var t=gr(e);if(!e.equals(t)&&(e.wv=ls(),(!A?.is_fork||e.deps===null)&&(A!==null?(A.capture(e,t,!0),or?.capture(e,t,!0)):e.v=t,e.deps===null))){z(e,K);return}_t||(He!==null?(wr()||A?.is_fork)&&He.set(e,t):_r(e))}function El(e){if(e.effects!==null)for(const t of e.effects)(t.teardown||t.ac)&&(t.teardown?.(),t.ac!==null&&mn(()=>{t.ac.abort(pn),t.ac=null}),t.fn!==null&&(t.teardown=Ga),vn(t,0),kr(t))}function Vi(e){if(e.effects!==null)for(const t of e.effects)t.teardown&&t.fn!==null&&Lt(t)}let er=null,$t=null,A=null,or=null,He=null,fr=null,un=!1,tr=!1,Ft=null,Rn=null;var di=0;let Sl=1;class ht{id=Sl++;#t=!1;linked=!0;#a=null;#e=null;async_deriveds=new Map;current=new Map;previous=new Map;#o=new Set;#r=new Set;#s=0;#n=new Map;#l=null;#i=[];#_=[];#f=new Set;#u=new Set;#d=new Map;#p=new Set;is_fork=!1;#c=!1;constructor(){$t===null?er=$t=this:($t.#e=this,this.#a=$t),$t=this}#m(){if(this.is_fork)return!0;for(const s of this.#n.keys()){for(var t=s,n=!1;t.parent!==null;){if(this.#d.has(t)){n=!0;break}t=t.parent}if(!n)return!0}return!1}skip_effect(t){this.#d.has(t)||this.#d.set(t,{d:[],m:[]}),this.#p.delete(t)}unskip_effect(t,n=s=>this.schedule(s)){var s=this.#d.get(t);if(s){this.#d.delete(t);for(var i of s.d)z(i,Q),n(i);for(i of s.m)z(i,Ce),n(i)}this.#p.add(t)}#g(){this.#t=!0,di++>1e3&&(this.#h(),Cl());for(const l of this.#f)this.#u.delete(l),z(l,Q),this.schedule(l);for(const l of this.#u)z(l,Ce),this.schedule(l);const t=this.#i;this.#i=[],this.apply();var n=Ft=[],s=[],i=Rn=[];for(const l of t)try{this.#w(l,n,s)}catch(d){throw Gi(l),this.#m()||this.discard(),d}if(A=null,i.length>0){var a=ht.ensure();for(const l of i)a.schedule(l)}if(Ft=null,Rn=null,this.#m()){this.#v(s),this.#v(n);for(const[l,d]of this.#d)Yi(l,d);i.length>0&&A.#g();return}const u=this.#y();if(u){this.#v(s),this.#v(n),u.#x(this);return}this.#f.clear(),this.#u.clear();for(const l of this.#o)l(this);this.#o.clear(),or=this,vi(s),vi(n),or=null,this.#l?.resolve();var c=A;if(this.#s===0&&(this.#i.length===0||c!==null)&&this.#h(),this.#i.length>0)if(c!==null){const l=c;l.#i.push(...this.#i.filter(d=>!l.#i.includes(d)))}else c=this;c!==null&&c.#g()}#w(t,n,s){t.f^=K;for(var i=t.first;i!==null;){var a=i.f,u=(a&(Re|rt))!==0,c=u&&(a&K)!==0,l=c||(a&ue)!==0||this.#d.has(i);if(!l&&i.fn!==null){u?i.f^=K:(a&dn)!==0?n.push(i):zt(i)&&((a&Pe)!==0&&this.#u.add(i),Lt(i));var d=i.first;if(d!==null){i=d;continue}}for(;i!==null;){var g=i.next;if(g!==null){i=g;break}i=i.parent}}}#y(){for(var t=this.#a;t!==null;){if(!t.is_fork){for(const[n,[,s]]of this.current)if(t.current.has(n)&&!s)return t}t=t.#a}return null}#x(t){for(const[s,i]of t.current)!this.previous.has(s)&&t.previous.has(s)&&this.previous.set(s,t.previous.get(s)),this.current.set(s,i);for(const[s,i]of t.async_deriveds){const a=this.async_deriveds.get(s);a&&i.promise.then(a.resolve).catch(a.reject)}t.async_deriveds.clear(),this.transfer_effects(t.#f,t.#u);const n=s=>{var i=s.reactions;if(i!==null&&!((s.f&ne)!==0&&(s.f&(Q|Ce))===0))for(const c of i){var a=c.f;if((a&ne)!==0)n(c);else{var u=c;a&(Pt|Pe)&&!this.async_deriveds.has(u)&&(this.#u.delete(u),z(u,Q),this.schedule(u))}}};for(const s of this.current.keys())n(s);this.oncommit(()=>t.discard()),t.#h(),A=this,this.#g()}#v(t){for(var n=0;n<t.length;n+=1)Ui(t[n],this.#f,this.#u)}capture(t,n,s=!1){t.v!==J&&!this.previous.has(t)&&this.previous.set(t,t.v),(t.f&dt)===0&&(this.current.set(t,[n,s]),He?.set(t,n)),this.is_fork||(t.v=n)}activate(){A=this}deactivate(){A=null,He=null}flush(){try{tr=!0,A=this,this.#g()}finally{di=0,fr=null,Ft=null,Rn=null,tr=!1,A=null,He=null,St.clear()}}discard(){for(const t of this.#r)t(this);this.#r.clear();for(const t of this.async_deriveds.values())t.reject(rn);this.#h(),this.#l?.resolve()}register_created_effect(t){this.#_.push(t)}#b(){for(let m=er;m!==null;m=m.#e){var t=m.id<this.id,n=[];for(const[_,[v,b]]of this.current){if(m.current.has(_)){var s=m.current.get(_)[0];if(t&&v!==s)m.current.set(_,[v,b]);else continue}n.push(_)}if(t)for(const[_,v]of this.async_deriveds){const b=m.async_deriveds.get(_);b&&v.promise.then(b.resolve).catch(b.reject)}var i=[...m.current.keys()].filter(_=>!m.current.get(_)[1]);if(!(!m.#t||i.length===0)){var a=i.filter(_=>!this.current.has(_));if(a.length===0)t&&m.discard();else if(n.length>0){if(t)for(const _ of this.#p)m.unskip_effect(_,v=>{(v.f&(Pe|Pt))!==0?m.schedule(v):m.#v([v])});m.activate();var u=new Set,c=new Map;for(var l of n)zi(l,a,u,c);c=new Map;var d=[...m.current].filter(([_,v])=>{const b=this.current.get(_);return b?b[0]!==v[0]||b[1]!==v[1]:!0}).map(([_])=>_);if(d.length>0)for(const _ of this.#_)(_.f&(Ae|ue|Mn))===0&&mr(_,d,c)&&((_.f&(Pt|Pe))!==0?(z(_,Q),m.schedule(_)):m.#f.add(_));if(m.#i.length>0&&!m.#c){m.apply();for(var g of m.#i)m.#w(g,[],[]);m.#i=[]}m.deactivate()}}}}increment(t,n){if(this.#s+=1,t){let s=this.#n.get(n)??0;this.#n.set(n,s+1)}}decrement(t,n){if(this.#s-=1,t){let s=this.#n.get(n)??0;s===1?this.#n.delete(n):this.#n.set(n,s-1)}this.#c||(this.#c=!0,ut(()=>{this.#c=!1,this.linked&&this.flush()}))}transfer_effects(t,n){for(const s of t)this.#f.add(s);for(const s of n)this.#u.add(s);t.clear(),n.clear()}oncommit(t){this.#o.add(t)}ondiscard(t){this.#r.add(t)}settled(){return(this.#l??=Li()).promise}static ensure(){if(A===null){const t=A=new ht;!tr&&!un&&ut(()=>{t.#t||t.flush()})}return A}apply(){{He=null;return}}schedule(t){if(fr=t,t.b?.is_pending&&(t.f&(dn|_n|Ii))!==0&&(t.f&Bt)===0){t.b.defer_effect(t);return}for(var n=t;n.parent!==null;){n=n.parent;var s=n.f;if(Ft!==null&&n===L&&(I===null||(I.f&ne)===0))return;if((s&(rt|Re))!==0){if((s&K)===0)return;n.f^=K}}this.#i.push(n)}#h(){if(this.linked){var t=this.#a,n=this.#e;t===null?er=n:t.#e=n,n===null?$t=t:n.#a=t,this.linked=!1}}}function Tl(e){var t=un;un=!0;try{for(var n;;){if(dl(),A===null)return n;A.flush()}}finally{un=t}}function Cl(){try{il()}catch(e){ct(e,fr)}}let nt=null;function vi(e){var t=e.length;if(t!==0){for(var n=0;n<t;){var s=e[n++];if((s.f&(Ae|ue))===0&&zt(s)&&(nt=new Set,Lt(s),s.deps===null&&s.first===null&&s.nodes===null&&s.teardown===null&&s.ac===null&&rs(s),nt?.size>0)){St.clear();for(const i of nt){if((i.f&(Ae|ue))!==0)continue;const a=[i];let u=i.parent;for(;u!==null;)nt.has(u)&&(nt.delete(u),a.push(u)),u=u.parent;for(let c=a.length-1;c>=0;c--){const l=a[c];(l.f&(Ae|ue))===0&&Lt(l)}}nt.clear()}}nt=null}}function zi(e,t,n,s){if(!n.has(e)&&(n.add(e),e.reactions!==null))for(const i of e.reactions){const a=i.f;(a&ne)!==0?zi(i,t,n,s):(a&(Pt|Pe))!==0&&(a&Q)===0&&mr(i,t,s)&&(z(i,Q),yr(i))}}function mr(e,t,n){const s=n.get(e);if(s!==void 0)return s;if(e.deps!==null)for(const i of e.deps){if(In.call(t,i))return!0;if((i.f&ne)!==0&&mr(i,t,n))return n.set(i,!0),!0}return n.set(e,!1),!1}function yr(e){A.schedule(e)}function Yi(e,t){if(!((e.f&Re)!==0&&(e.f&K)!==0)){(e.f&Q)!==0?t.d.push(e):(e.f&Ce)!==0&&t.m.push(e),z(e,K);for(var n=e.first;n!==null;)Yi(n,t),n=n.next}}function Gi(e){z(e,K);for(var t=e.first;t!==null;)Gi(t),t=t.next}let On=new Set;const St=new Map;let Wi=!1;function Rt(e,t){var n={f:0,v:e,reactions:null,equals:Di,rv:0,wv:0};return n}function ot(e,t){const n=Rt(e);return Hl(n),n}function ye(e,t=!1,n=!0){const s=Rt(e);return t||(s.equals=Ni),hn&&n&&H!==null&&H.l!==null&&(H.l.s??=[]).push(s),s}function q(e,t,n=!1){I!==null&&(!Ue||(I.f&Mn)!==0)&&gn()&&(I.f&(ne|Pe|Pt|Mn))!==0&&(Ye===null||!Ye.has(e))&&ll();let s=n?sn(t):t;return jt(e,s,Rn)}function jt(e,t,n=null){if(!e.equals(t)){St.set(e,_t?t:e.v);var s=ht.ensure();if(s.capture(e,t),(e.f&ne)!==0){const i=e;(e.f&Q)!==0&&gr(i),He===null&&_r(i)}e.wv=ls(),Ki(e,Q,n),gn()&&L!==null&&(L.f&K)!==0&&(L.f&(Re|rt))===0&&(Ee===null?Ul([e]):Ee.push(e)),!s.is_fork&&On.size>0&&!Wi&&Al()}return t}function Al(){Wi=!1;for(const e of On){(e.f&K)!==0&&z(e,Ce);let t;try{t=zt(e)}catch{t=!0}t&&Lt(e)}On.clear()}function cn(e){q(e,e.v+1)}function Ki(e,t,n){var s=e.reactions;if(s!==null)for(var i=gn(),a=s.length,u=0;u<a;u++){var c=s[u],l=c.f;if(!(!i&&c===L)){var d=(l&Q)===0;if(d&&z(c,t),(l&Mn)!==0)On.add(c);else if((l&ne)!==0){var g=c;He?.delete(g),(l&At)===0&&(l&Te&&(L===null||(L.f&qn)===0)&&(c.f|=At),Ki(g,Ce,n))}else if(d){var m=c;(l&Pe)!==0&&nt!==null&&nt.add(m),n!==null?n.push(m):yr(m)}}}}function sn(e){if(typeof e!="object"||e===null||fn in e)return e;const t=hr(e);if(t!==za&&t!==Ya)return e;var n=new Map,s=Ai(e),i=ot(0),a=Ct,u=c=>{if(Ct===a)return c();var l=I,d=Ct;Le(null),pi(a);var g=c();return Le(l),pi(d),g};return s&&n.set("length",ot(e.length)),new Proxy(e,{defineProperty(c,l,d){(!("value"in d)||d.configurable===!1||d.enumerable===!1||d.writable===!1)&&sl();var g=n.get(l);return g===void 0?u(()=>{var m=ot(d.value);return n.set(l,m),m}):q(g,d.value,!0),!0},deleteProperty(c,l){var d=n.get(l);if(d===void 0){if(l in c){const g=u(()=>ot(J));n.set(l,g),cn(i)}}else q(d,J),cn(i);return!0},get(c,l,d){if(l===fn)return e;var g=n.get(l),m=l in c;if(g===void 0&&(!m||on(c,l)?.writable)&&(g=u(()=>{var v=sn(m?c[l]:J),b=ot(v);return b}),n.set(l,g)),g!==void 0){var _=r(g);return _===J?void 0:_}return Reflect.get(c,l,d)},getOwnPropertyDescriptor(c,l){var d=Reflect.getOwnPropertyDescriptor(c,l);if(d&&"value"in d){var g=n.get(l);g&&(d.value=r(g))}else if(d===void 0){var m=n.get(l),_=m?.v;if(m!==void 0&&_!==J)return{enumerable:!0,configurable:!0,value:_,writable:!0}}return d},has(c,l){if(l===fn)return!0;var d=n.get(l),g=d!==void 0&&d.v!==J||Reflect.has(c,l);if(d!==void 0||L!==null&&(!g||on(c,l)?.writable)){d===void 0&&(d=u(()=>{var _=g?sn(c[l]):J,v=ot(_);return v}),n.set(l,d));var m=r(d);if(m===J)return!1}return g},set(c,l,d,g){var m=n.get(l),_=l in c;if(s&&l==="length")for(var v=d;v<m.v;v+=1){var b=n.get(v+"");b!==void 0?q(b,J):v in c&&(b=u(()=>ot(J)),n.set(v+"",b))}if(m===void 0)(!_||on(c,l)?.writable)&&(m=u(()=>ot(void 0)),q(m,sn(d)),n.set(l,m));else{_=m.v!==J;var T=u(()=>sn(d));q(m,T)}var w=Reflect.getOwnPropertyDescriptor(c,l);if(w?.set&&w.set.call(g,d),!_){if(s&&typeof l=="string"){var E=n.get("length"),G=Number(l);Number.isInteger(G)&&G>=E.v&&q(E,G+1)}cn(i)}return!0},ownKeys(c){r(i);var l=Reflect.ownKeys(c).filter(m=>{var _=n.get(m);return _===void 0||_.v!==J});for(var[d,g]of n)g.v!==J&&!(d in c)&&l.push(d);return l},setPrototypeOf(){al()}})}var hi,Qi,Xi,Zi;function Rl(){if(hi===void 0){hi=window,Qi=/Firefox/.test(navigator.userAgent);var e=Element.prototype,t=Node.prototype,n=Text.prototype;Xi=on(t,"firstChild").get,Zi=on(t,"nextSibling").get,fi(e)&&(e[ar]=void 0,e[qi]=null,e[Xa]=void 0,e.__e=void 0),fi(n)&&(n[lr]=void 0)}}function vt(e=""){return document.createTextNode(e)}function br(e){return Xi.call(e)}function yn(e){return Zi.call(e)}function o(e,t){return br(e)}function Jt(e,t=!1){{var n=br(e);return n instanceof Comment&&n.data===""?yn(n):n}}function p(e,t=1,n=!1){let s=e;for(;t--;)s=yn(s);return s}function Ll(e){e.textContent=""}function Ji(){return!1}function Il(e,t,n){return n?document.createElement(e,{is:n}):document.createElement(e)}function es(e){L===null&&(I===null&&rl(),nl()),_t&&tl()}function Ml(e,t){var n=t.last;n===null?t.last=t.first=e:(n.next=e,e.prev=n,t.last=e)}function it(e,t){var n=L;n!==null&&(n.f&ue)!==0&&(e|=ue);var s={ctx:H,deps:null,nodes:null,f:e|Q|Te,first:null,fn:t,last:null,next:null,parent:n,b:n&&n.b,prev:null,teardown:null,wv:0,ac:null};A?.register_created_effect(s);var i=s;if((e&dn)!==0)Ft!==null?Ft.push(s):ht.ensure().schedule(s);else if(t!==null){try{Lt(s)}catch(u){throw ve(s),u}i.deps===null&&i.teardown===null&&i.nodes===null&&i.first===i.last&&(i.f&Vt)===0&&(i=i.first,(e&Pe)!==0&&(e&Ht)!==0&&i!==null&&(i.f|=Ht))}if(i!==null&&(i.parent=n,n!==null&&Ml(i,n),I!==null&&(I.f&ne)!==0&&(e&rt)===0)){var a=I;(a.effects??=[]).push(i)}return s}function wr(){return I!==null&&!Ue}function ql(e){const t=it(_n,null);return z(t,K),t.teardown=e,t}function ur(e){es();var t=L.f,n=!I&&(t&Re)!==0&&H!==null&&!H.i;if(n){var s=H;(s.e??=[]).push(e)}else return ts(e)}function ts(e){return it(dn|Mi,e)}function Dl(e){return es(),it(_n|Mi,e)}function Nl(e){ht.ensure();const t=it(rt|Vt,e);return(n={})=>new Promise(s=>{n.outro?Tt(t,()=>{ve(t),s(void 0)}):(ve(t),s(void 0))})}function en(e,t){var n=H,s={effect:null,ran:!1,deps:e};n.l.$.push(s),s.effect=Pn(()=>{if(e(),!s.ran){s.ran=!0;var i=L;try{Ie(i.parent),f(t)}finally{Ie(i)}}})}function Ol(){var e=H;Pn(()=>{for(var t of e.l.$){t.deps();var n=t.effect;(n.f&K)!==0&&n.deps!==null&&z(n,Ce),zt(n)&&Lt(n),t.ran=!1}})}function $l(e){return it(Pt|Vt,e)}function Pn(e,t=0){return it(_n|t,e)}function D(e,t=[],n=[],s=[]){bl(s,t,n,i=>{it(_n,()=>{e(...i.map(r))})})}function xr(e,t=0){var n=it(Pe|t,e);return n}function Se(e){return it(Re|Vt,e)}function ns(e){var t=e.teardown;if(t!==null){const n=_t,s=I;_i(!0),Le(null);try{t.call(null)}finally{_i(n),Le(s)}}}function kr(e,t=!1){var n=e.first;for(e.first=e.last=null;n!==null;){const i=n.ac;i!==null&&mn(()=>{i.abort(pn)});var s=n.next;(n.f&rt)!==0?n.parent=null:ve(n,t),n=s}}function Fl(e){for(var t=e.first;t!==null;){var n=t.next;(t.f&Re)===0&&ve(t),t=n}}function ve(e,t=!0){var n=!1;(t||(e.f&Ka)!==0)&&e.nodes!==null&&e.nodes.end!==null&&(Pl(e.nodes.start,e.nodes.end),n=!0),e.f|=ui,kr(e,t&&!n),vn(e,0);var s=e.nodes&&e.nodes.t;if(s!==null)for(const a of s)a.stop();ns(e),e.f^=ui,e.f|=Ae;var i=e.parent;i!==null&&i.first!==null&&rs(e),e.next=e.prev=e.teardown=e.ctx=e.deps=e.fn=e.nodes=e.ac=e.b=null}function Pl(e,t){for(;e!==null;){var n=e===t?null:yn(e);e.remove(),e=n}}function rs(e){var t=e.parent,n=e.prev,s=e.next;n!==null&&(n.next=s),s!==null&&(s.prev=n),t!==null&&(t.first===e&&(t.first=s),t.last===e&&(t.last=n))}function Tt(e,t,n=!0){var s=[];is(e,s,!0);var i=()=>{n&&ve(e),t&&t()},a=s.length;if(a>0){var u=()=>--a||i();for(var c of s)c.out(u)}else i()}function is(e,t,n){if((e.f&ue)===0){e.f^=ue;var s=e.nodes&&e.nodes.t;if(s!==null)for(const c of s)(c.is_global||n)&&t.push(c);for(var i=e.first;i!==null;){var a=i.next;if((i.f&rt)===0){var u=(i.f&Ht)!==0||(i.f&Re)!==0&&(e.f&Pe)!==0;is(i,t,u?n:!1)}i=a}}}function $n(e){ss(e,!0)}function ss(e,t){if((e.f&ue)!==0){e.f^=ue,(e.f&K)===0&&(z(e,Q),ht.ensure().schedule(e));for(var n=e.first;n!==null;){var s=n.next,i=(n.f&Ht)!==0||(n.f&Re)!==0;ss(n,i?t:!1),n=s}var a=e.nodes&&e.nodes.t;if(a!==null)for(const u of a)(u.is_global||t)&&u.in()}}function Er(e,t){if(e.nodes)for(var n=e.nodes.start,s=e.nodes.end;n!==null;){var i=n===s?null:yn(n);t.append(n),n=i}}let Ln=!1,_t=!1;function _i(e){_t=e}let I=null,Ue=!1;function Le(e){I=e}let L=null;function Ie(e){L=e}let Ye=null;function Hl(e){I!==null&&(Ye??=new Set).add(e)}let de=null,be=0,Ee=null;function Ul(e){Ee=e}let as=1,Et=0,Ct=Et;function pi(e){Ct=e}function ls(){return++as}function zt(e){var t=e.f;if((t&Q)!==0)return!0;if(t&ne&&(e.f&=~At),(t&Ce)!==0){for(var n=e.deps,s=n.length,i=0;i<s;i++){var a=n[i];if(zt(a)&&Bi(a),a.wv>e.wv)return!0}(t&Te)!==0&&He===null&&z(e,K)}return!1}function os(e,t,n=!0){var s=e.reactions;if(s!==null&&!(Ye!==null&&Ye.has(e)))for(var i=0;i<s.length;i++){var a=s[i];(a.f&ne)!==0?os(a,t,!1):t===a&&(n?z(a,Q):(a.f&K)!==0&&z(a,Ce),yr(a))}}function fs(e){var t=de,n=be,s=Ee,i=I,a=Ye,u=H,c=Ue,l=Ct,d=e.f;de=null,be=0,Ee=null,I=(d&(Re|rt))===0?e:null,Ye=null,Ut(e.ctx),Ue=!1,Ct=++Et,e.ac!==null&&(mn(()=>{e.ac.abort(pn)}),e.ac=null);try{e.f|=qn;var g=e.fn,m=g();e.f|=Bt;var _=e.deps,v=A?.is_fork;if(de!==null){var b;if(v||vn(e,be),_!==null&&be>0)for(_.length=be+de.length,b=0;b<de.length;b++)_[be+b]=de[b];else e.deps=_=de;if(wr()&&(e.f&Te)!==0)for(b=be;b<_.length;b++)(_[b].reactions??=[]).push(e)}else!v&&_!==null&&be<_.length&&(vn(e,be),_.length=be);if(gn()&&Ee!==null&&!Ue&&_!==null&&(e.f&(ne|Ce|Q))===0)for(b=0;b<Ee.length;b++)os(Ee[b],e);if(i!==null&&i!==e){if(Et++,i.deps!==null)for(let T=0;T<n;T+=1)i.deps[T].rv=Et;if(t!==null)for(const T of t)T.rv=Et;Ee!==null&&(s===null?s=Ee:s.push(...Ee))}return(e.f&dt)!==0&&(e.f^=dt),m}catch(T){return Pi(T)}finally{e.f^=qn,de=t,be=n,Ee=s,I=i,Ye=a,Ut(u),Ue=c,Ct=l}}function jl(e,t){let n=t.reactions;if(n!==null){var s=Ba.call(n,e);if(s!==-1){var i=n.length-1;i===0?n=t.reactions=null:(n[s]=n[i],n.pop())}}if(n===null&&(t.f&ne)!==0&&(de===null||!In.call(de,t))){var a=t;(a.f&Te)!==0&&(a.f^=Te,a.f&=~At),a.v!==J&&_r(a),a.ac!==null&&mn(()=>{a.ac.abort(pn),a.ac=null,z(a,Q)}),El(a),vn(a,0)}}function vn(e,t){var n=e.deps;if(n!==null)for(var s=t;s<n.length;s++)jl(e,n[s])}function Lt(e){var t=e.f;if((t&Ae)===0){z(e,K);var n=L,s=Ln;L=e,Ln=(t&(Re|rt))===0;try{(t&(Pe|Ii))!==0?Fl(e):kr(e),ns(e);var i=fs(e);e.teardown=typeof i=="function"?i:null,e.wv=as;var a;Ci&&Na&&(e.f&Q)!==0&&e.deps}finally{Ln=s,L=n}}}async function us(){await Promise.resolve(),Tl()}function r(e){var t=e.f,n=(t&ne)!==0;if(I!==null&&!Ue){var s=L!==null&&(L.f&Ae)!==0;if(!s&&(Ye===null||!Ye.has(e))){var i=I.deps;if((I.f&qn)!==0)e.rv<Et&&(e.rv=Et,de===null&&i!==null&&i[be]===e?be++:de===null?de=[e]:de.push(e));else{I.deps??=[],In.call(I.deps,e)||I.deps.push(e);var a=e.reactions;a===null?e.reactions=[I]:In.call(a,I)||a.push(I)}}}if(_t&&St.has(e))return St.get(e);if(n){var u=e;if(_t){var c=u.v;return((u.f&K)===0&&u.reactions!==null||ds(u))&&(c=gr(u)),St.set(u,c),c}var l=(u.f&Te)===0&&!Ue&&I!==null&&(Ln||(I.f&Te)!==0),d=(u.f&Bt)===0;zt(u)&&(l&&(u.f|=Te),Bi(u)),l&&!d&&(Vi(u),cs(u))}if(He?.has(e))return He.get(e);if((e.f&dt)!==0)throw e.v;return e.v}function cs(e){if(e.f|=Te,e.deps!==null)for(const t of e.deps)(t.reactions??=[]).push(e),(t.f&ne)!==0&&(t.f&Te)===0&&(Vi(t),cs(t))}function ds(e){if(e.v===J)return!0;if(e.deps===null)return!1;for(const t of e.deps)if(St.has(t)||(t.f&ne)!==0&&ds(t))return!0;return!1}function f(e){var t=Ue;try{return Ue=!0,e()}finally{Ue=t}}function ke(e){if(!(typeof e!="object"||!e||e instanceof EventTarget)){if(fn in e)cr(e);else if(!Array.isArray(e))for(let t in e){const n=e[t];typeof n=="object"&&n&&fn in n&&cr(n)}}}function cr(e,t=new Set){if(typeof e=="object"&&e!==null&&!(e instanceof EventTarget)&&!t.has(e)){t.add(e),e instanceof Date&&e.getTime();for(let s in e)try{cr(e[s],t)}catch{}const n=hr(e);if(n!==Object.prototype&&n!==Array.prototype&&n!==Map.prototype&&n!==Set.prototype&&n!==Date.prototype){const s=Ri(n);for(let i in s){const a=s[i].get;if(a)try{a.call(e)}catch{}}}}}const an=Symbol("events"),vs=new Set,dr=new Set;function Ve(e,t,n){(t[an]??={})[e]=n}function Bl(e){for(var t=0;t<e.length;t++)vs.add(e[t]);for(var n of dr)n(e)}let gi=null;function mi(e){var t=this,n=t.ownerDocument,s=e.type,i=e.composedPath?.()||[],a=i[0]||e.target;gi=e;var u=0,c=gi===e&&e[an];if(c){var l=i.indexOf(c);if(l!==-1&&(t===document||t===window)){e[an]=t;return}var d=i.indexOf(t);if(d===-1)return;l<=d&&(u=l)}if(a=i[u]||e.target,a!==t){Va(e,"currentTarget",{configurable:!0,get(){return a||n}});var g=I,m=L;Le(null),Ie(null);try{for(var _,v=[];a!==null&&a!==t;){try{var b=a[an]?.[s];b!=null&&(!a.disabled||e.target===a)&&b.call(a,e)}catch(T){_?v.push(T):_=T}if(e.cancelBubble)break;u++,a=u<i.length?i[u]:null}if(_){for(let T of v)queueMicrotask(()=>{throw T});throw _}}finally{e[an]=t,delete e.currentTarget,Le(g),Ie(m)}}}const Vl=globalThis?.window?.trustedTypes&&globalThis.window.trustedTypes.createPolicy("svelte-trusted-html",{createHTML:e=>e});function zl(e){return Vl?.createHTML(e)??e}function Yl(e){var t=Il("template");return t.innerHTML=zl(e.replaceAll("<!>","<!---->")),t.content}function hs(e,t){var n=L;n.nodes===null&&(n.nodes={start:e,end:t,a:null,t:null})}function j(e,t){var n=(t&Ua)!==0,s,i=!e.startsWith("<!>");return()=>{s===void 0&&(s=Yl(i?e:"<!>"+e),s=br(s));var a=n||Qi?document.importNode(s,!0):s.cloneNode(!0);return hs(a,a),a}}function tn(){var e=document.createDocumentFragment(),t=document.createComment(""),n=vt();return e.append(t,n),hs(t,n),e}function R(e,t){e!==null&&e.before(t)}const Gl=["touchstart","touchmove"];function Wl(e){return Gl.includes(e)}function h(e,t){var n=t==null?"":typeof t=="object"?`${t}`:t;n!==(e[lr]??=e.nodeValue)&&(e[lr]=n,e.nodeValue=`${n}`)}function Kl(e,t){return Ql(e,t)}const Sn=new Map;function Ql(e,{target:t,anchor:n,props:s={},events:i,context:a,intro:u=!0,transformError:c}){Rl();var l=void 0,d=Nl(()=>{var g=n??t.appendChild(vt());ml(g,{pending:()=>{}},v=>{Oi({});var b=H;a&&(b.c=a),i&&(s.$$events=i),l=e(v,s)||{},$i()},c);var m=new Set,_=v=>{for(var b=0;b<v.length;b++){var T=v[b];if(!m.has(T)){m.add(T);var w=Wl(T);for(const U of[t,document]){var E=Sn.get(U);E===void 0&&(E=new Map,Sn.set(U,E));var G=E.get(T);G===void 0?(U.addEventListener(T,mi,{passive:w}),E.set(T,1)):E.set(T,G+1)}}}};return _(Fn(vs)),dr.add(_),()=>{for(var v of m)for(const w of[t,document]){var b=Sn.get(w),T=b.get(v);--T==0?(w.removeEventListener(v,mi),b.delete(v),b.size===0&&Sn.delete(w)):b.set(v,T)}dr.delete(_),g!==n&&g.parentNode?.removeChild(g)}});return Xl.set(l,d),l}let Xl=new WeakMap;class Zl{anchor;#t=new Map;#a=new Map;#e=new Map;#o=new Set;#r=!0;constructor(t,n=!0){this.anchor=t,this.#r=n}#s=t=>{if(this.#t.has(t)){var n=this.#t.get(t),s=this.#a.get(n);if(s)$n(s),this.#o.delete(n);else{var i=this.#e.get(n);i&&($n(i.effect),this.#a.set(n,i.effect),this.#e.delete(n),i.fragment.lastChild.remove(),this.anchor.before(i.fragment),s=i.effect)}for(const[a,u]of this.#t){if(this.#t.delete(a),a===t)break;const c=this.#e.get(u);c&&(ve(c.effect),this.#e.delete(u))}for(const[a,u]of this.#a){if(a===n||this.#o.has(a))continue;const c=()=>{if(Array.from(this.#t.values()).includes(a)){var d=document.createDocumentFragment();Er(u,d),d.append(vt()),this.#e.set(a,{effect:u,fragment:d})}else ve(u);this.#o.delete(a),this.#a.delete(a)};this.#r||!s?(this.#o.add(a),Tt(u,c,!1)):c()}}};#n=t=>{this.#t.delete(t);const n=Array.from(this.#t.values());for(const[s,i]of this.#e)n.includes(s)||(ve(i.effect),this.#e.delete(s))};ensure(t,n){var s=A,i=Ji();if(n&&!this.#a.has(t)&&!this.#e.has(t))if(i){var a=document.createDocumentFragment(),u=vt();a.append(u),this.#e.set(t,{effect:Se(()=>n(u)),fragment:a})}else this.#a.set(t,Se(()=>n(this.anchor)));if(this.#t.set(s,t),i){for(const[c,l]of this.#a)c===t?s.unskip_effect(l):s.skip_effect(l);for(const[c,l]of this.#e)c===t?s.unskip_effect(l.effect):s.skip_effect(l.effect);s.oncommit(this.#s),s.ondiscard(this.#n)}else this.#s(s)}}function Jl(e){H===null&&Za(),hn&&H.l!==null?eo(H).m.push(e):ur(()=>{const t=f(e);if(typeof t=="function")return t})}function eo(e){var t=e.l;return t.u??={a:[],b:[],m:[]}}function me(e,t,n=!1){var s=new Zl(e),i=n?Ht:0;function a(u,c){s.ensure(u,c)}xr(()=>{var u=!1;t((c,l=0)=>{u=!0,a(l,c)}),u||a(-1,null)},i)}function et(e,t){return t}function to(e,t,n){for(var s=[],i=t.length,a,u=t.length,c=0;c<i;c++){let m=t[c];Tt(m,()=>{if(a){if(a.pending.delete(m),a.done.add(m),a.pending.size===0){var _=e.outrogroups;vr(e,Fn(a.done)),_.delete(a),_.size===0&&(e.outrogroups=null)}}else u-=1},!1)}if(u===0){var l=s.length===0&&n!==null;if(l){var d=n,g=d.parentNode;Ll(g),g.append(d),e.items.clear()}vr(e,t,!l)}else a={pending:new Set(t),done:new Set},(e.outrogroups??=new Set).add(a)}function vr(e,t,n=!0){var s;if(e.pending.size>0){s=new Set;for(const u of e.pending.values())for(const c of u)s.add(e.items.get(c).e)}for(var i=0;i<t.length;i++){var a=t[i];if(s?.has(a)){a.f|=ze;const u=document.createDocumentFragment();Er(a,u)}else ve(t[i],n)}}var yi;function ae(e,t,n,s,i,a=null){var u=e,c=new Map,l=(t&Ti)!==0;if(l){var d=e;u=d.appendChild(vt())}var g=null,m=Nn(()=>{var U=n();return Ai(U)?U:U==null?[]:Fn(U)}),_,v=new Map,b=!0;function T(U){(G.effect.f&Ae)===0&&(G.pending.delete(U),G.fallback=g,no(G,_,u,t,s),g!==null&&(_.length===0?(g.f&ze)===0?$n(g):(g.f^=ze,ln(g,null,u)):Tt(g,()=>{g=null})))}function w(U){G.pending.delete(U)}var E=xr(()=>{_=r(m);for(var U=_.length,le=new Set,he=A,_e=Ji(),oe=0;oe<U;oe+=1){var je=_[oe],st=s(je,oe),X=b?null:c.get(st);X?(X.v&&jt(X.v,je),X.i&&jt(X.i,oe),_e&&he.unskip_effect(X.e)):(X=ro(c,b?u:yi??=vt(),je,st,oe,i,t,n),b||(X.e.f|=ze),c.set(st,X)),le.add(st)}if(U===0&&a&&!g&&(b?g=Se(()=>a(u)):(g=Se(()=>a(yi??=vt())),g.f|=ze)),U>le.size&&el(),!b)if(v.set(he,le),_e){for(const[Hn,Yt]of c)le.has(Hn)||he.skip_effect(Yt.e);he.oncommit(T),he.ondiscard(w)}else T(he);r(m)}),G={effect:E,items:c,pending:v,outrogroups:null,fallback:g};b=!1}function nn(e){for(;e!==null&&(e.f&Re)===0;)e=e.next;return e}function no(e,t,n,s,i){var a=(s&Pa)!==0,u=t.length,c=e.items,l=nn(e.effect.first),d,g=null,m,_=[],v=[],b,T,w,E;if(a)for(E=0;E<u;E+=1)b=t[E],T=i(b,E),w=c.get(T).e,(w.f&ze)===0&&(w.nodes?.a?.measure(),(m??=new Set).add(w));for(E=0;E<u;E+=1){if(b=t[E],T=i(b,E),w=c.get(T).e,e.outrogroups!==null)for(const X of e.outrogroups)X.pending.delete(w),X.done.delete(w);if((w.f&ue)!==0&&($n(w),a&&(w.nodes?.a?.unfix(),(m??=new Set).delete(w))),(w.f&ze)!==0)if(w.f^=ze,w===l)ln(w,null,n);else{var G=g?g.next:l;w===e.effect.last&&(e.effect.last=w.prev),w.prev&&(w.prev.next=w.next),w.next&&(w.next.prev=w.prev),ft(e,g,w),ft(e,w,G),ln(w,G,n),g=w,_=[],v=[],l=nn(g.next);continue}if(w!==l){if(d!==void 0&&d.has(w)){if(_.length<v.length){var U=v[0],le;g=U.prev;var he=_[0],_e=_[_.length-1];for(le=0;le<_.length;le+=1)ln(_[le],U,n);for(le=0;le<v.length;le+=1)d.delete(v[le]);ft(e,he.prev,_e.next),ft(e,g,he),ft(e,_e,U),l=U,g=_e,E-=1,_=[],v=[]}else d.delete(w),ln(w,l,n),ft(e,w.prev,w.next),ft(e,w,g===null?e.effect.first:g.next),ft(e,g,w),g=w;continue}for(_=[],v=[];l!==null&&l!==w;)(d??=new Set).add(l),v.push(l),l=nn(l.next);if(l===null)continue}(w.f&ze)===0&&_.push(w),g=w,l=nn(w.next)}if(e.outrogroups!==null){for(const X of e.outrogroups)X.pending.size===0&&(vr(e,Fn(X.done)),e.outrogroups?.delete(X));e.outrogroups.size===0&&(e.outrogroups=null)}if(l!==null||d!==void 0){var oe=[];if(d!==void 0)for(w of d)(w.f&ue)===0&&oe.push(w);for(;l!==null;)(l.f&ue)===0&&l!==e.fallback&&oe.push(l),l=nn(l.next);var je=oe.length;if(je>0){var st=(s&Ti)!==0&&u===0?n:null;if(a){for(E=0;E<je;E+=1)oe[E].nodes?.a?.measure();for(E=0;E<je;E+=1)oe[E].nodes?.a?.fix()}to(e,oe,st)}}a&&ut(()=>{if(m!==void 0)for(w of m)w.nodes?.a?.apply()})}function ro(e,t,n,s,i,a,u,c){var l=(u&$a)!==0?(u&Ha)===0?ye(n,!1,!1):Rt(n):null,d=(u&Fa)!==0?Rt(i):null;return{v:l,i:d,e:Se(()=>(a(t,l??n,d??i,c),()=>{e.delete(s)}))}}function ln(e,t,n){if(e.nodes)for(var s=e.nodes.start,i=e.nodes.end,a=t&&(t.f&ze)===0?t.nodes.start:n;s!==null;){var u=yn(s);if(a.before(s),s===i)return;s=u}}function ft(e,t,n){t===null?e.effect.first=n:t.next=n,n===null?e.effect.last=t:n.prev=t}const bi=[..." \\t\\n\\r\\f \\u000b\uFEFF"];function io(e,t,n){var s=e==null?"":""+e;if(t&&(s=s?s+" "+t:t),n){for(var i of Object.keys(n))if(n[i])s=s?s+" "+i:i;else if(s.length)for(var a=i.length,u=0;(u=s.indexOf(i,u))>=0;){var c=u+a;(u===0||bi.includes(s[u-1]))&&(c===s.length||bi.includes(s[c]))?s=(u===0?"":s.substring(0,u))+s.substring(c+1):u=c}}return s===""?null:s}function tt(e,t,n,s,i,a){var u=e[ar];if(u!==n||u===void 0){var c=io(n,s,a);c==null?e.removeAttribute("class"):e.className=c,e[ar]=n}else if(a&&i!==a)for(var l in a){var d=!!a[l];(i==null||d!==!!i[l])&&e.classList.toggle(l,d)}return a}const so=Symbol("is custom element"),ao=Symbol("is html");function V(e,t,n,s){var i=lo(e);i[t]!==(i[t]=n)&&(t==="loading"&&(e[Qa]=n),n==null?e.removeAttribute(t):typeof n!="string"&&oo(e).includes(t)?e[t]=n:e.setAttribute(t,n))}function lo(e){return e[qi]??={[so]:e.nodeName.includes("-"),[ao]:e.namespaceURI===ja}}var wi=new Map;function oo(e){var t=e.getAttribute("is")||e.nodeName,n=wi.get(t);if(n)return n;wi.set(t,n=[]);for(var s,i=e,a=Element.prototype;a!==i;){s=Ri(i);for(var u in s)s[u].set&&u!=="innerHTML"&&u!=="textContent"&&u!=="innerText"&&n.push(u);i=hr(i)}return n}function fo(e,t,n=t){var s=new WeakSet;_l(e,"input",async i=>{var a=i?e.defaultValue:e.value;if(a=nr(e)?rr(a):a,n(a),A!==null&&s.add(A),await us(),a!==(a=t())){var u=e.selectionStart,c=e.selectionEnd,l=e.value.length;if(e.value=a??"",c!==null){var d=e.value.length;u===c&&c===l&&d>l?(e.selectionStart=d,e.selectionEnd=d):(e.selectionStart=u,e.selectionEnd=Math.min(c,d))}}}),f(t)==null&&e.value&&(n(nr(e)?rr(e.value):e.value),A!==null&&s.add(A)),Pn(()=>{var i=t();if(e===document.activeElement){var a=A;if(s.has(a))return}nr(e)&&i===rr(e.value)||e.type==="date"&&!i&&!e.value||i!==e.value&&(e.value=i??"")})}function nr(e){var t=e.type;return t==="number"||t==="range"}function rr(e){return e===""?null:+e}function uo(e=!1){const t=H,n=t.l.u;if(!n)return;let s=()=>ke(t.s);if(e){let i=0,a={};const u=pr(()=>{let c=!1;const l=t.s;for(const d in l)l[d]!==a[d]&&(a[d]=l[d],c=!0);return c&&i++,i});s=()=>r(u)}n.b.length&&Dl(()=>{xi(t,s),ir(n.b)}),ur(()=>{const i=f(()=>n.m.map(Wa));return()=>{for(const a of i)typeof a=="function"&&a()}}),n.a.length&&ur(()=>{xi(t,s),ir(n.a)})}function xi(e,t){if(e.l.s)for(const n of e.l.s)r(n);t()}var Tn=j("<span> </span>"),co=j(\'<li><a><span class="queue-index"> </span> <span class="queue-copy"><strong> </strong> <span class="badges"><span> </span> <!></span></span></a></li>\'),vo=j(\'<section class="queue-section"><h3><span> </span> <span class="count"> </span></h3> <ol></ol></section>\'),ho=j(\'<li><a><span class="queue-index"> </span> <span class="queue-copy"><strong> </strong><span> </span></span></a></li>\'),_o=j(\'<section class="queue-section unclassified"><h3><span> </span><span class="count"> </span></h3> <ol></ol></section>\'),po=j(\'<li><span class="file-status"> </span> <code> </code> <span> </span></li>\'),Cn=j("<li> </li>"),go=j("<ul></ul>"),mo=j("<p> </p>"),yo=j("<li><span> </span><strong> </strong> <p> </p></li>"),bo=j("<li><strong> </strong> </li>"),wo=j(\'<details class="more-evidence"><summary> </summary> <ul></ul></details>\'),ki=j(\'<button class="context-fold" type="button"> </button>\'),xo=j(\'<div role="row"><span class="line-number"> </span> <span class="line-number"> </span> <span class="line-sign" aria-hidden="true"> </span> <code></code></div>\'),Ei=j("<code></code>"),ko=j(\'<div class="split-row" role="row"><div><span class="line-number"> </span> <span class="line-sign" aria-hidden="true"> </span> <!></div> <div><span class="line-number"> </span> <span class="line-sign" aria-hidden="true"> </span> <!></div></div>\'),Eo=j(\'<button class="back-link hunk-back" type="button"> </button>\'),So=j(\'<section tabindex="-1"><header><div><p> </p> <h4> </h4></div> <button type="button" class="anchor-button">#</button></header> <div role="table"></div> <!></section>\'),To=j(\'<article class="focused-change" tabindex="-1"><button class="back-link" type="button"> </button> <header class="change-header"><div><p class="kicker"> </p> <h2> </h2></div> <div class="change-badges" aria-label="Change status"><span> </span> <span> </span> <span> </span></div></header> <div class="explanation-grid"><section><h3> </h3> <p> </p> <p class="technical"> </p></section> <section><h3> </h3> <p> </p></section> <section><h3> </h3> <!></section> <section class="risk-block"><h3> </h3> <ul></ul></section> <section class="gap-block"><h3> </h3> <ul></ul></section> <section><h3> </h3> <ul></ul></section></div> <section class="evidence-section" aria-labelledby="evidence-heading"><div class="section-heading"><div><p class="kicker"> </p> <h3 id="evidence-heading"> </h3></div></div> <ul class="evidence-list"></ul> <!></section> <section class="diff-section" aria-labelledby="diff-heading"><div class="section-heading"><div><p class="kicker"> </p> <h3 id="diff-heading"> </h3></div> <div class="segmented-control" aria-label="Diff layout"><button type="button"> </button> <button type="button"> </button></div></div> <!></section></article>\'),Co=j(\'<div><span class="line-number"> </span><span class="line-number"> </span><span class="line-sign"> </span><code> </code></div>\'),Ao=j(\'<section class="focused-change unclassified-focus"><button class="back-link" type="button"> </button> <p class="kicker"> </p> <h2> </h2> <section class="hunk active-hunk" tabindex="-1"><header><h3> </h3></header> <div class="diff-table"></div></section></section>\'),Ro=j(\'<section class="focused-change empty-focus"><h2> </h2></section>\'),Lo=j(\'<div class="report-shell"><header class="report-header"><a class="wordmark" href="#summary-heading" aria-label="Utsuri review summary"><span aria-hidden="true">UT</span> <strong>Utsuri</strong></a> <div class="report-state"><span class="state-mark" aria-hidden="true"></span> <span> </span> <small> </small></div> <p class="report-id"> </p></header> <aside class="review-rail" aria-labelledby="queue-heading"><div class="rail-heading"><p class="kicker">Focus / 01</p> <h2 id="queue-heading" tabindex="-1"> </h2></div> <label class="queue-search"><span> </span> <input type="search" autocomplete="off"/></label> <nav><!> <!></nav></aside> <main id="main-content"><section aria-labelledby="summary-heading" class="decision-summary"><div><p class="kicker"> </p> <h1 id="summary-heading"> </h1> <p class="decision-statement"> </p></div> <dl class="metrics"><div><dt> </dt> <dd> </dd></div> <div><dt> </dt> <dd class="positive"> </dd></div> <div><dt> </dt> <dd class="negative"> </dd></div> <div><dt> </dt> <dd> </dd></div> <div><dt> </dt> <dd> </dd></div></dl> <details class="file-inventory"><summary> </summary> <ul></ul></details></section> <!></main></div>\'),Io=j(\'<p class="loading" aria-live="polite"> </p>\');function Mo(e,t){Oi(t,!1);const n=ye(),s={en:{queue:"Review queue",search:"Filter changes",action:"Action required",confirm:"Needs confirmation",clear:"No issue found",unclassified:"Unclassified hunks",summary:"Decision summary",files:"Files",additions:"Additions",deletions:"Deletions",changes:"Change groups",lowSignal:"Low-signal files",inventory:"File inventory",backQueue:"Back to review queue",what:"What changed",why:"Why",userImpact:"User impact",noImpact:"User impact is not established.",risk:"Risk",gaps:"Not verified",verified:"Verified",evidence:"Evidence",codeDiff:"Code diff",unified:"Unified",split:"Side by side",context:"Show {count} hidden context lines",moreEvidence:"More evidence",backChange:"Back to focused change",visualGap:"Visual verification has not run",empty:"No semantic changes",loading:"Loading review data…"},ja:{queue:"レビューキュー",search:"変更を絞り込む",action:"対応が必要",confirm:"確認が必要",clear:"問題なし",unclassified:"未分類のハンク",summary:"判断サマリー",files:"ファイル",additions:"追加",deletions:"削除",changes:"変更グループ",lowSignal:"低シグナル",inventory:"ファイル一覧",backQueue:"レビューキューへ戻る",what:"変更内容",why:"変更理由",userImpact:"ユーザー影響",noImpact:"ユーザー影響は未確定です。",risk:"リスク",gaps:"未検証",verified:"検証済み",evidence:"根拠",codeDiff:"コード差分",unified:"統合表示",split:"左右表示",context:"非表示のコンテキスト {count} 行を表示",moreEvidence:"その他の根拠",backChange:"変更グループへ戻る",visualGap:"画面の検証は未実施です",empty:"意味単位の変更はありません",loading:"レビューデータを読み込んでいます…"}};let i=ye(null),a=ye(""),u=ye("en"),c=ye(""),l=ye(""),d=ye(""),g="",m=ye("unified"),_=new Set,v=ye(),b=ye([]),T=ye([]),w=ye([]);function E(y,C){return`${y}-${C.replace(/[^a-zA-Z0-9_-]/gu,"-")}`}function G(y){return y.risk.level==="critical"||y.risk.level==="high"?"action-required":y.verification.gaps.length>0||y.intent.source==="unknown"?"needs-confirmation":"no-issue"}function U(y){return y==="action-required"?r(n).action:y==="needs-confirmation"?r(n).confirm:r(n).clear}function le(y){return r(w).filter(C=>G(C)===y).length}function he(y,C){history.pushState(null,"",`#${y}=${encodeURIComponent(C)}`)}async function _e(y){await us(),document.getElementById(y)?.focus({preventScroll:!1})}function oe(y,C=!0){C&&(g=E("queue",y.id)),q(l,y.id),q(d,""),he("change",y.id),_e(E("change",y.id))}function je(y){q(d,y),he("hunk",y),_e(E("hunk",y))}function st(y){g=E("queue-hunk",y),q(l,""),je(y)}function X(){q(d,""),history.pushState(null,"","#queue"),_e(g||"queue-heading")}function Hn(){q(d,""),r(v)&&(he("change",r(v).id),_e(E("change",r(v).id)))}function Yt(){if(!r(i))return;const y=location.hash.match(/^#(change|hunk)=(.+)$/u);if(!y){q(l,r(l)||(r(i).changes[0]?.id??""));return}let C="";try{C=decodeURIComponent(y[2]??"")}catch{q(l,r(l)||(r(i).changes[0]?.id??""));return}if(y[1]==="change"&&r(i).changes.some(M=>M.id===C)){q(l,C),q(d,""),_e(E("change",C));return}y[1]==="hunk"&&r(i).hunks.some(M=>M.id===C)&&(q(l,r(i).changes.find(M=>M.hunkRefs.includes(C))?.id??""),q(d,C),_e(E("hunk",C)))}async function _s(){try{const y=await fetch("./report.json",{credentials:"omit"});if(!y.ok)throw new Error(`HTTP ${y.status}`);q(i,await y.json()),q(l,r(i).changes[0]?.id??""),document.querySelector("[data-static-fallback]")?.remove(),Yt()}catch(y){q(a,`Interactive data unavailable: ${y instanceof Error?y.message:String(y)}`)}}function Sr(y){if(_.has(y.id))return y.lines.map((P,N)=>({kind:"line",line:P,index:N}));const C=y.lines.map(()=>!1);y.lines.forEach((P,N)=>{if(P.kind==="addition"||P.kind==="deletion")for(let re=Math.max(0,N-3);re<=Math.min(y.lines.length-1,N+3);re+=1)C[re]=!0}),C.some(Boolean)||C.fill(!0);const M=[];for(let P=0;P<y.lines.length;)if(C[P])M.push({kind:"line",line:y.lines[P],index:P}),P+=1;else{let N=P+1;for(;N<y.lines.length&&!C[N];)N+=1;M.push({kind:"fold",count:N-P}),P=N}return M}function Tr(y){_=new Set([..._,y])}function ps(y,C){const M=y.lines[C];if(!M||M.kind!=="addition"&&M.kind!=="deletion")return;const P=M.kind==="addition"?"deletion":"addition";for(let N=1;N<=6;N+=1)for(const re of[C-N,C+N]){const at=y.lines[re];if(at?.kind===P)return at;if(at&&at.kind==="context")break}}function Un(y,C){const M=y.lines[C],P=ps(y,C);if(!P)return[{text:M.content,changed:M.kind==="addition"||M.kind==="deletion"}];let N=0;for(;N<M.content.length&&M.content[N]===P.content[N];)N+=1;let re=0;for(;re<M.content.length-N&&re<P.content.length-N&&M.content[M.content.length-re-1]===P.content[P.content.length-re-1];)re+=1;return[{text:M.content.slice(0,N),changed:!1},{text:M.content.slice(N,re?-re:void 0),changed:!0},{text:re?M.content.slice(-re):"",changed:!1}].filter(at=>at.text.length>0)}Jl(()=>(q(u,navigator.language.toLowerCase().startsWith("ja")?"ja":"en"),_s(),window.addEventListener("hashchange",Yt),()=>window.removeEventListener("hashchange",Yt))),en(()=>r(u),()=>{q(n,s[r(u)])}),en(()=>(r(i),r(l)),()=>{q(v,r(i)?.changes.find(y=>y.id===r(l)))}),en(()=>(r(v),r(i)),()=>{q(b,r(v)?r(v).hunkRefs.map(y=>r(i)?.hunks.find(C=>C.id===y)).filter(y=>y!==void 0):[])}),en(()=>(r(v),r(i)),()=>{q(T,r(v)&&r(i)?r(i).evidence.filter(y=>r(v)?.intent.evidenceRefs.includes(y.id)||y.hunkRefs.some(C=>r(v)?.hunkRefs.includes(C))):[])}),en(()=>(r(i),r(c)),()=>{q(w,r(i)?r(i).changes.filter(y=>`${y.title} ${y.summary}`.toLocaleLowerCase().includes(r(c).toLocaleLowerCase())):[])}),Ol(),uo();var Cr=tn(),gs=Jt(Cr);{var ms=y=>{var C=Lo(),M=o(C),P=p(o(M),2),N=p(o(P),2),re=o(N),at=p(N,2),bs=o(at),ws=p(P,2),xs=o(ws),Ar=p(M,2),Rr=o(Ar),ks=p(o(Rr),2),Es=o(ks),Lr=p(Rr,2),Ir=o(Lr),Ss=o(Ir),Ts=p(Ir,2),Mr=p(Lr,2),qr=o(Mr);ae(qr,0,()=>["action-required","needs-confirmation","no-issue"],O=>O,(O,S)=>{var ee=vo(),ce=o(ee),Me=o(ce),fe=o(Me),qe=p(Me,2),De=o(qe),we=p(ce,2);ae(we,7,()=>(r(w),f(()=>r(w).filter(W=>G(W)===S))),W=>W.id,(W,B,ie)=>{var Ge=co(),pe=o(Ge),We=o(pe),Ne=o(We),lt=p(We,2),xe=o(lt),Oe=o(xe),Y=p(xe,2),Ke=o(Y),Qe=o(Ke),pt=p(Ke,2);{var gt=te=>{var Z=Tn(),ge=o(Z);D(()=>h(ge,`${r(B),f(()=>r(B).verification.gaps.length)??""} gaps`)),R(te,Z)};me(pt,te=>{r(B),f(()=>r(B).verification.gaps.length>0)&&te(gt)})}D((te,Z,ge)=>{V(pe,"id",te),V(pe,"href",Z),V(pe,"aria-current",(r(l),r(B),f(()=>r(l)===r(B).id?"page":void 0))),h(Ne,ge),h(Oe,(r(B),f(()=>r(B).title))),h(Qe,(r(B),f(()=>r(B).risk.level)))},[()=>(r(B),f(()=>E("queue",r(B).id))),()=>(r(B),f(()=>`#change=${encodeURIComponent(r(B).id)}`)),()=>(ke(r(ie)),f(()=>String(r(ie)+1).padStart(2,"0")))]),Ve("click",pe,te=>{te.preventDefault(),oe(r(B))}),R(W,Ge)}),D((W,B)=>{V(ee,"data-queue",S),h(fe,W),h(De,B)},[()=>f(()=>U(S)),()=>f(()=>le(S))]),R(O,ee)});var Cs=p(qr,2);{var As=O=>{var S=_o(),ee=o(S),ce=o(ee),Me=o(ce),fe=p(ce),qe=o(fe),De=p(ee,2);ae(De,7,()=>(r(i),f(()=>r(i).unclassifiedHunkRefs)),we=>we,(we,W,B)=>{const ie=Nn(()=>(r(i),r(W),f(()=>r(i).hunks.find(Ne=>Ne.id===r(W)))));var Ge=tn(),pe=Jt(Ge);{var We=Ne=>{var lt=ho(),xe=o(lt),Oe=o(xe),Y=o(Oe),Ke=p(Oe,2),Qe=o(Ke),pt=o(Qe),gt=p(Qe),te=o(gt);D((Z,ge)=>{V(xe,"id",Z),V(xe,"href",ge),h(Y,`U${r(B)+1}`),h(pt,(ke(r(ie)),f(()=>r(ie).path))),h(te,`@@ ${ke(r(ie)),f(()=>r(ie).oldStart)??""} → ${ke(r(ie)),f(()=>r(ie).newStart)??""}`)},[()=>(r(W),f(()=>E("queue-hunk",r(W)))),()=>(r(W),f(()=>`#hunk=${encodeURIComponent(r(W))}`))]),Ve("click",xe,Z=>{Z.preventDefault(),st(r(W))}),R(Ne,lt)};me(pe,Ne=>{r(ie)&&Ne(We)})}R(we,Ge)}),D(()=>{h(Me,(r(n),f(()=>r(n).unclassified))),h(qe,(r(i),f(()=>r(i).unclassifiedHunkRefs.length)))}),R(O,S)};me(Cs,O=>{r(i),f(()=>r(i).unclassifiedHunkRefs.length>0)&&O(As)})}var Rs=p(Ar,2),Dr=o(Rs),Nr=o(Dr),Or=o(Nr),Ls=o(Or),$r=p(Or,2),Is=o($r),Ms=p($r,2),qs=o(Ms),Fr=p(Nr,2),Pr=o(Fr),Hr=o(Pr),Ds=o(Hr),Ns=p(Hr,2),Os=o(Ns),Ur=p(Pr,2),jr=o(Ur),$s=o(jr),Fs=p(jr,2),Ps=o(Fs),Br=p(Ur,2),Vr=o(Br),Hs=o(Vr),Us=p(Vr,2),js=o(Us),zr=p(Br,2),Yr=o(zr),Bs=o(Yr),Vs=p(Yr,2),zs=o(Vs),Ys=p(zr,2),Gr=o(Ys),Gs=o(Gr),Ws=p(Gr,2),Ks=o(Ws),Qs=p(Fr,2),Wr=o(Qs),Xs=o(Wr),Zs=p(Wr,2);ae(Zs,5,()=>(r(i),f(()=>r(i).files)),O=>O.id,(O,S)=>{var ee=po(),ce=o(ee),Me=o(ce),fe=p(ce,2),qe=o(fe),De=p(fe,2),we=o(De);D(()=>{h(Me,(r(S),f(()=>r(S).status))),h(qe,(r(S),f(()=>r(S).oldPath&&r(S).newPath&&r(S).oldPath!==r(S).newPath?`${r(S).oldPath} → ${r(S).newPath}`:r(S).newPath??r(S).oldPath))),h(we,(r(S),f(()=>r(S).binary?"binary":`+${r(S).additions??0} / −${r(S).deletions??0}`)))}),R(O,ee)});var Js=p(Dr,2);{var ea=O=>{var S=To(),ee=o(S),ce=o(ee),Me=p(ee,2),fe=o(Me),qe=o(fe),De=o(qe),we=p(qe,2),W=o(we),B=p(fe,2),ie=o(B),Ge=o(ie),pe=p(ie,2),We=o(pe),Ne=p(pe,2),lt=o(Ne),xe=p(Me,2),Oe=o(xe),Y=o(Oe),Ke=o(Y),Qe=p(Y,2),pt=o(Qe),gt=p(Qe,2),te=o(gt),Z=p(Oe,2),ge=o(Z),Gt=o(ge),bn=p(ge,2),jn=o(bn),Wt=p(Z,2),wn=o(Wt),Bn=o(wn),Vn=p(wn,2);{var ra=$=>{var x=go();ae(x,5,()=>(r(v),f(()=>r(v).userImpact)),et,(F,se)=>{var $e=Cn(),Fe=o($e);D(()=>h(Fe,r(se))),R(F,$e)}),R($,x)},ia=$=>{var x=mo(),F=o(x);D(()=>h(F,(r(n),f(()=>r(n).noImpact)))),R($,x)};me(Vn,$=>{r(v),f(()=>r(v).userImpact.length>0)?$(ra):$(ia,-1)})}var Kr=p(Wt,2),Qr=o(Kr),sa=o(Qr),aa=p(Qr,2);ae(aa,5,()=>(r(v),f(()=>r(v).risk.reasons)),et,($,x)=>{var F=Cn(),se=o(F);D(()=>h(se,r(x))),R($,F)});var Xr=p(Kr,2),Zr=o(Xr),la=o(Zr),oa=p(Zr,2);ae(oa,5,()=>(r(v),f(()=>r(v).verification.gaps)),et,($,x)=>{var F=Cn(),se=o(F);D(()=>h(se,r(x))),R($,F)});var fa=p(Xr,2),Jr=o(fa),ua=o(Jr),ca=p(Jr,2);ae(ca,5,()=>(r(v),f(()=>r(v).verification.verified)),et,($,x)=>{var F=Cn(),se=o(F);D(()=>h(se,r(x))),R($,F)});var ei=p(xe,2),ti=o(ei),da=o(ti),ni=o(da),va=o(ni),ha=p(ni,2),_a=o(ha),ri=p(ti,2);ae(ri,5,()=>(r(T),f(()=>r(T).slice(0,3))),$=>$.id,($,x)=>{var F=yo(),se=o(F),$e=o(se),Fe=p(se),Xe=o(Fe),It=p(Fe,2),mt=o(It);D(()=>{h($e,(r(x),f(()=>r(x).type))),h(Xe,(r(x),f(()=>r(x).path))),h(mt,(r(x),f(()=>r(x).summary)))}),R($,F)});var pa=p(ri,2);{var ga=$=>{var x=wo(),F=o(x),se=o(F),$e=p(F,2);ae($e,5,()=>(r(T),f(()=>r(T).slice(3))),Fe=>Fe.id,(Fe,Xe)=>{var It=bo(),mt=o(It),Yn=o(mt),kn=p(mt);D(()=>{h(Yn,(r(Xe),f(()=>r(Xe).path))),h(kn,` — ${r(Xe),f(()=>r(Xe).summary)??""}`)}),R(Fe,It)}),D(()=>h(se,`${r(n),f(()=>r(n).moreEvidence)??""} (${r(T),f(()=>r(T).length-3)??""})`)),R($,x)};me(pa,$=>{r(T),f(()=>r(T).length>3)&&$(ga)})}var ma=p(ei,2),ii=o(ma),si=o(ii),ai=o(si),ya=o(ai),ba=p(ai,2),wa=o(ba),xa=p(si,2),xn=o(xa),ka=o(xn),zn=p(xn,2),Ea=o(zn),Sa=p(ii,2);ae(Sa,1,()=>r(b),$=>$.id,($,x)=>{var F=So();let se;var $e=o(F),Fe=o($e),Xe=o(Fe),It=o(Xe),mt=p(Xe,2),Yn=o(mt),kn=p(Fe,2),En=p($e,2);let li;ae(En,5,()=>(r(x),f(()=>Sr(r(x)))),et,(yt,k)=>{var Mt=tn(),Aa=Jt(Mt);{var Ra=Ze=>{var Be=ki(),Je=o(Be);D(qt=>h(Je,qt),[()=>(r(n),r(k),f(()=>r(n).context.replace("{count}",String(r(k).count))))]),Ve("click",Be,()=>Tr(r(x).id)),R(Ze,Be)},La=Ze=>{var Be=xo(),Je=o(Be),qt=o(Je),Dt=p(Je,2),Gn=o(Dt),Kt=p(Dt,2),Wn=o(Kt),Kn=p(Kt,2);ae(Kn,5,()=>(r(x),r(k),f(()=>Un(r(x),r(k).index))),et,(Qn,Nt)=>{var Ot=Tn();let Qt;var Xn=o(Ot);D(()=>{Qt=tt(Ot,1,"",null,Qt,{"word-change":r(Nt).changed}),h(Xn,(r(Nt),f(()=>r(Nt).text)))}),R(Qn,Ot)}),D(()=>{tt(Be,1,(r(k),f(()=>`diff-line ${r(k).line.kind}`))),V(Je,"aria-label",(r(k),f(()=>`old line ${r(k).line.oldLine??"none"}`))),h(qt,(r(k),f(()=>r(k).line.oldLine??""))),V(Dt,"aria-label",(r(k),f(()=>`new line ${r(k).line.newLine??"none"}`))),h(Gn,(r(k),f(()=>r(k).line.newLine??""))),h(Wn,(r(k),f(()=>r(k).line.kind==="addition"?"+":r(k).line.kind==="deletion"?"−":" ")))}),R(Ze,Be)},Ia=Ze=>{var Be=ko(),Je=o(Be);let qt;var Dt=o(Je),Gn=o(Dt),Kt=p(Dt,2),Wn=o(Kt),Kn=p(Kt,2);{var Qn=bt=>{var Xt=Ei();ae(Xt,5,()=>(r(x),r(k),f(()=>Un(r(x),r(k).index))),et,(Zn,wt)=>{var xt=Tn();let Zt;var Jn=o(xt);D(()=>{Zt=tt(xt,1,"",null,Zt,{"word-change":r(wt).changed}),h(Jn,(r(wt),f(()=>r(wt).text)))}),R(Zn,xt)}),R(bt,Xt)};me(Kn,bt=>{r(k),f(()=>r(k).line.kind!=="addition")&&bt(Qn)})}var Nt=p(Je,2);let Ot;var Qt=o(Nt),Xn=o(Qt),oi=p(Qt,2),Ma=o(oi),qa=p(oi,2);{var Da=bt=>{var Xt=Ei();ae(Xt,5,()=>(r(x),r(k),f(()=>Un(r(x),r(k).index))),et,(Zn,wt)=>{var xt=Tn();let Zt;var Jn=o(xt);D(()=>{Zt=tt(xt,1,"",null,Zt,{"word-change":r(wt).changed}),h(Jn,(r(wt),f(()=>r(wt).text)))}),R(Zn,xt)}),R(bt,Xt)};me(qa,bt=>{r(k),f(()=>r(k).line.kind!=="deletion")&&bt(Da)})}D(()=>{qt=tt(Je,1,(r(k),f(()=>`diff-line ${r(k).line.kind==="addition"?"empty":r(k).line.kind}`)),null,qt,{"empty-side":r(k).line.kind==="addition"}),h(Gn,(r(k),f(()=>r(k).line.oldLine??""))),h(Wn,(r(k),f(()=>r(k).line.kind==="deletion"?"−":" "))),Ot=tt(Nt,1,(r(k),f(()=>`diff-line ${r(k).line.kind==="deletion"?"empty":r(k).line.kind}`)),null,Ot,{"empty-side":r(k).line.kind==="deletion"}),h(Xn,(r(k),f(()=>r(k).line.newLine??""))),h(Ma,(r(k),f(()=>r(k).line.kind==="addition"?"+":" ")))}),R(Ze,Be)};me(Aa,Ze=>{r(k),f(()=>r(k).kind==="fold")?Ze(Ra):r(m)==="unified"?Ze(La,1):Ze(Ia,-1)})}R(yt,Mt)});var Ta=p(En,2);{var Ca=yt=>{var k=Eo(),Mt=o(k);D(()=>h(Mt,`← ${r(n),f(()=>r(n).backChange)??""}`)),Ve("click",k,Hn),R(yt,k)};me(Ta,yt=>{r(d),r(x),f(()=>r(d)===r(x).id)&&yt(Ca)})}D((yt,k,Mt)=>{se=tt(F,1,"hunk",null,se,{"active-hunk":r(d)===r(x).id}),V(F,"id",yt),V(F,"aria-labelledby",k),h(It,(r(x),f(()=>r(x).path))),V(mt,"id",Mt),h(Yn,`@@ −${r(x),f(()=>r(x).oldStart)??""},${r(x),f(()=>r(x).oldLines)??""} +${r(x),f(()=>r(x).newStart)??""},${r(x),f(()=>r(x).newLines)??""} @@ ${r(x),f(()=>r(x).heading)??""}`),V(kn,"aria-label",(r(x),f(()=>`Link to hunk in ${r(x).path}`))),li=tt(En,1,"diff-table",null,li,{"split-diff":r(m)==="split"}),V(En,"aria-label",(r(x),f(()=>`Diff for ${r(x).path}`)))},[()=>(r(x),f(()=>E("hunk",r(x).id))),()=>(r(x),f(()=>E("hunk-title",r(x).id))),()=>(r(x),f(()=>E("hunk-title",r(x).id)))]),Ve("click",kn,()=>je(r(x).id)),R($,F)}),D(($,x,F,se,$e)=>{V(S,"id",$),V(S,"aria-labelledby",x),h(ce,`← ${r(n),f(()=>r(n).backQueue)??""}`),h(De,`Focused change / ${r(v),f(()=>r(v).kind)??""}`),V(we,"id",F),h(W,(r(v),f(()=>r(v).title))),V(ie,"data-queue",se),h(Ge,$e),h(We,`${r(v),f(()=>r(v).risk.level)??""} risk`),h(lt,(r(v),f(()=>r(v).intent.source))),h(Ke,(r(n),f(()=>r(n).what))),h(pt,(r(v),f(()=>r(v).summary))),h(te,(r(v),f(()=>r(v).implementation))),h(Gt,(r(n),f(()=>r(n).why))),h(jn,(r(v),f(()=>r(v).intent.text||"Intent unknown"))),h(Bn,(r(n),f(()=>r(n).userImpact))),h(sa,(r(n),f(()=>r(n).risk))),h(la,(r(n),f(()=>r(n).gaps))),h(ua,(r(n),f(()=>r(n).verified))),h(va,`Evidence / ${r(T),f(()=>r(T).length)??""}`),h(_a,(r(n),f(()=>r(n).evidence))),h(ya,`Structured patch / ${r(b),f(()=>r(b).length)??""}`),h(wa,(r(n),f(()=>r(n).codeDiff))),V(xn,"aria-pressed",r(m)==="unified"),h(ka,(r(n),f(()=>r(n).unified))),V(zn,"aria-pressed",r(m)==="split"),h(Ea,(r(n),f(()=>r(n).split)))},[()=>(r(v),f(()=>E("change",r(v).id))),()=>(r(v),f(()=>E("title",r(v).id))),()=>(r(v),f(()=>E("title",r(v).id))),()=>(r(v),f(()=>G(r(v)))),()=>(r(v),f(()=>U(G(r(v)))))]),Ve("click",ee,X),Ve("click",xn,()=>q(m,"unified")),Ve("click",zn,()=>q(m,"split")),R(O,S)},ta=O=>{const S=Nn(()=>(r(i),r(d),f(()=>r(i).hunks.find(fe=>fe.id===r(d)))));var ee=tn(),ce=Jt(ee);{var Me=fe=>{var qe=Ao(),De=o(qe),we=o(De),W=p(De,2),B=o(W),ie=p(W,2),Ge=o(ie),pe=p(ie,2),We=o(pe),Ne=o(We),lt=o(Ne),xe=p(We,2);ae(xe,5,()=>(ke(r(S)),f(()=>Sr(r(S)))),et,(Oe,Y)=>{var Ke=tn(),Qe=Jt(Ke);{var pt=te=>{var Z=ki(),ge=o(Z);D(Gt=>h(ge,Gt),[()=>(r(n),r(Y),f(()=>r(n).context.replace("{count}",String(r(Y).count))))]),Ve("click",Z,()=>Tr(r(S).id)),R(te,Z)},gt=te=>{var Z=Co(),ge=o(Z),Gt=o(ge),bn=p(ge),jn=o(bn),Wt=p(bn),wn=o(Wt),Bn=p(Wt),Vn=o(Bn);D(()=>{tt(Z,1,(r(Y),f(()=>`diff-line ${r(Y).line.kind}`))),h(Gt,(r(Y),f(()=>r(Y).line.oldLine??""))),h(jn,(r(Y),f(()=>r(Y).line.newLine??""))),h(wn,(r(Y),f(()=>r(Y).line.kind==="addition"?"+":r(Y).line.kind==="deletion"?"−":" "))),h(Vn,(r(Y),f(()=>r(Y).line.content)))}),R(te,Z)};me(Qe,te=>{r(Y),f(()=>r(Y).kind==="fold")?te(pt):te(gt,-1)})}R(Oe,Ke)}),D(Oe=>{h(we,`← ${r(n),f(()=>r(n).backQueue)??""}`),h(B,(r(n),f(()=>r(n).unclassified))),h(Ge,(ke(r(S)),f(()=>r(S).path))),V(pe,"id",Oe),h(lt,`@@ −${ke(r(S)),f(()=>r(S).oldStart)??""},${ke(r(S)),f(()=>r(S).oldLines)??""} +${ke(r(S)),f(()=>r(S).newStart)??""},${ke(r(S)),f(()=>r(S).newLines)??""} @@`)},[()=>(ke(r(S)),f(()=>E("hunk",r(S).id)))]),Ve("click",De,X),R(fe,qe)};me(ce,fe=>{r(S)&&fe(Me)})}R(O,ee)},na=O=>{var S=Ro(),ee=o(S),ce=o(ee);D(()=>h(ce,(r(n),f(()=>r(n).empty)))),R(O,S)};me(Js,O=>{r(v)?O(ea):r(d)?O(ta,1):O(na,-1)})}D(O=>{V(P,"data-status",(r(i),f(()=>r(i).status))),h(re,(r(i),f(()=>r(i).status))),h(bs,(r(n),f(()=>r(n).visualGap))),h(xs,(r(i),f(()=>r(i).reportId))),h(Es,(r(n),f(()=>r(n).queue))),h(Ss,(r(n),f(()=>r(n).search))),V(Mr,"aria-label",(r(n),f(()=>r(n).queue))),h(Ls,`Overview / ${r(i),f(()=>r(i).status)??""}`),h(Is,(r(n),f(()=>r(n).summary))),h(qs,(r(i),f(()=>r(i).summary.statement))),h(Ds,(r(n),f(()=>r(n).files))),h(Os,(r(i),f(()=>r(i).summary.filesChanged))),h($s,(r(n),f(()=>r(n).additions))),h(Ps,`+${r(i),f(()=>r(i).summary.additions)??""}`),h(Hs,(r(n),f(()=>r(n).deletions))),h(js,`−${r(i),f(()=>r(i).summary.deletions)??""}`),h(Bs,(r(n),f(()=>r(n).changes))),h(zs,(r(i),f(()=>r(i).changes.length))),h(Gs,(r(n),f(()=>r(n).lowSignal))),h(Ks,O),h(Xs,(r(n),f(()=>r(n).inventory)))},[()=>(r(i),f(()=>r(i).files.filter(O=>O.lowSignal).length))]),fo(Ts,()=>r(c),O=>q(c,O)),R(y,C)},ys=y=>{var C=Io(),M=o(C);D(()=>{V(C,"role",r(a)?"alert":"status"),h(M,(r(a),f(()=>r(a)||s.en.loading)))}),R(y,C)};me(gs,y=>{r(i)?y(ms):y(ys,-1)})}R(e,Cr),$i()}Bl(["click"]);const Si=document.querySelector("[data-utsuri-app]");Si&&Kl(Mo,{target:Si});\n';
+var reportUiCss = ":root{color-scheme:light dark;font-family:-apple-system,BlinkMacSystemFont,Segoe UI,Hiragino Sans,Yu Gothic UI,sans-serif;font-size:16px;--paper: #f2efe7;--paper-raised: #fffdf7;--ink: #171a1f;--ink-muted: #61656d;--line: #c9c4b8;--line-strong: #7c7b77;--rail: #e4e0d6;--blue: #1558d6;--blue-soft: #dce7ff;--coral: #b73f2d;--coral-soft: #fae1db;--green: #176948;--green-soft: #d8eee3;--amber: #805400;--amber-soft: #f5e7bf;--focus: #0066ff;--code-bg: #20242b;--code-text: #f5f2e9;--code-muted: #a9afb9;--addition: #123d2e;--deletion: #4d2524;--word-addition: #297553;--word-deletion: #9c4139;--radius: .25rem;--shadow: 0 1px 0 rgb(23 26 31 / 8%), 0 12px 34px rgb(23 26 31 / 7%)}@media (prefers-color-scheme: dark){:root{--paper: #15171a;--paper-raised: #1e2126;--ink: #f4f0e7;--ink-muted: #b3b5ba;--line: #3b3f45;--line-strong: #71757c;--rail: #1a1d21;--blue: #80a9ff;--blue-soft: #25395f;--coral: #ff9b89;--coral-soft: #542e2a;--green: #76d4ac;--green-soft: #1c4637;--amber: #f0c66c;--amber-soft: #4b3b1c;--focus: #8ab4ff;--code-bg: #0c0e11}}*{box-sizing:border-box}html{background:var(--paper);color:var(--ink);scroll-behavior:smooth}body{margin:0;min-width:320px;background-image:linear-gradient(rgb(23 26 31 / 3%) 1px,transparent 1px);background-size:100% 2rem}button,input{font:inherit}button,a,summary{-webkit-tap-highlight-color:transparent}a{color:inherit}:focus-visible{outline:3px solid var(--focus);outline-offset:3px}.skip-link{position:fixed;inset:0 auto auto 0;z-index:100;transform:translateY(-120%);padding:.75rem 1rem;background:var(--paper-raised);color:var(--ink)}.skip-link:focus{transform:translateY(0)}.report-shell{display:grid;grid-template-columns:clamp(17rem,23vw,22rem) minmax(0,1fr);grid-template-rows:4.5rem minmax(calc(100vh - 4.5rem),auto);min-height:100vh}.report-header{position:sticky;top:0;z-index:20;grid-column:1 / -1;display:grid;grid-template-columns:clamp(17rem,23vw,22rem) 1fr auto;align-items:stretch;min-height:4.5rem;border-bottom:1px solid var(--line-strong);background:color-mix(in srgb,var(--paper-raised) 94%,transparent);-webkit-backdrop-filter:blur(14px);backdrop-filter:blur(14px)}.wordmark{display:flex;align-items:center;gap:.8rem;padding:0 1.25rem;border-right:1px solid var(--line-strong);text-decoration:none}.wordmark>span{display:grid;width:2rem;height:2rem;place-items:center;border-radius:50%;background:var(--ink);color:var(--paper-raised);font-size:.68rem;font-weight:800;letter-spacing:-.08em}.wordmark strong{font-size:1.05rem;letter-spacing:-.025em}.report-state{display:flex;align-items:center;gap:.65rem;padding:0 1.5rem;font-size:.78rem;font-weight:760;letter-spacing:.075em}.report-state small{color:var(--ink-muted);font-size:.75rem;font-weight:500;letter-spacing:0}.state-mark{width:.72rem;height:.72rem;border:2px solid currentColor;transform:rotate(45deg)}.report-state[data-status=UNCOVERED],.report-state[data-status=INCOMPLETE]{color:var(--amber)}.report-id{align-self:center;margin:0;padding:0 1.25rem;color:var(--ink-muted);font:.7rem/1.2 ui-monospace,SFMono-Regular,Menlo,monospace}.review-rail{position:sticky;top:4.5rem;align-self:start;height:calc(100vh - 4.5rem);overflow-y:auto;border-right:1px solid var(--line-strong);background:color-mix(in srgb,var(--rail) 96%,transparent)}.rail-heading,.queue-search,.queue-section h3{padding-right:1.25rem;padding-left:1.25rem}.rail-heading{padding-top:1.6rem;padding-bottom:1rem}.kicker{margin:0 0 .55rem;color:var(--ink-muted);font-size:.69rem;font-weight:750;letter-spacing:.12em;text-transform:uppercase}.rail-heading h2,.decision-summary h1,.focused-change h2,.section-heading h3{margin:0;letter-spacing:-.04em}.rail-heading h2{font-size:1.55rem}.queue-search{display:grid;gap:.42rem;padding-bottom:1.4rem;color:var(--ink-muted);font-size:.72rem;font-weight:650}.queue-search input{width:100%;border:1px solid var(--line-strong);border-radius:var(--radius);padding:.72rem .8rem;background:var(--paper-raised);color:var(--ink)}.queue-section{border-top:1px solid var(--line)}.queue-section h3{display:flex;align-items:center;justify-content:space-between;margin:0;padding-top:.75rem;padding-bottom:.75rem;color:var(--ink-muted);font-size:.7rem;letter-spacing:.055em;text-transform:uppercase}.count{min-width:1.7rem;border:1px solid var(--line);border-radius:1rem;padding:.12rem .38rem;text-align:center}.queue-section ol{margin:0;padding:0;list-style:none}.queue-section a{display:grid;grid-template-columns:2rem minmax(0,1fr);gap:.65rem;padding:.9rem 1.25rem;border-top:1px solid color-mix(in srgb,var(--line) 70%,transparent);text-decoration:none}.queue-section a:hover,.queue-section a[aria-current=page]{background:var(--paper-raised)}.queue-section a[aria-current=page]{box-shadow:inset .24rem 0 var(--blue)}.queue-index{padding-top:.08rem;color:var(--ink-muted);font:.68rem/1.2 ui-monospace,SFMono-Regular,Menlo,monospace}.queue-copy{min-width:0}.queue-copy strong{display:block;overflow:hidden;font-size:.84rem;line-height:1.35;text-overflow:ellipsis}.queue-copy>span:not(.badges){color:var(--ink-muted);font-size:.7rem}.badges{display:flex;flex-wrap:wrap;gap:.35rem;margin-top:.48rem}.badges span,.change-badges span{border:1px solid var(--line);border-radius:99px;padding:.16rem .45rem;color:var(--ink-muted);font-size:.63rem;font-weight:700}main{min-width:0;padding:clamp(1.25rem,3vw,3rem)}.decision-summary,.focused-change{width:min(100%,90rem);margin:0 auto;border:1px solid var(--line-strong);background:var(--paper-raised);box-shadow:var(--shadow)}.decision-summary{display:grid;grid-template-columns:minmax(15rem,1fr) minmax(28rem,1.25fr);gap:clamp(1.5rem,4vw,4rem);padding:clamp(1.4rem,3vw,2.6rem)}.decision-summary h1{font-size:clamp(1.9rem,4vw,3.6rem);line-height:.98}.decision-statement{max-width:44rem;margin:1.25rem 0 0;color:var(--ink-muted);font-size:clamp(1rem,1.6vw,1.25rem);line-height:1.55}.metrics{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));align-self:end;margin:0;border-top:1px solid var(--line-strong);border-bottom:1px solid var(--line-strong)}.metrics div{min-width:0;padding:.85rem .65rem;border-right:1px solid var(--line)}.metrics div:last-child{border-right:0}.metrics dt{min-height:2.2em;color:var(--ink-muted);font-size:.65rem}.metrics dd{margin:.35rem 0 0;font:700 clamp(1.25rem,2vw,1.8rem)/1 ui-monospace,SFMono-Regular,Menlo,monospace}.positive{color:var(--green)}.negative{color:var(--coral)}.file-inventory{grid-column:1 / -1;border-top:1px solid var(--line);padding-top:1rem}.file-inventory summary,.more-evidence summary{cursor:pointer;font-size:.78rem;font-weight:720}.file-inventory ul{display:grid;gap:0;margin:.8rem 0 0;padding:0;list-style:none}.file-inventory li{display:grid;grid-template-columns:6rem minmax(0,1fr) auto;gap:1rem;padding:.48rem 0;border-top:1px solid var(--line);color:var(--ink-muted);font-size:.72rem}.file-inventory code{overflow-wrap:anywhere;color:var(--ink)}.file-status{font-weight:750;text-transform:uppercase}.focused-change{margin-top:1.4rem;padding:clamp(1.4rem,3vw,2.6rem)}.back-link,.anchor-button{border:0;padding:0;background:transparent;color:var(--blue);cursor:pointer;font-size:.75rem;font-weight:720}.change-header{display:flex;align-items:end;justify-content:space-between;gap:2rem;margin-top:1.8rem;padding-bottom:1.5rem;border-bottom:2px solid var(--ink)}.change-header h2{max-width:50rem;font-size:clamp(1.8rem,4vw,3.25rem);line-height:1.04}.change-badges{display:flex;flex-wrap:wrap;justify-content:end;gap:.4rem}.change-badges span[data-queue=action-required]{border-color:var(--coral);background:var(--coral-soft);color:var(--coral)}.change-badges span[data-queue=needs-confirmation]{border-color:var(--amber);background:var(--amber-soft);color:var(--amber)}.change-badges span[data-queue=no-issue]{border-color:var(--green);background:var(--green-soft);color:var(--green)}.explanation-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));border-bottom:1px solid var(--line-strong)}.explanation-grid section{min-width:0;padding:1.5rem 1.5rem 1.5rem 0;border-bottom:1px solid var(--line)}.explanation-grid section:nth-child(2n){padding-right:0;padding-left:1.5rem;border-left:1px solid var(--line)}.explanation-grid h3{margin:0 0 .7rem;font-size:.74rem;letter-spacing:.08em;text-transform:uppercase}.explanation-grid p,.explanation-grid li{font-size:.9rem;line-height:1.62}.explanation-grid ul{margin:0;padding-left:1.1rem}.technical{color:var(--ink-muted)}.risk-block{box-shadow:inset .22rem 0 var(--coral);padding-left:1.2rem!important}.gap-block{background:var(--amber-soft);box-shadow:inset .22rem 0 var(--amber)}.evidence-section,.diff-section{padding-top:2.2rem}.section-heading{display:flex;align-items:end;justify-content:space-between;gap:1.5rem;margin-bottom:1rem}.section-heading h3{font-size:clamp(1.35rem,2.5vw,2rem)}.evidence-list{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:.75rem;margin:0;padding:0;list-style:none}.evidence-list li{min-width:0;border:1px solid var(--line);padding:1rem;background:color-mix(in srgb,var(--blue-soft) 35%,transparent)}.evidence-list span{display:block;color:var(--blue);font-size:.64rem;font-weight:780;letter-spacing:.08em;text-transform:uppercase}.evidence-list strong{display:block;overflow-wrap:anywhere;margin-top:.55rem;font:.77rem/1.4 ui-monospace,SFMono-Regular,Menlo,monospace}.evidence-list p{margin:.55rem 0 0;color:var(--ink-muted);font-size:.78rem;line-height:1.45}.more-evidence{margin-top:.8rem}.segmented-control{display:inline-flex;border:1px solid var(--line-strong);border-radius:var(--radius);overflow:hidden}.segmented-control button{border:0;border-right:1px solid var(--line-strong);padding:.48rem .72rem;background:transparent;color:var(--ink-muted);cursor:pointer;font-size:.7rem;font-weight:700}.segmented-control button:last-child{border-right:0}.segmented-control button[aria-pressed=true]{background:var(--ink);color:var(--paper-raised)}.hunk{overflow:hidden;margin-top:1rem;border:1px solid #555c66;border-radius:var(--radius);background:var(--code-bg);color:var(--code-text)}.hunk.active-hunk{box-shadow:0 0 0 4px var(--focus)}.hunk>header{display:flex;align-items:center;justify-content:space-between;gap:1rem;padding:.75rem 1rem;border-bottom:1px solid #555c66;background:#292e36}.hunk>header p,.hunk>header h4,.hunk>header h3{margin:0;overflow-wrap:anywhere;font:.72rem/1.45 ui-monospace,SFMono-Regular,Menlo,monospace}.hunk>header p{color:#d6d9de;font-weight:760}.hunk>header h4{color:var(--code-muted);font-weight:500}.anchor-button{min-width:2rem;min-height:2rem;color:#9bbaff;font:700 1rem/1 ui-monospace,SFMono-Regular,Menlo,monospace}.diff-table{overflow-x:auto;font:.76rem/1.55 ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,monospace;font-variant-ligatures:none}.diff-line{display:grid;grid-template-columns:3.4rem 3.4rem 1.4rem minmax(max-content,1fr);min-height:1.55rem}.diff-line.addition{background:var(--addition)}.diff-line.deletion{background:var(--deletion)}.diff-line.no-newline{color:var(--code-muted);font-style:italic}.line-number{padding:0 .65rem;border-right:1px solid rgb(255 255 255 / 8%);color:var(--code-muted);text-align:right;-webkit-user-select:none;user-select:none}.line-sign{color:var(--code-muted);text-align:center;-webkit-user-select:none;user-select:none}.diff-line code{padding:0 .75rem 0 0;white-space:pre}.word-change{border-radius:.12rem;background:var(--word-addition);box-shadow:0 0 0 .08rem var(--word-addition)}.deletion .word-change{background:var(--word-deletion);box-shadow:0 0 0 .08rem var(--word-deletion)}.context-fold{width:100%;border:0;border-top:1px solid #3a4049;border-bottom:1px solid #3a4049;padding:.4rem;background:#252a31;color:#a9c0ef;cursor:pointer;font:inherit;text-align:center}.split-row{display:grid;grid-template-columns:repeat(2,minmax(max-content,1fr));border-bottom:1px solid rgb(255 255 255 / 5%)}.split-row .diff-line{grid-template-columns:3.4rem 1.4rem minmax(max-content,1fr)}.split-row .diff-line:first-child{border-right:1px solid #555c66}.empty-side{background:#171a1f!important}.hunk-back{margin:.75rem 1rem;color:#9bbaff}.loading{margin:3rem;color:var(--ink-muted)}.empty-focus{min-height:12rem}@media (max-width: 1100px){.report-shell{grid-template-columns:16rem minmax(0,1fr)}.report-header{grid-template-columns:16rem 1fr}.report-id{display:none}.decision-summary{grid-template-columns:1fr}.metrics{grid-template-columns:repeat(5,minmax(5rem,1fr));overflow-x:auto}.evidence-list{grid-template-columns:1fr}}@media (max-width: 760px){.report-shell{display:block}.report-header{position:sticky;display:flex;min-height:3.75rem}.wordmark{border-right:0}.report-state{margin-left:auto;padding-right:1rem}.report-state small{display:none}.review-rail{position:static;width:100%;height:auto;max-height:26rem;border-right:0;border-bottom:1px solid var(--line-strong)}main{padding:.8rem}.decision-summary,.focused-change{box-shadow:none}.change-header{display:block}.change-badges{justify-content:start;margin-top:1rem}.explanation-grid{display:block}.explanation-grid section,.explanation-grid section:nth-child(2n){padding:1.15rem 0;border-left:0}.risk-block,.gap-block{padding-left:1rem!important}.section-heading{display:block}.segmented-control{margin-top:.8rem}.file-inventory li{grid-template-columns:1fr;gap:.25rem}}@media (prefers-reduced-motion: reduce){*,*:before,*:after{scroll-behavior:auto!important;transition-duration:.01ms!important;animation-duration:.01ms!important}}@media print{.review-rail,.segmented-control,.back-link,.anchor-button{display:none!important}.report-shell,.report-header{display:block}main{padding:0}.decision-summary,.focused-change{border:0;box-shadow:none}}\n";
 
 // packages/report-builder/src/native-publish.ts
-import { spawn } from "node:child_process";
-import { constants } from "node:fs";
+import { spawn as spawn2 } from "node:child_process";
+import { closeSync, constants, fstatSync, openSync } from "node:fs";
 import { access, lstat as lstat2 } from "node:fs/promises";
-import path2 from "node:path";
+import path8 from "node:path";
 import { fileURLToPath } from "node:url";
 var helperExit = {
   destinationExists: 65,
@@ -15551,10 +17116,10 @@ var helperExit = {
 };
 async function resolveNativeHelper() {
   const target = `${process.platform}-${process.arch}`;
-  const moduleDirectory = path2.dirname(fileURLToPath(import.meta.url));
+  const moduleDirectory = path8.dirname(fileURLToPath(import.meta.url));
   const candidates = [
-    path2.join(moduleDirectory, "native", target, "utsuri-fs-ops"),
-    path2.resolve(moduleDirectory, "../../..", ".artifacts/native", target, "utsuri-fs-ops")
+    path8.join(moduleDirectory, "native", target, "utsuri-fs-ops"),
+    path8.resolve(moduleDirectory, "../../..", ".artifacts/native", target, "utsuri-fs-ops")
   ];
   for (const candidate of candidates) {
     try {
@@ -15572,12 +17137,17 @@ async function resolveNativeHelper() {
     ExitCode.Environment
   );
 }
-async function runNativeHelper(helper, args, parentHandle) {
+async function runNativeHelper(helper, args, parentDescriptor) {
   return await new Promise((resolve, reject) => {
-    const child = spawn(helper, args, {
-      shell: false,
-      stdio: ["ignore", "ignore", "pipe", parentHandle.fd]
-    });
+    let child;
+    try {
+      child = spawn2(helper, args, {
+        shell: false,
+        stdio: ["ignore", "ignore", "pipe", parentDescriptor]
+      });
+    } finally {
+      closeInheritedDescriptor(parentDescriptor);
+    }
     let stderr = "";
     const errorStream = child.stderr;
     if (!errorStream) {
@@ -15592,8 +17162,30 @@ async function runNativeHelper(helper, args, parentHandle) {
     child.once("close", (code, signal) => resolve({ code, signal, stderr: stderr.trim() }));
   });
 }
+function duplicateDirectoryDescriptor(parentHandle, parentIdentity) {
+  const descriptorPath = `${process.platform === "linux" ? "/proc/self/fd" : "/dev/fd"}/${parentHandle.fd}`;
+  const duplicate = openSync(descriptorPath, constants.O_RDONLY);
+  const duplicateIdentity = fstatSync(duplicate, { bigint: true });
+  if (!duplicateIdentity.isDirectory() || String(duplicateIdentity.dev) !== String(parentIdentity.dev) || String(duplicateIdentity.ino) !== String(parentIdentity.ino)) {
+    closeSync(duplicate);
+    throw new UtsuriError(
+      "REPORT_PUBLISH_IDENTITY_CHANGED",
+      "The retained report publication directory changed before helper execution",
+      ExitCode.Security
+    );
+  }
+  return duplicate;
+}
+function closeInheritedDescriptor(descriptor) {
+  try {
+    closeSync(descriptor);
+  } catch (error) {
+    if (error.code !== "EBADF") throw error;
+  }
+}
 async function publishDirectoryNoReplace(parentHandle, parentIdentity, sourceName, destinationName, sourceIdentity) {
   const helper = await resolveNativeHelper();
+  const inheritedDescriptor = duplicateDirectoryDescriptor(parentHandle, parentIdentity);
   const result2 = await runNativeHelper(
     helper,
     [
@@ -15604,7 +17196,7 @@ async function publishDirectoryNoReplace(parentHandle, parentIdentity, sourceNam
       String(sourceIdentity.dev),
       String(sourceIdentity.ino)
     ],
-    parentHandle
+    inheritedDescriptor
   );
   if (result2.code === 0) return;
   if (result2.code === helperExit.destinationExists) {
@@ -16092,7 +17684,7 @@ var reportCsp = [
   "style-src 'self'"
 ].join("; ");
 var statusIconSvg = '<svg xmlns="http://www.w3.org/2000/svg"><symbol id="status" viewBox="0 0 16 16"><circle cx="8" cy="8" r="6" fill="currentColor"/></symbol></svg>\n';
-var phaseZeroArtifactPaths = /* @__PURE__ */ new Set([
+var reportArtifactPaths = /* @__PURE__ */ new Set([
   "assets/app.css",
   "assets/app.js",
   "assets/icons.svg",
@@ -16147,7 +17739,7 @@ async function readRegularBytes(filename) {
     if (code === "ELOOP" || code === "ENXIO") {
       throw new UtsuriError(
         "REPORT_SPECIAL_FILE",
-        `Artifact is not a regular non-symlink file: ${path3.basename(filename)}`,
+        `Artifact is not a regular non-symlink file: ${path9.basename(filename)}`,
         ExitCode.Security
       );
     }
@@ -16158,14 +17750,14 @@ async function readRegularBytes(filename) {
     if (!fileStat.isFile()) {
       throw new UtsuriError(
         "REPORT_SPECIAL_FILE",
-        `Artifact is not a regular file: ${path3.basename(filename)}`,
+        `Artifact is not a regular file: ${path9.basename(filename)}`,
         ExitCode.Security
       );
     }
     if (fileStat.size > maximumArtifactBytes) {
       throw new UtsuriError(
         "REPORT_FILE_TOO_LARGE",
-        `Artifact exceeds ${maximumArtifactBytes} bytes: ${path3.basename(filename)}`,
+        `Artifact exceeds ${maximumArtifactBytes} bytes: ${path9.basename(filename)}`,
         ExitCode.Artifact
       );
     }
@@ -16185,7 +17777,7 @@ async function readOptionalJson(filename) {
     } catch {
       throw new UtsuriError(
         "ARTIFACT_JSON_INVALID",
-        `${path3.basename(filename)} is not valid JSON`,
+        `${path9.basename(filename)} is not valid JSON`,
         ExitCode.Artifact
       );
     }
@@ -16194,56 +17786,180 @@ async function readOptionalJson(filename) {
     throw error;
   }
 }
-function assertPhaseZeroDiff(value) {
-  const errors = [];
-  if (!isRecord(value) || !hasExactKeys(value, ["summary", "hunks"])) {
-    errors.push("must be an object containing only summary and hunks");
-  } else {
-    if (!isRecord(value.summary) || !hasExactKeys(value.summary, ["filesChanged", "additions", "deletions"])) {
-      errors.push("summary must contain filesChanged, additions, and deletions");
-    } else {
-      for (const field of ["filesChanged", "additions", "deletions"]) {
-        if (!Number.isInteger(value.summary[field]) || value.summary[field] < 0) {
-          errors.push(`summary.${field} must be a non-negative integer`);
-        }
-      }
-    }
-    if (!Array.isArray(value.hunks)) errors.push("hunks must be an array");
-  }
-  if (errors.length > 0) {
-    throw new UtsuriError("SCHEMA_INVALID", `diff: ${errors.join("; ")}`, ExitCode.Artifact, {
-      schema: "diff",
-      errors
-    });
-  }
+function assertReferenceResult(id, result2) {
+  if (!result2.ok) throw new UtsuriError(id, result2.errors.join("; "), ExitCode.Artifact);
 }
-async function createInitialReport(runDirectory) {
-  const input = await readOptionalJson(path3.join(runDirectory, "input.json"));
-  const diffValue = await readOptionalJson(path3.join(runDirectory, "diff.json"));
-  if (diffValue !== null) assertPhaseZeroDiff(diffValue);
-  const diff = diffValue;
-  const reportId = `report-${stableHash({ input, diff }).slice(0, 16)}`;
-  const hasDiffEvidence = Boolean(
-    diff && (diff.summary.filesChanged > 0 || diff.summary.additions > 0 || diff.summary.deletions > 0 || diff.hunks.length > 0)
-  );
-  if (hasDiffEvidence) {
+function inferredKind(paths) {
+  const extensions = new Set(paths.map((entry) => path9.extname(entry).toLowerCase()));
+  if ([...extensions].some((extension) => [".css", ".scss", ".sass", ".less"].includes(extension))) {
+    return "visual";
+  }
+  if ([...extensions].every((extension) => [".md", ".txt"].includes(extension))) return "content";
+  if ([...extensions].some(
+    (extension) => [".html", ".svelte", ".vue", ".tsx", ".jsx"].includes(extension)
+  )) {
+    return "mixed";
+  }
+  return "unknown";
+}
+function createCandidateChanges(diff, plan) {
+  const filesById = new Map(diff.files.map((file) => [file.id, file]));
+  return plan.candidates.map((candidate) => {
+    const paths = candidate.fileRefs.map((reference) => filesById.get(reference)).filter((file) => file !== void 0).map((file) => file.newPath ?? file.oldPath ?? "unknown");
+    const lowSignalOnly = candidate.hunkRefs.every(
+      (reference) => diff.hunks.find((hunk) => hunk.id === reference)?.lowSignal
+    );
+    return {
+      id: candidate.id,
+      title: candidate.title,
+      kind: inferredKind(paths),
+      summary: `${candidate.hunkRefs.length} hunk${candidate.hunkRefs.length === 1 ? "" : "s"} across ${paths.length} file${paths.length === 1 ? "" : "s"}.`,
+      intent: {
+        text: "Intent has not been declared.",
+        source: "unknown",
+        evidenceRefs: candidate.evidenceRefs,
+        missingEvidence: ["User request, specification, or commit rationale"]
+      },
+      implementation: `Git changes were collected for ${paths.join(", ")}.`,
+      userImpact: [],
+      technicalImpact: paths.map((entry) => `Changed ${entry}`),
+      risk: {
+        level: lowSignalOnly ? "info" : "low",
+        reasons: lowSignalOnly ? ["Only low-signal or generated evidence is present."] : ["Runtime and visual effects have not been exercised."]
+      },
+      hunkRefs: candidate.hunkRefs,
+      targetRefs: [],
+      findingRefs: [],
+      verification: {
+        verified: ["Git patch structure and cross-references were validated."],
+        gaps: ["Visual behavior was not captured.", "Runtime behavior was not executed."]
+      }
+    };
+  });
+}
+function createCodeOnlyReport(input, diff, evidenceIndex, plan, annotations) {
+  const sourceChanges = annotations?.changes.length ? annotations.changes : createCandidateChanges(diff, plan);
+  const changes = sourceChanges.map((change) => ({
+    ...change,
+    verification: {
+      verified: change.verification.verified,
+      gaps: [
+        .../* @__PURE__ */ new Set([
+          ...change.verification.gaps,
+          "Visual behavior was not captured.",
+          "Runtime behavior was not executed."
+        ])
+      ]
+    }
+  }));
+  const classified = new Set(changes.flatMap((change) => change.hunkRefs));
+  const unclassifiedHunkRefs = diff.hunks.map((hunk) => hunk.id).filter((reference) => !classified.has(reference));
+  const reportId = `report-${stableHash({ input, diff, evidenceIndex, plan, annotations }).slice(0, 16)}`;
+  return {
+    schemaVersion: "1.0",
+    reportId,
+    status: "UNCOVERED",
+    summary: {
+      statement: "Code changes were collected and grouped. Visual and runtime behavior remain unverified.",
+      filesChanged: diff.summary.filesChanged,
+      additions: diff.summary.additions,
+      deletions: diff.summary.deletions
+    },
+    files: diff.files.map((file) => ({
+      id: file.id,
+      status: file.status,
+      oldPath: file.oldPath,
+      newPath: file.newPath,
+      additions: file.additions,
+      deletions: file.deletions,
+      binary: file.binary,
+      submodule: file.submodule,
+      oldMode: file.oldMode,
+      newMode: file.newMode,
+      oldOid: file.oldOid,
+      newOid: file.newOid,
+      lowSignal: file.lowSignal,
+      lowSignalReasons: file.lowSignalReasons,
+      hunkRefs: file.hunkRefs
+    })),
+    hunks: diff.hunks,
+    evidence: evidenceIndex.evidence,
+    unclassifiedHunkRefs,
+    changes,
+    targets: [],
+    findings: [],
+    coverage: {
+      knownUsages: null,
+      verifiedUsages: 0,
+      unknownPossible: true,
+      planned: 0,
+      succeeded: 0,
+      failed: 0
+    },
+    origin: {
+      host: "unknown",
+      projectFingerprint: diff.repository.fingerprint,
+      reportId,
+      bindingMode: "unbound",
+      createdAt: (/* @__PURE__ */ new Date(0)).toISOString()
+    },
+    diagnostics: {
+      incompleteReasons: ["visual-capture-not-run", "runtime-not-executed"],
+      blockedRequestCount: 0
+    }
+  };
+}
+async function createInitialReport(runDirectory, annotationsValue = null) {
+  const input = await readOptionalJson(path9.join(runDirectory, "input.json"));
+  const diffValue = await readOptionalJson(path9.join(runDirectory, "diff.json"));
+  if (annotationsValue !== null) assertArtifact("annotations", annotationsValue);
+  const annotations = annotationsValue;
+  if (diffValue !== null) {
+    assertArtifact("diff", diffValue);
+    const diff = diffValue;
+    assertReferenceResult("DIFF_REFERENCE_INVALID", validateDiffReferences(diff));
+    const evidenceValue = await readOptionalJson(path9.join(runDirectory, "evidence-index.json"));
+    const planValue = await readOptionalJson(path9.join(runDirectory, "review-plan.json"));
+    if (evidenceValue === null || planValue === null) {
+      throw new UtsuriError(
+        "COLLECT_ARTIFACT_MISSING",
+        "A collected diff requires evidence-index.json and review-plan.json",
+        ExitCode.Artifact
+      );
+    }
+    assertArtifact("evidence-index", evidenceValue);
+    assertArtifact("review-plan", planValue);
+    const evidenceIndex = evidenceValue;
+    const plan = planValue;
+    assertReferenceResult(
+      "REVIEW_PLAN_INVALID",
+      validateReviewPlanReferences(plan, diff, evidenceIndex)
+    );
+    const report = createCodeOnlyReport(input, diff, evidenceIndex, plan, annotations);
+    assertReferenceResult("REPORT_REFERENCE_INVALID", validateReportReferences(report));
+    return report;
+  }
+  if (annotations?.changes.length) {
     throw new UtsuriError(
-      "REPORT_DIFF_REQUIRES_COLLECT",
-      "Phase 0 finalize cannot preserve non-empty diff evidence; run the Phase 1 collect workflow",
+      "ANNOTATIONS_REQUIRE_DIFF",
+      "Non-empty annotations require a collected diff",
       ExitCode.Artifact
     );
   }
+  const reportId = `report-${stableHash({ input }).slice(0, 16)}`;
   return {
     schemaVersion: "1.0",
     reportId,
     status: "SKIPPED",
     summary: {
       statement: "No code diff was supplied; visual verification was skipped.",
-      filesChanged: diff?.summary.filesChanged ?? 0,
-      additions: diff?.summary.additions ?? 0,
-      deletions: diff?.summary.deletions ?? 0
+      filesChanged: 0,
+      additions: 0,
+      deletions: 0
     },
+    files: [],
     hunks: [],
+    evidence: [],
     unclassifiedHunkRefs: [],
     changes: [],
     targets: [],
@@ -16258,7 +17974,7 @@ async function createInitialReport(runDirectory) {
     },
     origin: {
       host: "unknown",
-      projectFingerprint: stableHash({ cwd: path3.basename(runDirectory), input }).slice(0, 16),
+      projectFingerprint: stableHash({ cwd: path9.basename(runDirectory), input }).slice(0, 16),
       reportId,
       bindingMode: "unbound",
       createdAt: (/* @__PURE__ */ new Date(0)).toISOString()
@@ -16274,8 +17990,8 @@ async function listFiles(directory, prefix = "") {
   for (const entry of (await readdir(directory, { withFileTypes: true })).sort(
     (a, b) => a.name.localeCompare(b.name)
   )) {
-    const relative = path3.posix.join(prefix, entry.name);
-    const absolute = path3.join(directory, entry.name);
+    const relative = path9.posix.join(prefix, entry.name);
+    const absolute = path9.join(directory, entry.name);
     const entryStat = await lstat3(absolute);
     if (entryStat.isSymbolicLink()) {
       throw new UtsuriError(
@@ -16297,7 +18013,7 @@ async function listFiles(directory, prefix = "") {
   return result2;
 }
 async function writeJson(filename, value) {
-  await writeFile(filename, `${JSON.stringify(value, null, 2)}
+  await writeFile2(filename, `${JSON.stringify(value, null, 2)}
 `, { flag: "wx" });
 }
 function isRecord(value) {
@@ -16340,7 +18056,7 @@ function validateManifest(value) {
     errors.push("Manifest assetHashes must be an object");
   } else {
     for (const [relative, digest] of Object.entries(value.assetHashes)) {
-      if (!relative || relative === "manifest.json" || relative.startsWith("/") || relative.includes("\\") || path3.posix.normalize(relative) !== relative || relative.split("/").includes("..")) {
+      if (!relative || relative === "manifest.json" || relative.startsWith("/") || relative.includes("\\") || path9.posix.normalize(relative) !== relative || relative.split("/").includes("..")) {
         errors.push(`Manifest asset path is invalid: ${relative}`);
       }
       if (typeof digest !== "string" || !/^[a-f0-9]{64}$/u.test(digest)) {
@@ -16379,9 +18095,9 @@ async function assertProtectedPublicationPath(runDirectory, runIdentity) {
   }
   const currentUid = BigInt(process.getuid());
   const paths = [];
-  for (let current = runDirectory; ; current = path3.dirname(current)) {
+  for (let current = runDirectory; ; current = path9.dirname(current)) {
     paths.push(current);
-    if (current === path3.dirname(current)) break;
+    if (current === path9.dirname(current)) break;
   }
   let childIdentity;
   for (const [index, current] of paths.entries()) {
@@ -16449,22 +18165,22 @@ async function readJsonForValidation(filename, label, errors) {
   }
 }
 async function populateReportDirectory(directory, report, options) {
-  await mkdir(path3.join(directory, "assets"), { recursive: true });
-  await mkdir(path3.join(directory, "diagnostics"), { recursive: true });
-  await writeFile(path3.join(directory, "index.html"), indexHtml(report), { flag: "wx" });
-  await writeJson(path3.join(directory, "report.json"), report);
-  await writeFile(path3.join(directory, "assets/app.js"), reportUiJavaScript, { flag: "wx" });
-  await writeFile(path3.join(directory, "assets/app.css"), reportUiCss, { flag: "wx" });
-  await writeFile(path3.join(directory, "assets/icons.svg"), statusIconSvg, { flag: "wx" });
-  await writeJson(path3.join(directory, "diagnostics/summary.json"), report.diagnostics);
+  await mkdir2(path9.join(directory, "assets"), { recursive: true });
+  await mkdir2(path9.join(directory, "diagnostics"), { recursive: true });
+  await writeFile2(path9.join(directory, "index.html"), indexHtml(report), { flag: "wx" });
+  await writeJson(path9.join(directory, "report.json"), report);
+  await writeFile2(path9.join(directory, "assets/app.js"), reportUiJavaScript, { flag: "wx" });
+  await writeFile2(path9.join(directory, "assets/app.css"), reportUiCss, { flag: "wx" });
+  await writeFile2(path9.join(directory, "assets/icons.svg"), statusIconSvg, { flag: "wx" });
+  await writeJson(path9.join(directory, "diagnostics/summary.json"), report.diagnostics);
   for (const schemaFile of reportSchemaFiles) {
-    await writeFile(path3.join(directory, schemaFile), reportSchemaAssets[schemaFile], {
+    await writeFile2(path9.join(directory, schemaFile), reportSchemaAssets[schemaFile], {
       flag: "wx"
     });
   }
   const assetHashes = {};
   for (const relative of await listFiles(directory)) {
-    assetHashes[relative] = sha2562(await readRegularBytes(path3.join(directory, relative)));
+    assetHashes[relative] = sha2562(await readRegularBytes(path9.join(directory, relative)));
   }
   const manifest = {
     schemaVersion: "1.0",
@@ -16480,7 +18196,7 @@ async function populateReportDirectory(directory, report, options) {
     },
     incompleteReasons: report.diagnostics.incompleteReasons
   };
-  await writeJson(path3.join(directory, "manifest.json"), manifest);
+  await writeJson(path9.join(directory, "manifest.json"), manifest);
   return manifest;
 }
 async function buildReport(runInput, report, options = {}) {
@@ -16493,7 +18209,7 @@ async function buildReport(runInput, report, options = {}) {
       ExitCode.Artifact
     );
   }
-  const runDirectory = await realpath2(runInput);
+  const runDirectory = await realpath4(runInput);
   const runHandle = await open(
     runDirectory,
     constants2.O_RDONLY | constants2.O_DIRECTORY | constants2.O_NOFOLLOW
@@ -16509,7 +18225,7 @@ async function buildReport(runInput, report, options = {}) {
     }
     await assertProtectedPublicationPath(runDirectory, runIdentity);
     await assertDirectoryIdentity(runDirectory, runIdentity, "Run");
-    const reportDirectory = path3.join(runDirectory, "report");
+    const reportDirectory = path9.join(runDirectory, "report");
     const existingStat = await optionalLstat(reportDirectory);
     if (existingStat) {
       if (existingStat.isSymbolicLink()) {
@@ -16527,7 +18243,7 @@ async function buildReport(runInput, report, options = {}) {
         );
       }
       await listFiles(reportDirectory);
-      const existing = await readOptionalJson(path3.join(reportDirectory, "report.json"));
+      const existing = await readOptionalJson(path9.join(reportDirectory, "report.json"));
       if (existing && canonicalJson(existing) === canonicalJson(report)) {
         const validation2 = await validateReportDirectory(reportDirectory, { strict: true });
         if (!validation2.ok) {
@@ -16538,7 +18254,7 @@ async function buildReport(runInput, report, options = {}) {
           );
         }
         const manifestResult = validateManifest(
-          await readOptionalJson(path3.join(reportDirectory, "manifest.json"))
+          await readOptionalJson(path9.join(reportDirectory, "manifest.json"))
         );
         if (manifestResult.manifest) {
           await assertDirectoryIdentity(runDirectory, runIdentity, "Run");
@@ -16552,8 +18268,8 @@ async function buildReport(runInput, report, options = {}) {
       );
     }
     const stagingName = `.report-${randomUUID()}.tmp`;
-    const stagingDirectory = path3.join(runDirectory, stagingName);
-    await mkdir(stagingDirectory, { recursive: false, mode: 448 });
+    const stagingDirectory = path9.join(runDirectory, stagingName);
+    await mkdir2(stagingDirectory, { recursive: false, mode: 448 });
     const stagingIdentity = await lstat3(stagingDirectory, { bigint: true });
     const manifest = await populateReportDirectory(stagingDirectory, report, options);
     const validation = await validateReportDirectory(stagingDirectory, { strict: true });
@@ -16599,7 +18315,7 @@ async function validateReportDirectory(input, options = {}) {
     if (!inputStat.isDirectory()) {
       return { ok: false, errors: ["Report path must be a directory"] };
     }
-    directory = await realpath2(input);
+    directory = await realpath4(input);
   } catch {
     return { ok: false, errors: ["Report directory is missing or inaccessible"] };
   }
@@ -16613,12 +18329,12 @@ async function validateReportDirectory(input, options = {}) {
     return { ok: false, errors: [error instanceof Error ? error.message : String(error)] };
   }
   const manifestRaw = await readJsonForValidation(
-    path3.join(directory, "manifest.json"),
+    path9.join(directory, "manifest.json"),
     "manifest.json",
     errors
   );
   const reportRaw = await readJsonForValidation(
-    path3.join(directory, "report.json"),
+    path9.join(directory, "report.json"),
     "report.json",
     errors
   );
@@ -16666,15 +18382,15 @@ async function validateReportDirectory(input, options = {}) {
     }
   }
   try {
-    errors.push(...validateHtml(await readRegularText(path3.join(directory, "index.html"))));
+    errors.push(...validateHtml(await readRegularText(path9.join(directory, "index.html"))));
   } catch {
     errors.push("index.html is missing");
   }
   if (options.strict) {
     const actualAssets = files.filter((relative) => relative !== "manifest.json").sort();
-    const expectedAssets = [...phaseZeroArtifactPaths].sort();
+    const expectedAssets = [...reportArtifactPaths].sort();
     if (JSON.stringify(actualAssets) !== JSON.stringify(expectedAssets)) {
-      errors.push("Strict Phase 0 artifact inventory mismatch");
+      errors.push("Strict report artifact inventory mismatch");
     }
     for (const [relative, expected] of [
       ["index.html", report ? indexHtml(report) : null],
@@ -16685,7 +18401,7 @@ async function validateReportDirectory(input, options = {}) {
     ]) {
       if (expected === null) continue;
       try {
-        if (await readRegularText(path3.join(directory, relative)) !== expected) {
+        if (await readRegularText(path9.join(directory, relative)) !== expected) {
           errors.push(`Bundled asset mismatch: ${relative}`);
         }
       } catch {
@@ -16696,7 +18412,7 @@ async function validateReportDirectory(input, options = {}) {
     if (report) {
       try {
         const diagnostics = JSON.parse(
-          await readRegularText(path3.join(directory, "diagnostics/summary.json"))
+          await readRegularText(path9.join(directory, "diagnostics/summary.json"))
         );
         if (canonicalJson(diagnostics) !== canonicalJson(report.diagnostics)) {
           errors.push("Diagnostic summary does not match report.json");
@@ -16710,7 +18426,7 @@ async function validateReportDirectory(input, options = {}) {
 }
 async function isWritableDirectory(directory) {
   try {
-    let target = path3.resolve(directory);
+    let target = path9.resolve(directory);
     for (; ; ) {
       const current = await stat(target).catch((error) => {
         if (error.code === "ENOENT") return null;
@@ -16721,7 +18437,7 @@ async function isWritableDirectory(directory) {
         await access2(target, 2);
         return true;
       }
-      const parent = path3.dirname(target);
+      const parent = path9.dirname(target);
       if (parent === target) return false;
       target = parent;
     }
@@ -16734,10 +18450,14 @@ async function isWritableDirectory(directory) {
 var valueOptions = /* @__PURE__ */ new Set([
   "--annotations",
   "--batch",
+  "--base",
   "--config",
   "--format",
+  "--head",
   "--input",
+  "--merge-base",
   "--output",
+  "--patch",
   "--run",
   "--status"
 ]);
@@ -16747,7 +18467,8 @@ var booleanOptions = /* @__PURE__ */ new Set([
   "--json",
   "--open",
   "--strict",
-  "--version"
+  "--version",
+  "--worktree"
 ]);
 function parseArguments(argv) {
   const options = /* @__PURE__ */ new Map();
@@ -16760,6 +18481,13 @@ function parseArguments(argv) {
       const separator = value.indexOf("=");
       const name = separator === -1 ? value : value.slice(0, separator);
       const inline = separator === -1 ? void 0 : value.slice(separator + 1);
+      if (options.has(name)) {
+        throw new UtsuriError(
+          "CLI_DUPLICATE_OPTION",
+          `${name} may be provided only once`,
+          ExitCode.Arguments
+        );
+      }
       if (booleanOptions.has(name)) {
         if (inline !== void 0)
           throw new UtsuriError(
@@ -16794,10 +18522,10 @@ function optionString(arguments_, name) {
 
 // packages/cli/src/doctor.ts
 var import_yaml = __toESM(require_dist2(), 1);
-import { access as access3, readFile } from "node:fs/promises";
+import { access as access3, readFile as readFile2 } from "node:fs/promises";
 import { constants as constants3 } from "node:fs";
 import { spawnSync } from "node:child_process";
-import path4 from "node:path";
+import path10 from "node:path";
 import { platform } from "node:os";
 function run(command, args) {
   const result2 = spawnSync(command, args, {
@@ -16833,9 +18561,9 @@ async function browserCheck() {
   return { id: "browser", status: "optional", detail: "No existing Chrome or Chromium found" };
 }
 async function configCheck(cwd, configName) {
-  const filename = path4.resolve(cwd, configName);
+  const filename = path10.resolve(cwd, configName);
   try {
-    const value = (0, import_yaml.parse)(await readFile(filename, "utf8"));
+    const value = (0, import_yaml.parse)(await readFile2(filename, "utf8"));
     const result2 = validateArtifact("config", value);
     return result2.ok ? { id: "config", status: "pass", detail: configName } : { id: "config", status: "invalid", detail: result2.errors.join("; ") };
   } catch (error) {
@@ -16854,7 +18582,7 @@ async function doctor(cwd, configName = "utsuri.yml") {
   const nodeMajor = Number(process.versions.node.split(".")[0]);
   const container = run("docker", ["--version"]) ?? run("podman", ["--version"]);
   const gitRoot = run("git", ["rev-parse", "--show-toplevel"]);
-  const outputPath = path4.join(cwd, ".artifacts", "utsuri");
+  const outputPath = path10.join(cwd, ".artifacts", "utsuri");
   const checks = [
     {
       id: "git",
@@ -16885,7 +18613,7 @@ async function doctor(cwd, configName = "utsuri.yml") {
     },
     {
       id: "dependencies",
-      status: await access3(path4.join(cwd, "node_modules")).then(() => true).catch(() => false) ? "pass" : "optional",
+      status: await access3(path10.join(cwd, "node_modules")).then(() => true).catch(() => false) ? "pass" : "optional",
       detail: "Existing dependency directory"
     }
   ];
@@ -16899,7 +18627,7 @@ async function doctor(cwd, configName = "utsuri.yml") {
 
 // packages/cli/src/cli.ts
 async function readArtifactJson(filename, label) {
-  const content = await readFile2(filename, "utf8");
+  const content = await readFile3(filename, "utf8");
   try {
     return JSON.parse(content);
   } catch {
@@ -16912,6 +18640,7 @@ Usage: utsuri <command> [options]
 
 Commands:
   doctor                 Inspect prerequisites without changing the environment
+  collect                Collect a Git diff into a review run
   finalize --run <path>  Build an immutable report
   validate <report>      Validate report schema, CSP, assets, and hashes
 
@@ -16940,27 +18669,53 @@ async function executeCli(argv, cwd = process.cwd()) {
         json
       };
     }
+    if (args.command === "collect") {
+      const output = optionString(args, "--output");
+      if (!output) {
+        throw new UtsuriError(
+          "CLI_OUTPUT_REQUIRED",
+          "collect requires --output",
+          ExitCode.Arguments
+        );
+      }
+      const collected = await collectGit({
+        cwd,
+        output,
+        patch: optionString(args, "--patch"),
+        worktree: args.options.has("--worktree"),
+        base: optionString(args, "--base"),
+        head: optionString(args, "--head"),
+        mergeBase: optionString(args, "--merge-base")
+      });
+      const runDirectory = path11.relative(cwd, collected.runDirectory).replaceAll(path11.sep, "/") || ".";
+      const data = {
+        ok: true,
+        command: "collect",
+        mode: collected.diff.input.mode,
+        runDirectory,
+        filesChanged: collected.diff.summary.filesChanged,
+        additions: collected.diff.summary.additions,
+        deletions: collected.diff.summary.deletions,
+        hunks: collected.diff.hunks.length,
+        lowSignalFiles: collected.diff.summary.lowSignalFiles
+      };
+      return { exitCode: 0, data, human: `Collected review input: ${runDirectory}`, json };
+    }
     if (args.command === "finalize") {
       const runValue = optionString(args, "--run");
       if (!runValue)
         throw new UtsuriError("CLI_RUN_REQUIRED", "finalize requires --run", ExitCode.Arguments);
       const runDirectory = await resolveContainedPath(cwd, runValue);
       const annotationsValue = optionString(args, "--annotations");
+      let annotations = null;
       if (annotationsValue) {
         const filename = await resolveContainedPath(cwd, annotationsValue);
-        const annotations = await readArtifactJson(filename, "annotations");
+        annotations = await readArtifactJson(filename, "annotations");
         assertArtifact("annotations", annotations);
-        if (typeof annotations === "object" && annotations !== null && "changes" in annotations && Array.isArray(annotations.changes) && annotations.changes.length > 0) {
-          throw new UtsuriError(
-            "ANNOTATIONS_REQUIRE_COLLECT",
-            "Phase 0 finalize cannot preserve non-empty annotations; run the Phase 1 collect workflow",
-            ExitCode.Artifact
-          );
-        }
       }
-      const report = await createInitialReport(runDirectory);
+      const report = await createInitialReport(runDirectory, annotations);
       const built = await buildReport(runDirectory, report, { toolVersion: "0.1.0" });
-      const relative = path5.relative(cwd, built.reportDirectory).replaceAll(path5.sep, "/");
+      const relative = path11.relative(cwd, built.reportDirectory).replaceAll(path11.sep, "/");
       const data = {
         ok: true,
         command: "finalize",

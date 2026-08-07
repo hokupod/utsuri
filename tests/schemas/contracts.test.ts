@@ -24,15 +24,18 @@ async function fixtures(kind: "valid" | "invalid") {
 }
 
 describe("schema contracts", () => {
-  test("exports the nine canonical external artifact schemas", () => {
+  test("exports the canonical external artifact schemas", () => {
     expect(schemaNames).toEqual([
       "annotations",
       "config",
       "context-pack",
+      "diff",
+      "evidence-index",
       "feedback-batch",
       "origin-session",
       "report",
       "review-answer",
+      "review-plan",
       "review-state",
       "review-thread"
     ]);
@@ -66,9 +69,21 @@ describe("schema contracts", () => {
     report.hunks.push({
       id: "hunk:src/app.ts:1:1:00000000",
       path: "src/app.ts",
+      oldPath: "src/app.ts",
+      newPath: "src/app.ts",
       oldStart: 1,
+      oldLines: 0,
       newStart: 1,
-      lines: ["+export const value = 1;"],
+      newLines: 1,
+      heading: "",
+      lines: [
+        {
+          kind: "addition",
+          content: "export const value = 1;",
+          oldLine: null,
+          newLine: 1
+        }
+      ],
       lowSignal: false
     });
     expect(validateReportReferences(report).errors).toContain(

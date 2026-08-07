@@ -41,6 +41,7 @@
       },
       "dependencies": {
         "@utsu-ri/core": "workspace:*",
+        "@utsu-ri/git-collector": "workspace:*",
         "@utsu-ri/report-builder": "workspace:*",
         "@utsu-ri/report-model": "workspace:*",
         "@utsu-ri/security": "workspace:*",
@@ -50,6 +51,15 @@
     "packages/core": {
       "name": "@utsu-ri/core",
       "version": "0.1.0",
+    },
+    "packages/git-collector": {
+      "name": "@utsu-ri/git-collector",
+      "version": "0.1.0",
+      "dependencies": {
+        "@utsu-ri/core": "workspace:*",
+        "@utsu-ri/report-model": "workspace:*",
+        "@utsu-ri/security": "workspace:*",
+      },
     },
     "packages/report-builder": {
       "name": "@utsu-ri/report-builder",
@@ -277,6 +287,8 @@
     "@utsu-ri/cli": ["@utsu-ri/cli@workspace:packages/cli"],
 
     "@utsu-ri/core": ["@utsu-ri/core@workspace:packages/core"],
+
+    "@utsu-ri/git-collector": ["@utsu-ri/git-collector@workspace:packages/git-collector"],
 
     "@utsu-ri/report-builder": ["@utsu-ri/report-builder@workspace:packages/report-builder"],
 

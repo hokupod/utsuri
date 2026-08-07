@@ -9,7 +9,9 @@
     "reportId",
     "status",
     "summary",
+    "files",
     "hunks",
+    "evidence",
     "unclassifiedHunkRefs",
     "changes",
     "targets",
@@ -33,7 +35,9 @@
         "deletions": { "type": "integer", "minimum": 0 }
       }
     },
+    "files": { "type": "array", "items": { "$ref": "#/$defs/file" } },
     "hunks": { "type": "array", "items": { "$ref": "#/$defs/hunk" } },
+    "evidence": { "type": "array", "items": { "$ref": "#/$defs/evidence" } },
     "unclassifiedHunkRefs": { "type": "array", "items": { "type": "string" }, "uniqueItems": true },
     "changes": { "type": "array", "items": { "$ref": "#/$defs/change" } },
     "targets": { "type": "array", "items": { "$ref": "#/$defs/target" } },
@@ -70,17 +74,132 @@
     }
   },
   "$defs": {
+    "file": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "status",
+        "oldPath",
+        "newPath",
+        "additions",
+        "deletions",
+        "binary",
+        "submodule",
+        "oldMode",
+        "newMode",
+        "oldOid",
+        "newOid",
+        "lowSignal",
+        "lowSignalReasons",
+        "hunkRefs"
+      ],
+      "properties": {
+        "id": { "type": "string", "pattern": "^file:" },
+        "status": {
+          "enum": [
+            "added",
+            "modified",
+            "deleted",
+            "renamed",
+            "copied",
+            "type-changed",
+            "unmerged",
+            "unknown"
+          ]
+        },
+        "oldPath": { "type": ["string", "null"] },
+        "newPath": { "type": ["string", "null"] },
+        "additions": { "type": ["integer", "null"], "minimum": 0 },
+        "deletions": { "type": ["integer", "null"], "minimum": 0 },
+        "binary": { "type": "boolean" },
+        "submodule": { "type": "boolean" },
+        "oldMode": { "type": ["string", "null"], "pattern": "^[0-7]{6}$" },
+        "newMode": { "type": ["string", "null"], "pattern": "^[0-7]{6}$" },
+        "oldOid": { "type": ["string", "null"], "pattern": "^[a-f0-9]{7,64}$" },
+        "newOid": { "type": ["string", "null"], "pattern": "^[a-f0-9]{7,64}$" },
+        "lowSignal": { "type": "boolean" },
+        "lowSignalReasons": {
+          "type": "array",
+          "items": { "type": "string" },
+          "uniqueItems": true
+        },
+        "hunkRefs": {
+          "type": "array",
+          "items": { "type": "string", "pattern": "^hunk:" },
+          "uniqueItems": true
+        }
+      }
+    },
+    "line": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["kind", "content", "oldLine", "newLine"],
+      "properties": {
+        "kind": { "enum": ["context", "addition", "deletion", "no-newline"] },
+        "content": { "type": "string" },
+        "oldLine": { "type": ["integer", "null"], "minimum": 1 },
+        "newLine": { "type": ["integer", "null"], "minimum": 1 }
+      }
+    },
     "hunk": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["id", "path", "oldStart", "newStart", "lines", "lowSignal"],
+      "required": [
+        "id",
+        "path",
+        "oldPath",
+        "newPath",
+        "oldStart",
+        "oldLines",
+        "newStart",
+        "newLines",
+        "heading",
+        "lines",
+        "lowSignal"
+      ],
       "properties": {
         "id": { "type": "string", "pattern": "^hunk:" },
         "path": { "type": "string", "minLength": 1 },
+        "oldPath": { "type": ["string", "null"] },
+        "newPath": { "type": ["string", "null"] },
         "oldStart": { "type": "integer", "minimum": 0 },
+        "oldLines": { "type": "integer", "minimum": 0 },
         "newStart": { "type": "integer", "minimum": 0 },
-        "lines": { "type": "array", "items": { "type": "string" } },
+        "newLines": { "type": "integer", "minimum": 0 },
+        "heading": { "type": "string" },
+        "lines": { "type": "array", "items": { "$ref": "#/$defs/line" } },
         "lowSignal": { "type": "boolean" }
+      }
+    },
+    "evidence": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "type", "path", "range", "summary", "hunkRefs"],
+      "properties": {
+        "id": { "type": "string", "pattern": "^evidence:" },
+        "type": { "enum": ["code", "test", "style", "configuration", "generated", "binary"] },
+        "path": { "type": "string", "minLength": 1 },
+        "range": {
+          "oneOf": [
+            { "type": "null" },
+            {
+              "type": "object",
+              "additionalProperties": false,
+              "required": ["start", "end"],
+              "properties": {
+                "start": { "type": "integer", "minimum": 0 },
+                "end": { "type": "integer", "minimum": 0 }
+              }
+            }
+          ]
+        },
+        "summary": { "type": "string" },
+        "hunkRefs": {
+          "type": "array",
+          "items": { "type": "string", "pattern": "^hunk:" },
+          "uniqueItems": true
+        }
       }
     },
     "change": {

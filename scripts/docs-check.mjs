@@ -367,8 +367,17 @@ async function main() {
             state.changeLogEntryId ?? "missing change-log entry ID"
           );
         }
-        if (state.currentPhase !== 0) {
-          report(diagnostic.phaseMismatch, `expected Phase 0 during bootstrap implementation`);
+        if (
+          !Number.isInteger(state.currentPhase) ||
+          state.currentPhase < 0 ||
+          state.currentPhase > 6 ||
+          typeof state.availability !== "string" ||
+          !state.availability.startsWith(`phase-${state.currentPhase}-`)
+        ) {
+          report(
+            diagnostic.phaseMismatch,
+            `Phase ${String(state.currentPhase)} does not match ${String(state.availability)}`
+          );
         }
 
         for (const document of publicDocuments) {

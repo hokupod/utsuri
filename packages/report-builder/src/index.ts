@@ -3,7 +3,17 @@ import { constants, type BigIntStats } from "node:fs";
 import { access, lstat, mkdir, open, readdir, realpath, stat, writeFile } from "node:fs/promises";
 import path from "node:path";
 import { canonicalJson, ExitCode, stableHash, UtsuriError } from "@utsu-ri/core";
-import { assertArtifact, validateReportReferences, type UtsuriReport } from "@utsu-ri/report-model";
+import {
+  assertArtifact,
+  validateDiffReferences,
+  validateReportReferences,
+  validateReviewPlanReferences,
+  type Annotations,
+  type EvidenceIndex,
+  type GitDiffDocument,
+  type ReviewPlan,
+  type UtsuriReport
+} from "@utsu-ri/report-model";
 import { resolveContainedPath } from "@utsu-ri/security";
 import { reportUiCss, reportUiJavaScript } from "./generated-ui-assets";
 import { publishDirectoryNoReplace } from "./native-publish";
@@ -25,7 +35,7 @@ export const reportCsp = [
 const statusIconSvg =
   '<svg xmlns="http://www.w3.org/2000/svg"><symbol id="status" viewBox="0 0 16 16"><circle cx="8" cy="8" r="6" fill="currentColor"/></symbol></svg>\n';
 
-const phaseZeroArtifactPaths = new Set([
+const reportArtifactPaths = new Set([
   "assets/app.css",
   "assets/app.js",
   "assets/icons.svg",
@@ -156,75 +166,208 @@ async function readOptionalJson(filename: string): Promise<unknown | null> {
   }
 }
 
-interface PhaseZeroDiff {
-  summary: {
-    filesChanged: number;
-    additions: number;
-    deletions: number;
-  };
-  hunks: unknown[];
+function assertReferenceResult(id: string, result: { ok: boolean; errors: string[] }): void {
+  if (!result.ok) throw new UtsuriError(id, result.errors.join("; "), ExitCode.Artifact);
 }
 
-function assertPhaseZeroDiff(value: unknown): asserts value is PhaseZeroDiff {
-  const errors: string[] = [];
-  if (!isRecord(value) || !hasExactKeys(value, ["summary", "hunks"])) {
-    errors.push("must be an object containing only summary and hunks");
-  } else {
-    if (
-      !isRecord(value.summary) ||
-      !hasExactKeys(value.summary, ["filesChanged", "additions", "deletions"])
-    ) {
-      errors.push("summary must contain filesChanged, additions, and deletions");
-    } else {
-      for (const field of ["filesChanged", "additions", "deletions"] as const) {
-        if (!Number.isInteger(value.summary[field]) || (value.summary[field] as number) < 0) {
-          errors.push(`summary.${field} must be a non-negative integer`);
-        }
+function inferredKind(paths: readonly string[]): UtsuriReport["changes"][number]["kind"] {
+  const extensions = new Set(paths.map((entry) => path.extname(entry).toLowerCase()));
+  if (
+    [...extensions].some((extension) => [".css", ".scss", ".sass", ".less"].includes(extension))
+  ) {
+    return "visual";
+  }
+  if ([...extensions].every((extension) => [".md", ".txt"].includes(extension))) return "content";
+  if (
+    [...extensions].some((extension) =>
+      [".html", ".svelte", ".vue", ".tsx", ".jsx"].includes(extension)
+    )
+  ) {
+    return "mixed";
+  }
+  return "unknown";
+}
+
+function createCandidateChanges(diff: GitDiffDocument, plan: ReviewPlan): UtsuriReport["changes"] {
+  const filesById = new Map(diff.files.map((file) => [file.id, file]));
+  return plan.candidates.map((candidate) => {
+    const paths = candidate.fileRefs
+      .map((reference) => filesById.get(reference))
+      .filter((file) => file !== undefined)
+      .map((file) => file.newPath ?? file.oldPath ?? "unknown");
+    const lowSignalOnly = candidate.hunkRefs.every(
+      (reference) => diff.hunks.find((hunk) => hunk.id === reference)?.lowSignal
+    );
+    return {
+      id: candidate.id,
+      title: candidate.title,
+      kind: inferredKind(paths),
+      summary: `${candidate.hunkRefs.length} hunk${candidate.hunkRefs.length === 1 ? "" : "s"} across ${paths.length} file${paths.length === 1 ? "" : "s"}.`,
+      intent: {
+        text: "Intent has not been declared.",
+        source: "unknown",
+        evidenceRefs: candidate.evidenceRefs,
+        missingEvidence: ["User request, specification, or commit rationale"]
+      },
+      implementation: `Git changes were collected for ${paths.join(", ")}.`,
+      userImpact: [],
+      technicalImpact: paths.map((entry) => `Changed ${entry}`),
+      risk: {
+        level: lowSignalOnly ? "info" : "low",
+        reasons: lowSignalOnly
+          ? ["Only low-signal or generated evidence is present."]
+          : ["Runtime and visual effects have not been exercised."]
+      },
+      hunkRefs: candidate.hunkRefs,
+      targetRefs: [],
+      findingRefs: [],
+      verification: {
+        verified: ["Git patch structure and cross-references were validated."],
+        gaps: ["Visual behavior was not captured.", "Runtime behavior was not executed."]
       }
-    }
-    if (!Array.isArray(value.hunks)) errors.push("hunks must be an array");
-  }
-
-  if (errors.length > 0) {
-    throw new UtsuriError("SCHEMA_INVALID", `diff: ${errors.join("; ")}`, ExitCode.Artifact, {
-      schema: "diff",
-      errors
-    });
-  }
+    };
+  });
 }
 
-export async function createInitialReport(runDirectory: string): Promise<UtsuriReport> {
+function createCodeOnlyReport(
+  input: unknown,
+  diff: GitDiffDocument,
+  evidenceIndex: EvidenceIndex,
+  plan: ReviewPlan,
+  annotations: Annotations | null
+): UtsuriReport {
+  const sourceChanges = annotations?.changes.length
+    ? (annotations.changes as UtsuriReport["changes"])
+    : createCandidateChanges(diff, plan);
+  const changes = sourceChanges.map((change) => ({
+    ...change,
+    verification: {
+      verified: change.verification.verified,
+      gaps: [
+        ...new Set([
+          ...change.verification.gaps,
+          "Visual behavior was not captured.",
+          "Runtime behavior was not executed."
+        ])
+      ]
+    }
+  }));
+  const classified = new Set(changes.flatMap((change) => change.hunkRefs));
+  const unclassifiedHunkRefs = diff.hunks
+    .map((hunk) => hunk.id)
+    .filter((reference) => !classified.has(reference));
+  const reportId = `report-${stableHash({ input, diff, evidenceIndex, plan, annotations }).slice(0, 16)}`;
+  return {
+    schemaVersion: "1.0",
+    reportId,
+    status: "UNCOVERED",
+    summary: {
+      statement:
+        "Code changes were collected and grouped. Visual and runtime behavior remain unverified.",
+      filesChanged: diff.summary.filesChanged,
+      additions: diff.summary.additions,
+      deletions: diff.summary.deletions
+    },
+    files: diff.files.map((file) => ({
+      id: file.id,
+      status: file.status,
+      oldPath: file.oldPath,
+      newPath: file.newPath,
+      additions: file.additions,
+      deletions: file.deletions,
+      binary: file.binary,
+      submodule: file.submodule,
+      oldMode: file.oldMode,
+      newMode: file.newMode,
+      oldOid: file.oldOid,
+      newOid: file.newOid,
+      lowSignal: file.lowSignal,
+      lowSignalReasons: file.lowSignalReasons,
+      hunkRefs: file.hunkRefs
+    })),
+    hunks: diff.hunks,
+    evidence: evidenceIndex.evidence,
+    unclassifiedHunkRefs,
+    changes,
+    targets: [],
+    findings: [],
+    coverage: {
+      knownUsages: null,
+      verifiedUsages: 0,
+      unknownPossible: true,
+      planned: 0,
+      succeeded: 0,
+      failed: 0
+    },
+    origin: {
+      host: "unknown",
+      projectFingerprint: diff.repository.fingerprint,
+      reportId,
+      bindingMode: "unbound",
+      createdAt: new Date(0).toISOString()
+    },
+    diagnostics: {
+      incompleteReasons: ["visual-capture-not-run", "runtime-not-executed"],
+      blockedRequestCount: 0
+    }
+  };
+}
+
+export async function createInitialReport(
+  runDirectory: string,
+  annotationsValue: unknown | null = null
+): Promise<UtsuriReport> {
   const input = await readOptionalJson(path.join(runDirectory, "input.json"));
   const diffValue = await readOptionalJson(path.join(runDirectory, "diff.json"));
-  if (diffValue !== null) assertPhaseZeroDiff(diffValue);
-  const diff = diffValue as PhaseZeroDiff | null;
-  const reportId = `report-${stableHash({ input, diff }).slice(0, 16)}`;
-  const hasDiffEvidence = Boolean(
-    diff &&
-    (diff.summary.filesChanged > 0 ||
-      diff.summary.additions > 0 ||
-      diff.summary.deletions > 0 ||
-      diff.hunks.length > 0)
-  );
-  if (hasDiffEvidence) {
+  if (annotationsValue !== null) assertArtifact("annotations", annotationsValue);
+  const annotations = annotationsValue as Annotations | null;
+  if (diffValue !== null) {
+    assertArtifact("diff", diffValue);
+    const diff = diffValue as GitDiffDocument;
+    assertReferenceResult("DIFF_REFERENCE_INVALID", validateDiffReferences(diff));
+    const evidenceValue = await readOptionalJson(path.join(runDirectory, "evidence-index.json"));
+    const planValue = await readOptionalJson(path.join(runDirectory, "review-plan.json"));
+    if (evidenceValue === null || planValue === null) {
+      throw new UtsuriError(
+        "COLLECT_ARTIFACT_MISSING",
+        "A collected diff requires evidence-index.json and review-plan.json",
+        ExitCode.Artifact
+      );
+    }
+    assertArtifact("evidence-index", evidenceValue);
+    assertArtifact("review-plan", planValue);
+    const evidenceIndex = evidenceValue as EvidenceIndex;
+    const plan = planValue as ReviewPlan;
+    assertReferenceResult(
+      "REVIEW_PLAN_INVALID",
+      validateReviewPlanReferences(plan, diff, evidenceIndex)
+    );
+    const report = createCodeOnlyReport(input, diff, evidenceIndex, plan, annotations);
+    assertReferenceResult("REPORT_REFERENCE_INVALID", validateReportReferences(report));
+    return report;
+  }
+  if (annotations?.changes.length) {
     throw new UtsuriError(
-      "REPORT_DIFF_REQUIRES_COLLECT",
-      "Phase 0 finalize cannot preserve non-empty diff evidence; run the Phase 1 collect workflow",
+      "ANNOTATIONS_REQUIRE_DIFF",
+      "Non-empty annotations require a collected diff",
       ExitCode.Artifact
     );
   }
 
+  const reportId = `report-${stableHash({ input }).slice(0, 16)}`;
   return {
     schemaVersion: "1.0",
     reportId,
     status: "SKIPPED",
     summary: {
       statement: "No code diff was supplied; visual verification was skipped.",
-      filesChanged: diff?.summary.filesChanged ?? 0,
-      additions: diff?.summary.additions ?? 0,
-      deletions: diff?.summary.deletions ?? 0
+      filesChanged: 0,
+      additions: 0,
+      deletions: 0
     },
+    files: [],
     hunks: [],
+    evidence: [],
     unclassifiedHunkRefs: [],
     changes: [],
     targets: [],
@@ -736,9 +879,9 @@ export async function validateReportDirectory(
 
   if (options.strict) {
     const actualAssets = files.filter((relative) => relative !== "manifest.json").sort();
-    const expectedAssets = [...phaseZeroArtifactPaths].sort();
+    const expectedAssets = [...reportArtifactPaths].sort();
     if (JSON.stringify(actualAssets) !== JSON.stringify(expectedAssets)) {
-      errors.push("Strict Phase 0 artifact inventory mismatch");
+      errors.push("Strict report artifact inventory mismatch");
     }
     for (const [relative, expected] of [
       ["index.html", report ? indexHtml(report) : null],

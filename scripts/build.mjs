@@ -15,7 +15,18 @@ const cliPackageRoot = path.join(root, "packages/cli");
 
 await import("./build-native-helper.mjs");
 await viteBuild({ configFile: path.join(root, "vite.config.ts") });
-const appJavaScript = await readFile(path.join(uiOutput, "app.js"), "utf8");
+const appJavaScriptPath = path.join(uiOutput, "app.js");
+const rawAppJavaScript = await readFile(appJavaScriptPath, "utf8");
+const rawSvelteWhitespaceLiteral = "` \t\n\\r\\f\u00a0\\v\\uFEFF`";
+const escapedSvelteWhitespaceLiteral = JSON.stringify(" \t\n\r\f\u00a0\u000b\ufeff");
+const appJavaScript = rawAppJavaScript.replaceAll(
+  rawSvelteWhitespaceLiteral,
+  escapedSvelteWhitespaceLiteral
+);
+if (/[ \t]+$/mu.test(appJavaScript)) {
+  throw new Error("Generated report UI JavaScript contains trailing whitespace");
+}
+if (appJavaScript !== rawAppJavaScript) await writeFile(appJavaScriptPath, appJavaScript);
 const appCss = await readFile(path.join(uiOutput, "app.css"), "utf8");
 await writeFile(
   generatedUi,
@@ -54,10 +65,13 @@ for (const name of [
   "annotations.schema.json",
   "config.schema.json",
   "context-pack.schema.json",
+  "diff.schema.json",
+  "evidence-index.schema.json",
   "feedback-batch.schema.json",
   "origin-session.schema.json",
   "report.schema.json",
   "review-answer.schema.json",
+  "review-plan.schema.json",
   "review-state.schema.json",
   "review-thread.schema.json"
 ]) {

@@ -1,0 +1,45 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://utsu-ri.dev/schemas/review-plan/v1",
+  "title": "ReviewPlan",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schemaVersion", "candidates", "unclassifiedHunkRefs"],
+  "properties": {
+    "schemaVersion": { "const": "1.0" },
+    "candidates": { "type": "array", "items": { "$ref": "#/$defs/candidate" } },
+    "unclassifiedHunkRefs": {
+      "type": "array",
+      "items": { "type": "string", "pattern": "^hunk:" },
+      "uniqueItems": true
+    }
+  },
+  "$defs": {
+    "candidate": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "title", "reason", "fileRefs", "hunkRefs", "evidenceRefs"],
+      "properties": {
+        "id": { "type": "string", "pattern": "^change[-:]" },
+        "title": { "type": "string", "minLength": 1 },
+        "reason": { "type": "string", "minLength": 1 },
+        "fileRefs": {
+          "type": "array",
+          "items": { "type": "string", "pattern": "^file:" },
+          "uniqueItems": true
+        },
+        "hunkRefs": {
+          "type": "array",
+          "items": { "type": "string", "pattern": "^hunk:" },
+          "minItems": 1,
+          "uniqueItems": true
+        },
+        "evidenceRefs": {
+          "type": "array",
+          "items": { "type": "string", "pattern": "^evidence:" },
+          "uniqueItems": true
+        }
+      }
+    }
+  }
+}

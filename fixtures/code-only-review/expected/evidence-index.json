@@ -1,0 +1,57 @@
+{
+  "schemaVersion": "1.0",
+  "evidence": [
+    {
+      "id": "evidence:ea339c11e03600be",
+      "type": "code",
+      "path": "src/navigation.ts",
+      "range": {
+        "start": 1,
+        "end": 13
+      },
+      "summary": "modified hunk in src/navigation.ts",
+      "hunkRefs": [
+        "hunk:src/navigation.ts:1:1:6bdb46e50317616a"
+      ]
+    },
+    {
+      "id": "evidence:ea5268a3b114f2de",
+      "type": "test",
+      "path": "src/navigation.test.ts",
+      "range": {
+        "start": 1,
+        "end": 4
+      },
+      "summary": "modified hunk in src/navigation.test.ts",
+      "hunkRefs": [
+        "hunk:src/navigation.test.ts:1:1:49a54a5707c9acfa"
+      ]
+    },
+    {
+      "id": "evidence:be3f7c6cb717b081",
+      "type": "style",
+      "path": "styles/navigation.css",
+      "range": {
+        "start": 1,
+        "end": 3
+      },
+      "summary": "modified hunk in styles/navigation.css",
+      "hunkRefs": [
+        "hunk:styles/navigation.css:1:1:1e7578c42b5f8338"
+      ]
+    },
+    {
+      "id": "evidence:6e2bdc787d7c59f4",
+      "type": "code",
+      "path": "src/malicious.ts",
+      "range": {
+        "start": 1,
+        "end": 1
+      },
+      "summary": "added hunk in src/malicious.ts",
+      "hunkRefs": [
+        "hunk:src/malicious.ts:0:1:2fa6beb5dcfa12d2"
+      ]
+    }
+  ]
+}

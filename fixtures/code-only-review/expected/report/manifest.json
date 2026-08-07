@@ -1,0 +1,28 @@
+{
+  "schemaVersion": "1.0",
+  "reportId": "report-ea55544087fb5ce4",
+  "toolVersion": "0.1.0",
+  "generatedAt": "2026-08-07T02:02:50.257Z",
+  "semanticHash": "88456ef9b50a47a08b99144d4022f4ee55e098f4dfada4ecf53c51459ef83b5d",
+  "assetHashes": {
+    "assets/app.css": "572e65a2e970b7e217a45a3e6394ecc70075a97bbb2194b1a8b44f5066187362",
+    "assets/app.js": "8aabf4a4321457a1ad5438abe3f670339ba1e0934c81afb383a2cc7c16d9718c",
+    "assets/icons.svg": "e3f7e7ede4e26a8bd9243ffb538b7037d3c821b7e91767fa81a6562c555789ea",
+    "context-pack.schema.json": "15a91a1f02f8bec3037bf869229f16de321e435948db6c56fa91145ee32a66d0",
+    "diagnostics/summary.json": "7daf08a35f68041e75083352a89dca517fe209d9ba1997a5075b049a79139d17",
+    "index.html": "decacc447cda3d04e7f44b1651230d3ab3645f37abbd262ab5579c49d68d29f4",
+    "report.json": "946dc14ff8c0923971912a1d359f1a0b17450ea9fe78093cb03350f96ef7d34d",
+    "review-answer.schema.json": "b26c42404e30f1974262dd467084284b2e41821ff948e97f8819d385b403fb3b",
+    "review-state.schema.json": "dfa63ae91dc03ee8eeedce780894c510d36632c5ce8c6e8c4fcb731d2f7a5589",
+    "review-thread.schema.json": "2f835797fd08a91d3d65de7943e6fa4f1eeb3a2afdc96ec7c4f675812b779ba2"
+  },
+  "privacy": {
+    "includesAbsolutePaths": false,
+    "includesRawEnvironment": false,
+    "includesRawDom": false
+  },
+  "incompleteReasons": [
+    "visual-capture-not-run",
+    "runtime-not-executed"
+  ]
+}

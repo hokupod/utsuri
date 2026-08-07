@@ -1,6 +1,7 @@
 import { readFile } from "node:fs/promises";
 import path from "node:path";
 import { ExitCode, toUtsuriError, UtsuriError } from "@utsu-ri/core";
+import { collectGit } from "@utsu-ri/git-collector";
 import { buildReport, createInitialReport, validateReportDirectory } from "@utsu-ri/report-builder";
 import { assertArtifact } from "@utsu-ri/report-model";
 import { resolveContainedPath } from "@utsu-ri/security";
@@ -22,6 +23,7 @@ Usage: utsuri <command> [options]
 
 Commands:
   doctor                 Inspect prerequisites without changing the environment
+  collect                Collect a Git diff into a review run
   finalize --run <path>  Build an immutable report
   validate <report>      Validate report schema, CSP, assets, and hashes
 
@@ -63,31 +65,53 @@ export async function executeCli(
       };
     }
 
+    if (args.command === "collect") {
+      const output = optionString(args, "--output");
+      if (!output) {
+        throw new UtsuriError(
+          "CLI_OUTPUT_REQUIRED",
+          "collect requires --output",
+          ExitCode.Arguments
+        );
+      }
+      const collected = await collectGit({
+        cwd,
+        output,
+        patch: optionString(args, "--patch"),
+        worktree: args.options.has("--worktree"),
+        base: optionString(args, "--base"),
+        head: optionString(args, "--head"),
+        mergeBase: optionString(args, "--merge-base")
+      });
+      const runDirectory =
+        path.relative(cwd, collected.runDirectory).replaceAll(path.sep, "/") || ".";
+      const data = {
+        ok: true,
+        command: "collect",
+        mode: collected.diff.input.mode,
+        runDirectory,
+        filesChanged: collected.diff.summary.filesChanged,
+        additions: collected.diff.summary.additions,
+        deletions: collected.diff.summary.deletions,
+        hunks: collected.diff.hunks.length,
+        lowSignalFiles: collected.diff.summary.lowSignalFiles
+      };
+      return { exitCode: 0, data, human: `Collected review input: ${runDirectory}`, json };
+    }
+
     if (args.command === "finalize") {
       const runValue = optionString(args, "--run");
       if (!runValue)
         throw new UtsuriError("CLI_RUN_REQUIRED", "finalize requires --run", ExitCode.Arguments);
       const runDirectory = await resolveContainedPath(cwd, runValue);
       const annotationsValue = optionString(args, "--annotations");
+      let annotations: unknown | null = null;
       if (annotationsValue) {
         const filename = await resolveContainedPath(cwd, annotationsValue);
-        const annotations = await readArtifactJson(filename, "annotations");
+        annotations = await readArtifactJson(filename, "annotations");
         assertArtifact("annotations", annotations);
-        if (
-          typeof annotations === "object" &&
-          annotations !== null &&
-          "changes" in annotations &&
-          Array.isArray(annotations.changes) &&
-          annotations.changes.length > 0
-        ) {
-          throw new UtsuriError(
-            "ANNOTATIONS_REQUIRE_COLLECT",
-            "Phase 0 finalize cannot preserve non-empty annotations; run the Phase 1 collect workflow",
-            ExitCode.Artifact
-          );
-        }
       }
-      const report = await createInitialReport(runDirectory);
+      const report = await createInitialReport(runDirectory, annotations);
       const built = await buildReport(runDirectory, report, { toolVersion: "0.1.0" });
       const relative = path.relative(cwd, built.reportDirectory).replaceAll(path.sep, "/");
       const data = {

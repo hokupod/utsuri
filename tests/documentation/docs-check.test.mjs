@@ -172,6 +172,15 @@ await withFixture("development rejects stale current hashes", async (root) => {
   assert.match(result.combined, /DOC_HASH_STALE/u);
 });
 
+await withFixture("development rejects a Phase and availability mismatch", async (root) => {
+  await updateState(root, (state) => {
+    state.currentPhase = 1;
+  });
+  const result = run(root, "development");
+  assert.notEqual(result.status, 0);
+  assert.match(result.combined, /DOC_PHASE_MISMATCH/u);
+});
+
 await withFixture("release-candidate rejects unresolved publication metadata", async (root) => {
   await prepareRelease(root);
   await updateState(root, (state) => {

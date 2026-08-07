@@ -6,7 +6,7 @@
 - **Plugin name**: `utsuri`
 - **Skill name**: `utsuri-review`
 - **CLI name**: `utsuri`
-- **Document version**: 1.8
+- **Document version**: 1.9
 - **Created**: 2026-08-06
 - **Last updated**: 2026-08-07
 - **Language**: English (canonical)
@@ -14,7 +14,7 @@
 - **Implementation language**: TypeScript
 - **Development environment**: Bun
 - **Report UI**: a static application built with Svelte
-- **v1.8 changes**: required a clean, exact-inventory npm CLI tarball whose bundled runtime has no registry dependency on private workspace packages; required lifecycle-script rejection, exact-tarball installation smoke tests, and version-tagged package documentation links
+- **v1.9 changes**: implemented the Phase 1 code-only review contract with four explicit Git input modes, structured diff and evidence schemas, deterministic review-plan coverage, an `UNCOVERED` report boundary, and the keyboard-accessible Diff Ledger UI
 
 ---
 
@@ -1647,7 +1647,18 @@ command: "bun run dev && curl ..."
 
 ### 15.1 Git input
 
-The CLI combines multiple Git outputs:
+Phase 1 provides four mutually exclusive collection modes:
+
+| Mode       | CLI selection                               | Compared state                                      |
+| ---------- | ------------------------------------------- | --------------------------------------------------- |
+| patch      | `--patch <repository-relative-file>`        | the supplied Git patch                              |
+| worktree   | `--worktree`                                | `HEAD` (or the empty tree) against the working tree |
+| range      | `--base <ref> --head <ref\|worktree>`       | the resolved base against head                      |
+| merge-base | `--merge-base <ref> --head <ref\|worktree>` | the computed merge base against head                |
+
+Commit-like refs are resolved to object IDs before the diff command runs. A ref beginning with `-`, a path outside the repository, an output under `.git`, and a pre-existing output directory are rejected. Git is always invoked as an argument vector without a shell. Worktree mode includes untracked, non-ignored files by synthesizing the same structured Git patch form.
+
+For Git-backed modes, the CLI collects these sources separately:
 
 - patch;
 - numstat;
@@ -1657,7 +1668,9 @@ The CLI combines multiple Git outputs:
 - merge-base; and
 - commit metadata.
 
-It does not depend on one pretty-formatted output.
+It does not depend on one pretty-formatted output. `diff.json` records a SHA-256 digest for each available source, while patch mode records only the patch digest and uses `null` for unavailable Git metadata. The run also contains `input.json`, `diff.patch`, `evidence-index.json`, `review-plan.json`, and an NDJSON collection log.
+
+The parser preserves added, modified, deleted, renamed, copied, type-changed, unmerged, binary, submodule, and mode-change evidence. It rejects path traversal, malformed ranges, unsupported over-size input, and inconsistent hunk line counts before writing a report.
 
 ### 15.2 Hunk model
 
@@ -1668,6 +1681,8 @@ hunk:<normalized-path>:<old-start>:<new-start>:<content-hash-prefix>
 ```
 
 Preserve both old and new paths for a rename.
+
+Each hunk is represented as structured data rather than reparsed in the viewer. Every line records `context`, `addition`, `deletion`, or `no-newline`, its untrusted text content, and nullable old/new line numbers. File records retain old/new paths, modes, object IDs, similarity, stats, binary/submodule flags, and hunk references. Cross-reference validation rejects a missing or duplicate file, hunk, evidence, candidate, target, or finding reference.
 
 ### 15.3 Generated / low-signal classification
 
@@ -1681,11 +1696,13 @@ Treat these as low-signal candidates:
 - source maps; and
 - binary files.
 
-Still include their existence in the summary; never discard them completely.
+Still include their existence, status, stats where Git supplies them, and reasons in the summary; never discard them completely. Binary stats remain unknown rather than being inferred from a missing textual hunk.
 
 ### 15.4 Semantic Change Group candidate generation
 
-Create initial clusters with deterministic heuristics:
+The Phase 1 baseline creates deterministic candidates from normalized file stems. This groups companion implementation, test, style, story, or module files when their paths share a stable stem. A single changed file becomes its own candidate. Candidate IDs, ordering, file references, hunk references, and evidence references are deterministic.
+
+The final target extends that baseline with these deterministic heuristics:
 
 1. hunks near one another in the same file;
 2. an implementation and adjacent test;
@@ -1697,7 +1714,7 @@ Create initial clusters with deterministic heuristics:
 8. commit boundaries; and
 9. vocabulary in the user request and symbol names.
 
-The Agent may merge or split candidates but must never remove a hunk.
+The Agent may merge or split candidates through a schema-validated annotation artifact but must never remove a hunk. Every hunk must occur exactly once in a candidate or in `unclassifiedHunkRefs`; missing and duplicate assignment are artifact errors.
 
 ### 15.5 Evidence index
 
@@ -1713,6 +1730,8 @@ Store evidence as a reference rather than copying full content.
 }
 ```
 
+Phase 1 emits one evidence record per textual hunk and one file-level record when a file has no hunk. Evidence is typed as code, test, style, configuration, generated, or binary and links back to the source hunk without embedding arbitrary repository HTML.
+
 ---
 
 ## 16. Change-intent and explanation generation
@@ -1725,6 +1744,8 @@ supported-inference
 weak-inference
 unknown
 ```
+
+The deterministic Phase 1 fallback uses `unknown`, explicitly requests missing rationale evidence, and never invents a numeric confidence. Valid annotations may replace that fallback with one of the four sources while preserving evidence references.
 
 ### 16.2 Evidence priority
 
@@ -1753,6 +1774,8 @@ unknown
 - `gaps`: what was not checked
 
 Do not blend these fields into one long paragraph.
+
+In a code-only report, Git structure is the only verified evidence. The report builder always adds `Visual behavior was not captured.` and `Runtime behavior was not executed.` to every change, even when an annotation omits them, and sets the overall status to `UNCOVERED`. An annotation cannot turn absent capture or runtime execution into `PASS`.
 
 ---
 
@@ -2208,6 +2231,8 @@ Use single-file output only for small reports.
 
 ## 23. Report information architecture
 
+Phase 1 implements the code-only subset as a local **Diff Ledger**: decision summary, three-state queue, one focused change, fixed explanations and gaps, evidence drawer, file inventory, and structured code diff. The visual, structural, review-state, and feedback surfaces below remain the v1 target for later phases. Interaction and visual decisions are traced to primary Apple HIG and WCAG sources in [UI guidelines](ui-guidelines.md).
+
 ### 23.1 Overall structure
 
 ```text
@@ -2274,8 +2299,8 @@ What changed
 Why
 User impact
 Risk
-Verified
 Not verified
+Verified
 Evidence
 ```
 
@@ -2306,6 +2331,8 @@ Keep both rather than choosing one:
 
 ### 23.7 Code Diff
 
+Phase 1 implements semantic-group and unclassified-hunk access, side-by-side and unified views, structured line rendering, word emphasis, context expansion, hunk anchors, and change/hunk URL fragments. Code content is inserted only as text nodes. The file tree, syntax highlighting, whitespace toggle, and visual-target links remain later-phase targets.
+
 - by semantic group;
 - by file tree;
 - side-by-side or unified;
@@ -2321,6 +2348,8 @@ Keep both rather than choosing one:
 
 Show up to three important evidence items by default and place the rest in a drawer.
 
+Phase 1 derives this list from the evidence index and keeps path, evidence type, summary, and hunk relationship visible without copying raw source content.
+
 ### 23.9 Verification gaps
 
 Display gaps directly after risk, not buried at the bottom.
@@ -2331,6 +2360,8 @@ Not verified
 - error state on the settings route
 - 23 components using the shared token
 ```
+
+The Phase 1 code-only UI always shows visual and runtime gaps in this position and labels the report `UNCOVERED`; those gaps are never collapsed into a clear queue state.
 
 ### 23.10 Review state and comments
 
@@ -4537,6 +4568,7 @@ A feature outside this definition is accepted only when it makes review decision
 
 | Entry ID                                   | Version | Date       | Change                                                                                                                                                                                                                                                                                                           |
 | ------------------------------------------ | ------: | ---------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| design-v1.9-code-diff-mvp                  |     1.9 | 2026-08-07 | Implemented four explicit Git collection modes, structured diff/evidence/review-plan contracts, deterministic full-hunk coverage, schema-validated annotations, mandatory code-only verification gaps, and the keyboard-accessible Diff Ledger report UI.                                                        |
 | design-v1.8-exact-cli-tarball              |     1.8 | 2026-08-07 | Required a clean exact-inventory npm CLI tarball with bundled JavaScript dependencies, no registry dependency on private workspace packages, no install lifecycle scripts, isolated exact-tarball smoke tests, and version-tagged documentation links.                                                           |
 | design-v1.7-atomic-report-publication-gate |     1.7 | 2026-08-07 | Added fail-closed atomic no-replace report publication, protected-ancestor and inode checks, regular non-symlink run inputs, current-platform source builds, four-platform release assembly, and explicit Phase 0 rejection of non-empty diff or annotation evidence.                                            |
 | design-v1.6-publication-and-safe-chain     |     1.6 | 2026-08-07 | Fixed publisher, npm maintainer, trusted-publishing, and SPDX metadata; replaced the local absolute-path Safe-chain requirement with exact-version discovery at the standard user installation; pinned official platform SHA-256 digests for verification before first execution.                                |

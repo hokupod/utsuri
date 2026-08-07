@@ -18,24 +18,23 @@ The name joins the Japanese ideas of how a UI is reflected after a change and ho
 
 ## Status
 
-<!-- availability:phase-0-documentation -->
+<!-- availability:phase-1-code-review -->
 
-Utsuri v1 is under active implementation. The npm package is not published, the Plugin is not distributed, and commands shown below are for this source checkout only.
+The Phase 1 code-only review flow is available from this source checkout. It collects patch, worktree, range, or merge-base changes and builds an immutable local report. Browser capture, visual/runtime comparison, persisted review state, and Agent feedback are not implemented yet. The npm package and Plugin remain unpublished.
 
 <a id="capabilities"></a><!-- section:capabilities -->
 
 ## Capabilities
 
-The v1 target includes:
+Available now:
 
-- semantic grouping of every Git hunk;
-- isolated before/after browser capture;
-- visual, DOM, ARIA, style, accessibility, runtime, and coverage evidence;
-- a self-contained WCAG 2.2 AA report;
-- review state, anchored comments, and Origin Session feedback; and
-- Codex Plugin, Claude Code Plugin, standalone Skill, local CLI, and CI use.
+- explicit patch, worktree, range, and merge-base collection modes;
+- stable structured hunks with rename, delete, binary, submodule, mode, and low-signal metadata;
+- deterministic initial change candidates with complete candidate-or-unclassified coverage;
+- schema-validated annotations and evidence references; and
+- a self-contained code review with summary, three-state queue, Focus mode, evidence drawer, unified/side-by-side diff, deep links, and keyboard focus restoration.
 
-These capabilities become available only as their phase gates pass. A failed or uncovered capture is never reported as no difference.
+Later v1 phases add isolated browser capture, visual/DOM/ARIA/style/accessibility/runtime comparison, persisted review state, and Origin Session feedback. Until capture runs, every report is `UNCOVERED` and explicitly lists visual and runtime verification gaps.
 
 <a id="quick-start"></a><!-- section:quick-start -->
 
@@ -62,6 +61,26 @@ node scripts/safe-chain.mjs bun install --frozen-lockfile
 ```
 
 No setup script, Skill, or CLI command installs dependencies or downloads a browser automatically.
+
+Create a fresh code-only example run. The output directory must not already exist.
+
+<!-- sync-command:collect-patch -->
+
+```bash
+node skills/utsuri-review/scripts/utsuri.mjs collect --patch fixtures/code-only-review/changes.patch --output .artifacts/utsuri/readme-example --json
+```
+
+<!-- sync-command:finalize-report -->
+
+```bash
+node skills/utsuri-review/scripts/utsuri.mjs finalize --run .artifacts/utsuri/readme-example --json
+```
+
+<!-- sync-command:validate-report -->
+
+```bash
+node skills/utsuri-review/scripts/utsuri.mjs validate .artifacts/utsuri/readme-example/report --strict --json
+```
 
 <a id="development"></a><!-- section:development -->
 
@@ -95,11 +114,14 @@ Utsuri treats repository content, diffs, HTML, SVG, comments, Context Packs, and
 
 Generated `report/` content is immutable. Utsuri requires regular non-symlink run inputs, a publication path protected from other local principals, strict staging validation, and the bundled OS no-replace helper. Missing or unsupported helpers fail closed; failed generation can leave a private staging directory for manual diagnosis and never deletes it automatically. Mutable human-review data is stored separately in `run/review/`. The static viewer does not contact external services.
 
+Code diff content is parsed into structured lines and rendered only as text. Repository-controlled diff text is never injected as HTML.
+
 <a id="documentation"></a><!-- section:documentation -->
 
 ## Documentation
 
 - [Canonical detailed design](https://github.com/hokupod/utsuri/blob/main/docs/design.md)
+- [UI guidelines and HIG/WCAG traceability](https://github.com/hokupod/utsuri/blob/main/docs/ui-guidelines.md)
 - [v1 implementation plan](https://github.com/hokupod/utsuri/blob/main/ai/plans/active/v1-%E5%AE%9F%E8%A3%85/README.md)
 
 The design is canonical in English. User-facing README changes update English, Japanese, and Simplified Chinese in the same change.

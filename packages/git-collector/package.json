@@ -1,0 +1,15 @@
+{
+  "name": "@utsu-ri/git-collector",
+  "version": "0.1.0",
+  "private": true,
+  "license": "AGPL-3.0-or-later",
+  "type": "module",
+  "dependencies": {
+    "@utsu-ri/core": "workspace:*",
+    "@utsu-ri/report-model": "workspace:*",
+    "@utsu-ri/security": "workspace:*"
+  },
+  "exports": {
+    ".": "./src/index.ts"
+  }
+}

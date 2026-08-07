@@ -1,0 +1,44 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://utsu-ri.dev/schemas/evidence-index/v1",
+  "title": "EvidenceIndex",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schemaVersion", "evidence"],
+  "properties": {
+    "schemaVersion": { "const": "1.0" },
+    "evidence": { "type": "array", "items": { "$ref": "#/$defs/evidence" } }
+  },
+  "$defs": {
+    "evidence": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "type", "path", "range", "summary", "hunkRefs"],
+      "properties": {
+        "id": { "type": "string", "pattern": "^evidence:" },
+        "type": { "enum": ["code", "test", "style", "configuration", "generated", "binary"] },
+        "path": { "type": "string", "minLength": 1 },
+        "range": {
+          "oneOf": [
+            { "type": "null" },
+            {
+              "type": "object",
+              "additionalProperties": false,
+              "required": ["start", "end"],
+              "properties": {
+                "start": { "type": "integer", "minimum": 0 },
+                "end": { "type": "integer", "minimum": 0 }
+              }
+            }
+          ]
+        },
+        "summary": { "type": "string" },
+        "hunkRefs": {
+          "type": "array",
+          "items": { "type": "string", "pattern": "^hunk:" },
+          "uniqueItems": true
+        }
+      }
+    }
+  }
+}

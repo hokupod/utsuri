@@ -1,0 +1,306 @@
+{
+  "schemaVersion": "1.0",
+  "input": {
+    "mode": "patch",
+    "base": null,
+    "head": null,
+    "mergeBase": null,
+    "patchPath": "fixtures/code-only-review/changes.patch"
+  },
+  "repository": {
+    "fingerprint": "41c816ea1f81d58cf53a0d3fd519a29b"
+  },
+  "sourceDigests": {
+    "patch": "e251539c8b24f33a4b36497bb5206f83ce172c3eb6bdf30d869a86d33a9f3f3f",
+    "numstat": null,
+    "nameStatus": null,
+    "summary": null,
+    "raw": null,
+    "commits": null
+  },
+  "summary": {
+    "filesChanged": 4,
+    "additions": 5,
+    "deletions": 2,
+    "binaryFiles": 0,
+    "lowSignalFiles": 0
+  },
+  "files": [
+    {
+      "id": "file:9417e3e5b2db406f",
+      "status": "modified",
+      "oldPath": "src/navigation.ts",
+      "newPath": "src/navigation.ts",
+      "additions": 2,
+      "deletions": 1,
+      "binary": false,
+      "submodule": false,
+      "oldMode": "100644",
+      "newMode": "100644",
+      "oldOid": "1111111111111111111111111111111111111111",
+      "newOid": "2222222222222222222222222222222222222222",
+      "similarity": null,
+      "lowSignal": false,
+      "lowSignalReasons": [],
+      "hunkRefs": [
+        "hunk:src/navigation.ts:1:1:6bdb46e50317616a"
+      ]
+    },
+    {
+      "id": "file:c8088eded3f5d8d4",
+      "status": "modified",
+      "oldPath": "src/navigation.test.ts",
+      "newPath": "src/navigation.test.ts",
+      "additions": 1,
+      "deletions": 0,
+      "binary": false,
+      "submodule": false,
+      "oldMode": "100644",
+      "newMode": "100644",
+      "oldOid": "3333333333333333333333333333333333333333",
+      "newOid": "4444444444444444444444444444444444444444",
+      "similarity": null,
+      "lowSignal": false,
+      "lowSignalReasons": [],
+      "hunkRefs": [
+        "hunk:src/navigation.test.ts:1:1:49a54a5707c9acfa"
+      ]
+    },
+    {
+      "id": "file:5d2304241a7d9bef",
+      "status": "modified",
+      "oldPath": "styles/navigation.css",
+      "newPath": "styles/navigation.css",
+      "additions": 1,
+      "deletions": 1,
+      "binary": false,
+      "submodule": false,
+      "oldMode": "100644",
+      "newMode": "100644",
+      "oldOid": "5555555555555555555555555555555555555555",
+      "newOid": "6666666666666666666666666666666666666666",
+      "similarity": null,
+      "lowSignal": false,
+      "lowSignalReasons": [],
+      "hunkRefs": [
+        "hunk:styles/navigation.css:1:1:1e7578c42b5f8338"
+      ]
+    },
+    {
+      "id": "file:f80fab3fb035780e",
+      "status": "added",
+      "oldPath": null,
+      "newPath": "src/malicious.ts",
+      "additions": 1,
+      "deletions": 0,
+      "binary": false,
+      "submodule": false,
+      "oldMode": null,
+      "newMode": "100644",
+      "oldOid": "0000000000000000000000000000000000000000",
+      "newOid": "7777777777777777777777777777777777777777",
+      "similarity": null,
+      "lowSignal": false,
+      "lowSignalReasons": [],
+      "hunkRefs": [
+        "hunk:src/malicious.ts:0:1:2fa6beb5dcfa12d2"
+      ]
+    }
+  ],
+  "hunks": [
+    {
+      "path": "src/navigation.ts",
+      "oldPath": "src/navigation.ts",
+      "newPath": "src/navigation.ts",
+      "oldStart": 1,
+      "oldLines": 12,
+      "newStart": 1,
+      "newLines": 13,
+      "heading": "export function navigation() {",
+      "lines": [
+        {
+          "kind": "context",
+          "content": "const desktop = true;",
+          "oldLine": 1,
+          "newLine": 1
+        },
+        {
+          "kind": "context",
+          "content": "const mobile = true;",
+          "oldLine": 2,
+          "newLine": 2
+        },
+        {
+          "kind": "context",
+          "content": "const keyboard = true;",
+          "oldLine": 3,
+          "newLine": 3
+        },
+        {
+          "kind": "context",
+          "content": "const pointer = true;",
+          "oldLine": 4,
+          "newLine": 4
+        },
+        {
+          "kind": "context",
+          "content": "const aria = true;",
+          "oldLine": 5,
+          "newLine": 5
+        },
+        {
+          "kind": "deletion",
+          "content": "const breakpoint = 640;",
+          "oldLine": 6,
+          "newLine": null
+        },
+        {
+          "kind": "addition",
+          "content": "const breakpoint = 768;",
+          "oldLine": null,
+          "newLine": 6
+        },
+        {
+          "kind": "addition",
+          "content": "const menuButton = \"Menu\";",
+          "oldLine": null,
+          "newLine": 7
+        },
+        {
+          "kind": "context",
+          "content": "const focusReturn = true;",
+          "oldLine": 7,
+          "newLine": 8
+        },
+        {
+          "kind": "context",
+          "content": "const escapeKey = true;",
+          "oldLine": 8,
+          "newLine": 9
+        },
+        {
+          "kind": "context",
+          "content": "const outsideClick = true;",
+          "oldLine": 9,
+          "newLine": 10
+        },
+        {
+          "kind": "context",
+          "content": "const reducedMotion = true;",
+          "oldLine": 10,
+          "newLine": 11
+        },
+        {
+          "kind": "context",
+          "content": "const darkMode = true;",
+          "oldLine": 11,
+          "newLine": 12
+        },
+        {
+          "kind": "context",
+          "content": "const lightMode = true;",
+          "oldLine": 12,
+          "newLine": 13
+        }
+      ],
+      "id": "hunk:src/navigation.ts:1:1:6bdb46e50317616a",
+      "lowSignal": false
+    },
+    {
+      "path": "src/navigation.test.ts",
+      "oldPath": "src/navigation.test.ts",
+      "newPath": "src/navigation.test.ts",
+      "oldStart": 1,
+      "oldLines": 3,
+      "newStart": 1,
+      "newLines": 4,
+      "heading": "",
+      "lines": [
+        {
+          "kind": "context",
+          "content": "test(\"mobile navigation\", () => {",
+          "oldLine": 1,
+          "newLine": 1
+        },
+        {
+          "kind": "addition",
+          "content": "  expect(breakpoint).toBe(768);",
+          "oldLine": null,
+          "newLine": 2
+        },
+        {
+          "kind": "context",
+          "content": "  expect(menuButton).toBeVisible();",
+          "oldLine": 2,
+          "newLine": 3
+        },
+        {
+          "kind": "context",
+          "content": "});",
+          "oldLine": 3,
+          "newLine": 4
+        }
+      ],
+      "id": "hunk:src/navigation.test.ts:1:1:49a54a5707c9acfa",
+      "lowSignal": false
+    },
+    {
+      "path": "styles/navigation.css",
+      "oldPath": "styles/navigation.css",
+      "newPath": "styles/navigation.css",
+      "oldStart": 1,
+      "oldLines": 3,
+      "newStart": 1,
+      "newLines": 3,
+      "heading": "",
+      "lines": [
+        {
+          "kind": "context",
+          "content": ".navigation {",
+          "oldLine": 1,
+          "newLine": 1
+        },
+        {
+          "kind": "deletion",
+          "content": "  gap: 8px;",
+          "oldLine": 2,
+          "newLine": null
+        },
+        {
+          "kind": "addition",
+          "content": "  gap: 12px;",
+          "oldLine": null,
+          "newLine": 2
+        },
+        {
+          "kind": "context",
+          "content": "}",
+          "oldLine": 3,
+          "newLine": 3
+        }
+      ],
+      "id": "hunk:styles/navigation.css:1:1:1e7578c42b5f8338",
+      "lowSignal": false
+    },
+    {
+      "path": "src/malicious.ts",
+      "oldPath": null,
+      "newPath": "src/malicious.ts",
+      "oldStart": 0,
+      "oldLines": 0,
+      "newStart": 1,
+      "newLines": 1,
+      "heading": "",
+      "lines": [
+        {
+          "kind": "addition",
+          "content": "export const payload = '<img src=x onerror=\"window.__utsuriXss=1\">';",
+          "oldLine": null,
+          "newLine": 1
+        }
+      ],
+      "id": "hunk:src/malicious.ts:0:1:2fa6beb5dcfa12d2",
+      "lowSignal": false
+    }
+  ]
+}

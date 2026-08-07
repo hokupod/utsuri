@@ -10,7 +10,9 @@ export interface UtsuriReport {
     additions: number;
     deletions: number;
   };
+  files: File[];
   hunks: Hunk[];
+  evidence: Evidence[];
   unclassifiedHunkRefs: string[];
   changes: Change[];
   targets: Target[];
@@ -29,13 +31,52 @@ export interface UtsuriReport {
     blockedRequestCount: number;
   };
 }
+export interface File {
+  id: string;
+  status: "added" | "modified" | "deleted" | "renamed" | "copied" | "type-changed" | "unmerged" | "unknown";
+  oldPath: string | null;
+  newPath: string | null;
+  additions: number | null;
+  deletions: number | null;
+  binary: boolean;
+  submodule: boolean;
+  oldMode: string | null;
+  newMode: string | null;
+  oldOid: string | null;
+  newOid: string | null;
+  lowSignal: boolean;
+  lowSignalReasons: string[];
+  hunkRefs: string[];
+}
 export interface Hunk {
   id: string;
   path: string;
+  oldPath: string | null;
+  newPath: string | null;
   oldStart: number;
+  oldLines: number;
   newStart: number;
-  lines: string[];
+  newLines: number;
+  heading: string;
+  lines: Line[];
   lowSignal: boolean;
+}
+export interface Line {
+  kind: "context" | "addition" | "deletion" | "no-newline";
+  content: string;
+  oldLine: number | null;
+  newLine: number | null;
+}
+export interface Evidence {
+  id: string;
+  type: "code" | "test" | "style" | "configuration" | "generated" | "binary";
+  path: string;
+  range: null | {
+    start: number;
+    end: number;
+  };
+  summary: string;
+  hunkRefs: string[];
 }
 export interface Change {
   id: string;

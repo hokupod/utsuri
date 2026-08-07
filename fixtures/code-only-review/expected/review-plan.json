@@ -1,0 +1,51 @@
+{
+  "schemaVersion": "1.0",
+  "candidates": [
+    {
+      "id": "change:7c246b92cfbb2e8d",
+      "title": "src/malicious.ts",
+      "reason": "Hunks are close within one file.",
+      "fileRefs": [
+        "file:f80fab3fb035780e"
+      ],
+      "hunkRefs": [
+        "hunk:src/malicious.ts:0:1:2fa6beb5dcfa12d2"
+      ],
+      "evidenceRefs": [
+        "evidence:6e2bdc787d7c59f4"
+      ]
+    },
+    {
+      "id": "change:25f3c3918b7ae557",
+      "title": "navigation and related files",
+      "reason": "Implementation, test, style, or companion files share a stable path stem.",
+      "fileRefs": [
+        "file:9417e3e5b2db406f",
+        "file:c8088eded3f5d8d4"
+      ],
+      "hunkRefs": [
+        "hunk:src/navigation.test.ts:1:1:49a54a5707c9acfa",
+        "hunk:src/navigation.ts:1:1:6bdb46e50317616a"
+      ],
+      "evidenceRefs": [
+        "evidence:ea339c11e03600be",
+        "evidence:ea5268a3b114f2de"
+      ]
+    },
+    {
+      "id": "change:866b83522287e080",
+      "title": "styles/navigation.css",
+      "reason": "Hunks are close within one file.",
+      "fileRefs": [
+        "file:5d2304241a7d9bef"
+      ],
+      "hunkRefs": [
+        "hunk:styles/navigation.css:1:1:1e7578c42b5f8338"
+      ],
+      "evidenceRefs": [
+        "evidence:be3f7c6cb717b081"
+      ]
+    }
+  ],
+  "unclassifiedHunkRefs": []
+}

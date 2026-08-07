@@ -27,6 +27,7 @@ const validManifest = {
   publishConfig: { access: "public" },
   dependencies: {
     "@utsu-ri/core": "workspace:*",
+    "@utsu-ri/git-collector": "workspace:*",
     "@utsu-ri/report-builder": "workspace:*",
     "@utsu-ri/report-model": "workspace:*",
     "@utsu-ri/security": "workspace:*",

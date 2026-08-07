@@ -1,0 +1,9 @@
+{
+  "filesChanged": 6,
+  "additions": 3,
+  "deletions": 4,
+  "binaryFiles": 1,
+  "lowSignalFiles": 3,
+  "hunks": 4,
+  "statuses": ["renamed", "added", "deleted", "modified", "modified", "modified"]
+}

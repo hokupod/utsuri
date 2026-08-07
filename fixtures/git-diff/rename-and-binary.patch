@@ -1,0 +1,39 @@
+diff --git a/src/old-name.ts b/src/new-name.ts
+similarity index 70%
+rename from src/old-name.ts
+rename to src/new-name.ts
+index 1111111111111111111111111111111111111111..2222222222222222222222222222222222222222 100644
+--- a/src/old-name.ts
++++ b/src/new-name.ts
+@@ -1,2 +1,2 @@
+-export const name = "old";
++export const name = "new";
+ export const keep = true;
+diff --git a/assets/logo.png b/assets/logo.png
+new file mode 100644
+index 0000000000000000000000000000000000000000..3333333333333333333333333333333333333333
+Binary files /dev/null and b/assets/logo.png differ
+diff --git a/src/removed.ts b/src/removed.ts
+deleted file mode 100644
+index 4444444444444444444444444444444444444444..0000000000000000000000000000000000000000
+--- a/src/removed.ts
++++ /dev/null
+@@ -1 +0,0 @@
+-export const removed = true;
+diff --git a/vendor/shared b/vendor/shared
+index 5555555555555555555555555555555555555555..6666666666666666666666666666666666666666 160000
+--- a/vendor/shared
++++ b/vendor/shared
+@@ -1 +1 @@
+-Subproject commit 5555555555555555555555555555555555555555
++Subproject commit 6666666666666666666666666666666666666666
+diff --git a/scripts/run.sh b/scripts/run.sh
+old mode 100644
+new mode 100755
+diff --git a/bun.lock b/bun.lock
+index 7777777777777777777777777777777777777777..8888888888888888888888888888888888888888 100644
+--- a/bun.lock
++++ b/bun.lock
+@@ -1 +1 @@
+-{"lockfileVersion":0}
++{"lockfileVersion":1}
