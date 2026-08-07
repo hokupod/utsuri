@@ -1,0 +1,13 @@
+.artifacts/
+.direnv/
+ai/log/
+ai/tmp/
+bun.lock
+dist/
+fixtures/**/expected/
+fixtures/**/run/report/
+node_modules/
+packages/report-builder/src/generated-ui-assets.ts
+packages/report-model/src/generated/
+skills/utsuri-review/assets/
+skills/utsuri-review/scripts/utsuri.mjs

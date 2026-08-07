@@ -1,0 +1,80 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://utsu-ri.dev/schemas/annotations/v1",
+  "title": "Annotations",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schemaVersion", "changes"],
+  "properties": {
+    "schemaVersion": { "const": "1.0" },
+    "changes": { "type": "array", "items": { "$ref": "#/$defs/semanticChange" } }
+  },
+  "$defs": {
+    "semanticChange": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "title",
+        "kind",
+        "summary",
+        "intent",
+        "implementation",
+        "userImpact",
+        "technicalImpact",
+        "risk",
+        "hunkRefs",
+        "targetRefs",
+        "findingRefs",
+        "verification"
+      ],
+      "properties": {
+        "id": { "type": "string", "pattern": "^change[-:]" },
+        "title": { "type": "string", "minLength": 1 },
+        "kind": {
+          "enum": ["visual", "behavior", "content", "accessibility", "refactor", "mixed", "unknown"]
+        },
+        "summary": { "type": "string" },
+        "intent": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["text", "source", "evidenceRefs"],
+          "properties": {
+            "text": { "type": "string" },
+            "source": { "enum": ["declared", "supported-inference", "weak-inference", "unknown"] },
+            "evidenceRefs": { "type": "array", "items": { "type": "string" }, "uniqueItems": true },
+            "missingEvidence": {
+              "type": "array",
+              "items": { "type": "string" },
+              "uniqueItems": true
+            }
+          }
+        },
+        "implementation": { "type": "string" },
+        "userImpact": { "type": "array", "items": { "type": "string" } },
+        "technicalImpact": { "type": "array", "items": { "type": "string" } },
+        "risk": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["level", "reasons"],
+          "properties": {
+            "level": { "enum": ["critical", "high", "medium", "low", "info"] },
+            "reasons": { "type": "array", "items": { "type": "string" } }
+          }
+        },
+        "hunkRefs": { "type": "array", "items": { "type": "string" }, "uniqueItems": true },
+        "targetRefs": { "type": "array", "items": { "type": "string" }, "uniqueItems": true },
+        "findingRefs": { "type": "array", "items": { "type": "string" }, "uniqueItems": true },
+        "verification": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["verified", "gaps"],
+          "properties": {
+            "verified": { "type": "array", "items": { "type": "string" } },
+            "gaps": { "type": "array", "items": { "type": "string" } }
+          }
+        }
+      }
+    }
+  }
+}

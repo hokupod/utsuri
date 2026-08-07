@@ -1,0 +1,138 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://utsu-ri.dev/schemas/feedback-batch/v1",
+  "title": "FeedbackBatch",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "id",
+    "reportId",
+    "origin",
+    "items",
+    "state",
+    "deliveryMode",
+    "contextHash",
+    "createdAt"
+  ],
+  "properties": {
+    "id": { "type": "string", "pattern": "^fb[-:]" },
+    "reportId": { "type": "string" },
+    "origin": { "$ref": "#/$defs/origin" },
+    "items": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 100,
+      "items": { "$ref": "#/$defs/item" }
+    },
+    "state": { "enum": ["draft", "ready", "submitted", "consumed", "answered", "stale"] },
+    "deliveryMode": { "enum": ["direct-same-session", "return-to-session", "export-only"] },
+    "contextHash": { "type": "string", "minLength": 8 },
+    "createdAt": { "type": "string", "format": "date-time" },
+    "submittedAt": { "type": "string", "format": "date-time" },
+    "consumedAt": { "type": "string", "format": "date-time" }
+  },
+  "$defs": {
+    "origin": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["host", "projectFingerprint", "reportId", "bindingMode", "createdAt"],
+      "properties": {
+        "host": { "enum": ["codex", "claude-code", "unknown"] },
+        "sessionRef": { "type": "string" },
+        "projectFingerprint": { "type": "string", "minLength": 8 },
+        "reportId": { "type": "string" },
+        "bindingMode": { "enum": ["direct-same-session", "return-to-session", "unbound"] },
+        "createdAt": { "type": "string", "format": "date-time" }
+      }
+    },
+    "anchor": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["type", "ref", "fingerprint"],
+      "properties": {
+        "type": {
+          "enum": [
+            "change",
+            "file",
+            "hunk",
+            "line-range",
+            "visual-target",
+            "visual-region",
+            "finding",
+            "verification-gap"
+          ]
+        },
+        "ref": { "type": "string" },
+        "path": { "type": "string" },
+        "side": { "enum": ["before", "after", "diff"] },
+        "startLine": { "type": "integer", "minimum": 1 },
+        "endLine": { "type": "integer", "minimum": 1 },
+        "targetRef": { "type": "string" },
+        "region": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["x", "y", "width", "height"],
+          "properties": {
+            "x": { "type": "number", "minimum": 0 },
+            "y": { "type": "number", "minimum": 0 },
+            "width": { "type": "number", "exclusiveMinimum": 0 },
+            "height": { "type": "number", "exclusiveMinimum": 0 }
+          }
+        },
+        "selectorHint": { "type": "string" },
+        "fingerprint": { "type": "string", "minLength": 8 }
+      }
+    },
+    "item": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "threadId",
+        "anchor",
+        "sourceMessageId",
+        "requestKind",
+        "question",
+        "contextSelection",
+        "state"
+      ],
+      "properties": {
+        "id": { "type": "string", "pattern": "^item[-:]" },
+        "threadId": { "type": "string" },
+        "anchor": { "$ref": "#/$defs/anchor" },
+        "sourceMessageId": { "type": "string" },
+        "requestKind": {
+          "enum": [
+            "explain",
+            "trace-impact",
+            "risk-check",
+            "intent-check",
+            "a11y-check",
+            "suggest-tests",
+            "freeform"
+          ]
+        },
+        "question": { "type": "string", "minLength": 1 },
+        "contextSelection": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "includeCodeDiff",
+            "includeVisualCrop",
+            "includeComputedStyle",
+            "includeDomAria",
+            "includeRelatedTests"
+          ],
+          "properties": {
+            "includeCodeDiff": { "type": "boolean" },
+            "includeVisualCrop": { "type": "boolean" },
+            "includeComputedStyle": { "type": "boolean" },
+            "includeDomAria": { "type": "boolean" },
+            "includeRelatedTests": { "type": "boolean" }
+          }
+        },
+        "state": { "enum": ["ready", "submitted", "acknowledged", "answered", "stale"] }
+      }
+    }
+  }
+}

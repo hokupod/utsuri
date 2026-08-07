@@ -1,0 +1,60 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://utsu-ri.dev/schemas/review-answer/v1",
+  "title": "ReviewAnswer",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion",
+    "batchId",
+    "itemId",
+    "directAnswer",
+    "evidence",
+    "uncertainty",
+    "suggestedNextActions",
+    "metadata"
+  ],
+  "properties": {
+    "schemaVersion": { "const": "1.0" },
+    "batchId": { "type": "string", "minLength": 1 },
+    "itemId": { "type": "string", "minLength": 1 },
+    "directAnswer": { "type": "string" },
+    "evidence": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["ref", "explanation"],
+        "properties": {
+          "ref": { "type": "string" },
+          "explanation": { "type": "string" }
+        }
+      }
+    },
+    "uncertainty": { "type": "array", "items": { "type": "string" } },
+    "suggestedNextActions": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["type", "label"],
+        "properties": {
+          "type": { "enum": ["inspect", "test", "recapture", "propose-patch", "none"] },
+          "label": { "type": "string" },
+          "anchorRef": { "type": "string" }
+        }
+      }
+    },
+    "metadata": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["host", "contextHash"],
+      "properties": {
+        "host": { "enum": ["codex", "claude-code", "unknown"] },
+        "originSessionRef": { "type": "string" },
+        "answerTurnRef": { "type": "string" },
+        "contextHash": { "type": "string", "minLength": 8 }
+      }
+    }
+  }
+}

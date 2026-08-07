@@ -1,0 +1,4 @@
+interface:
+  display_name: "Utsuri Review"
+  short_description: "Build evidence-backed local change reviews"
+  default_prompt: "Use $utsuri-review to review the current change, preserve incomplete evidence, and return a strictly validated local report."

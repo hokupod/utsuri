@@ -1,0 +1,262 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://utsu-ri.dev/schemas/report/v1",
+  "title": "UtsuriReport",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion",
+    "reportId",
+    "status",
+    "summary",
+    "hunks",
+    "unclassifiedHunkRefs",
+    "changes",
+    "targets",
+    "findings",
+    "coverage",
+    "origin",
+    "diagnostics"
+  ],
+  "properties": {
+    "schemaVersion": { "const": "1.0" },
+    "reportId": { "type": "string", "pattern": "^report[-:]" },
+    "status": { "enum": ["PASS", "CHANGED", "REGRESSION", "INCOMPLETE", "UNCOVERED", "SKIPPED"] },
+    "summary": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["statement", "filesChanged", "additions", "deletions"],
+      "properties": {
+        "statement": { "type": "string" },
+        "filesChanged": { "type": "integer", "minimum": 0 },
+        "additions": { "type": "integer", "minimum": 0 },
+        "deletions": { "type": "integer", "minimum": 0 }
+      }
+    },
+    "hunks": { "type": "array", "items": { "$ref": "#/$defs/hunk" } },
+    "unclassifiedHunkRefs": { "type": "array", "items": { "type": "string" }, "uniqueItems": true },
+    "changes": { "type": "array", "items": { "$ref": "#/$defs/change" } },
+    "targets": { "type": "array", "items": { "$ref": "#/$defs/target" } },
+    "findings": { "type": "array", "items": { "$ref": "#/$defs/finding" } },
+    "coverage": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "knownUsages",
+        "verifiedUsages",
+        "unknownPossible",
+        "planned",
+        "succeeded",
+        "failed"
+      ],
+      "properties": {
+        "knownUsages": { "type": ["integer", "null"], "minimum": 0 },
+        "verifiedUsages": { "type": "integer", "minimum": 0 },
+        "unknownPossible": { "type": "boolean" },
+        "planned": { "type": "integer", "minimum": 0 },
+        "succeeded": { "type": "integer", "minimum": 0 },
+        "failed": { "type": "integer", "minimum": 0 }
+      }
+    },
+    "origin": { "$ref": "#/$defs/origin" },
+    "diagnostics": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["incompleteReasons", "blockedRequestCount"],
+      "properties": {
+        "incompleteReasons": { "type": "array", "items": { "type": "string" } },
+        "blockedRequestCount": { "type": "integer", "minimum": 0 }
+      }
+    }
+  },
+  "$defs": {
+    "hunk": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "path", "oldStart", "newStart", "lines", "lowSignal"],
+      "properties": {
+        "id": { "type": "string", "pattern": "^hunk:" },
+        "path": { "type": "string", "minLength": 1 },
+        "oldStart": { "type": "integer", "minimum": 0 },
+        "newStart": { "type": "integer", "minimum": 0 },
+        "lines": { "type": "array", "items": { "type": "string" } },
+        "lowSignal": { "type": "boolean" }
+      }
+    },
+    "change": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "title",
+        "kind",
+        "summary",
+        "intent",
+        "implementation",
+        "userImpact",
+        "technicalImpact",
+        "risk",
+        "hunkRefs",
+        "targetRefs",
+        "findingRefs",
+        "verification"
+      ],
+      "properties": {
+        "id": { "type": "string", "pattern": "^change[-:]" },
+        "title": { "type": "string", "minLength": 1 },
+        "kind": {
+          "enum": ["visual", "behavior", "content", "accessibility", "refactor", "mixed", "unknown"]
+        },
+        "summary": { "type": "string" },
+        "intent": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["text", "source", "evidenceRefs"],
+          "properties": {
+            "text": { "type": "string" },
+            "source": { "enum": ["declared", "supported-inference", "weak-inference", "unknown"] },
+            "evidenceRefs": { "type": "array", "items": { "type": "string" }, "uniqueItems": true },
+            "missingEvidence": { "type": "array", "items": { "type": "string" } }
+          }
+        },
+        "implementation": { "type": "string" },
+        "userImpact": { "type": "array", "items": { "type": "string" } },
+        "technicalImpact": { "type": "array", "items": { "type": "string" } },
+        "risk": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["level", "reasons"],
+          "properties": {
+            "level": { "enum": ["critical", "high", "medium", "low", "info"] },
+            "reasons": { "type": "array", "items": { "type": "string" } }
+          }
+        },
+        "hunkRefs": { "type": "array", "items": { "type": "string" }, "uniqueItems": true },
+        "targetRefs": { "type": "array", "items": { "type": "string" }, "uniqueItems": true },
+        "findingRefs": { "type": "array", "items": { "type": "string" }, "uniqueItems": true },
+        "verification": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["verified", "gaps"],
+          "properties": {
+            "verified": { "type": "array", "items": { "type": "string" } },
+            "gaps": { "type": "array", "items": { "type": "string" } }
+          }
+        }
+      }
+    },
+    "captureResult": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["status", "screenshotRefs"],
+      "properties": {
+        "status": { "enum": ["success", "failed", "skipped"] },
+        "url": { "type": "string" },
+        "screenshotRefs": { "type": "array", "items": { "type": "string" } },
+        "domRef": { "type": "string" },
+        "ariaRef": { "type": "string" },
+        "styleRef": { "type": "string" },
+        "axeRef": { "type": "string" },
+        "consoleRef": { "type": "string" },
+        "networkRef": { "type": "string" },
+        "failure": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["code", "message", "stage"],
+          "properties": {
+            "code": { "type": "string" },
+            "message": { "type": "string" },
+            "stage": { "type": "string" }
+          }
+        }
+      }
+    },
+    "target": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "routeOrStory",
+        "viewport",
+        "state",
+        "roots",
+        "discovery",
+        "before",
+        "after"
+      ],
+      "properties": {
+        "id": { "type": "string", "pattern": "^target:" },
+        "routeOrStory": { "type": "string" },
+        "viewport": { "type": "string" },
+        "state": { "type": "string" },
+        "roots": { "type": "array", "items": { "type": "string" } },
+        "discovery": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["source", "confidence", "reason"],
+          "properties": {
+            "source": {
+              "enum": ["explicit", "storybook", "test", "route", "import", "selector", "fallback"]
+            },
+            "confidence": { "enum": ["explicit", "strong", "medium", "weak", "unknown"] },
+            "reason": { "type": "string" }
+          }
+        },
+        "before": { "$ref": "#/$defs/captureResult" },
+        "after": { "$ref": "#/$defs/captureResult" },
+        "comparisonRef": { "type": "string" }
+      }
+    },
+    "finding": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "category",
+        "state",
+        "severity",
+        "title",
+        "description",
+        "evidenceRefs",
+        "hunkRefs"
+      ],
+      "properties": {
+        "id": { "type": "string", "pattern": "^finding:" },
+        "category": {
+          "enum": [
+            "visual",
+            "layout",
+            "dom",
+            "aria",
+            "a11y",
+            "console",
+            "page-error",
+            "network",
+            "coverage",
+            "security"
+          ]
+        },
+        "state": { "enum": ["new", "resolved", "unchanged", "incomplete"] },
+        "severity": { "enum": ["critical", "high", "medium", "low", "info"] },
+        "title": { "type": "string" },
+        "description": { "type": "string" },
+        "targetRef": { "type": "string" },
+        "evidenceRefs": { "type": "array", "items": { "type": "string" } },
+        "hunkRefs": { "type": "array", "items": { "type": "string" } }
+      }
+    },
+    "origin": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["host", "projectFingerprint", "reportId", "bindingMode", "createdAt"],
+      "properties": {
+        "host": { "enum": ["codex", "claude-code", "unknown"] },
+        "sessionRef": { "type": "string" },
+        "projectFingerprint": { "type": "string", "minLength": 8 },
+        "reportId": { "type": "string" },
+        "bindingMode": { "enum": ["direct-same-session", "return-to-session", "unbound"] },
+        "createdAt": { "type": "string", "format": "date-time" }
+      }
+    }
+  }
+}

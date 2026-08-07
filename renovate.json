@@ -1,0 +1,17 @@
+{
+  "$schema": "https://docs.renovatebot.com/renovate-schema.json",
+  "extends": ["config:best-practices", ":timezone(Asia/Tokyo)"],
+  "labels": ["dependencies"],
+  "minimumReleaseAge": "3 days",
+  "rangeStrategy": "pin",
+  "customManagers": [
+    {
+      "customType": "regex",
+      "description": "Safe-chain version pinned with independently reviewed release digests",
+      "managerFilePatterns": ["/^toolchain-policy\\.json$/"],
+      "matchStrings": ["\"version\": \"(?<currentValue>[0-9]+\\.[0-9]+\\.[0-9]+)\""],
+      "depNameTemplate": "@aikidosec/safe-chain",
+      "datasourceTemplate": "npm"
+    }
+  ]
+}

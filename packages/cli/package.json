@@ -1,0 +1,39 @@
+{
+  "name": "@utsu-ri/cli",
+  "version": "0.1.0",
+  "description": "Evidence-backed visual change review for Codex and Claude Code",
+  "license": "AGPL-3.0-or-later",
+  "author": {
+    "name": "hokupod"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/hokupod/utsuri.git"
+  },
+  "homepage": "https://github.com/hokupod/utsuri#readme",
+  "bugs": {
+    "url": "https://github.com/hokupod/utsuri/issues"
+  },
+  "type": "module",
+  "engines": {
+    "node": ">=22"
+  },
+  "bin": {
+    "utsuri": "dist/utsuri.mjs"
+  },
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE"
+  ],
+  "publishConfig": {
+    "access": "public"
+  },
+  "dependencies": {
+    "@utsu-ri/core": "workspace:*",
+    "@utsu-ri/report-builder": "workspace:*",
+    "@utsu-ri/report-model": "workspace:*",
+    "@utsu-ri/security": "workspace:*",
+    "yaml": "2.8.1"
+  }
+}

@@ -1,0 +1,16 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://utsu-ri.dev/schemas/origin-session/v1",
+  "title": "OriginSessionBinding",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["host", "projectFingerprint", "reportId", "bindingMode", "createdAt"],
+  "properties": {
+    "host": { "enum": ["codex", "claude-code", "unknown"] },
+    "sessionRef": { "type": "string", "minLength": 1 },
+    "projectFingerprint": { "type": "string", "minLength": 8 },
+    "reportId": { "type": "string", "minLength": 1 },
+    "bindingMode": { "enum": ["direct-same-session", "return-to-session", "unbound"] },
+    "createdAt": { "type": "string", "format": "date-time" }
+  }
+}

@@ -1,0 +1,2 @@
+*.md whitespace=-blank-at-eol
+*.patch -whitespace

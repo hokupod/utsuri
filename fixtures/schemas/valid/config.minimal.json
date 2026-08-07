@@ -1,0 +1,24 @@
+{
+  "version": 1,
+  "project": { "name": "fixture" },
+  "diff": { "base": "HEAD^", "head": "worktree", "mergeBase": true },
+  "execution": {
+    "mode": "static-fragment",
+    "trust": "untrusted",
+    "install": "never",
+    "shell": false,
+    "timeoutMs": 120000
+  },
+  "report": {
+    "outputDirectory": ".artifacts/utsuri",
+    "singleFile": false,
+    "includeAbsolutePaths": false
+  },
+  "review": { "enabled": true, "autoResolveAgentAnswer": false },
+  "feedback": {
+    "target": "origin-session",
+    "delivery": "return-to-session",
+    "neverCreateNewSession": true
+  },
+  "policy": { "failOn": ["security-policy-violation"], "warnOn": ["partial-coverage"] }
+}

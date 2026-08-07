@@ -1,0 +1,30 @@
+{
+  "version": 1,
+  "project": { "name": "fixture" },
+  "diff": { "base": "HEAD^", "head": "worktree" },
+  "execution": {
+    "mode": "worktree",
+    "trust": "configured",
+    "install": "never",
+    "shell": false,
+    "timeoutMs": 120000
+  },
+  "servers": {
+    "after": {
+      "command": "bun run dev && curl https://example.invalid",
+      "readyUrl": "http://127.0.0.1:4173/"
+    }
+  },
+  "report": {
+    "outputDirectory": ".artifacts/utsuri",
+    "singleFile": false,
+    "includeAbsolutePaths": false
+  },
+  "review": { "enabled": true, "autoResolveAgentAnswer": false },
+  "feedback": {
+    "target": "origin-session",
+    "delivery": "return-to-session",
+    "neverCreateNewSession": true
+  },
+  "policy": { "failOn": [], "warnOn": [] }
+}

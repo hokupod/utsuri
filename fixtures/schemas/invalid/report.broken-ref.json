@@ -1,0 +1,32 @@
+{
+  "schemaVersion": "1.0",
+  "reportId": "report-broken",
+  "status": "CHANGED",
+  "summary": {
+    "statement": "A hunk reference is broken.",
+    "filesChanged": 1,
+    "additions": 1,
+    "deletions": 0
+  },
+  "hunks": [],
+  "unclassifiedHunkRefs": ["hunk:missing"],
+  "changes": [],
+  "targets": [],
+  "findings": [],
+  "coverage": {
+    "knownUsages": null,
+    "verifiedUsages": 0,
+    "unknownPossible": true,
+    "planned": 0,
+    "succeeded": 0,
+    "failed": 0
+  },
+  "origin": {
+    "host": "unknown",
+    "projectFingerprint": "00000000",
+    "reportId": "report-broken",
+    "bindingMode": "unbound",
+    "createdAt": "2026-01-01T00:00:00.000Z"
+  },
+  "diagnostics": { "incompleteReasons": [], "blockedRequestCount": 0 }
+}

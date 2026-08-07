@@ -1,0 +1,17 @@
+{
+  "schemaVersion": "1.3",
+  "reportId": "report-empty",
+  "reportFingerprint": "00000000",
+  "revision": 0,
+  "updatedAt": "2026-01-01T00:00:00.000Z",
+  "viewed": {},
+  "judgments": {
+    "change-001": {
+      "changeId": "change-001",
+      "state": "approved",
+      "updatedAt": "2026-01-01T00:00:00.000Z"
+    }
+  },
+  "threadIds": [],
+  "orphanedThreadIds": []
+}

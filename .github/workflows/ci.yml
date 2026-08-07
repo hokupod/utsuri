@@ -1,0 +1,124 @@
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  native-cli-protocol:
+    name: Native CLI / Node ${{ matrix.node }}
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        node: [22, 24]
+    steps:
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: ${{ matrix.node }}
+      - name: Verify strict native JSON before Safe-chain setup
+        run: node scripts/verify-native-cli-json.mjs
+
+  bun-matrix:
+    name: Bun ${{ matrix.bun }}
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        bun: [1.3.13, 1.3.14]
+    steps:
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: 24
+      - uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6 # v2.0.2
+        with:
+          bun-version: ${{ matrix.bun }}
+      - name: Verify committed CLI before dependency or shim setup
+        run: node scripts/verify-native-cli-json.mjs
+      - name: Install and verify Safe-chain trust anchor
+        run: |
+          utsuri_safe_chain_version="$(node -p "require('./toolchain-policy.json').safeChain.version")"
+          utsuri_safe_chain_asset="$(node -p "require('./toolchain-policy.json').safeChain.assets['linux-x64']")"
+          utsuri_safe_chain_sha256="$(node -p "require('./toolchain-policy.json').safeChain.sha256['linux-x64']")"
+          utsuri_safe_chain_target="${HOME}/.safe-chain/bin/safe-chain"
+          mkdir -p "$(dirname "${utsuri_safe_chain_target}")"
+          curl --fail --silent --show-error --location \
+            "https://github.com/AikidoSec/safe-chain/releases/download/${utsuri_safe_chain_version}/${utsuri_safe_chain_asset}" \
+            --output "${utsuri_safe_chain_target}"
+          echo "${utsuri_safe_chain_sha256}  ${utsuri_safe_chain_target}" | sha256sum --check --strict
+          chmod 0755 "${utsuri_safe_chain_target}"
+          node scripts/safe-chain.mjs --version
+          node scripts/safe-chain.mjs setup-ci
+          npx safe-chain-verify
+          bunx safe-chain-verify
+      - name: Install locked dependencies
+        run: bun install --frozen-lockfile
+      - name: Run full static gate
+        run: bun run check
+      - name: Build and validate artifacts
+        run: |
+          bun run build
+          bun run validate:fixtures
+          bun run verify:release-layout
+      - name: Reject generated or lockfile drift
+        run: git diff --exit-code -- bun.lock packages/report-model/src/generated packages/cli/dist packages/cli/README.md packages/cli/LICENSE skills/utsuri-review
+
+  nix-compatibility:
+    name: Nix / Bun 1.3.13
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        with:
+          persist-credentials: false
+      - uses: DeterminateSystems/nix-installer-action@ef8a148080ab6020fd15196c2084a2eea5ff2d25 # v22
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: 24
+      - name: Evaluate every supported system
+        run: nix flake check --all-systems --no-build
+      - name: Build current-system checks
+        run: nix flake check
+      - name: Verify Nix toolchain
+        run: |
+          test "$(nix develop --command node --version)" = "v24.16.0"
+          test "$(nix develop --command bun --version)" = "1.3.13"
+      - name: Install and verify Safe-chain trust anchor
+        run: |
+          utsuri_safe_chain_version="$(node -p "require('./toolchain-policy.json').safeChain.version")"
+          utsuri_safe_chain_asset="$(node -p "require('./toolchain-policy.json').safeChain.assets['linux-x64']")"
+          utsuri_safe_chain_sha256="$(node -p "require('./toolchain-policy.json').safeChain.sha256['linux-x64']")"
+          utsuri_safe_chain_target="${HOME}/.safe-chain/bin/safe-chain"
+          mkdir -p "$(dirname "${utsuri_safe_chain_target}")"
+          curl --fail --silent --show-error --location \
+            "https://github.com/AikidoSec/safe-chain/releases/download/${utsuri_safe_chain_version}/${utsuri_safe_chain_asset}" \
+            --output "${utsuri_safe_chain_target}"
+          echo "${utsuri_safe_chain_sha256}  ${utsuri_safe_chain_target}" | sha256sum --check --strict
+          chmod 0755 "${utsuri_safe_chain_target}"
+          node scripts/safe-chain.mjs --version
+          node scripts/safe-chain.mjs setup-ci
+          npx safe-chain-verify
+          bunx safe-chain-verify
+      - name: Run the Nix Bun compatibility gate through Safe-chain
+        run: |
+          nix develop --command node scripts/dev-env-check.mjs --json
+          nix develop --command node scripts/safe-chain.mjs bun install --frozen-lockfile
+          nix develop --command node scripts/safe-chain.mjs bun run check
+          nix develop --command node scripts/safe-chain.mjs bun run build
+          nix develop --command node scripts/safe-chain.mjs bun run validate:fixtures
+          nix develop --command node scripts/safe-chain.mjs bun run verify:release-layout
+      - name: Reject generated or lockfile drift
+        run: git diff --exit-code -- bun.lock flake.lock packages/report-model/src/generated packages/cli/dist packages/cli/README.md packages/cli/LICENSE skills/utsuri-review

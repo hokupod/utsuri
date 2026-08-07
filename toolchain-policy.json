@@ -1,0 +1,35 @@
+{
+  "schemaVersion": 1,
+  "node": {
+    "developmentMajor": 24,
+    "bundleCompatibilityMajors": [22, 24]
+  },
+  "bun": {
+    "flake": "1.3.13",
+    "ciPrimary": "1.3.14"
+  },
+  "safeChain": {
+    "version": "1.5.14",
+    "releaseUrl": "https://github.com/AikidoSec/safe-chain/releases/tag/1.5.14",
+    "discovery": "standard-user-install",
+    "relativeExecutable": ".safe-chain/bin/safe-chain",
+    "allowEnvironmentOverride": false,
+    "assets": {
+      "darwin-arm64": "safe-chain-mac-arm64",
+      "darwin-x64": "safe-chain-mac-x64",
+      "linux-arm64": "safe-chain-linux-arm64",
+      "linux-x64": "safe-chain-linux-x64"
+    },
+    "sha256": {
+      "darwin-arm64": "a1a827589c46db5600c5a96d5efc5fea7c5431df6bc4d28db90bd971988075ff",
+      "darwin-x64": "c250cf0a5b7b0f75a5d10566ec10638d0e0a75fa9719db3055afb78ca1fab2d0",
+      "linux-arm64": "ae5b758820a2bf317ee843c6c4d032be04907c7d7a7579be3373372504108f94",
+      "linux-x64": "565d62360c7d17e1508e76c88319b6b58940bce5495071dca133f51eb30768cf"
+    }
+  },
+  "browser": {
+    "linux": "nixpkgs-chromium",
+    "darwin": "system-or-existing-playwright",
+    "allowAutomaticDownload": false
+  }
+}

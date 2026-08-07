@@ -1,0 +1,23 @@
+{
+  "id": "thread-001",
+  "reportId": "report-empty",
+  "anchor": {
+    "type": "change",
+    "ref": "change-001",
+    "fingerprint": "00000000"
+  },
+  "kind": "note",
+  "state": "open",
+  "messages": [
+    {
+      "id": "message-001",
+      "kind": "human-note",
+      "author": { "type": "human", "label": "Reviewer" },
+      "body": "Check this change.",
+      "createdAt": "2026-01-01T00:00:00.000Z"
+    }
+  ],
+  "agentAttention": { "state": "requested", "updatedAt": "2026-01-01T00:00:00.000Z" },
+  "createdAt": "2026-01-01T00:00:00.000Z",
+  "updatedAt": "2026-01-01T00:00:00.000Z"
+}

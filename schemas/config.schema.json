@@ -1,0 +1,205 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://utsu-ri.dev/schemas/config/v1",
+  "title": "UtsuriConfig",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["version", "project", "diff", "execution", "report", "review", "feedback", "policy"],
+  "properties": {
+    "version": { "const": 1 },
+    "project": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["name"],
+      "properties": {
+        "name": { "type": "string", "minLength": 1 },
+        "locale": { "type": "string", "minLength": 2 }
+      }
+    },
+    "diff": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["base", "head"],
+      "properties": {
+        "base": { "type": "string", "minLength": 1 },
+        "head": { "type": "string", "minLength": 1 },
+        "mergeBase": { "type": "boolean", "default": true },
+        "include": { "type": "array", "items": { "type": "string" }, "uniqueItems": true },
+        "exclude": { "type": "array", "items": { "type": "string" }, "uniqueItems": true },
+        "generatedPatterns": {
+          "type": "array",
+          "items": { "type": "string" },
+          "uniqueItems": true
+        }
+      }
+    },
+    "execution": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["mode", "trust", "install", "shell", "timeoutMs"],
+      "properties": {
+        "mode": { "enum": ["dual-url", "static-fragment", "worktree", "container"] },
+        "trust": { "enum": ["untrusted", "configured", "trusted"] },
+        "install": { "const": "never" },
+        "shell": { "const": false },
+        "timeoutMs": { "type": "integer", "minimum": 1, "maximum": 900000 }
+      }
+    },
+    "servers": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "before": { "$ref": "#/$defs/server" },
+        "after": { "$ref": "#/$defs/server" }
+      }
+    },
+    "browser": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "engine": { "const": "chromium" },
+        "headless": { "type": "boolean" },
+        "serviceWorkers": { "const": "block" },
+        "locale": { "type": "string" },
+        "timezone": { "type": "string" },
+        "colorScheme": { "enum": ["light", "dark"] },
+        "reducedMotion": { "enum": ["reduce", "no-preference"] }
+      }
+    },
+    "viewports": {
+      "type": "object",
+      "additionalProperties": { "$ref": "#/$defs/viewport" }
+    },
+    "targets": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/target" }
+    },
+    "network": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "browserPolicy": { "const": "block-external" },
+        "allowedOrigins": {
+          "type": "array",
+          "items": { "type": "string", "format": "uri" },
+          "uniqueItems": true
+        },
+        "blockMethods": {
+          "type": "array",
+          "items": { "enum": ["POST", "PUT", "PATCH", "DELETE"] },
+          "uniqueItems": true
+        },
+        "recordBlocked": { "type": "boolean" }
+      }
+    },
+    "security": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "envAllowlist": { "type": "array", "items": { "type": "string" }, "uniqueItems": true },
+        "followSymlinks": { "const": false },
+        "allowArbitraryScriptSteps": { "const": false },
+        "allowRemoteAuthState": { "const": false },
+        "sanitizeHtmlPreview": { "const": true }
+      }
+    },
+    "report": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["outputDirectory", "singleFile", "includeAbsolutePaths"],
+      "properties": {
+        "outputDirectory": { "type": "string", "minLength": 1 },
+        "language": { "type": "string", "minLength": 2 },
+        "theme": { "enum": ["system", "light", "dark"] },
+        "singleFile": { "type": "boolean" },
+        "includeReviewNotes": { "type": "boolean" },
+        "includeRawLogs": { "type": "boolean" },
+        "includeAbsolutePaths": { "const": false }
+      }
+    },
+    "review": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["enabled", "autoResolveAgentAnswer"],
+      "properties": {
+        "enabled": { "type": "boolean" },
+        "viewedMode": { "const": "manual" },
+        "staleOnFingerprintChange": { "type": "boolean" },
+        "autoResolveAgentAnswer": { "const": false }
+      }
+    },
+    "feedback": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["target", "delivery", "neverCreateNewSession"],
+      "properties": {
+        "target": { "const": "origin-session" },
+        "delivery": { "enum": ["return-to-session", "direct-same-session", "export-only"] },
+        "directSameSessionBridge": { "enum": ["auto", "disabled"] },
+        "neverCreateNewSession": { "const": true },
+        "contextPreview": { "const": "required" },
+        "maxBatchItems": { "type": "integer", "minimum": 1, "maximum": 100 },
+        "maxContextBytes": { "type": "integer", "minimum": 1024, "maximum": 10485760 }
+      }
+    },
+    "policy": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["failOn", "warnOn"],
+      "properties": {
+        "failOn": { "type": "array", "items": { "type": "string" }, "uniqueItems": true },
+        "warnOn": { "type": "array", "items": { "type": "string" }, "uniqueItems": true }
+      }
+    }
+  },
+  "$defs": {
+    "server": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["command", "readyUrl"],
+      "properties": {
+        "command": {
+          "type": "array",
+          "minItems": 1,
+          "items": { "type": "string", "minLength": 1 }
+        },
+        "readyUrl": { "type": "string", "format": "uri" },
+        "readySelector": { "type": "string", "minLength": 1 }
+      }
+    },
+    "viewport": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["width", "height", "deviceScaleFactor"],
+      "properties": {
+        "width": { "type": "integer", "minimum": 1, "maximum": 10000 },
+        "height": { "type": "integer", "minimum": 1, "maximum": 30000 },
+        "deviceScaleFactor": { "type": "number", "minimum": 0.25, "maximum": 4 }
+      }
+    },
+    "target": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "path", "viewports", "states"],
+      "properties": {
+        "id": { "type": "string", "pattern": "^[a-z0-9][a-z0-9-]*$" },
+        "path": { "type": "string", "pattern": "^/" },
+        "viewports": { "type": "array", "minItems": 1, "items": { "type": "string" } },
+        "roots": { "type": "array", "items": { "type": "string" } },
+        "states": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["name"],
+            "properties": {
+              "name": { "type": "string", "minLength": 1 },
+              "steps": { "type": "array", "items": { "type": "object" } }
+            }
+          }
+        }
+      }
+    }
+  }
+}

@@ -1,0 +1,10 @@
+.artifacts/
+.direnv/
+dist/
+node_modules/
+playwright-report/
+test-results/
+result
+skills/utsuri-review/scripts/native/
+*.log
+.DS_Store

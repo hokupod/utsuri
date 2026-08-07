@@ -1,0 +1,13 @@
+{
+  "schemaVersion": "1.0",
+  "batchId": "fb-001",
+  "itemId": "item-001",
+  "directAnswer": "The available evidence is insufficient.",
+  "evidence": [],
+  "uncertainty": ["No associated hunk was supplied."],
+  "suggestedNextActions": [{ "type": "inspect", "label": "Inspect the associated hunk." }],
+  "metadata": {
+    "host": "unknown",
+    "contextHash": "00000000"
+  }
+}
