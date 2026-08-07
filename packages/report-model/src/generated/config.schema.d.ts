@@ -6,6 +6,14 @@ export interface UtsuriConfig {
     name: string;
     locale?: string;
   };
+  proposedCommands?: {
+    source: string;
+    /**
+     * @minItems 1
+     */
+    command: [string, ...string[]];
+    reason: string;
+  }[];
   diff: {
     base: string;
     head: string;
@@ -38,6 +46,18 @@ export interface UtsuriConfig {
     [k: string]: Viewport;
   };
   targets?: Target[];
+  stabilization?: {
+    disableAnimations?: boolean;
+    hideCaret?: boolean;
+    waitForFonts?: boolean;
+    freezeTime?: string;
+    waitAfterReadyMs?: number;
+    maxRetries?: number;
+    masks?: {
+      selector: string;
+      reason: string;
+    }[];
+  };
   network?: {
     browserPolicy?: "block-external";
     allowedOrigins?: string[];
@@ -50,6 +70,18 @@ export interface UtsuriConfig {
     allowArbitraryScriptSteps?: false;
     allowRemoteAuthState?: false;
     sanitizeHtmlPreview?: true;
+  };
+  capture?: {
+    fullPage?: boolean;
+    elementCrops?: boolean;
+    maxFullPageHeight?: number;
+    maxMegapixels?: number;
+    screenshotFormat?: "png";
+    includeDom?: "normalized";
+    includeRawDom?: false;
+    includeAria?: boolean;
+    includeComputedStyles?: "changed-and-layout" | "layout";
+    includeAxe?: boolean;
   };
   report: {
     outputDirectory: string;
@@ -84,9 +116,11 @@ export interface Server {
   /**
    * @minItems 1
    */
-  command: [string, ...string[]];
+  command?: [string, ...string[]];
+  cwd?: string;
   readyUrl: string;
   readySelector?: string;
+  shutdownTimeoutMs?: number;
 }
 export interface Viewport {
   width: number;
@@ -101,6 +135,10 @@ export interface Target {
    */
   viewports: [string, ...string[]];
   roots?: string[];
+  fragments?: {
+    before: string;
+    after: string;
+  };
   /**
    * @minItems 1
    */

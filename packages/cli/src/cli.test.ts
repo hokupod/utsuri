@@ -12,7 +12,9 @@ import {
 } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import path from "node:path";
+import { parse } from "yaml";
 import { executeCli } from "./cli";
+import { validateArtifact } from "@utsu-ri/report-model";
 
 const temporaryDirectories: string[] = [];
 
@@ -78,6 +80,44 @@ describe("CLI", () => {
     const result = await executeCli(["doctor", "--json", "--json"]);
     expect(result.exitCode).toBe(2);
     expect(errorId(result)).toBe("CLI_DUPLICATE_OPTION");
+  });
+
+  test("initializes a non-executable configuration proposal without overwriting", async () => {
+    const root = await mkdtemp(path.join(tmpdir(), "utsuri-init-"));
+    temporaryDirectories.push(root);
+    await writeFile(
+      path.join(root, "package.json"),
+      JSON.stringify({ name: "fixture", packageManager: "bun@1.3.14", scripts: { dev: "vite" } })
+    );
+
+    const initialized = await executeCli(["init", "--output", "utsuri.yml", "--json"], root);
+    expect(initialized.exitCode).toBe(0);
+    const config = parse(await readFile(path.join(root, "utsuri.yml"), "utf8")) as Record<
+      string,
+      unknown
+    >;
+    expect(validateArtifact("config", config).errors).toEqual([]);
+    expect(config.proposedCommands).toEqual([
+      {
+        source: "package.json#scripts.dev",
+        command: ["bun", "run", "dev"],
+        reason: "Project script may start a reviewable local UI"
+      }
+    ]);
+    expect(config.servers).toEqual({
+      before: {
+        readyUrl: "http://127.0.0.1:4173/",
+        readySelector: "[data-app-ready]"
+      },
+      after: {
+        readyUrl: "http://127.0.0.1:4174/",
+        readySelector: "[data-app-ready]"
+      }
+    });
+
+    const repeated = await executeCli(["init", "--output", "utsuri.yml", "--json"], root);
+    expect(repeated.exitCode).toBe(2);
+    expect(errorId(repeated)).toBe("INIT_OUTPUT_EXISTS");
   });
 
   test("finalizes and strictly validates an empty run", async () => {

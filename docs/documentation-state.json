@@ -1,21 +1,27 @@
 {
   "schemaVersion": 1,
-  "currentPhase": 1,
-  "availability": "phase-1-code-review",
-  "designVersion": "1.9",
+  "currentPhase": 2,
+  "availability": "phase-2-browser-capture",
+  "designVersion": "2.0",
   "lastUpdated": "2026-08-07",
-  "changeLogEntryId": "design-v1.9-code-diff-mvp",
+  "changeLogEntryId": "design-v2.0-browser-capture",
   "currentHashes": {
-    "docs/design.md": "6696a85dc10d6dd353da3220e420e77602efc9d5bfac1c5879711affbf266202",
-    "README.md": "e8716ca7d3ae8ba1dac81d2812c2b9641b8e6a1f2e9e44e7ff15c4f80b52661b",
-    "README.ja.md": "1508aa7b3866d535b3f46c287e067cf4371a0e18e108fb1254d3d16b9fc05f35",
-    "README.zh-CN.md": "629a48b6488dff317afa41ea021da6d0ed579f224d6f6b4585d7dacb586137da"
+    "docs/design.md": "e38d42770e1466eb74d9797c0489eaed0953fda183a99486098abf96f54ad9d9",
+    "README.md": "60eb1b439938542702675f0896f51f5d45092ea7f6c4edb8511d8c8c1aaab1f4",
+    "README.ja.md": "e5b01ef5e649f8d3ed5deaffade9c2935fb258e89bae1550cab0700b14c56ce8",
+    "README.zh-CN.md": "85e88b6811d3f0281b451c5c0184276ab637825e923c3346bb683a74cddd1a07"
   },
   "changedSections": [
     "metadata",
-    "15",
-    "16",
-    "23",
+    "14",
+    "18",
+    "19",
+    "29",
+    "30",
+    "31",
+    "32",
+    "33",
+    "34",
     "document-change-log",
     "readme:status",
     "readme:capabilities",
@@ -25,14 +31,14 @@
     "documentation-policy:sync-command-ids"
   ],
   "humanReviewedHashes": {
-    "docs/design.md": "6696a85dc10d6dd353da3220e420e77602efc9d5bfac1c5879711affbf266202",
-    "README.md": "e8716ca7d3ae8ba1dac81d2812c2b9641b8e6a1f2e9e44e7ff15c4f80b52661b",
-    "README.ja.md": "1508aa7b3866d535b3f46c287e067cf4371a0e18e108fb1254d3d16b9fc05f35",
-    "README.zh-CN.md": "629a48b6488dff317afa41ea021da6d0ed579f224d6f6b4585d7dacb586137da"
+    "docs/design.md": "e38d42770e1466eb74d9797c0489eaed0953fda183a99486098abf96f54ad9d9",
+    "README.md": "60eb1b439938542702675f0896f51f5d45092ea7f6c4edb8511d8c8c1aaab1f4",
+    "README.ja.md": "e5b01ef5e649f8d3ed5deaffade9c2935fb258e89bae1550cab0700b14c56ce8",
+    "README.zh-CN.md": "85e88b6811d3f0281b451c5c0184276ab637825e923c3346bb683a74cddd1a07"
   },
-  "reviewEvidencePath": "ai/log/tests/2026-08-07-phase-1-documentation-review.md",
-  "reviewEvidenceSha256": "4cd416a500a118b4e325b795bcf3c6921989ab2acba386eafea5161e72e4281b",
-  "reviewedPhase": 1,
+  "reviewEvidencePath": "ai/log/tests/2026-08-07-phase-2-documentation-review.md",
+  "reviewEvidenceSha256": "9d8040622eec88e39aab5087c40a4e5091e6bc57aaf6f8052ded799b9148c3dc",
+  "reviewedPhase": 2,
   "publicationMetadata": {
     "publisher": "hokupod",
     "npmMaintainer": "hokupod-npm",

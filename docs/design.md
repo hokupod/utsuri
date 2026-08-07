@@ -6,7 +6,7 @@
 - **Plugin name**: `utsuri`
 - **Skill name**: `utsuri-review`
 - **CLI name**: `utsuri`
-- **Document version**: 1.9
+- **Document version**: 2.0
 - **Created**: 2026-08-06
 - **Last updated**: 2026-08-07
 - **Language**: English (canonical)
@@ -14,7 +14,7 @@
 - **Implementation language**: TypeScript
 - **Development environment**: Bun
 - **Report UI**: a static application built with Svelte
-- **v1.9 changes**: implemented the Phase 1 code-only review contract with four explicit Git input modes, structured diff and evidence schemas, deterministic review-plan coverage, an `UNCOVERED` report boundary, and the keyboard-accessible Diff Ledger UI
+- **v2.0 changes**: implemented the Phase 2 browser-capture contract with three isolated capture modes, explicit worktree execution consent, deterministic stabilization and action schemas, network mutation blocking, digest-validated reuse, typed partial failures, and self-contained immutable capture evidence
 
 ---
 
@@ -1399,7 +1399,7 @@ A command may still succeed when findings exist unless policy defines them as fa
 
 ## 14. Configuration file
 
-### 14.1 Complete example
+### 14.1 Phase 2 accepted example
 
 ```yaml
 version: 1
@@ -1425,7 +1425,7 @@ diff:
 
 execution:
   mode: worktree
-  trust: configured-only
+  trust: trusted
   install: never
   shell: false
   timeoutMs: 120000
@@ -1439,8 +1439,10 @@ servers:
       - --
       - --port
       - "4173"
+    cwd: .worktrees/utsuri-before
     readyUrl: http://127.0.0.1:4173/
     readySelector: "[data-app-ready]"
+    shutdownTimeoutMs: 3000
 
   after:
     command:
@@ -1450,12 +1452,13 @@ servers:
       - --
       - --port
       - "4174"
+    cwd: .worktrees/utsuri-after
     readyUrl: http://127.0.0.1:4174/
     readySelector: "[data-app-ready]"
+    shutdownTimeoutMs: 3000
 
 browser:
   engine: chromium
-  channel: auto
   headless: true
   serviceWorkers: block
   locale: ja-JP
@@ -1488,13 +1491,15 @@ targets:
       - name: menu-open
         steps:
           - click:
-              by: role
-              role: button
-              name: Menu
+              locator:
+                by: role
+                role: button
+                name: Menu
           - waitFor:
-              by: role
-              role: dialog
-              name: Navigation
+              locator:
+                by: role
+                role: dialog
+                name: Navigation
               state: visible
 
   - id: settings
@@ -1542,31 +1547,9 @@ capture:
   includeComputedStyles: changed-and-layout
   includeAxe: true
 
-compare:
-  pixel:
-    threshold: 0.1
-    includeAntiAliased: false
-    minRegionPixels: 12
-    mergeDistancePx: 8
-  layout:
-    positionTolerancePx: 1
-    sizeTolerancePx: 1
-  a11y:
-    tags:
-      - wcag2a
-      - wcag2aa
-      - wcag21a
-      - wcag21aa
-      - wcag22aa
-
 security:
   envAllowlist:
     - NODE_ENV
-  redactEnvNamePatterns:
-    - "*TOKEN*"
-    - "*SECRET*"
-    - "*KEY*"
-    - "*PASSWORD*"
   followSymlinks: false
   allowArbitraryScriptSteps: false
   allowRemoteAuthState: false
@@ -1586,15 +1569,6 @@ review:
   viewedMode: manual
   staleOnFingerprintChange: true
   autoResolveAgentAnswer: false
-  persist:
-    snapshot: review/review-state.json
-    events: review/review-events.ndjson
-    inbox: review/review-inbox.json
-  composer:
-    agentAttentionCheckbox: true
-    defaultAgentAttention: false
-    batchSubmission: true
-    requireBatchPreview: true
 
 feedback:
   target: origin-session
@@ -1604,13 +1578,6 @@ feedback:
   contextPreview: required
   maxBatchItems: 20
   maxContextBytes: 524288
-  handoff:
-    copyPrompt: true
-    includeReportId: true
-  originBinding:
-    requireProjectFingerprint: true
-    requireSessionMatchWhenAvailable: true
-    allowManualRebind: false
 
 policy:
   failOn:
@@ -1621,6 +1588,8 @@ policy:
     - uncovered-ui-change
     - partial-coverage
 ```
+
+`dual-url` is the default and omits every server `command` and `cwd`. `static-fragment` replaces `servers` with repository-relative `fragments.before` and `fragments.after` on each target. `container` remains machine-readable but unavailable until Phase 4.
 
 ### 14.2 Command representation
 
@@ -1639,7 +1608,7 @@ The string form is forbidden by default:
 command: "bun run dev && curl ..."
 ```
 
-`execution.shell: true` is an unsafe option and requires an explicit CLI flag plus a security warning.
+`execution.shell` must remain `false`; there is no override. `worktree` additionally requires `execution.trust: trusted`, separate contained working directories, and the user's `capture --allow-project-code` opt-in. `init` may record read-only `proposedCommands`, but those proposals never authorize execution.
 
 ---
 
@@ -1840,7 +1809,7 @@ Store structured coverage rather than one percentage:
 
 ### 18.1 `dual-url`
 
-The safest standard mode:
+The default and safest standard mode:
 
 ```yaml
 execution:
@@ -1852,11 +1821,11 @@ servers:
     readyUrl: http://127.0.0.1:4174
 ```
 
-The Skill does not start project code. It compares URLs started by the user or an existing environment.
+The Skill does not start project code. It captures URLs started by the user or an existing environment, rejects configured server commands, and allows browser requests only to declared origins. Use `execution.trust: configured`; `untrusted` input is limited to `static-fragment` until container mode is available.
 
 ### 18.2 `worktree`
 
-Start base and after from separate directories:
+Start base and after from separate, user-prepared directories:
 
 ```text
 run/worktrees/
@@ -1867,22 +1836,26 @@ run/worktrees/
 Constraints:
 
 - trusted projects only;
-- commands declared in configuration;
+- commands and working directories declared explicitly in configuration;
+- `capture --allow-project-code` supplied by the user for that invocation;
 - no automatic installation;
 - do not casually share the current `node_modules` when the lockfile changed;
 - allowlisted environment only;
 - output in a run directory outside the worktrees; and
 - always terminate child processes.
 
+Commands are argv arrays with `shell: false`. Package installation, on-demand package execution, browser installation, and shell executables are rejected. The child environment contains only `PATH`, `TMPDIR`, locale variables, and explicitly allowlisted non-secret names.
+
 ### 18.3 `static-fragment`
 
-Render HTML/CSS fragments in a minimal fixture.
+Render repository-relative HTML/CSS fragments in a minimal fixture. Every target declares both `fragments.before` and `fragments.after`.
 
 - Disable JavaScript.
 - Disable external communication.
 - Apply a sanitizer.
 - Label the result as a synthetic preview.
 - Never claim it is identical to real-application rendering.
+- Record axe as skipped because the JavaScript-disabled preview cannot execute axe-core.
 
 ### 18.4 `container`
 
@@ -1902,7 +1875,11 @@ secrets mount: none
 host socket mount: none
 ```
 
-Container mode is required to reliably prevent external communication by the server process itself. Blocking Playwright requests cannot prevent application-server communication.
+Container mode is machine-readable as unsupported with `availablePhase: 4`. Container mode is required to reliably prevent external communication by the server process itself. Blocking Playwright requests cannot prevent application-server communication.
+
+### 18.5 Browser and artifact boundary
+
+Capture uses an existing system Chrome or Chromium and never downloads a browser. Before and after always use separate Browser Contexts. Each successful side stores full-page and element screenshots, normalized DOM, ARIA, computed styles, raw axe output, console entries, network entries, and metadata as separate artifacts. Initial HTTP requests, every HTTP redirect `Location`, and WebSocket handshakes are checked against the same origin policy; an external redirect is replaced before the browser can follow it and is recorded as blocked evidence. Finalization copies every report-referenced capture artifact into immutable `report/` and covers it with the report asset manifest.
 
 ---
 
@@ -1980,6 +1957,12 @@ Forbidden by default:
 - download;
 - popups; and
 - mutation-method requests.
+
+The complete configuration and every action are schema-validated before browser or server startup. The action payload nests its selector under `locator`; an omitted `by` resolves in the priority above.
+
+### 19.5 Reuse and capture identity
+
+The capture manifest records the configuration/run-binding hash, browser version, platform, architecture, stabilization settings, blocked-request count, per-artifact SHA-256 digests, and a semantic capture hash. It must contain at least one target. A successful side is reusable only when the configuration/run binding and browser version still match and every referenced artifact digest verifies. A changed configuration, missing artifact, or modified artifact forces recapture. Before first publication, finalization independently revalidates the manifest shape, complete digest inventory, artifact bytes, semantic capture hash, and exact report-target binding even when every side failed before producing report-referenced evidence.
 
 ---
 
@@ -2963,9 +2946,9 @@ configured
 trusted
 ```
 
-- `untrusted`: only static-fragment or container mode.
-- `configured`: only explicit commands in repository configuration.
-- `trusted`: commands explicitly selected by the local user with a CLI flag.
+- `untrusted`: only static-fragment, or container mode after Phase 4.
+- `configured`: dual-url capture of explicitly configured origins; no project command starts.
+- `trusted`: worktree commands declared as argv and working directories in validated configuration, plus the local user's `--allow-project-code` flag.
 
 The Skill must never elevate trust automatically.
 
@@ -2976,6 +2959,8 @@ The Skill must never elevate trust automatically.
 ### 30.1 Environment variables
 
 Build the child-process environment from a minimal baseline; never copy the parent-process environment.
+
+The Phase 2 baseline is limited to path, temporary-directory, and locale variables. Additional names must be allowlisted and secret-like names are rejected.
 
 ### 30.2 Authentication state
 
@@ -3011,6 +2996,8 @@ Include these in secret and personal-data inspection:
 - screenshots.
 
 A Context Pack preview displays redaction results and the assets that will be shared with the current conversation.
+
+Capture artifacts remove URL credentials, query strings, fragments, complete request headers, cookies, and absolute repository/run paths before persistence. Textual redaction covers absolute, protocol-relative, root-relative, parent-relative, bare path-relative, query-only, and fragment-only URLs. Screenshot masks remain explicit review information; Utsuri does not claim that an unmasked screenshot is free of personal data.
 
 ---
 
@@ -3052,6 +3039,7 @@ Chunk by:
 - Load code diff when a group is selected.
 - Load a full-size image when its thumbnail is selected.
 - Load raw diagnostics only through an explicit action.
+- Resolve capture assets only inside the immutable report; never depend on mutable sibling run files.
 
 ---
 
@@ -3061,41 +3049,44 @@ Chunk by:
 
 ```json
 {
-  "product": "Utsuri",
-  "productId": "utsuri",
-  "toolVersion": "0.1.0",
   "schemaVersion": "1.0",
-  "baseSha": "...",
-  "headSha": "...",
-  "dirty": true,
-  "configHash": "sha256:...",
+  "configurationHash": "...",
+  "mode": "dual-url",
   "browser": {
-    "name": "chromium",
-    "version": "..."
+    "engine": "chromium",
+    "version": "...",
+    "locale": "ja-JP",
+    "timezone": "Asia/Tokyo",
+    "colorScheme": "light",
+    "reducedMotion": "reduce"
   },
   "environment": {
     "os": "darwin",
-    "arch": "arm64",
-    "locale": "ja-JP",
-    "timezone": "Asia/Tokyo"
-  }
+    "arch": "arm64"
+  },
+  "artifactDigests": {
+    "capture/targets/.../before/attempt-1/full-page.png": "..."
+  },
+  "blockedRequestCount": 0,
+  "captureHash": "..."
 }
 ```
 
 ### 32.2 Nondeterministic values
 
-Exclude generation time, temporary paths, ports, and similar nondeterministic values from the report semantic hash.
+Exclude generation time, absolute temporary paths, process IDs, and similar nondeterministic values from semantic hashes. Explicit configured endpoint ports remain inputs because changing an endpoint can change captured content.
 
 ### 32.3 Cache key
 
 ```text
-base SHA
-+ head content hash
-+ config hash
-+ browser version
-+ target definition hash
+normalized capture configuration
++ run input and diff digests
 + tool version
++ browser version compatibility check
++ referenced artifact digests
 ```
+
+Target definitions are part of the normalized configuration. Reuse fails closed when any component or artifact digest changes.
 
 ---
 
@@ -3128,7 +3119,11 @@ Generate a report with at least:
 
 - diff metadata;
 - failure summary; and
-- unclassified-hunk list.
+- unclassified-hunk list;
+- every independently successful capture side; and
+- blocked-request and failed-side diagnostics.
+
+A non-empty capture with all sides successful but no comparison is `UNCOVERED`. A failed side or blocked request is `INCOMPLETE`; neither state can become `PASS` or “no visual diff.” An empty capture manifest is invalid and cannot produce a verification claim.
 
 ### 33.4 No diff
 
@@ -3140,21 +3135,21 @@ Keep `no code diff`, `no visual diff`, and `capture failed` as separate statuses
 
 ### 34.1 Format
 
-Internal logs are NDJSON.
+Phase 2 stores deterministic capture diagnostics as separate JSON artifacts and one atomic `capture.json` manifest. Streaming NDJSON logs remain a later diagnostic option.
 
 ```json
 {
-  "time": "...",
-  "level": "info",
-  "stage": "capture",
-  "target": "home-mobile",
-  "event": "navigation-start"
+  "code": "CAPTURE_SERVER_TIMEOUT",
+  "message": "Configured server did not become ready within 10000ms",
+  "stage": "server",
+  "retryable": false,
+  "attempts": 1
 }
 ```
 
 ### 34.2 Standard output
 
-Keep human output concise. Emit machine-readable events with `--json`.
+Keep human output concise. `--json` emits one strict result value; capture incompleteness exits 4 while preserving the manifest and successful evidence.
 
 ### 34.3 Information included in the report
 
@@ -3162,7 +3157,9 @@ Included by default:
 
 - failure summary;
 - blocked-request count; and
-- environment summary.
+- browser/environment summary;
+- stabilization settings and masks; and
+- separate DOM, ARIA, style, axe, console, and network artifacts.
 
 Excluded by default:
 
@@ -4566,11 +4563,12 @@ A feature outside this definition is accepted only when it makes review decision
 
 ## Document change log
 
-| Entry ID                                   | Version | Date       | Change                                                                                                                                                                                                                                                                                                           |
-| ------------------------------------------ | ------: | ---------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| design-v1.9-code-diff-mvp                  |     1.9 | 2026-08-07 | Implemented four explicit Git collection modes, structured diff/evidence/review-plan contracts, deterministic full-hunk coverage, schema-validated annotations, mandatory code-only verification gaps, and the keyboard-accessible Diff Ledger report UI.                                                        |
-| design-v1.8-exact-cli-tarball              |     1.8 | 2026-08-07 | Required a clean exact-inventory npm CLI tarball with bundled JavaScript dependencies, no registry dependency on private workspace packages, no install lifecycle scripts, isolated exact-tarball smoke tests, and version-tagged documentation links.                                                           |
-| design-v1.7-atomic-report-publication-gate |     1.7 | 2026-08-07 | Added fail-closed atomic no-replace report publication, protected-ancestor and inode checks, regular non-symlink run inputs, current-platform source builds, four-platform release assembly, and explicit Phase 0 rejection of non-empty diff or annotation evidence.                                            |
-| design-v1.6-publication-and-safe-chain     |     1.6 | 2026-08-07 | Fixed publisher, npm maintainer, trusted-publishing, and SPDX metadata; replaced the local absolute-path Safe-chain requirement with exact-version discovery at the standard user installation; pinned official platform SHA-256 digests for verification before first execution.                                |
-| design-v1.5-english-canonical              |     1.5 | 2026-08-06 | Established English as the living canonical design; retained the verified Japanese v1.4 source for review; fixed npm identifiers at `@utsu-ri/*`; selected `review-answer.schema.json` and `run/review/`; added the locked Nix, Bun, Safe-chain, Apple HIG, synchronized README, and documentation-review gates. |
-| design-v1.4-product-name                   |     1.4 | 2026-08-06 | Established Utsuri as the product name and unified Plugin, Skill, CLI, configuration, artifact, and display identifiers.                                                                                                                                                                                         |
+| Entry ID                                   | Version | Date       | Change                                                                                                                                                                                                                                                                                                                  |
+| ------------------------------------------ | ------: | ---------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| design-v2.0-browser-capture                |     2.0 | 2026-08-07 | Implemented isolated dual-url, static-fragment, and explicitly authorized worktree capture; deterministic stabilization and safe actions; redirect-aware external and mutation request blocking; typed partial failures; URL redaction; digest-validated reuse; and independently validated immutable capture evidence. |
+| design-v1.9-code-diff-mvp                  |     1.9 | 2026-08-07 | Implemented four explicit Git collection modes, structured diff/evidence/review-plan contracts, deterministic full-hunk coverage, schema-validated annotations, mandatory code-only verification gaps, and the keyboard-accessible Diff Ledger report UI.                                                               |
+| design-v1.8-exact-cli-tarball              |     1.8 | 2026-08-07 | Required a clean exact-inventory npm CLI tarball with bundled JavaScript dependencies, no registry dependency on private workspace packages, no install lifecycle scripts, isolated exact-tarball smoke tests, and version-tagged documentation links.                                                                  |
+| design-v1.7-atomic-report-publication-gate |     1.7 | 2026-08-07 | Added fail-closed atomic no-replace report publication, protected-ancestor and inode checks, regular non-symlink run inputs, current-platform source builds, four-platform release assembly, and explicit Phase 0 rejection of non-empty diff or annotation evidence.                                                   |
+| design-v1.6-publication-and-safe-chain     |     1.6 | 2026-08-07 | Fixed publisher, npm maintainer, trusted-publishing, and SPDX metadata; replaced the local absolute-path Safe-chain requirement with exact-version discovery at the standard user installation; pinned official platform SHA-256 digests for verification before first execution.                                       |
+| design-v1.5-english-canonical              |     1.5 | 2026-08-06 | Established English as the living canonical design; retained the verified Japanese v1.4 source for review; fixed npm identifiers at `@utsu-ri/*`; selected `review-answer.schema.json` and `run/review/`; added the locked Nix, Bun, Safe-chain, Apple HIG, synchronized README, and documentation-review gates.        |
+| design-v1.4-product-name                   |     1.4 | 2026-08-06 | Established Utsuri as the product name and unified Plugin, Skill, CLI, configuration, artifact, and display identifiers.                                                                                                                                                                                                |

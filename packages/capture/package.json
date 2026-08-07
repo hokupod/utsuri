@@ -1,0 +1,17 @@
+{
+  "name": "@utsu-ri/capture",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "dependencies": {
+    "@utsu-ri/core": "workspace:*",
+    "@utsu-ri/report-model": "workspace:*",
+    "@utsu-ri/security": "workspace:*",
+    "axe-core": "4.10.3",
+    "playwright-core": "1.55.0",
+    "yaml": "2.8.1"
+  }
+}

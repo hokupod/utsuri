@@ -1,5 +1,6 @@
 import { readFile } from "node:fs/promises";
 import path from "node:path";
+import { captureCapabilities, captureRun, loadCaptureConfig } from "@utsu-ri/capture";
 import { ExitCode, toUtsuriError, UtsuriError } from "@utsu-ri/core";
 import { collectGit } from "@utsu-ri/git-collector";
 import { buildReport, createInitialReport, validateReportDirectory } from "@utsu-ri/report-builder";
@@ -7,6 +8,7 @@ import { assertArtifact } from "@utsu-ri/report-model";
 import { resolveContainedPath } from "@utsu-ri/security";
 import { optionString, parseArguments } from "./arguments";
 import { doctor } from "./doctor";
+import { initializeConfig } from "./init";
 
 async function readArtifactJson(filename: string, label: string): Promise<unknown> {
   const content = await readFile(filename, "utf8");
@@ -23,7 +25,10 @@ Usage: utsuri <command> [options]
 
 Commands:
   doctor                 Inspect prerequisites without changing the environment
+  init [--output path]   Propose a safe capture configuration without overwriting
   collect                Collect a Git diff into a review run
+  capture                Capture configured before/after browser evidence
+                         Worktree mode also requires --allow-project-code
   finalize --run <path>  Build an immutable report
   validate <report>      Validate report schema, CSP, assets, and hashes
 
@@ -63,6 +68,21 @@ export async function executeCli(
         human: data.ok ? "Environment checks passed" : "Environment checks failed",
         json
       };
+    }
+
+    if (args.command === "init") {
+      const output = optionString(args, "--output") ?? "utsuri.yml";
+      const initialized = await initializeConfig(cwd, output);
+      const relative = path.relative(cwd, initialized.filename).replaceAll(path.sep, "/");
+      const data = {
+        ok: true,
+        command: "init",
+        output: relative,
+        proposedCommands: initialized.proposals,
+        executableCommandsConfigured: false,
+        defaultCaptureMode: "dual-url"
+      };
+      return { exitCode: 0, data, human: `Configuration proposal written: ${relative}`, json };
     }
 
     if (args.command === "collect") {
@@ -124,6 +144,47 @@ export async function executeCli(
       return { exitCode: 0, data, human: `Report ready: ${relative}`, json };
     }
 
+    if (args.command === "capture") {
+      const runValue = optionString(args, "--run");
+      const configValue = optionString(args, "--config");
+      if (!runValue || !configValue) {
+        throw new UtsuriError(
+          "CLI_CAPTURE_INPUT_REQUIRED",
+          "capture requires --run and --config",
+          ExitCode.Arguments
+        );
+      }
+      const runDirectory = await resolveContainedPath(cwd, runValue);
+      const { config } = await loadCaptureConfig(cwd, configValue);
+      const captured = await captureRun(cwd, runDirectory, config, {
+        allowProjectCode: args.options.has("--allow-project-code")
+      });
+      const data = {
+        ok: captured.complete,
+        command: "capture",
+        mode: captured.manifest.mode,
+        capability: captureCapabilities[captured.manifest.mode],
+        captureHash: captured.manifest.captureHash,
+        targets: captured.manifest.targets.length,
+        failedSides: captured.manifest.targets.reduce(
+          (count, target) =>
+            count +
+            Number(target.before.status !== "success") +
+            Number(target.after.status !== "success"),
+          0
+        ),
+        blockedRequests: captured.manifest.blockedRequestCount,
+        reusedSides: captured.reusedSides,
+        manifest: path.relative(cwd, captured.manifestPath).replaceAll(path.sep, "/")
+      };
+      return {
+        exitCode: captured.complete ? ExitCode.Success : ExitCode.Incomplete,
+        data,
+        human: captured.complete ? "Browser capture completed" : "Browser capture is incomplete",
+        json
+      };
+    }
+
     if (args.command === "validate") {
       const reportValue = args.positionals[0];
       if (!reportValue)
@@ -158,7 +219,8 @@ export async function executeCli(
         error: {
           id: normalized.diagnosticId,
           message: normalized.message,
-          exitCode: normalized.exitCode
+          exitCode: normalized.exitCode,
+          details: normalized.details
         }
       },
       human: `${normalized.diagnosticId}: ${normalized.message}`,

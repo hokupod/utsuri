@@ -1,0 +1,194 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://utsu-ri.dev/schemas/capture-action/v1",
+  "title": "CaptureAction",
+  "oneOf": [
+    { "$ref": "#/$defs/click" },
+    { "$ref": "#/$defs/hover" },
+    { "$ref": "#/$defs/focus" },
+    { "$ref": "#/$defs/fill" },
+    { "$ref": "#/$defs/press" },
+    { "$ref": "#/$defs/selectOption" },
+    { "$ref": "#/$defs/check" },
+    { "$ref": "#/$defs/uncheck" },
+    { "$ref": "#/$defs/waitFor" },
+    { "$ref": "#/$defs/assertVisible" },
+    { "$ref": "#/$defs/assertText" }
+  ],
+  "$defs": {
+    "locator": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "by": { "enum": ["role", "label", "testId", "text", "css"] },
+        "role": { "type": "string", "minLength": 1 },
+        "name": { "type": "string", "minLength": 1 },
+        "label": { "type": "string", "minLength": 1 },
+        "testId": { "type": "string", "minLength": 1 },
+        "text": { "type": "string", "minLength": 1 },
+        "selector": { "type": "string", "minLength": 1 },
+        "exact": { "type": "boolean" }
+      },
+      "anyOf": [
+        { "required": ["role", "name"] },
+        { "required": ["label"] },
+        { "required": ["testId"] },
+        { "required": ["text"] },
+        { "required": ["selector"] }
+      ],
+      "allOf": [
+        {
+          "if": { "properties": { "by": { "const": "role" } }, "required": ["by"] },
+          "then": { "required": ["role", "name"] }
+        },
+        {
+          "if": { "properties": { "by": { "const": "label" } }, "required": ["by"] },
+          "then": { "required": ["label"] }
+        },
+        {
+          "if": { "properties": { "by": { "const": "testId" } }, "required": ["by"] },
+          "then": { "required": ["testId"] }
+        },
+        {
+          "if": { "properties": { "by": { "const": "text" } }, "required": ["by"] },
+          "then": { "required": ["text"] }
+        },
+        {
+          "if": { "properties": { "by": { "const": "css" } }, "required": ["by"] },
+          "then": { "required": ["selector"] }
+        }
+      ]
+    },
+    "locatorPayload": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["locator"],
+      "properties": {
+        "locator": { "$ref": "#/$defs/locator" },
+        "timeoutMs": { "type": "integer", "minimum": 1, "maximum": 60000 }
+      }
+    },
+    "click": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["click"],
+      "properties": { "click": { "$ref": "#/$defs/locatorPayload" } }
+    },
+    "hover": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["hover"],
+      "properties": { "hover": { "$ref": "#/$defs/locatorPayload" } }
+    },
+    "focus": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["focus"],
+      "properties": { "focus": { "$ref": "#/$defs/locatorPayload" } }
+    },
+    "fillPayload": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["locator", "value"],
+      "properties": {
+        "locator": { "$ref": "#/$defs/locator" },
+        "value": { "type": "string" },
+        "timeoutMs": { "type": "integer", "minimum": 1, "maximum": 60000 }
+      }
+    },
+    "fill": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["fill"],
+      "properties": { "fill": { "$ref": "#/$defs/fillPayload" } }
+    },
+    "pressPayload": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["locator", "key"],
+      "properties": {
+        "locator": { "$ref": "#/$defs/locator" },
+        "key": { "type": "string", "minLength": 1, "maxLength": 64 },
+        "timeoutMs": { "type": "integer", "minimum": 1, "maximum": 60000 }
+      }
+    },
+    "press": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["press"],
+      "properties": { "press": { "$ref": "#/$defs/pressPayload" } }
+    },
+    "selectPayload": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["locator", "values"],
+      "properties": {
+        "locator": { "$ref": "#/$defs/locator" },
+        "values": {
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 20,
+          "items": { "type": "string" }
+        },
+        "timeoutMs": { "type": "integer", "minimum": 1, "maximum": 60000 }
+      }
+    },
+    "selectOption": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["selectOption"],
+      "properties": { "selectOption": { "$ref": "#/$defs/selectPayload" } }
+    },
+    "check": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["check"],
+      "properties": { "check": { "$ref": "#/$defs/locatorPayload" } }
+    },
+    "uncheck": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["uncheck"],
+      "properties": { "uncheck": { "$ref": "#/$defs/locatorPayload" } }
+    },
+    "waitPayload": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["locator"],
+      "properties": {
+        "locator": { "$ref": "#/$defs/locator" },
+        "state": { "enum": ["visible", "hidden", "attached", "detached"] },
+        "timeoutMs": { "type": "integer", "minimum": 1, "maximum": 60000 }
+      }
+    },
+    "waitFor": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["waitFor"],
+      "properties": { "waitFor": { "$ref": "#/$defs/waitPayload" } }
+    },
+    "assertVisible": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["assertVisible"],
+      "properties": { "assertVisible": { "$ref": "#/$defs/locatorPayload" } }
+    },
+    "assertTextPayload": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["locator", "expected"],
+      "properties": {
+        "locator": { "$ref": "#/$defs/locator" },
+        "expected": { "type": "string" },
+        "exact": { "type": "boolean" },
+        "timeoutMs": { "type": "integer", "minimum": 1, "maximum": 60000 }
+      }
+    },
+    "assertText": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["assertText"],
+      "properties": { "assertText": { "$ref": "#/$defs/assertTextPayload" } }
+    }
+  }
+}

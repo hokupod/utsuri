@@ -34,4 +34,4 @@ Invoke the bundled CLI with:
 node "${PLUGIN_ROOT}/skills/utsuri-review/scripts/utsuri.mjs" <command> [arguments]
 ```
 
-Read [CLI contract](references/cli-contract.md) before interpreting output, [security rules](references/security.md) before capture or serving, and [failure continuation](references/failure-continuation.md) when any stage is incomplete.
+Read [CLI contract](references/cli-contract.md) before interpreting output, [capture modes](references/capture-modes.md) before configuring browser evidence, [security rules](references/security.md) before capture or serving, and [failure continuation](references/failure-continuation.md) when any stage is incomplete.

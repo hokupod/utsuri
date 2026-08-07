@@ -22,6 +22,7 @@ const valueOptions = new Set([
   "--status"
 ]);
 const booleanOptions = new Set([
+  "--allow-project-code",
   "--help",
   "--interactive",
   "--json",

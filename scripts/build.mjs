@@ -46,6 +46,7 @@ await esbuild({
   format: "esm",
   legalComments: "none",
   logLevel: "warning",
+  external: ["playwright-core"],
   minify: false,
   platform: "node",
   target: "node22"
@@ -63,6 +64,7 @@ const schemaOutput = path.join(root, "skills/utsuri-review/schemas");
 await mkdir(schemaOutput, { recursive: true });
 for (const name of [
   "annotations.schema.json",
+  "capture-action.schema.json",
   "config.schema.json",
   "context-pack.schema.json",
   "diff.schema.json",

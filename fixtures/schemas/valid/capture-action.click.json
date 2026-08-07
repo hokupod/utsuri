@@ -1,0 +1,9 @@
+{
+  "click": {
+    "locator": {
+      "by": "role",
+      "role": "button",
+      "name": "Menu"
+    }
+  }
+}

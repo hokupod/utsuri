@@ -16,6 +16,23 @@
         "locale": { "type": "string", "minLength": 2 }
       }
     },
+    "proposedCommands": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["source", "command", "reason"],
+        "properties": {
+          "source": { "type": "string", "minLength": 1 },
+          "command": {
+            "type": "array",
+            "minItems": 1,
+            "items": { "type": "string", "minLength": 1 }
+          },
+          "reason": { "type": "string", "minLength": 1 }
+        }
+      }
+    },
     "diff": {
       "type": "object",
       "additionalProperties": false,
@@ -38,7 +55,10 @@
       "additionalProperties": false,
       "required": ["mode", "trust", "install", "shell", "timeoutMs"],
       "properties": {
-        "mode": { "enum": ["dual-url", "static-fragment", "worktree", "container"] },
+        "mode": {
+          "enum": ["dual-url", "static-fragment", "worktree", "container"],
+          "default": "dual-url"
+        },
         "trust": { "enum": ["untrusted", "configured", "trusted"] },
         "install": { "const": "never" },
         "shell": { "const": false },
@@ -74,6 +94,30 @@
       "type": "array",
       "items": { "$ref": "#/$defs/target" }
     },
+    "stabilization": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "disableAnimations": { "type": "boolean", "default": true },
+        "hideCaret": { "type": "boolean", "default": true },
+        "waitForFonts": { "type": "boolean", "default": true },
+        "freezeTime": { "type": "string", "format": "date-time" },
+        "waitAfterReadyMs": { "type": "integer", "minimum": 0, "maximum": 5000 },
+        "maxRetries": { "type": "integer", "minimum": 0, "maximum": 1 },
+        "masks": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["selector", "reason"],
+            "properties": {
+              "selector": { "type": "string", "minLength": 1 },
+              "reason": { "type": "string", "minLength": 1 }
+            }
+          }
+        }
+      }
+    },
     "network": {
       "type": "object",
       "additionalProperties": false,
@@ -101,6 +145,22 @@
         "allowArbitraryScriptSteps": { "const": false },
         "allowRemoteAuthState": { "const": false },
         "sanitizeHtmlPreview": { "const": true }
+      }
+    },
+    "capture": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "fullPage": { "type": "boolean", "default": true },
+        "elementCrops": { "type": "boolean", "default": true },
+        "maxFullPageHeight": { "type": "integer", "minimum": 1, "maximum": 100000 },
+        "maxMegapixels": { "type": "number", "exclusiveMinimum": 0, "maximum": 500 },
+        "screenshotFormat": { "const": "png" },
+        "includeDom": { "const": "normalized" },
+        "includeRawDom": { "const": false },
+        "includeAria": { "type": "boolean" },
+        "includeComputedStyles": { "enum": ["changed-and-layout", "layout"] },
+        "includeAxe": { "type": "boolean" }
       }
     },
     "report": {
@@ -156,15 +216,17 @@
     "server": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["command", "readyUrl"],
+      "required": ["readyUrl"],
       "properties": {
         "command": {
           "type": "array",
           "minItems": 1,
           "items": { "type": "string", "minLength": 1 }
         },
+        "cwd": { "type": "string", "minLength": 1 },
         "readyUrl": { "type": "string", "format": "uri" },
-        "readySelector": { "type": "string", "minLength": 1 }
+        "readySelector": { "type": "string", "minLength": 1 },
+        "shutdownTimeoutMs": { "type": "integer", "minimum": 1, "maximum": 30000 }
       }
     },
     "viewport": {
@@ -184,8 +246,22 @@
       "properties": {
         "id": { "type": "string", "pattern": "^[a-z0-9][a-z0-9-]*$" },
         "path": { "type": "string", "pattern": "^/" },
-        "viewports": { "type": "array", "minItems": 1, "items": { "type": "string" } },
+        "viewports": {
+          "type": "array",
+          "minItems": 1,
+          "items": { "type": "string" },
+          "uniqueItems": true
+        },
         "roots": { "type": "array", "items": { "type": "string" } },
+        "fragments": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["before", "after"],
+          "properties": {
+            "before": { "type": "string", "minLength": 1 },
+            "after": { "type": "string", "minLength": 1 }
+          }
+        },
         "states": {
           "type": "array",
           "minItems": 1,

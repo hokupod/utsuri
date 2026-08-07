@@ -47,6 +47,14 @@ export default defineConfig({
     {
       name: "code-only",
       testMatch: /code-only\.spec\.ts/u
+    },
+    {
+      name: "capture",
+      testMatch: /capture\.spec\.ts/u
+    },
+    {
+      name: "failed-before-server",
+      testMatch: /failed-before-server\.spec\.ts/u
     }
   ]
 });

@@ -18,9 +18,9 @@ The name joins the Japanese ideas of how a UI is reflected after a change and ho
 
 ## Status
 
-<!-- availability:phase-1-code-review -->
+<!-- availability:phase-2-browser-capture -->
 
-The Phase 1 code-only review flow is available from this source checkout. It collects patch, worktree, range, or merge-base changes and builds an immutable local report. Browser capture, visual/runtime comparison, persisted review state, and Agent feedback are not implemented yet. The npm package and Plugin remain unpublished.
+The Phase 2 browser-capture flow is available from this source checkout. It combines the Phase 1 code review with isolated `dual-url`, `static-fragment`, or explicitly authorized `worktree` evidence. Visual/runtime comparison, persisted review state, and Agent feedback are not implemented yet. The npm package and Plugin remain unpublished.
 
 <a id="capabilities"></a><!-- section:capabilities -->
 
@@ -32,15 +32,18 @@ Available now:
 - stable structured hunks with rename, delete, binary, submodule, mode, and low-signal metadata;
 - deterministic initial change candidates with complete candidate-or-unclassified coverage;
 - schema-validated annotations and evidence references; and
-- a self-contained code review with summary, three-state queue, Focus mode, evidence drawer, unified/side-by-side diff, deep links, and keyboard focus restoration.
+- a self-contained code review with summary, three-state queue, Focus mode, evidence drawer, unified/side-by-side diff, deep links, and keyboard focus restoration;
+- separate before/after Browser Contexts with identical viewport, DPR, locale, timezone, color scheme, and reduced-motion settings;
+- full-page and element screenshots plus normalized DOM, ARIA, computed-style, axe, console, network, metadata, and typed failure evidence; and
+- deterministic stabilization, an allowlisted action DSL, blocked external/mutation requests, digest-checked reuse, and partial `INCOMPLETE` reports.
 
-Later v1 phases add isolated browser capture, visual/DOM/ARIA/style/accessibility/runtime comparison, persisted review state, and Origin Session feedback. Until capture runs, every report is `UNCOVERED` and explicitly lists visual and runtime verification gaps.
+Later v1 phases add visual/DOM/ARIA/style/accessibility/runtime comparison, persisted review state, and Origin Session feedback. A complete capture remains `UNCOVERED` until comparison and target mapping run; a failed side or blocked request remains `INCOMPLETE`.
 
 <a id="quick-start"></a><!-- section:quick-start -->
 
 ## Quick Start
 
-Prerequisites: Nix and Safe-chain 1.5.14 installed at its standard user location. The Nix shell supplies Node 24 and Bun; no absolute Safe-chain path is configured.
+Prerequisites: Nix, Safe-chain 1.5.14 at its standard user location, and an existing system Chrome or Chromium for capture. The Nix shell supplies Node 24 and Bun; no absolute Safe-chain path is configured.
 
 <!-- sync-command:dev-shell -->
 
@@ -62,13 +65,31 @@ node scripts/safe-chain.mjs bun install --frozen-lockfile
 
 No setup script, Skill, or CLI command installs dependencies or downloads a browser automatically.
 
-Create a fresh code-only example run. The output directory must not already exist.
+Create a non-overwriting capture proposal from read-only project inspection. Review and edit it before capture; `proposedCommands` are never executed.
+
+<!-- sync-command:init-capture-config -->
+
+```bash
+node skills/utsuri-review/scripts/utsuri.mjs init --output utsuri.yml --json
+```
+
+Create a fresh example run. The output directory must not already exist.
 
 <!-- sync-command:collect-patch -->
 
 ```bash
 node skills/utsuri-review/scripts/utsuri.mjs collect --patch fixtures/code-only-review/changes.patch --output .artifacts/utsuri/readme-example --json
 ```
+
+For the default `dual-url` mode, start the configured before and after URLs yourself, then capture. A trusted `worktree` configuration additionally requires `--allow-project-code`. `static-fragment` starts no project command and labels its JavaScript-disabled output synthetic.
+
+<!-- sync-command:capture-run -->
+
+```bash
+node skills/utsuri-review/scripts/utsuri.mjs capture --run .artifacts/utsuri/readme-example --config utsuri.yml --json
+```
+
+A capture exit code of 4 preserves successful sides and typed failure evidence. Finalize that partial run rather than treating it as no visual difference.
 
 <!-- sync-command:finalize-report -->
 
@@ -110,9 +131,11 @@ node skills/utsuri-review/scripts/utsuri.mjs doctor --json
 
 Utsuri treats repository content, diffs, HTML, SVG, comments, Context Packs, and captured text as untrusted evidence.
 
-**Security warning:** never provide production credentials, production browser state, unrestricted external network access, inferred setup commands, or parent-process environment variables to a capture. Before and after use separate Browser Contexts; external requests and Service Workers are blocked by default.
+**Security warning:** never provide production credentials, production browser state, unrestricted external network access, inferred setup commands, or parent-process environment variables to a capture. Before and after use separate Browser Contexts; external requests and Service Workers are blocked by default. External HTTP redirects and WebSocket handshakes use the same origin policy, and persisted textual evidence removes credentials, queries, and fragments from absolute and relative URLs.
 
-Generated `report/` content is immutable. Utsuri requires regular non-symlink run inputs, a publication path protected from other local principals, strict staging validation, and the bundled OS no-replace helper. Missing or unsupported helpers fail closed; failed generation can leave a private staging directory for manual diagnosis and never deletes it automatically. Mutable human-review data is stored separately in `run/review/`. The static viewer does not contact external services.
+`dual-url` never starts project code. `worktree` requires trusted input, explicit argv and separate working directories for both sides, plus the user's `--allow-project-code` opt-in. Child environments use only a minimal baseline and allowlisted non-secret names. `static-fragment` disables JavaScript and HTTP requests, sanitizes active markup, and is not equivalent to real-application rendering. Browser request blocking does not isolate a project server process; untrusted server execution waits for Phase 4 container mode.
+
+Generated `report/` content is immutable. Referenced capture evidence is copied into it and covered by the report asset manifest. Utsuri requires regular non-symlink run inputs, a publication path protected from other local principals, strict staging validation, and the bundled OS no-replace helper. Missing or unsupported helpers fail closed; failed generation can leave a private staging directory for manual diagnosis and never deletes it automatically. Mutable human-review data is stored separately in `run/review/`. The static viewer does not contact external services.
 
 Code diff content is parsed into structured lines and rendered only as text. Repository-controlled diff text is never injected as HTML.
 
@@ -122,6 +145,7 @@ Code diff content is parsed into structured lines and rendered only as text. Rep
 
 - [Canonical detailed design](https://github.com/hokupod/utsuri/blob/main/docs/design.md)
 - [UI guidelines and HIG/WCAG traceability](https://github.com/hokupod/utsuri/blob/main/docs/ui-guidelines.md)
+- [Capture modes and runtime boundary](https://github.com/hokupod/utsuri/blob/main/skills/utsuri-review/references/capture-modes.md)
 - [v1 implementation plan](https://github.com/hokupod/utsuri/blob/main/ai/plans/active/v1-%E5%AE%9F%E8%A3%85/README.md)
 
 The design is canonical in English. User-facing README changes update English, Japanese, and Simplified Chinese in the same change.

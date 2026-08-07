@@ -229,41 +229,319 @@ function createCandidateChanges(diff: GitDiffDocument, plan: ReviewPlan): Utsuri
   });
 }
 
+interface CaptureArtifactResult {
+  status: "success" | "failed" | "skipped";
+  url?: string;
+  screenshotRefs: string[];
+  domRef?: string;
+  ariaRef?: string;
+  styleRef?: string;
+  axeRef?: string;
+  consoleRef?: string;
+  networkRef?: string;
+  metadataRef?: string;
+  failureRef?: string;
+  failure?: {
+    code: string;
+    message: string;
+    stage: string;
+  };
+}
+
+interface CaptureArtifact {
+  schemaVersion: "1.0";
+  configurationHash: string;
+  blockedRequestCount: number;
+  artifactDigests: Record<string, string>;
+  captureHash: string;
+  targets: Array<{
+    id: string;
+    routeOrStory: string;
+    viewport: string;
+    state: string;
+    roots: string[];
+    discovery: {
+      source: "explicit";
+      confidence: "explicit";
+      reason: string;
+    };
+    before: CaptureArtifactResult;
+    after: CaptureArtifactResult;
+  }>;
+}
+
+function captureArtifactError(message: string): never {
+  throw new UtsuriError("CAPTURE_ARTIFACT_INVALID", message, ExitCode.Artifact);
+}
+
+async function validateCaptureArtifact(
+  runDirectory: string,
+  value: unknown
+): Promise<CaptureArtifact> {
+  if (!isRecord(value) || value.schemaVersion !== "1.0" || !Array.isArray(value.targets)) {
+    return captureArtifactError("capture.json has an invalid top-level structure");
+  }
+  if (
+    !hasExactKeys(value, [
+      "schemaVersion",
+      "configurationHash",
+      "mode",
+      "capability",
+      "browser",
+      "environment",
+      "stabilization",
+      "targets",
+      "blockedRequestCount",
+      "artifactDigests",
+      "captureHash"
+    ])
+  ) {
+    return captureArtifactError("capture.json has missing or unknown top-level fields");
+  }
+  if (
+    !Number.isInteger(value.blockedRequestCount) ||
+    (value.blockedRequestCount as number) < 0 ||
+    typeof value.configurationHash !== "string" ||
+    !/^[a-f0-9]{64}$/u.test(value.configurationHash) ||
+    !isRecord(value.artifactDigests) ||
+    typeof value.captureHash !== "string" ||
+    !/^[a-f0-9]{64}$/u.test(value.captureHash)
+  ) {
+    return captureArtifactError("capture.json has invalid diagnostics or hash metadata");
+  }
+  const artifactDigests = value.artifactDigests as Record<string, unknown>;
+  for (const [reference, digest] of Object.entries(artifactDigests)) {
+    if (
+      !reference.startsWith("capture/") ||
+      reference.includes("\\") ||
+      path.posix.normalize(reference) !== reference ||
+      typeof digest !== "string" ||
+      !/^[a-f0-9]{64}$/u.test(digest)
+    ) {
+      return captureArtifactError(`Capture artifact digest is invalid: ${reference}`);
+    }
+  }
+  const targets = value.targets as Array<Record<string, unknown>>;
+  if (targets.length === 0) {
+    return captureArtifactError("capture.json must contain at least one target");
+  }
+  const ids = targets.map((target) => target.id);
+  if (ids.some((id) => typeof id !== "string") || new Set(ids).size !== ids.length) {
+    return captureArtifactError("capture.json target IDs must be unique strings");
+  }
+  const referencedArtifacts = new Set<string>();
+  for (const target of targets) {
+    for (const side of ["before", "after"] as const) {
+      const result = target[side];
+      if (
+        !isRecord(result) ||
+        !new Set(["success", "failed", "skipped"]).has(String(result.status)) ||
+        !Array.isArray(result.screenshotRefs) ||
+        result.screenshotRefs.some((reference) => typeof reference !== "string")
+      ) {
+        return captureArtifactError(`${String(target.id)}.${side} is invalid`);
+      }
+      const references = [
+        ...result.screenshotRefs,
+        result.domRef,
+        result.ariaRef,
+        result.styleRef,
+        result.axeRef,
+        result.consoleRef,
+        result.networkRef,
+        result.metadataRef,
+        result.failureRef
+      ].filter((reference): reference is string => typeof reference === "string");
+      for (const reference of references) {
+        if (
+          !reference.startsWith("capture/") ||
+          reference.includes("\\") ||
+          path.posix.normalize(reference) !== reference
+        ) {
+          return captureArtifactError(`Capture reference is unsafe: ${reference}`);
+        }
+        referencedArtifacts.add(reference);
+        const expected = artifactDigests[reference];
+        if (typeof expected !== "string") {
+          return captureArtifactError(`Capture artifact digest is missing: ${reference}`);
+        }
+        const filename = await resolveContainedPath(runDirectory, reference);
+        if (sha256(await readRegularBytes(filename)) !== expected) {
+          return captureArtifactError(`Capture artifact digest mismatch: ${reference}`);
+        }
+      }
+    }
+  }
+  const declaredArtifacts = Object.keys(artifactDigests).sort();
+  const actualArtifacts = [...referencedArtifacts].sort();
+  if (canonicalJson(declaredArtifacts) !== canonicalJson(actualArtifacts)) {
+    return captureArtifactError("capture.json artifact digest inventory does not match references");
+  }
+  const { captureHash, ...manifestBase } = value;
+  if (stableHash(manifestBase) !== captureHash) {
+    return captureArtifactError("capture.json captureHash does not match its manifest content");
+  }
+  return value as unknown as CaptureArtifact;
+}
+
+function reportCaptureResult(
+  result: CaptureArtifactResult
+): UtsuriReport["targets"][number]["before"] {
+  return {
+    status: result.status,
+    screenshotRefs: result.screenshotRefs,
+    ...(result.url ? { url: result.url } : {}),
+    ...(result.domRef ? { domRef: result.domRef } : {}),
+    ...(result.ariaRef ? { ariaRef: result.ariaRef } : {}),
+    ...(result.styleRef ? { styleRef: result.styleRef } : {}),
+    ...(result.axeRef ? { axeRef: result.axeRef } : {}),
+    ...(result.consoleRef ? { consoleRef: result.consoleRef } : {}),
+    ...(result.networkRef ? { networkRef: result.networkRef } : {}),
+    ...(result.failure
+      ? {
+          failure: {
+            code: result.failure.code,
+            message: result.failure.message,
+            stage: result.failure.stage
+          }
+        }
+      : {})
+  };
+}
+
+function reportCaptureTargets(capture: CaptureArtifact | null): UtsuriReport["targets"] {
+  return (
+    capture?.targets.map((target) => ({
+      id: target.id,
+      routeOrStory: target.routeOrStory,
+      viewport: target.viewport,
+      state: target.state,
+      roots: target.roots,
+      discovery: target.discovery,
+      before: reportCaptureResult(target.before),
+      after: reportCaptureResult(target.after)
+    })) ?? []
+  );
+}
+
+function captureEvidenceReferences(report: UtsuriReport): string[] {
+  const references = report.targets.flatMap((target) =>
+    ([target.before, target.after] as const).flatMap((result) => [
+      ...result.screenshotRefs,
+      result.domRef,
+      result.ariaRef,
+      result.styleRef,
+      result.axeRef,
+      result.consoleRef,
+      result.networkRef
+    ])
+  );
+  const normalized = references.filter((reference): reference is string => Boolean(reference));
+  for (const reference of normalized) {
+    if (
+      !reference.startsWith("capture/") ||
+      reference.includes("\\") ||
+      path.posix.normalize(reference) !== reference
+    ) {
+      throw new UtsuriError(
+        "REPORT_CAPTURE_REFERENCE_INVALID",
+        `Capture reference is unsafe: ${reference}`,
+        ExitCode.Artifact
+      );
+    }
+  }
+  return [...new Set(normalized)].sort();
+}
+
+function captureReportState(capture: CaptureArtifact | null) {
+  const targets = reportCaptureTargets(capture);
+  const succeeded = targets.filter(
+    (target) => target.before.status === "success" && target.after.status === "success"
+  ).length;
+  const failed = targets.length - succeeded;
+  const blockedRequestCount = capture?.blockedRequestCount ?? 0;
+  const incompleteReasons = capture
+    ? [
+        ...capture.targets.flatMap((target) =>
+          (["before", "after"] as const).flatMap((side) => {
+            const result = target[side];
+            return result.status === "success"
+              ? []
+              : [`capture:${target.id}:${side}:${result.failure?.code ?? result.status}`];
+          })
+        ),
+        ...(blockedRequestCount > 0 ? ["blocked-network-requests"] : []),
+        ...(failed === 0 && blockedRequestCount === 0
+          ? ["comparison-not-run", "capture-target-mapping-not-run"]
+          : [])
+      ]
+    : ["visual-capture-not-run", "runtime-not-executed"];
+  return { targets, succeeded, failed, blockedRequestCount, incompleteReasons };
+}
+
 function createCodeOnlyReport(
   input: unknown,
   diff: GitDiffDocument,
   evidenceIndex: EvidenceIndex,
   plan: ReviewPlan,
-  annotations: Annotations | null
+  annotations: Annotations | null,
+  capture: CaptureArtifact | null
 ): UtsuriReport {
   const sourceChanges = annotations?.changes.length
     ? (annotations.changes as UtsuriReport["changes"])
     : createCandidateChanges(diff, plan);
+  const captureState = captureReportState(capture);
+  const captureComplete =
+    capture !== null &&
+    captureState.targets.length > 0 &&
+    captureState.failed === 0 &&
+    captureState.blockedRequestCount === 0;
   const changes = sourceChanges.map((change) => ({
     ...change,
     verification: {
-      verified: change.verification.verified,
-      gaps: [
+      verified: [
         ...new Set([
-          ...change.verification.gaps,
-          "Visual behavior was not captured.",
-          "Runtime behavior was not executed."
+          ...change.verification.verified,
+          ...(captureComplete ? ["Configured before/after browser evidence was captured."] : [])
         ])
-      ]
+      ],
+      gaps: capture
+        ? [
+            ...new Set([
+              ...change.verification.gaps.filter(
+                (gap) =>
+                  gap !== "Visual behavior was not captured." &&
+                  gap !== "Runtime behavior was not executed."
+              ),
+              captureComplete
+                ? "Captured evidence has not been compared or mapped to this change."
+                : "Browser capture is incomplete."
+            ])
+          ]
+        : [
+            ...new Set([
+              ...change.verification.gaps,
+              "Visual behavior was not captured.",
+              "Runtime behavior was not executed."
+            ])
+          ]
     }
   }));
   const classified = new Set(changes.flatMap((change) => change.hunkRefs));
   const unclassifiedHunkRefs = diff.hunks
     .map((hunk) => hunk.id)
     .filter((reference) => !classified.has(reference));
-  const reportId = `report-${stableHash({ input, diff, evidenceIndex, plan, annotations }).slice(0, 16)}`;
+  const reportId = `report-${stableHash({ input, diff, evidenceIndex, plan, annotations, ...(capture ? { capture } : {}) }).slice(0, 16)}`;
   return {
     schemaVersion: "1.0",
     reportId,
-    status: "UNCOVERED",
+    status: capture && !captureComplete ? "INCOMPLETE" : "UNCOVERED",
     summary: {
-      statement:
-        "Code changes were collected and grouped. Visual and runtime behavior remain unverified.",
+      statement: capture
+        ? captureComplete
+          ? "Code changes and browser evidence were collected. Comparison and target mapping remain unverified."
+          : "Code changes were collected, but browser evidence is incomplete."
+        : "Code changes were collected and grouped. Visual and runtime behavior remain unverified.",
       filesChanged: diff.summary.filesChanged,
       additions: diff.summary.additions,
       deletions: diff.summary.deletions
@@ -289,15 +567,15 @@ function createCodeOnlyReport(
     evidence: evidenceIndex.evidence,
     unclassifiedHunkRefs,
     changes,
-    targets: [],
+    targets: captureState.targets,
     findings: [],
     coverage: {
       knownUsages: null,
       verifiedUsages: 0,
       unknownPossible: true,
-      planned: 0,
-      succeeded: 0,
-      failed: 0
+      planned: captureState.targets.length,
+      succeeded: captureState.succeeded,
+      failed: captureState.failed
     },
     origin: {
       host: "unknown",
@@ -307,8 +585,8 @@ function createCodeOnlyReport(
       createdAt: new Date(0).toISOString()
     },
     diagnostics: {
-      incompleteReasons: ["visual-capture-not-run", "runtime-not-executed"],
-      blockedRequestCount: 0
+      incompleteReasons: captureState.incompleteReasons,
+      blockedRequestCount: captureState.blockedRequestCount
     }
   };
 }
@@ -319,6 +597,9 @@ export async function createInitialReport(
 ): Promise<UtsuriReport> {
   const input = await readOptionalJson(path.join(runDirectory, "input.json"));
   const diffValue = await readOptionalJson(path.join(runDirectory, "diff.json"));
+  const captureValue = await readOptionalJson(path.join(runDirectory, "capture.json"));
+  const capture =
+    captureValue === null ? null : await validateCaptureArtifact(runDirectory, captureValue);
   if (annotationsValue !== null) assertArtifact("annotations", annotationsValue);
   const annotations = annotationsValue as Annotations | null;
   if (diffValue !== null) {
@@ -342,7 +623,7 @@ export async function createInitialReport(
       "REVIEW_PLAN_INVALID",
       validateReviewPlanReferences(plan, diff, evidenceIndex)
     );
-    const report = createCodeOnlyReport(input, diff, evidenceIndex, plan, annotations);
+    const report = createCodeOnlyReport(input, diff, evidenceIndex, plan, annotations, capture);
     assertReferenceResult("REPORT_REFERENCE_INVALID", validateReportReferences(report));
     return report;
   }
@@ -354,13 +635,23 @@ export async function createInitialReport(
     );
   }
 
-  const reportId = `report-${stableHash({ input }).slice(0, 16)}`;
+  const captureState = captureReportState(capture);
+  const captureComplete =
+    capture !== null &&
+    captureState.targets.length > 0 &&
+    captureState.failed === 0 &&
+    captureState.blockedRequestCount === 0;
+  const reportId = `report-${stableHash({ input, ...(capture ? { capture } : {}) }).slice(0, 16)}`;
   return {
     schemaVersion: "1.0",
     reportId,
-    status: "SKIPPED",
+    status: capture ? (captureComplete ? "UNCOVERED" : "INCOMPLETE") : "SKIPPED",
     summary: {
-      statement: "No code diff was supplied; visual verification was skipped.",
+      statement: capture
+        ? captureComplete
+          ? "Browser evidence was captured without a code diff; comparison remains unverified."
+          : "Browser evidence is incomplete and no code diff was supplied."
+        : "No code diff was supplied; visual verification was skipped.",
       filesChanged: 0,
       additions: 0,
       deletions: 0
@@ -370,15 +661,15 @@ export async function createInitialReport(
     evidence: [],
     unclassifiedHunkRefs: [],
     changes: [],
-    targets: [],
+    targets: captureState.targets,
     findings: [],
     coverage: {
       knownUsages: null,
       verifiedUsages: 0,
       unknownPossible: true,
-      planned: 0,
-      succeeded: 0,
-      failed: 0
+      planned: captureState.targets.length,
+      succeeded: captureState.succeeded,
+      failed: captureState.failed
     },
     origin: {
       host: "unknown",
@@ -388,8 +679,10 @@ export async function createInitialReport(
       createdAt: new Date(0).toISOString()
     },
     diagnostics: {
-      incompleteReasons: ["no-input"],
-      blockedRequestCount: 0
+      incompleteReasons: capture
+        ? [...captureState.incompleteReasons, "no-code-diff"]
+        : ["no-input"],
+      blockedRequestCount: captureState.blockedRequestCount
     }
   };
 }
@@ -628,7 +921,9 @@ async function readJsonForValidation(
 
 async function populateReportDirectory(
   directory: string,
+  runDirectory: string,
   report: UtsuriReport,
+  captureDigests: Readonly<Record<string, string>>,
   options: { now?: Date; toolVersion?: string }
 ): Promise<ReportManifest> {
   await mkdir(path.join(directory, "assets"), { recursive: true });
@@ -639,6 +934,21 @@ async function populateReportDirectory(
   await writeFile(path.join(directory, "assets/app.css"), reportUiCss, { flag: "wx" });
   await writeFile(path.join(directory, "assets/icons.svg"), statusIconSvg, { flag: "wx" });
   await writeJson(path.join(directory, "diagnostics/summary.json"), report.diagnostics);
+
+  for (const reference of captureEvidenceReferences(report)) {
+    const source = await resolveContainedPath(runDirectory, reference);
+    const destination = path.join(directory, reference);
+    const bytes = await readRegularBytes(source);
+    if (sha256(bytes) !== captureDigests[reference]) {
+      throw new UtsuriError(
+        "CAPTURE_ARTIFACT_DIGEST_MISMATCH",
+        `Capture artifact changed before publication: ${reference}`,
+        ExitCode.Artifact
+      );
+    }
+    await mkdir(path.dirname(destination), { recursive: true, mode: 0o700 });
+    await writeFile(destination, bytes, { flag: "wx", mode: 0o600 });
+  }
 
   for (const schemaFile of reportSchemaFiles) {
     await writeFile(path.join(directory, schemaFile), reportSchemaAssets[schemaFile], {
@@ -743,11 +1053,40 @@ export async function buildReport(
       );
     }
 
+    const captureReferences = captureEvidenceReferences(report);
+    let captureDigests: Readonly<Record<string, string>> = {};
+    const captureValue = await readOptionalJson(path.join(runDirectory, "capture.json"));
+    if (captureValue === null) {
+      if (report.targets.length > 0 || captureReferences.length > 0) {
+        throw new UtsuriError(
+          "CAPTURE_ARTIFACT_MISSING",
+          "The report contains capture results but capture.json is missing",
+          ExitCode.Artifact
+        );
+      }
+    } else {
+      const capture = await validateCaptureArtifact(runDirectory, captureValue);
+      if (canonicalJson(reportCaptureTargets(capture)) !== canonicalJson(report.targets)) {
+        throw new UtsuriError(
+          "REPORT_CAPTURE_MISMATCH",
+          "The report capture targets do not match the independently validated capture manifest",
+          ExitCode.Artifact
+        );
+      }
+      captureDigests = capture.artifactDigests;
+    }
+
     const stagingName = `.report-${randomUUID()}.tmp`;
     const stagingDirectory = path.join(runDirectory, stagingName);
     await mkdir(stagingDirectory, { recursive: false, mode: 0o700 });
     const stagingIdentity = await lstat(stagingDirectory, { bigint: true });
-    const manifest = await populateReportDirectory(stagingDirectory, report, options);
+    const manifest = await populateReportDirectory(
+      stagingDirectory,
+      runDirectory,
+      report,
+      captureDigests,
+      options
+    );
     const validation = await validateReportDirectory(stagingDirectory, { strict: true });
     if (!validation.ok) {
       throw new UtsuriError(
@@ -832,6 +1171,9 @@ export async function validateReportDirectory(
       assertArtifact("report", reportRaw);
       report = reportRaw as UtsuriReport;
       errors.push(...validateReportReferences(report).errors);
+      for (const reference of captureEvidenceReferences(report)) {
+        if (!files.includes(reference)) errors.push(`Missing capture evidence: ${reference}`);
+      }
     } catch (error) {
       errors.push(error instanceof Error ? error.message : String(error));
     }
@@ -879,7 +1221,10 @@ export async function validateReportDirectory(
 
   if (options.strict) {
     const actualAssets = files.filter((relative) => relative !== "manifest.json").sort();
-    const expectedAssets = [...reportArtifactPaths].sort();
+    const expectedAssets = [
+      ...reportArtifactPaths,
+      ...(report ? captureEvidenceReferences(report) : [])
+    ].sort();
     if (JSON.stringify(actualAssets) !== JSON.stringify(expectedAssets)) {
       errors.push("Strict report artifact inventory mismatch");
     }

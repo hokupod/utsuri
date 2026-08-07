@@ -1,0 +1,5 @@
+{
+  "evaluate": {
+    "script": "document.body.remove()"
+  }
+}

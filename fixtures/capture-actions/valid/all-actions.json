@@ -1,0 +1,29 @@
+[
+  { "click": { "locator": { "role": "button", "name": "Menu" } } },
+  { "hover": { "locator": { "label": "Account" } } },
+  { "focus": { "locator": { "testId": "search" } } },
+  { "fill": { "locator": { "label": "Name" }, "value": "Ada" } },
+  { "press": { "locator": { "testId": "search" }, "key": "Enter" } },
+  {
+    "selectOption": {
+      "locator": { "label": "Language" },
+      "values": ["ja"]
+    }
+  },
+  { "check": { "locator": { "text": "Remember me" } } },
+  { "uncheck": { "locator": { "selector": "#subscribe" } } },
+  {
+    "waitFor": {
+      "locator": { "role": "dialog", "name": "Navigation" },
+      "state": "visible"
+    }
+  },
+  { "assertVisible": { "locator": { "text": "Welcome" } } },
+  {
+    "assertText": {
+      "locator": { "testId": "status" },
+      "expected": "Ready",
+      "exact": true
+    }
+  }
+]

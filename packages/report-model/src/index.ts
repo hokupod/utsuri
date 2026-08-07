@@ -1,4 +1,5 @@
 export type { Annotations } from "./generated/annotations.schema";
+export type { CaptureAction } from "./generated/capture-action.schema";
 export type { UtsuriConfig } from "./generated/config.schema";
 export type { ContextPack } from "./generated/context-pack.schema";
 export type { GitDiffDocument } from "./generated/diff.schema";

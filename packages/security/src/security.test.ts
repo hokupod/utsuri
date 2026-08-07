@@ -6,6 +6,7 @@ import {
   assertAllowedUrl,
   assertArchiveEntryPath,
   assertArgvCommand,
+  assertRuntimeCommand,
   buildChildEnvironment,
   resolveContainedPath
 } from "./index";
@@ -14,8 +15,26 @@ describe("security primitives", () => {
   test("rejects string and shell-like commands", () => {
     expect(() => assertArgvCommand("bun run dev && curl example.invalid")).toThrow();
     expect(() => assertArgvCommand(["sh", "-c", "echo unsafe"])).toThrow();
+    expect(() => assertRuntimeCommand(["cmd.exe", "/c", "npm ci"])).toThrow();
+    expect(() => assertRuntimeCommand(["env", "npm", "install"])).toThrow();
+    expect(() => assertRuntimeCommand(["busybox", "sh", "-c", "npm ci"])).toThrow();
     expect(() => assertArgvCommand(["bun run dev"])).toThrow();
     expect(() => assertArgvCommand(["bun", "run", "dev"])).not.toThrow();
+  });
+
+  test("rejects dependency mutation and on-demand browser installation", () => {
+    expect(() => assertRuntimeCommand(["bun", "run", "dev"])).not.toThrow();
+    expect(() => assertRuntimeCommand(["npm", "run", "storybook"])).not.toThrow();
+    for (const command of [
+      ["bun", "install"],
+      ["npm", "ci"],
+      ["pnpm", "add", "react"],
+      ["yarn", "install"],
+      ["npx", "vite"],
+      ["playwright", "install", "chromium"]
+    ]) {
+      expect(() => assertRuntimeCommand(command), command.join(" ")).toThrow();
+    }
   });
 
   test("builds an allowlisted environment without parent secrets", () => {

@@ -2,6 +2,7 @@ import Ajv, { type ErrorObject, type ValidateFunction } from "ajv";
 import addFormats from "ajv-formats";
 import { ExitCode, UtsuriError } from "@utsu-ri/core";
 import annotationsSchema from "../../../schemas/annotations.schema.json";
+import captureActionSchema from "../../../schemas/capture-action.schema.json";
 import configSchema from "../../../schemas/config.schema.json";
 import contextPackSchema from "../../../schemas/context-pack.schema.json";
 import diffSchema from "../../../schemas/diff.schema.json";
@@ -20,6 +21,7 @@ import type { ReviewPlan } from "./generated/review-plan.schema";
 
 const schemaMap = {
   annotations: annotationsSchema,
+  "capture-action": captureActionSchema,
   config: configSchema,
   "context-pack": contextPackSchema,
   diff: diffSchema,

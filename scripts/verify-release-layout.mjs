@@ -49,6 +49,7 @@ async function requireExactDirectories(relativePath, expectedNames) {
 
 const schemaNames = [
   "annotations.schema.json",
+  "capture-action.schema.json",
   "config.schema.json",
   "context-pack.schema.json",
   "diff.schema.json",

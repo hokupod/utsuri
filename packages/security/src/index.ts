@@ -3,6 +3,7 @@ import path from "node:path";
 import { ExitCode, UtsuriError } from "@utsu-ri/core";
 
 const shellExecutables = new Set(["bash", "cmd", "fish", "powershell", "pwsh", "sh", "zsh"]);
+const delegatingExecutables = new Set(["busybox", "env"]);
 const secretName = /(TOKEN|SECRET|PASSWORD|PASSWD|PRIVATE|CREDENTIAL|AUTH|COOKIE|SESSION|KEY)/iu;
 
 function securityError(id: string, message: string): never {
@@ -17,12 +18,61 @@ export function assertArgvCommand(value: unknown): asserts value is string[] {
   ) {
     securityError("SEC_COMMAND_ARGV", "Commands must be non-empty argv arrays");
   }
-  const executable = path.basename(value[0]).toLowerCase();
+  const executable = path
+    .basename(value[0])
+    .replace(/\.(?:cmd|exe)$/iu, "")
+    .toLowerCase();
   if (shellExecutables.has(executable)) {
     securityError("SEC_COMMAND_SHELL", "Shell executables are not allowed in configured commands");
   }
+  if (delegatingExecutables.has(executable)) {
+    securityError(
+      "SEC_COMMAND_DELEGATE",
+      "Command-delegating executables are not allowed in configured commands"
+    );
+  }
   if (/[;&|`\n\r]/u.test(value[0]) || /\s/u.test(value[0])) {
     securityError("SEC_COMMAND_EXECUTABLE", "The command executable contains shell-like syntax");
+  }
+}
+
+const packageManagerInstallCommands: Readonly<Record<string, ReadonlySet<string>>> = {
+  bun: new Set(["add", "install", "remove", "update", "x"]),
+  npm: new Set(["ci", "exec", "i", "install", "uninstall", "update"]),
+  pnpm: new Set(["add", "dlx", "exec", "i", "install", "remove", "update"]),
+  yarn: new Set(["add", "dlx", "install", "remove", "up"])
+};
+
+export function assertRuntimeCommand(value: unknown): asserts value is string[] {
+  assertArgvCommand(value);
+  const executable = path
+    .basename(value[0]!)
+    .replace(/\.(?:cmd|exe)$/iu, "")
+    .toLowerCase();
+  const operation = value[1]?.toLowerCase();
+  if (executable === "npx" || executable === "bunx" || executable === "corepack") {
+    securityError(
+      "SEC_COMMAND_ON_DEMAND_EXECUTION",
+      `On-demand package execution is not allowed: ${executable}`
+    );
+  }
+  if (operation && packageManagerInstallCommands[executable]?.has(operation)) {
+    securityError(
+      "SEC_COMMAND_INSTALL",
+      `Dependency mutation is not allowed in runtime commands: ${executable} ${operation}`
+    );
+  }
+  const nodePlaywrightCli =
+    executable === "node" &&
+    value.some(
+      (argument, index) =>
+        index > 0 && /playwright[^/\\]*[/\\].*cli|playwright.*cli/iu.test(argument)
+    );
+  if (
+    (executable === "playwright" && operation === "install") ||
+    (nodePlaywrightCli && value.includes("install"))
+  ) {
+    securityError("SEC_BROWSER_INSTALL", "Browser installation is not allowed at runtime");
   }
 }
 
@@ -30,16 +80,18 @@ export function buildChildEnvironment(
   parent: NodeJS.ProcessEnv,
   allowlist: readonly string[],
   options: { allowSensitiveNames?: boolean } = {}
-): NodeJS.ProcessEnv {
-  const output: NodeJS.ProcessEnv = {};
+): Record<string, string> {
+  const output: Record<string, string> = {};
   for (const baseline of ["PATH", "TMPDIR", "LANG", "LC_ALL"]) {
-    if (parent[baseline]) output[baseline] = parent[baseline];
+    const value = parent[baseline];
+    if (value) output[baseline] = value;
   }
   for (const name of allowlist) {
     if (!options.allowSensitiveNames && secretName.test(name)) {
       securityError("SEC_ENV_SECRET_NAME", `Sensitive environment name is not allowed: ${name}`);
     }
-    if (parent[name] !== undefined) output[name] = parent[name];
+    const value = parent[name];
+    if (value !== undefined) output[name] = value;
   }
   return output;
 }

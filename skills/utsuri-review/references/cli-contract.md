@@ -24,3 +24,5 @@ Use `--json` for a single JSON result and `--ndjson` only on commands that expli
 |    8 | Partial result with preserved evidence |
 
 Do not discard an output path merely because a command reports a partial result. Strictly validate the preserved report and explain its gaps.
+
+`capture` requires `--run` and `--config`. `worktree` capture additionally requires `--allow-project-code`; configuration content cannot grant that process-execution consent by itself.

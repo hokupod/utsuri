@@ -27,6 +27,7 @@ describe("schema contracts", () => {
   test("exports the canonical external artifact schemas", () => {
     expect(schemaNames).toEqual([
       "annotations",
+      "capture-action",
       "config",
       "context-pack",
       "diff",

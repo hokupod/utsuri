@@ -88,7 +88,7 @@ test("keeps the queue-change-hunk-queue path keyboard-only", async ({ page }, te
   await page.keyboard.press("Enter");
   await expect(page.locator(".focused-change")).toBeFocused();
 
-  const anchor = page.getByRole("button", { name: "#" }).first();
+  const anchor = page.getByRole("button", { name: /Link to hunk in/u }).first();
   await anchor.focus();
   await page.keyboard.press("Enter");
   await expect(page.locator(".hunk.active-hunk")).toBeFocused();

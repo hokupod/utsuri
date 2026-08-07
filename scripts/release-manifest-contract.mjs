@@ -19,11 +19,13 @@ const expectedManifestKeys = [
   "version"
 ].sort();
 const expectedDependencies = {
+  "@utsu-ri/capture": "workspace:*",
   "@utsu-ri/core": "workspace:*",
   "@utsu-ri/git-collector": "workspace:*",
   "@utsu-ri/report-builder": "workspace:*",
   "@utsu-ri/report-model": "workspace:*",
   "@utsu-ri/security": "workspace:*",
+  "playwright-core": "1.55.0",
   yaml: "2.8.1"
 };
 

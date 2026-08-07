@@ -18,9 +18,9 @@ Utsuri 将代码变更转换为有证据、便于人类理解的可视化评审�
 
 ## 状态
 
-<!-- availability:phase-1-code-review -->
+<!-- availability:phase-2-browser-capture -->
 
-Phase 1 的 code-only review flow 已可在此 source checkout 中使用。它可收集 patch、worktree、range 或 merge-base 变更，并生成 immutable local report。browser capture、visual/runtime comparison、持久化 review state 和 Agent feedback 尚未实现。npm package 与 Plugin 也尚未发布。
+Phase 2 的 browser capture flow 已可在此 source checkout 中使用。它把 Phase 1 code review 与隔离的 `dual-url`、`static-fragment` 或经明确授权的 `worktree` 证据结合起来。visual/runtime comparison、持久化 review state 和 Agent feedback 尚未实现。npm package 与 Plugin 也尚未发布。
 
 <a id="capabilities"></a><!-- section:capabilities -->
 
@@ -32,15 +32,18 @@ Phase 1 的 code-only review flow 已可在此 source checkout 中使用。它�
 - 保留 rename、delete、binary、submodule、mode 与 low-signal metadata 的稳定 structured hunk；
 - 将每个 hunk 保留在 candidate 或 `unclassified` 中的确定性初始 change candidate；
 - 经过 schema 验证的 annotation 与 evidence reference；以及
-- 包含 summary、三状态 queue、Focus mode、evidence drawer、unified/side-by-side diff、deep link 和 keyboard focus 恢复的自包含 code review。
+- 包含 summary、三状态 queue、Focus mode、evidence drawer、unified/side-by-side diff、deep link 和 keyboard focus 恢复的自包含 code review；
+- viewport、DPR、locale、timezone、color scheme 与 reduced motion 一致且 before / after 相互独立的 Browser Context；
+- full-page 与 element screenshot，以及 normalized DOM、ARIA、computed style、axe、console、network、metadata 和类型化 failure evidence；以及
+- 确定性 stabilization、allowlist action DSL、external / mutation request 阻止、经过 digest 校验的复用，以及部分 `INCOMPLETE` report。
 
-后续 v1 Phase 将加入隔离 browser capture、visual/DOM/ARIA/style/accessibility/runtime comparison、持久化 review state 与 Origin Session feedback。在执行 capture 之前，每份 report 都是 `UNCOVERED`，并明确列出 visual 与 runtime verification gap。
+后续 v1 Phase 将加入 visual/DOM/ARIA/style/accessibility/runtime comparison、持久化 review state 与 Origin Session feedback。即使 capture 完整，在 comparison 和 target mapping 运行前仍为 `UNCOVERED`；任一侧失败或存在 blocked request 时仍为 `INCOMPLETE`。
 
 <a id="quick-start"></a><!-- section:quick-start -->
 
 ## Quick Start
 
-前提条件：Nix，以及安装在标准用户位置的 Safe-chain 1.5.14。Node 24 与 Bun 由 Nix shell 提供；无需配置 Safe-chain 绝对路径。
+前提条件：Nix、安装在标准用户位置的 Safe-chain 1.5.14，以及用于 capture 的现有 system Chrome 或 Chromium。Node 24 与 Bun 由 Nix shell 提供；无需配置 Safe-chain 绝对路径。
 
 <!-- sync-command:dev-shell -->
 
@@ -62,13 +65,31 @@ node scripts/safe-chain.mjs bun install --frozen-lockfile
 
 setup script、Skill 或 CLI 都不会自动安装依赖或下载浏览器。
 
-创建一个新的 code-only example run。output directory 不得预先存在。
+通过只读 project 检查创建不会覆盖现有文件的 capture 配置提案。capture 前请检查并编辑；`proposedCommands` 永远不会执行。
+
+<!-- sync-command:init-capture-config -->
+
+```bash
+node skills/utsuri-review/scripts/utsuri.mjs init --output utsuri.yml --json
+```
+
+创建新的 example run。output directory 不得预先存在。
 
 <!-- sync-command:collect-patch -->
 
 ```bash
 node skills/utsuri-review/scripts/utsuri.mjs collect --patch fixtures/code-only-review/changes.patch --output .artifacts/utsuri/readme-example --json
 ```
+
+在默认 `dual-url` mode 中，请先自行启动配置的 before / after URL，再执行 capture。trusted `worktree` 配置还需要 `--allow-project-code`。`static-fragment` 不启动 project command，并把禁用 JavaScript 的结果标记为 synthetic。
+
+<!-- sync-command:capture-run -->
+
+```bash
+node skills/utsuri-review/scripts/utsuri.mjs capture --run .artifacts/utsuri/readme-example --config utsuri.yml --json
+```
+
+即使 capture 返回 exit code 4，成功的一侧和类型化 failure evidence 仍会保留。请 finalize 该 partial run，不要把它当作 no visual difference。
 
 <!-- sync-command:finalize-report -->
 
@@ -110,9 +131,11 @@ node skills/utsuri-review/scripts/utsuri.mjs doctor --json
 
 Utsuri 将 repository content、diff、HTML、SVG、comment、Context Pack 和 captured text 视为不可信证据。
 
-**安全警告：**不要向 capture 提供 production credential、production browser state、不受限制的 external network、推测的 setup command 或父进程环境变量。before 与 after 使用独立 Browser Context；默认阻止 external request 和 Service Worker。
+**安全警告：**不要向 capture 提供 production credential、production browser state、不受限制的 external network、推测的 setup command 或父进程环境变量。before 与 after 使用独立 Browser Context；默认阻止 external request 和 Service Worker。external HTTP redirect 与 WebSocket handshake 也受同一 origin policy 约束，持久化文本证据会移除 absolute / relative URL 中的 credential、query 和 fragment。
 
-生成的 `report/` 是 immutable。Utsuri 要求 run input 是普通文件且不是 symlink，publication path 不可被其他本地 principal 改名，staging 必须通过 strict validation，并使用 OS 的 no-replace helper。helper 缺失或 filesystem 不支持时会 fail closed。生成失败可能保留用于诊断的 private staging directory，Utsuri 不会自动删除它。可变的人工 review data 单独存储在 `run/review/`。static viewer 不连接外部服务。
+`dual-url` 永远不会启动 project code。`worktree` 要求 trusted input、before / after 各自的明确 argv 和不同 working directory，以及用户提供 `--allow-project-code` opt-in。child environment 只包含最小 baseline 与 allowlist 中的非 secret 名称。`static-fragment` 会禁用 JavaScript 和 HTTP request、清理 active markup，但不等同于真实 application rendering。阻止 browser request 并不能隔离 project server process；untrusted server execution 必须等待 Phase 4 container mode。
+
+生成的 `report/` 是 immutable。引用的 capture evidence 会复制到其中，并纳入 report asset manifest 的 hash。Utsuri 要求 run input 是普通文件且不是 symlink，publication path 不可被其他本地 principal 改名，staging 必须通过 strict validation，并使用 OS 的 no-replace helper。helper 缺失或 filesystem 不支持时会 fail closed。生成失败可能保留用于诊断的 private staging directory，Utsuri 不会自动删除它。可变的人工 review data 单独存储在 `run/review/`。static viewer 不连接外部服务。
 
 code diff content 会解析为 structured line，并且只以 text 方式渲染。由 repository 控制的 diff text 永远不会作为 HTML 注入。
 
@@ -122,6 +145,7 @@ code diff content 会解析为 structured line，并且只以 text 方式渲染�
 
 - [英文详细设计正本](https://github.com/hokupod/utsuri/blob/main/docs/design.md)
 - [UI guideline 与 HIG/WCAG traceability](https://github.com/hokupod/utsuri/blob/main/docs/ui-guidelines.md)
+- [Capture mode 与 runtime boundary](https://github.com/hokupod/utsuri/blob/main/skills/utsuri-review/references/capture-modes.md)
 - [v1 实现计划](https://github.com/hokupod/utsuri/blob/main/ai/plans/active/v1-%E5%AE%9F%E8%A3%85/README.md)
 
 详细设计以英文为正本。面向用户的 README 变更必须在同一个 change 中同步英文、日文和简体中文。
