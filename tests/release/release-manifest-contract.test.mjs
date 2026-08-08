@@ -268,7 +268,7 @@ describe("source and native package contracts", () => {
       dependencies: {
         "@utsu-ri/core": "workspace:*",
         fflate: "0.8.2",
-        yaml: "2.8.1"
+        yaml: "2.8.3"
       }
     };
     assert.deepEqual(validateCliSourceManifest(sourceManifest, "0.1.0"), []);

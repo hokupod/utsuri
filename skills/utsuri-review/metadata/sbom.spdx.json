@@ -5,7 +5,7 @@
     "creators": ["Tool: Utsuri SBOM generator 1"]
   },
   "dataLicense": "CC0-1.0",
-  "documentNamespace": "https://github.com/hokupod/utsuri/sbom/0.1.0/c1bb9c0ab153241c12b0a4a501913f6bf55b63ebea3e9bae96cd15700632fe22",
+  "documentNamespace": "https://github.com/hokupod/utsuri/sbom/0.1.0/de680198df088328333bfc628c92f876890fdd9ec6bc12d4f583607c843f1660",
   "name": "utsuri-0.1.0",
   "packages": [
     {
@@ -13,7 +13,7 @@
       "checksums": [
         {
           "algorithm": "SHA256",
-          "checksumValue": "cbde349339d1fc94401b918e842ed21075d1a0a128fa583c14d3293ece6d252c"
+          "checksumValue": "65122518b87d70e4c5b793c04a919b96fdc6bc47a9ffef013a119eca5183c9c8"
         }
       ],
       "downloadLocation": "NOASSERTION",
@@ -24,11 +24,11 @@
       "versionInfo": "0.1.0"
     },
     {
-      "SPDXID": "SPDXRef-Package-ajv-8.17.1",
+      "SPDXID": "SPDXRef-Package-ajv-8.18.0",
       "checksums": [
         {
           "algorithm": "SHA512",
-          "checksumValue": "07f801b8d8394a2313acf902f80dbe716d11b33c316269fa558c41fe29e5052b52e67c7ac4722dfde84a46120c86abac97b6bc2e34286678c2b39be1c31390d6"
+          "checksumValue": "3e55cf78458c5cc67bb0f60e1ea983c8227371f36b52bddf18d2ad7b35f5e3291738422fc8af3577eab2771f3d298e4eef514a30f690daf05f04523934747adc"
         }
       ],
       "downloadLocation": "NOASSERTION",
@@ -37,9 +37,9 @@
       "licenseDeclared": "MIT",
       "name": "ajv",
       "packageVerificationCode": {
-        "packageVerificationCodeValue": "3c926d19327f4135272d3a758b90689a5b40952c"
+        "packageVerificationCodeValue": "f52a0e510d4a7f0ed20bf33cecb6bb95e5e23278"
       },
-      "versionInfo": "8.17.1"
+      "versionInfo": "8.18.0"
     },
     {
       "SPDXID": "SPDXRef-Package-ajv-formats-3.0.1",
@@ -222,11 +222,11 @@
       "versionInfo": "2.0.2"
     },
     {
-      "SPDXID": "SPDXRef-Package-yaml-2.8.1",
+      "SPDXID": "SPDXRef-Package-yaml-2.8.3",
       "checksums": [
         {
           "algorithm": "SHA512",
-          "checksumValue": "95c61c3315f63cef57306bc02642773ac34cc3effb14a7aceff8607ab1946162285aee63ffe610a9c66be499cf656cceb0406031b49b8924e7fddbffebd324a7"
+          "checksumValue": "02f6da08b38ed8eb70fe55b96e687d77f58475c0c5750a766766541f7a57f54da2872518d27bcbbfb27a4eb5a8c2495118f61b07f22e20c7d88316823e0e41a6"
         }
       ],
       "downloadLocation": "NOASSERTION",
@@ -235,9 +235,9 @@
       "licenseDeclared": "ISC",
       "name": "yaml",
       "packageVerificationCode": {
-        "packageVerificationCodeValue": "fa9e7c37079b73324ad5dae7e284c5e7c45d956e"
+        "packageVerificationCodeValue": "cac05147c9e81f47be97e4fe2653e8e19042720a"
       },
-      "versionInfo": "2.8.1"
+      "versionInfo": "2.8.3"
     }
   ],
   "relationships": [
@@ -249,25 +249,25 @@
     {
       "relatedSpdxElement": "SPDXRef-Package-fast-deep-equal-3.1.3",
       "relationshipType": "DEPENDS_ON",
-      "spdxElementId": "SPDXRef-Package-ajv-8.17.1"
+      "spdxElementId": "SPDXRef-Package-ajv-8.18.0"
     },
     {
       "relatedSpdxElement": "SPDXRef-Package-fast-uri-3.1.5",
       "relationshipType": "DEPENDS_ON",
-      "spdxElementId": "SPDXRef-Package-ajv-8.17.1"
+      "spdxElementId": "SPDXRef-Package-ajv-8.18.0"
     },
     {
       "relatedSpdxElement": "SPDXRef-Package-json-schema-traverse-1.0.0",
       "relationshipType": "DEPENDS_ON",
-      "spdxElementId": "SPDXRef-Package-ajv-8.17.1"
+      "spdxElementId": "SPDXRef-Package-ajv-8.18.0"
     },
     {
       "relatedSpdxElement": "SPDXRef-Package-require-from-string-2.0.2",
       "relationshipType": "DEPENDS_ON",
-      "spdxElementId": "SPDXRef-Package-ajv-8.17.1"
+      "spdxElementId": "SPDXRef-Package-ajv-8.18.0"
     },
     {
-      "relatedSpdxElement": "SPDXRef-Package-ajv-8.17.1",
+      "relatedSpdxElement": "SPDXRef-Package-ajv-8.18.0",
       "relationshipType": "DEPENDS_ON",
       "spdxElementId": "SPDXRef-Package-ajv-formats-3.0.1"
     },
@@ -277,7 +277,7 @@
       "spdxElementId": "SPDXRef-Package-pixelmatch-7.1.0"
     },
     {
-      "relatedSpdxElement": "SPDXRef-Package-ajv-8.17.1",
+      "relatedSpdxElement": "SPDXRef-Package-ajv-8.18.0",
       "relationshipType": "DEPENDS_ON",
       "spdxElementId": "SPDXRef-Package-utsuri-workspace-0.1.0"
     },
@@ -312,7 +312,7 @@
       "spdxElementId": "SPDXRef-Package-utsuri-workspace-0.1.0"
     },
     {
-      "relatedSpdxElement": "SPDXRef-Package-yaml-2.8.1",
+      "relatedSpdxElement": "SPDXRef-Package-yaml-2.8.3",
       "relationshipType": "DEPENDS_ON",
       "spdxElementId": "SPDXRef-Package-utsuri-workspace-0.1.0"
     }

@@ -1,9 +1,9 @@
 {
   "schemaVersion": "1.0",
-  "lockfileSha256": "c1bb9c0ab153241c12b0a4a501913f6bf55b63ebea3e9bae96cd15700632fe22",
-  "bundledInputHash": "1f28bfed35d4695085d86f40d942085797041d85e1cc048a7d33dc48f45340ce",
+  "lockfileSha256": "de680198df088328333bfc628c92f876890fdd9ec6bc12d4f583607c843f1660",
+  "bundledInputHash": "597d8867ab9712efda0d971040c5841996fe059b15bef239b2a6f84303b3223c",
   "packageVerificationCodes": {
-    "ajv@8.17.1": "3c926d19327f4135272d3a758b90689a5b40952c",
+    "ajv@8.18.0": "f52a0e510d4a7f0ed20bf33cecb6bb95e5e23278",
     "ajv-formats@3.0.1": "10c29707282bc159f1c8261e00681eef880cd4d6",
     "axe-core@4.10.3": "040a8a755840d9df8acbf1730a3fb4e34483a8d9",
     "fast-deep-equal@3.1.3": "765fba27abdad11c0d38d6211c8b642157af946b",
@@ -14,6 +14,6 @@
     "playwright-core@1.61.1": "fb137e0cd71afd1a5fdde351d87619852d31a649",
     "pngjs@7.0.0": "fb6ca73f76a553af8a1bd637fef59250fe00faf4",
     "require-from-string@2.0.2": "376512d3467526f7b9d0a6d46123a7b317af0e9c",
-    "yaml@2.8.1": "fa9e7c37079b73324ad5dae7e284c5e7c45d956e"
+    "yaml@2.8.3": "cac05147c9e81f47be97e4fe2653e8e19042720a"
   }
 }

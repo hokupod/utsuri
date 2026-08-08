@@ -12,6 +12,6 @@
     "@utsu-ri/security": "workspace:*",
     "axe-core": "4.10.3",
     "playwright-core": "1.61.1",
-    "yaml": "2.8.1"
+    "yaml": "2.8.3"
   }
 }
