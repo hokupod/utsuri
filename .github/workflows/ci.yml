@@ -192,9 +192,12 @@ jobs:
         run: nix develop --command node scripts/safe-chain.mjs bun run build
       - name: Verify the explicit browser source
         run: nix develop --command node scripts/dev-env-check.mjs --json
-      - name: Run real-browser integration and installed-bundle smoke
+      - name: Run isolated integration and Node bundle browser smoke
         run: |
-          nix develop --command node scripts/safe-chain.mjs bun run test:integration
+          # Bun 1.3.13/1.3.14 can double-close Playwright's extra stdio fds on Linux.
+          # Keep Bun integration browser-free; the Node bundle and E2E steps below
+          # exercise the pinned Chromium through the supported public runtime.
+          UTSURI_BROWSER_TESTS=disabled nix develop --command node scripts/safe-chain.mjs bun run test:integration
           nix develop --command node scripts/safe-chain.mjs bun test --parallel=1 --max-concurrency=1 tests/cli/installed-bundle.test.ts
       - name: Run Playwright E2E
         run: nix develop --command node scripts/safe-chain.mjs bun run test:e2e
