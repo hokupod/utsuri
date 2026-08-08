@@ -173,7 +173,7 @@ There are no unresolved Phase 3 Must items in this checklist; its documentation/
 | Integration    | Static serve                                  | Loopback-only random port, Host validation, traversal rejection, and no implicit browser open. | `tests/integration/phase5-serve-pack.test.ts`                           |
 | Schema         | Review event and bundle                       | Unknown events, invalid anchors, oversized text, and malformed state fail validation.          | `schemas/review-event.schema.json`, `schemas/review-bundle.schema.json` |
 
-Browser-backed E2E execution requires an already installed compatible Playwright browser. Absence of that prerequisite is recorded as unexecuted evidence, never as a passing UI result.
+Browser-backed E2E execution uses the pinned Nix Chromium job and never launches the user's normal Chrome profile. Exact-SHA evidence is retained in the [Phase 6 browser record](../ai/log/tests/2026-08-09-phase-6-browser-evidence.md).
 
 ## 14. Phase 5 Must checklist
 
@@ -183,9 +183,9 @@ Browser-backed E2E execution requires an already installed compatible Playwright
 - [x] **Explicit portability**: export/import is initiated by a labeled control and validates the report/source identity.
 - [x] **No implicit delivery**: comments and attention metadata do not start an Agent or send data.
 - [x] **Progressive disclosure**: review controls complement rather than replace the existing evidence hierarchy.
-- [ ] **Browser evidence**: execute the Phase 5 E2E matrix with a compatible preinstalled browser without launching the user's normal Chrome profile.
+- [x] **Browser evidence**: execute the Phase 5 E2E matrix with a compatible preinstalled browser without launching the user's normal Chrome profile.
 
-The implementation checklist has one environment-dependent browser-evidence item. It remains a release gate and is not represented as PASS while the compatible Playwright browser is absent.
+There are no unresolved Phase 5 Must items in this checklist. The exact-SHA Browser/Nix job passed the review-state E2E with pinned Chromium.
 
 ## 15. Phase 6 feedback rules
 
@@ -222,6 +222,6 @@ Browser-backed E2E execution uses only a compatible preinstalled Playwright-mana
 - [x] **State separation**: Agent answers do not change viewed, human judgment, or resolution.
 - [x] **Failure fallback**: unsupported direct delivery remains `return-to-session` and creates no session.
 - [x] **Interactive security**: loopback, capability, exact Origin for mutations, same-origin Fetch Metadata for read-only GET, exact Referer validation when present, report binding, and exact schema are required.
-- [ ] **Browser evidence**: execute the Phase 6 static and interactive Playwright projects with a compatible managed browser and retain the result.
+- [x] **Browser evidence**: execute the Phase 6 static and interactive Playwright projects with a compatible managed browser and retain the result.
 
-The browser-evidence item remains environment-dependent and cannot be represented as PASS when the required managed browser is unavailable or crashes.
+There are no unresolved Phase 6 Must items in this checklist. The exact-SHA Browser/Nix job passed all 18 Playwright tests, including static and interactive feedback, both return-to-session hosts, re-anchoring, fallback, and axe.
