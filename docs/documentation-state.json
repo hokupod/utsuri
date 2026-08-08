@@ -39,14 +39,14 @@
     "ui-guidelines:phase-6"
   ],
   "humanReviewedHashes": {
-    "docs/design.md": "f352ebf43bbebbba503a81557a80958b55ad0462a93bdf1e7fd3fcf87417a943",
-    "README.md": "5b52d77ab003c5772c91f453323e7f6cd0026097be4f8e1f1c6131b1b0f749b5",
-    "README.ja.md": "4199a4b07eec9c44ff251fe674059f8b74632719e5c7390ba32e5e24ca915b10",
-    "README.zh-CN.md": "0b1df2352be5b4920a333a4014e98cabeb3d7e28e87a94b21384efa11880796f"
+    "docs/design.md": "93c1a3560436e908cac0d21571fb42a8151cc64eae1113a315433f44387b9f36",
+    "README.md": "89286be71abd3e37debc9d525c912c45613dfaba04f34e9e1657d543a5535f63",
+    "README.ja.md": "ccb0226b9e966379bb9e83883f50d7860a15b4b82841f701eb6fe5c9b23f0eb3",
+    "README.zh-CN.md": "523469d48240a99c8c9a508678c98279d04edca084529ff00d48c9fa3d1d3175"
   },
-  "reviewEvidencePath": "ai/log/tests/2026-08-07-phase-4-documentation-review.md",
-  "reviewEvidenceSha256": "bfd4aa3e6ff62308b699c5de3b9f66205f72d9a0a1cf32756940cf09c09d42bb",
-  "reviewedPhase": 4,
+  "reviewEvidencePath": "ai/log/tests/2026-08-08-phase-6-documentation-review.md",
+  "reviewEvidenceSha256": "6b8049ace00d4f3b87dbd0649a21b40112a9c6282895a81af39e59155d0965dd",
+  "reviewedPhase": 6,
   "publicationMetadata": {
     "publisher": "hokupod",
     "npmMaintainer": "hokupod-npm",
