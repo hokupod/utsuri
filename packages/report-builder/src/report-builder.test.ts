@@ -340,6 +340,42 @@ describe("immutable report generation", () => {
 });
 
 describe("atomic publication helper", () => {
+  test("does not inherit browser-launch environment during publication", async () => {
+    const root = await mkdtemp(path.join(os.tmpdir(), "utsuri-publish-environment-"));
+    temporaryDirectories.push(root);
+    const source = path.join(root, "source");
+    await mkdir(source);
+    await writeFile(path.join(source, "source.txt"), "validated\n");
+    const parentHandle = await open(
+      root,
+      constants.O_RDONLY | constants.O_DIRECTORY | constants.O_NOFOLLOW
+    );
+    const previousBrowser = process.env.UTSURI_BROWSER_EXECUTABLE;
+    const previousCgroup = process.env.UTSURI_BROWSER_CGROUP_PROCS;
+    // Inheriting either variable switches the helper into browser-launch mode.
+    process.env.UTSURI_BROWSER_EXECUTABLE = process.execPath;
+    process.env.UTSURI_BROWSER_CGROUP_PROCS = "/utsuri-parent-environment-must-not-be-inherited";
+    try {
+      await expect(
+        publishDirectoryNoReplace(
+          root,
+          parentHandle,
+          await parentHandle.stat({ bigint: true }),
+          "source",
+          "report",
+          await lstat(source, { bigint: true })
+        )
+      ).resolves.toBeUndefined();
+    } finally {
+      if (previousBrowser === undefined) delete process.env.UTSURI_BROWSER_EXECUTABLE;
+      else process.env.UTSURI_BROWSER_EXECUTABLE = previousBrowser;
+      if (previousCgroup === undefined) delete process.env.UTSURI_BROWSER_CGROUP_PROCS;
+      else process.env.UTSURI_BROWSER_CGROUP_PROCS = previousCgroup;
+      await parentHandle.close();
+    }
+    expect(await readFile(path.join(root, "report/source.txt"), "utf8")).toBe("validated\n");
+  });
+
   test("does not replace a destination created before the no-replace syscall", async () => {
     const root = await mkdtemp(path.join(os.tmpdir(), "utsuri-publish-"));
     temporaryDirectories.push(root);

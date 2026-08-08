@@ -30,6 +30,7 @@ const contentTypes: Record<string, string> = {
   ".png": "image/png",
   ".svg": "image/svg+xml"
 };
+const reportOrigin = "http://127.0.0.1:4173";
 
 async function buildFixture(): Promise<Phase3ReportFixture> {
   const fixtureRoot = path.join(repositoryRoot, `.artifacts/phase-3-e2e-${process.pid}`);
@@ -83,7 +84,7 @@ export async function servePhase3Report(
   options: Phase3ReportServeOptions = {}
 ): Promise<Phase3ReportFixture> {
   const fixture = await phase3ReportFixture();
-  await page.route("http://utsuri-phase3.test/**", async (route: Route) => {
+  await page.route(`${reportOrigin}/**`, async (route: Route) => {
     const requestPath = new URL(route.request().url()).pathname;
     const relative = requestPath === "/" ? "index.html" : requestPath.slice(1);
     if (relative.includes("..")) return route.abort("blockedbyclient");
@@ -117,6 +118,6 @@ export async function servePhase3Report(
       await route.fulfill({ status: 404, body: "Not found" });
     }
   });
-  await page.goto("http://utsuri-phase3.test/index.html");
+  await page.goto(`${reportOrigin}/index.html`);
   return fixture;
 }

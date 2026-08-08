@@ -127,6 +127,7 @@
       unreadAnswers: "Unread answers",
       exportReview: "Export review",
       importReview: "Import review",
+      reviewBundleFile: "Review bundle file",
       reanchorImport: "Re-anchor another report",
       stale: "Stale",
       orphaned: "Orphaned",
@@ -220,6 +221,7 @@
       unreadAnswers: "未読回答",
       exportReview: "レビューを書き出す",
       importReview: "レビューを読み込む",
+      reviewBundleFile: "レビューバンドルファイル",
       reanchorImport: "別レポートへ再アンカーする",
       stale: "古い状態",
       orphaned: "参照先なし",
@@ -368,18 +370,18 @@
     return t.unreviewed;
   }
 
-  function judgment(changeId: string): HumanJudgment {
-    return reviewStore?.state.judgments[changeId]?.state ?? "unreviewed";
+  function judgment(store: ReviewStore | null, changeId: string): HumanJudgment {
+    return store?.state.judgments[changeId]?.state ?? "unreviewed";
   }
 
   function currentAnchor(type: ReviewAnchor["type"], ref: string): ReviewAnchor | undefined {
     return reviewStore ? findAnchor(reviewStore.anchorCatalog, type, ref) : undefined;
   }
 
-  function viewed(type: ReviewAnchor["type"], ref: string): boolean {
-    const anchor = currentAnchor(type, ref);
-    if (!anchor || !reviewStore) return false;
-    return reviewStore.state.viewed[anchorKey(anchor)]?.state === "viewed";
+  function viewed(store: ReviewStore | null, type: ReviewAnchor["type"], ref: string): boolean {
+    const anchor = store ? findAnchor(store.anchorCatalog, type, ref) : undefined;
+    if (!anchor || !store) return false;
+    return store.state.viewed[anchorKey(anchor)]?.state === "viewed";
   }
 
   function lineReviewAnchor(hunk: Hunk, index: number): ReviewAnchor | undefined {
@@ -571,7 +573,7 @@
   }
 
   async function startComment(anchor: ReviewAnchor | undefined): Promise<void> {
-    if (!anchor) return;
+    if (!anchor || reviewBusy) return;
     commentAnchor = anchor;
     commentBody = "";
     commentAgentAttention = false;
@@ -1282,7 +1284,7 @@
                   <label class="viewed-control compact-control">
                     <input
                       type="checkbox"
-                      checked={viewed("file", file.id)}
+                      checked={viewed(reviewStore, "file", file.id)}
                       disabled={reviewBusy}
                       onchange={(event) =>
                         void updateViewed("file", file.id, event.currentTarget.checked)}
@@ -1360,6 +1362,7 @@
                   bind:this={reviewImportInput}
                   type="file"
                   accept="application/json,.json"
+                  aria-label={t.reviewBundleFile}
                   onchange={(event) => void importReview(event.currentTarget.files?.[0])}
                 />
               </div>
@@ -1369,8 +1372,8 @@
                 <label>
                   <span>{t.humanJudgment}</span>
                   <select
-                    value={judgment(selectedChange.id)}
-                    disabled={reviewBusy || judgment(selectedChange.id) === "stale"}
+                    value={judgment(reviewStore, selectedChange.id)}
+                    disabled={reviewBusy || judgment(reviewStore, selectedChange.id) === "stale"}
                     onchange={(event) =>
                       void updateJudgment(
                         selectedChange!.id,
@@ -1380,7 +1383,7 @@
                     {#each ["unreviewed", "reviewed", "follow-up", "blocked"] as value (value)}
                       <option {value}>{judgmentLabel(value as HumanJudgment)}</option>
                     {/each}
-                    {#if judgment(selectedChange.id) === "stale"}
+                    {#if judgment(reviewStore, selectedChange.id) === "stale"}
                       <option value="stale">{t.stale}</option>
                     {/if}
                   </select>
@@ -1388,7 +1391,7 @@
                 <label class="viewed-control">
                   <input
                     type="checkbox"
-                    checked={viewed("change", selectedChange.id)}
+                    checked={viewed(reviewStore, "change", selectedChange.id)}
                     disabled={reviewBusy}
                     onchange={(event) =>
                       void updateViewed("change", selectedChange!.id, event.currentTarget.checked)}
@@ -1447,6 +1450,7 @@
                       {#if reviewStore}<button
                           type="button"
                           class="inline-comment-action"
+                          disabled={reviewBusy}
                           onclick={() =>
                             void startComment(
                               currentAnchor(
@@ -1516,7 +1520,7 @@
                   <label class="viewed-control visual-viewed-control">
                     <input
                       type="checkbox"
-                      checked={viewed("visual-target", activeComparison.targetRef)}
+                      checked={viewed(reviewStore, "visual-target", activeComparison.targetRef)}
                       disabled={reviewBusy}
                       onchange={(event) =>
                         void updateViewed(
@@ -1784,6 +1788,7 @@
                             >
                             {#if reviewStore}<button
                                 type="button"
+                                disabled={reviewBusy}
                                 onclick={() =>
                                   void startComment(
                                     currentAnchor(
@@ -1838,6 +1843,7 @@
                         {/if}
                         {#if reviewStore}<button
                             type="button"
+                            disabled={reviewBusy}
                             onclick={() => void startComment(currentAnchor("finding", finding.id))}
                             >{t.comment}</button
                           >{/if}
@@ -1918,7 +1924,7 @@
                       <label class="viewed-control dark-control">
                         <input
                           type="checkbox"
-                          checked={viewed("hunk", hunk.id)}
+                          checked={viewed(reviewStore, "hunk", hunk.id)}
                           disabled={reviewBusy}
                           onchange={(event) =>
                             void updateViewed("hunk", hunk.id, event.currentTarget.checked)}
@@ -1927,6 +1933,7 @@
                       </label>
                       <button
                         type="button"
+                        disabled={reviewBusy}
                         onclick={() => void startComment(currentAnchor("hunk", hunk.id))}
                         >{t.comment}</button
                       >
@@ -1981,6 +1988,7 @@
                         {#if reviewStore && reviewAnchor}<button
                             class="line-comment"
                             type="button"
+                            disabled={reviewBusy}
                             aria-label={`${t.commentOn} ${hunk.path}:${reviewAnchor.startLine}`}
                             title={t.comment}
                             onclick={() => void startComment(reviewAnchor)}>✎</button
@@ -2028,6 +2036,7 @@
                         {#if reviewStore && reviewAnchor}<button
                             class="line-comment"
                             type="button"
+                            disabled={reviewBusy}
                             aria-label={`${t.commentOn} ${hunk.path}:${reviewAnchor.startLine}`}
                             title={t.comment}
                             onclick={() => void startComment(reviewAnchor)}>✎</button
@@ -2174,7 +2183,7 @@
                     <label class="viewed-control dark-control">
                       <input
                         type="checkbox"
-                        checked={viewed("hunk", hunk.id)}
+                        checked={viewed(reviewStore, "hunk", hunk.id)}
                         disabled={reviewBusy}
                         onchange={(event) =>
                           void updateViewed("hunk", hunk.id, event.currentTarget.checked)}
@@ -2183,6 +2192,7 @@
                     </label>
                     <button
                       type="button"
+                      disabled={reviewBusy}
                       onclick={() => void startComment(currentAnchor("hunk", hunk.id))}
                       >{t.comment}</button
                     >

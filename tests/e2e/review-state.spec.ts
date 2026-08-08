@@ -61,6 +61,18 @@ test("persists and transfers independent human review state", async ({ page }) =
     buffer: Buffer.from(JSON.stringify(bundle))
   });
   await expect(page.getByRole("status")).toContainText("matched");
+  const persistedJudgment = await page.evaluate(
+    ({ reportId, changeId }) => {
+      const stored = localStorage.getItem(`utsuri:review:v1:${encodeURIComponent(reportId)}`);
+      if (!stored) return null;
+      const value = JSON.parse(stored) as {
+        state?: { judgments?: Record<string, { state?: string }> };
+      };
+      return value.state?.judgments?.[changeId]?.state ?? null;
+    },
+    { reportId: fixture.report.reportId, changeId: selectedChange.id }
+  );
+  expect(persistedJudgment).toBe("reviewed");
   await expect(judgment).toHaveValue("reviewed");
   await expect(changeViewed).toBeChecked();
   await expect(page.locator(".thread-list")).toContainText("Verify this exact line.");

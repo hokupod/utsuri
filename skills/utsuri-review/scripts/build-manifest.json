@@ -1,7 +1,7 @@
 {
   "schemaVersion": "1.1",
   "toolVersion": "0.1.0",
-  "sourceHash": "c2c3a913e5edb5755fa1d4862680e59ff8ebd44fe9930e99a7c233248966a06f",
+  "sourceHash": "9d31f32b3a8ba0103a1349e913e0ed6f148dac6c6495354b4646960b6d8829d5",
   "sourceHashes": {
     "packages/adapters/generic/src/index.ts": "0fb851c88f14187773d97373b9d848e831abb629bb4b1834c4393f29917c4169",
     "packages/adapters/playwright/src/index.ts": "7714950f8fbcc160493e649a13e2c96d2843530307150357c30b9155c42b6081",
@@ -50,9 +50,9 @@
     "packages/git-collector/src/index.ts": "c8686ef8faa57f1fa17a105a57f7306ff8372de171f9469ae6e22aa1b278f86d",
     "packages/git-collector/src/patch.ts": "2ad71151ca382bc5be3b9396e60aeb36394151e5ae5670687414f967fa893e96",
     "packages/interactive-server/src/index.ts": "66bac04d327797d4d57a594f7032b87f0a32dd8ccd3c1ed1647bcf1b6a87b5b1",
-    "packages/report-builder/src/generated-ui-assets.ts": "169fd87e8c5934644d5fc331a62768af14fc9d22bd1d2761bccd25c3db519936",
+    "packages/report-builder/src/generated-ui-assets.ts": "8108ef87eef0b8e031d072b03a3776045232ed911e911dadc44efdefd937cd4e",
     "packages/report-builder/src/index.ts": "9b3822c279dd29cbbf5fbda74f294d00f93ad0d7cc432ed06506a7eaae7fcc17",
-    "packages/report-builder/src/native-publish.ts": "867f7709e0e6561115c7f85f60090f92775abfe311e292cd260c20c4d325988a",
+    "packages/report-builder/src/native-publish.ts": "1476a27dfbb7172caf656b996b7aa71ca8c7ec3ddf1d85ee0028d11a3029f222",
     "packages/report-builder/src/schema-assets.ts": "ef080b08889e19f291d92f260fc4f731b1505552c5f3481734de9c6414d0c23a",
     "packages/report-model/src/index.ts": "f93ea5cb121a43d8d85254f6da3a129b7c35cc32911523e263dabd9a13e33a66",
     "packages/report-model/src/validator.ts": "2bed24889f93dd4cdf385cf96f5c7b27d745396aec357a3ddfb1095a6b3cfba7",
@@ -281,7 +281,7 @@
   },
   "uiAssetHashes": {
     "app.css": "4c49aa245c933b504b0864bd4eaf7a9fe3564a4378ccf6cfd81d83634110cb0f",
-    "app.js": "5bdd231f4b609c648782f71e3c2bee95531ca59c7c3788dec9e2172a6545eab8"
+    "app.js": "5a11e1a5496f1bb3ceb41e50934dd6a3b7d650a348f726721c5fcc8a480b9e6f"
   },
-  "bundleSha256": "c4879ad135f408d1c64e2cfc1c1c2425212fb96e59c02904bbbc2200bbda1eee"
+  "bundleSha256": "18b53fe5ec2cbb6576a62a40eaa42a25ba0f3b5842df5c9e79236d455953ee8a"
 }

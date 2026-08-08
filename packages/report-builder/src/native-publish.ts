@@ -32,6 +32,7 @@ async function runNativeHelper(
 ): Promise<{ code: number | null; signal: NodeJS.Signals | null; stderr: string }> {
   return await new Promise((resolve, reject) => {
     const child = spawn(helper, args, {
+      env: {},
       shell: false,
       stdio: ["ignore", "ignore", "pipe"]
     });

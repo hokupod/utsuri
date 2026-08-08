@@ -68,7 +68,8 @@ test("stores a three-item batch through the capability-bound interactive UI", as
     );
 
     const downloadPromise = page.waitForEvent("download");
-    await page.getByRole("button", { name: "Export review" }).click();
+    await page.getByRole("button", { name: "Export review" }).focus();
+    await page.keyboard.press("Enter");
     const download = await downloadPromise;
     const downloadPath = await download.path();
     expect(downloadPath).not.toBeNull();

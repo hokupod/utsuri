@@ -6,7 +6,7 @@ test.setTimeout(90_000);
 
 test("has no serious or critical automated accessibility violations", async ({ page }) => {
   await servePhase3Report(page, { extraAssets: { "axe.js": axe.source } });
-  await page.addScriptTag({ url: "http://utsuri-phase3.test/axe.js" });
+  await page.addScriptTag({ url: new URL("axe.js", page.url()).href });
   const violations = await page.evaluate(async () => {
     const runner = (globalThis as typeof globalThis & { axe: typeof axe }).axe;
     const result = await runner.run(document, {

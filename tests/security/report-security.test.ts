@@ -1,6 +1,7 @@
 import { describe, expect, test } from "bun:test";
 import { readFile } from "node:fs/promises";
 import path from "node:path";
+import { reportUiJavaScript } from "../../packages/report-builder/src/generated-ui-assets";
 import { validateReportDirectory } from "../../packages/report-builder/src";
 import {
   assertPngBytes,
@@ -42,6 +43,9 @@ describe("report security boundaries", () => {
     expect(viewerDocument(staticDocument, "interactive")).toContain(interactiveReportCsp);
     expect(viewerDocument(staticDocument, "interactive")).not.toContain(staticReportCsp);
     expect(() => viewerDocument("<html></html>", "interactive")).toThrow("exactly one");
+    expect(interactiveReportCsp).not.toContain("'unsafe-eval'");
+    expect(reportUiJavaScript).not.toContain("new Function");
+    expect(reportUiJavaScript).not.toMatch(/\beval\s*\(/u);
   });
 
   test("sanitizes active HTML into an empty-sandbox static fragment", () => {

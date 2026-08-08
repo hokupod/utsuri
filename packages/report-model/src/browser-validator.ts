@@ -1,18 +1,23 @@
-import Ajv, { type ErrorObject, type ValidateFunction } from "ajv";
-import addFormats from "ajv-formats";
-import reviewBundleSchema from "../../../schemas/review-bundle.schema.json" with { type: "json" };
-import reviewEventSchema from "../../../schemas/review-event.schema.json" with { type: "json" };
-import reviewStateSchema from "../../../schemas/review-state.schema.json" with { type: "json" };
-import reviewThreadSchema from "../../../schemas/review-thread.schema.json" with { type: "json" };
+import type { ErrorObject } from "ajv";
+import {
+  reviewBundle,
+  reviewEvent,
+  reviewState,
+  reviewThread
+} from "./generated/browser-validators.generated.js";
 
-const schemas = {
-  "review-bundle": reviewBundleSchema,
-  "review-event": reviewEventSchema,
-  "review-state": reviewStateSchema,
-  "review-thread": reviewThreadSchema
-} as const;
+type StandaloneValidateFunction = ((value: unknown) => boolean) & {
+  errors?: ErrorObject[] | null;
+};
 
-export type BrowserReviewSchemaName = keyof typeof schemas;
+const validators = {
+  "review-bundle": reviewBundle as StandaloneValidateFunction,
+  "review-event": reviewEvent as StandaloneValidateFunction,
+  "review-state": reviewState as StandaloneValidateFunction,
+  "review-thread": reviewThread as StandaloneValidateFunction
+};
+
+export type BrowserReviewSchemaName = keyof typeof validators;
 
 export interface BrowserReviewValidationResult {
   ok: boolean;
@@ -50,13 +55,6 @@ interface ReviewAnchorForValidation {
   [key: string]: unknown;
 }
 
-const ajv = new Ajv({ allErrors: true, strict: false, validateFormats: true });
-addFormats(ajv);
-const validators = new Map<BrowserReviewSchemaName, ValidateFunction>();
-for (const name of Object.keys(schemas) as BrowserReviewSchemaName[]) {
-  validators.set(name, ajv.compile(schemas[name]));
-}
-
 function formatError(error: ErrorObject): string {
   return `${error.instancePath || "/"} ${error.message ?? "is invalid"}`;
 }
@@ -76,7 +74,7 @@ export function validateBrowserReviewArtifact(
   name: BrowserReviewSchemaName,
   value: unknown
 ): BrowserReviewValidationResult {
-  const validator = validators.get(name)!;
+  const validator = validators[name];
   const valid = validator(value);
   return { ok: Boolean(valid), errors: valid ? [] : (validator.errors ?? []).map(formatError) };
 }

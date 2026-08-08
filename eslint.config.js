@@ -14,6 +14,7 @@ export default tseslint.config(
       "fixtures/**/expected/**",
       "node_modules/**",
       "packages/cli/dist/**",
+      "packages/report-model/src/generated/browser-validators.generated.js",
       "skills/utsuri-review/assets/**",
       "skills/utsuri-review/scripts/utsuri.mjs"
     ]
