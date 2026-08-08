@@ -96,12 +96,22 @@ jobs:
       - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
         with:
           persist-credentials: false
+          fetch-depth: 0
       - uses: DeterminateSystems/nix-installer-action@ef8a148080ab6020fd15196c2084a2eea5ff2d25 # v22
       - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
         with:
           node-version: 24
       - name: Evaluate every supported system
         run: nix flake check --all-systems --no-build
+      - name: Reject PII and secrets in public history
+        run: |
+          node scripts/scan-public-history.mjs --ref HEAD
+          nix develop --command gitleaks git \
+            --config .gitleaks.toml \
+            --redact \
+            --no-banner \
+            --log-opts=HEAD \
+            .
       - name: Build current-system checks
         run: nix flake check
       - name: Verify Nix toolchain

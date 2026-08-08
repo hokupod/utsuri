@@ -177,7 +177,7 @@ async function productionGraph(root, lockIntegrities) {
 
 function creationTimestamp() {
   const raw = process.env.SOURCE_DATE_EPOCH;
-  if (!raw) return "1970-01-01T00:00:00.000Z";
+  if (!raw) return "1980-01-01T00:00:00.000Z";
   const seconds = Number(raw);
   if (!Number.isSafeInteger(seconds) || seconds < 0) {
     throw new Error("SOURCE_DATE_EPOCH must be a non-negative integer");

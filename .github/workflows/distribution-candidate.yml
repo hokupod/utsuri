@@ -1,0 +1,242 @@
+name: Distribution Candidate
+
+on:
+  workflow_call:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: distribution-candidate-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  native-helper:
+    name: Native helper / ${{ matrix.target }}
+    runs-on: ${{ matrix.runner }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - target: darwin-arm64
+            runner: macos-15
+          - target: darwin-x64
+            runner: macos-15-intel
+          - target: linux-arm64
+            runner: ubuntu-24.04-arm
+          - target: linux-x64
+            runner: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: 24
+          package-manager-cache: false
+      - uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6 # v2.0.2
+        with:
+          bun-version: 1.3.14
+      - name: Install and verify Safe-chain trust anchor
+        env:
+          UTSURI_TARGET: ${{ matrix.target }}
+        run: |
+          utsuri_safe_chain_version="$(node -p "require('./toolchain-policy.json').safeChain.version")"
+          utsuri_safe_chain_asset="$(node -p "require('./toolchain-policy.json').safeChain.assets[process.env.UTSURI_TARGET]")"
+          utsuri_safe_chain_expected="$(node -p "require('./toolchain-policy.json').safeChain.sha256[process.env.UTSURI_TARGET]")"
+          utsuri_safe_chain_target="${HOME}/.safe-chain/bin/safe-chain"
+          mkdir -p "$(dirname "${utsuri_safe_chain_target}")"
+          curl --fail --silent --show-error --location \
+            "https://github.com/AikidoSec/safe-chain/releases/download/${utsuri_safe_chain_version}/${utsuri_safe_chain_asset}" \
+            --output "${utsuri_safe_chain_target}"
+          node -e "const fs=require('node:fs');const c=require('node:crypto');const got=c.createHash('sha256').update(fs.readFileSync(process.argv[1])).digest('hex');if(got!==process.argv[2])throw new Error('Safe-chain digest mismatch')" \
+            "${utsuri_safe_chain_target}" "${utsuri_safe_chain_expected}"
+          chmod 0755 "${utsuri_safe_chain_target}"
+          node scripts/safe-chain.mjs --version
+          node scripts/safe-chain.mjs setup-ci
+          npx safe-chain-verify
+          bunx safe-chain-verify
+      - name: Install the exact lockfile
+        run: bun install --frozen-lockfile
+      - name: Build and execute the target helper proof
+        env:
+          UTSURI_TARGET: ${{ matrix.target }}
+        run: |
+          test "$(node -p "process.platform + '-' + process.arch")" = "${UTSURI_TARGET}"
+          node scripts/build-native-helper.mjs
+          node scripts/verify-native-helper.mjs --target "${UTSURI_TARGET}"
+      - name: Assemble and pack the target package
+        env:
+          UTSURI_TARGET: ${{ matrix.target }}
+        run: |
+          mkdir -p \
+            ".artifacts/platform/${UTSURI_TARGET}/upload/native" \
+            ".artifacts/platform/${UTSURI_TARGET}/upload/tarballs"
+          node scripts/assemble-release-package.mjs \
+            --kind native \
+            --target "${UTSURI_TARGET}" \
+            --output ".artifacts/platform/${UTSURI_TARGET}/package"
+          npm pack ".artifacts/platform/${UTSURI_TARGET}/package" \
+            --json \
+            --pack-destination ".artifacts/platform/${UTSURI_TARGET}/upload/tarballs"
+          cp ".artifacts/native/${UTSURI_TARGET}/utsuri-fs-ops" \
+            ".artifacts/platform/${UTSURI_TARGET}/upload/native/utsuri-fs-ops"
+          cp ".artifacts/native/${UTSURI_TARGET}/proof.json" \
+            ".artifacts/platform/${UTSURI_TARGET}/upload/native/proof.json"
+      - name: Upload target package and proof
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: native-${{ matrix.target }}
+          path: .artifacts/platform/${{ matrix.target }}/upload
+          if-no-files-found: error
+          retention-days: 7
+
+  aggregate:
+    name: Aggregate npm and Plugin candidate
+    needs: native-helper
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: 24
+          package-manager-cache: false
+      - uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6 # v2.0.2
+        with:
+          bun-version: 1.3.14
+      - name: Install and verify Safe-chain trust anchor
+        run: |
+          utsuri_safe_chain_version="$(node -p "require('./toolchain-policy.json').safeChain.version")"
+          utsuri_safe_chain_asset="$(node -p "require('./toolchain-policy.json').safeChain.assets['linux-x64']")"
+          utsuri_safe_chain_expected="$(node -p "require('./toolchain-policy.json').safeChain.sha256['linux-x64']")"
+          utsuri_safe_chain_target="${HOME}/.safe-chain/bin/safe-chain"
+          mkdir -p "$(dirname "${utsuri_safe_chain_target}")"
+          curl --fail --silent --show-error --location \
+            "https://github.com/AikidoSec/safe-chain/releases/download/${utsuri_safe_chain_version}/${utsuri_safe_chain_asset}" \
+            --output "${utsuri_safe_chain_target}"
+          node -e "const fs=require('node:fs');const c=require('node:crypto');const got=c.createHash('sha256').update(fs.readFileSync(process.argv[1])).digest('hex');if(got!==process.argv[2])throw new Error('Safe-chain digest mismatch')" \
+            "${utsuri_safe_chain_target}" "${utsuri_safe_chain_expected}"
+          chmod 0755 "${utsuri_safe_chain_target}"
+          node scripts/safe-chain.mjs --version
+          node scripts/safe-chain.mjs setup-ci
+          npx safe-chain-verify
+          bunx safe-chain-verify
+      - name: Install and build from the exact lockfile
+        run: |
+          bun install --frozen-lockfile
+          bun run check
+          bun run build
+          bun run verify:sbom
+      - name: Download every platform result
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        with:
+          pattern: native-*
+          path: .artifacts/platform-download
+      - name: Reconstruct and verify all helper proofs
+        run: |
+          mkdir -p .artifacts/candidate-native
+          for utsuri_target in darwin-arm64 darwin-x64 linux-arm64 linux-x64; do
+            utsuri_source=".artifacts/platform-download/native-${utsuri_target}/native"
+            utsuri_destination=".artifacts/candidate-native/${utsuri_target}"
+            mkdir -p "${utsuri_destination}"
+            cp "${utsuri_source}/utsuri-fs-ops" "${utsuri_destination}/utsuri-fs-ops"
+            cp "${utsuri_source}/proof.json" "${utsuri_destination}/proof.json"
+            chmod 0755 "${utsuri_destination}/utsuri-fs-ops"
+            chmod 0644 "${utsuri_destination}/proof.json"
+          done
+          node scripts/assemble-distribution-candidate.mjs \
+            --native-root .artifacts/candidate-native \
+            --output .artifacts/distribution-candidate
+          node scripts/verify-release-layout.mjs \
+            --candidate .artifacts/distribution-candidate
+      - name: Pack exact npm and Plugin artifacts
+        run: |
+          mkdir -p .artifacts/release-candidate/tarballs
+          npm pack .artifacts/distribution-candidate/packages/cli \
+            --json \
+            --pack-destination .artifacts/release-candidate/tarballs
+          for utsuri_target in darwin-arm64 darwin-x64 linux-arm64 linux-x64; do
+            npm pack ".artifacts/distribution-candidate/packages/native/${utsuri_target}" \
+              --json \
+              --pack-destination .artifacts/release-candidate/tarballs
+          done
+          cp .artifacts/distribution-candidate/candidate-manifest.json \
+            .artifacts/release-candidate/candidate-manifest.json
+          cp -R .artifacts/distribution-candidate/plugin \
+            .artifacts/release-candidate/plugin
+          node scripts/release-assets.mjs finalize \
+            --candidate .artifacts/release-candidate
+      - name: Upload the release candidate
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: utsuri-release-candidate
+          path: .artifacts/release-candidate
+          if-no-files-found: error
+          retention-days: 7
+
+  isolated-install:
+    name: Exact tarball / Node ${{ matrix.node }}
+    needs: aggregate
+    runs-on: ubuntu-24.04
+    strategy:
+      fail-fast: false
+      matrix:
+        node: [22, 24]
+    steps:
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: ${{ matrix.node }}
+          package-manager-cache: false
+      - uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6 # v2.0.2
+        with:
+          bun-version: 1.3.14
+      - uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        with:
+          name: utsuri-release-candidate
+          path: .artifacts/release-candidate
+      - name: Verify the exact downloaded release candidate
+        run: node scripts/release-assets.mjs verify --candidate .artifacts/release-candidate
+      - name: Install and verify Safe-chain trust anchor
+        run: |
+          utsuri_safe_chain_version="$(node -p "require('./toolchain-policy.json').safeChain.version")"
+          utsuri_safe_chain_asset="$(node -p "require('./toolchain-policy.json').safeChain.assets['linux-x64']")"
+          utsuri_safe_chain_expected="$(node -p "require('./toolchain-policy.json').safeChain.sha256['linux-x64']")"
+          utsuri_safe_chain_target="${HOME}/.safe-chain/bin/safe-chain"
+          mkdir -p "$(dirname "${utsuri_safe_chain_target}")"
+          curl --fail --silent --show-error --location \
+            "https://github.com/AikidoSec/safe-chain/releases/download/${utsuri_safe_chain_version}/${utsuri_safe_chain_asset}" \
+            --output "${utsuri_safe_chain_target}"
+          node -e "const fs=require('node:fs');const c=require('node:crypto');const got=c.createHash('sha256').update(fs.readFileSync(process.argv[1])).digest('hex');if(got!==process.argv[2])throw new Error('Safe-chain digest mismatch')" \
+            "${utsuri_safe_chain_target}" "${utsuri_safe_chain_expected}"
+          chmod 0755 "${utsuri_safe_chain_target}"
+          node scripts/safe-chain.mjs --version
+          node scripts/safe-chain.mjs setup-ci
+          npx safe-chain-verify
+          bunx safe-chain-verify
+      - name: Install only the exact local tarballs and run native protocol
+        run: |
+          utsuri_version="$(node -p "require('./package.json').version")"
+          utsuri_install_root="$(mktemp -d)"
+          trap 'rm -rf "${utsuri_install_root}"' EXIT
+          : > "${utsuri_install_root}/npmrc"
+          npm install \
+            --prefix "${utsuri_install_root}" \
+            --offline \
+            --ignore-scripts \
+            --no-audit \
+            --no-fund \
+            --package-lock=false \
+            --cache "${utsuri_install_root}/cache" \
+            --userconfig "${utsuri_install_root}/npmrc" \
+            ".artifacts/release-candidate/tarballs/utsu-ri-cli-linux-x64-${utsuri_version}.tgz" \
+            ".artifacts/release-candidate/tarballs/utsu-ri-cli-${utsuri_version}.tgz"
+          node scripts/verify-installed-cli.mjs \
+            --root "${utsuri_install_root}" \
+            --target linux-x64 \
+            --version "${utsuri_version}"

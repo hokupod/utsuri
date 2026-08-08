@@ -22,6 +22,7 @@
         default = pkgs.mkShell {
           packages = [
             pkgs.bun
+            pkgs.gitleaks
             pkgs.nodejs_24
           ] ++ pkgs.lib.optionals pkgs.stdenv.isLinux [ pkgs.chromium ];
         };

@@ -9,6 +9,11 @@ import {
   verifyDistributionCandidate
 } from "../../scripts/assemble-distribution-candidate.mjs";
 import { nativeTargets } from "../../scripts/assemble-release-package.mjs";
+import {
+  expectedPackageTarballs,
+  finalizeReleaseAssets,
+  verifyReleaseAssets
+} from "../../scripts/release-assets.mjs";
 import { repositoryRoot } from "./capture-helpers";
 
 const temporaryDirectories: string[] = [];
@@ -106,6 +111,31 @@ describe("distribution candidate assembly", () => {
     const assembled = await assembleDistributionCandidate(candidate, nativeRoot, repositoryRoot);
     expect(assembled.manifest.targets).toEqual(nativeTargets);
     await expect(verifyDistributionCandidate(candidate, repositoryRoot)).resolves.toBeDefined();
+
+    const releaseCandidate = path.join(scratch, "release-candidate");
+    await mkdir(path.join(releaseCandidate, "tarballs"), { recursive: true, mode: 0o700 });
+    await Promise.all([
+      cp(path.join(candidate, "plugin"), path.join(releaseCandidate, "plugin"), {
+        recursive: true
+      }),
+      cp(
+        path.join(candidate, "candidate-manifest.json"),
+        path.join(releaseCandidate, "candidate-manifest.json")
+      ),
+      ...expectedPackageTarballs(assembled.manifest.version).map(({ packageName, relative }) =>
+        writeFile(path.join(releaseCandidate, relative), `fixture tarball for ${packageName}\n`)
+      )
+    ]);
+    const releaseManifest = await finalizeReleaseAssets(releaseCandidate, repositoryRoot);
+    expect(Object.keys(releaseManifest.files)).toHaveLength(7);
+    await expect(verifyReleaseAssets(releaseCandidate, repositoryRoot)).resolves.toBeDefined();
+    const [firstTarball] = expectedPackageTarballs(assembled.manifest.version);
+    if (!firstTarball) throw new Error("expected a release tarball fixture");
+    const tamperedTarball = path.join(releaseCandidate, firstTarball.relative);
+    await writeFile(tamperedTarball, "tampered\n");
+    await expect(verifyReleaseAssets(releaseCandidate, repositoryRoot)).rejects.toThrow(
+      "differs from its manifest"
+    );
 
     const pluginHelper = path.join(
       candidate,

@@ -142,15 +142,33 @@ describe("release file inventory", () => {
 
 describe("cross-job distribution transport", () => {
   test("never extracts a downloaded helper or Plugin tarball", async () => {
-    const [releaseWorkflow, promotionWorkflow] = await Promise.all([
+    const [candidateWorkflow, releaseWorkflow, promotionWorkflow] = await Promise.all([
+      readFile(path.join(repositoryRoot, ".github/workflows/distribution-candidate.yml"), "utf8"),
       readFile(path.join(repositoryRoot, ".github/workflows/release.yml"), "utf8"),
       readFile(path.join(repositoryRoot, ".github/workflows/plugin-promotion.yml"), "utf8")
     ]);
-    for (const workflow of [releaseWorkflow, promotionWorkflow]) {
+    for (const workflow of [candidateWorkflow, releaseWorkflow, promotionWorkflow]) {
       assert.doesNotMatch(workflow, /(?:^|\s)-[A-Za-z]*x[A-Za-z]*(?:\s|$)/mu);
     }
     assert.match(promotionWorkflow, /--restore-plugin-modes/u);
     assert.match(promotionWorkflow, /Package only the verified aggregate Plugin/u);
+  });
+
+  test("keeps candidate generation read-only and isolates trusted publication", async () => {
+    const [candidateWorkflow, releaseWorkflow] = await Promise.all([
+      readFile(path.join(repositoryRoot, ".github/workflows/distribution-candidate.yml"), "utf8"),
+      readFile(path.join(repositoryRoot, ".github/workflows/release.yml"), "utf8")
+    ]);
+    assert.doesNotMatch(candidateWorkflow, /npm (?:stage )?publish|id-token:\s*write/u);
+    assert.match(candidateWorkflow, /workflow_call:/u);
+    assert.match(releaseWorkflow, /tags:\s*\n\s*- "v\*"/u);
+    assert.match(releaseWorkflow, /environment: release/u);
+    assert.match(releaseWorkflow, /id-token: write/u);
+    assert.match(releaseWorkflow, /publish-release-packages\.mjs/u);
+    assert.match(releaseWorkflow, /already exists; refusing to bypass asset verification/u);
+    assert.match(releaseWorkflow, /--draft\s/u);
+    assert.match(releaseWorkflow, /--draft=false/u);
+    assert.doesNotMatch(releaseWorkflow, /NODE_AUTH_TOKEN|NPM_TOKEN/u);
   });
 });
 

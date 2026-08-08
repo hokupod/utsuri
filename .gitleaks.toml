@@ -1,0 +1,14 @@
+title = "Utsuri secret scanning policy"
+
+[extend]
+useDefault = true
+
+[allowlist]
+description = "Exact reviewed test fixtures, dependency digest, and RFC 6455 sample"
+regexTarget = "match"
+regexes = [
+  '''24-literal-provider-token-in-comment''',
+  '''9b318ac7b3a3751127c74f59dd1dd209230a70ca116000348b82faae189f72f0''',
+  '''7e03802d-3670-4c68-a3e5-b82186cbc79c''',
+  '''Sec-WebSocket-Key: dGhlIHNhbXBsZSBub25jZQ=='''
+]
