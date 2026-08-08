@@ -34,6 +34,16 @@ function run(root, mode) {
   return { ...result, combined: `${result.stdout}${result.stderr}` };
 }
 
+test("valid fixture keeps its linked implementation plan tracked", () => {
+  const relativePath = "fixtures/documentation/valid/ai/plans/active/v1-実装/README.md";
+  const result = spawnSync("git", ["ls-files", "--error-unmatch", relativePath], {
+    cwd: repositoryRoot,
+    encoding: "utf8",
+    shell: false
+  });
+  assert.equal(result.status, 0, `${result.stdout}${result.stderr}`);
+});
+
 async function rewrite(root, relativePath, mutator) {
   const file = path.join(root, relativePath);
   const before = await readFile(file, "utf8");
