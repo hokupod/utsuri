@@ -55,8 +55,8 @@ jobs:
           chmod 0755 "${utsuri_safe_chain_target}"
           node scripts/safe-chain.mjs --version
           node scripts/safe-chain.mjs setup-ci
-          npx safe-chain-verify
-          bunx safe-chain-verify
+          node scripts/safe-chain.mjs npm safe-chain-verify
+          node scripts/safe-chain.mjs bun safe-chain-verify
       - name: Install the exact development lockfile
         run: bun install --frozen-lockfile
       - name: Download the approved release candidate

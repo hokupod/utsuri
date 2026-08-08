@@ -63,8 +63,8 @@ jobs:
           chmod 0755 "${utsuri_safe_chain_target}"
           node scripts/safe-chain.mjs --version
           node scripts/safe-chain.mjs setup-ci
-          npx safe-chain-verify
-          bunx safe-chain-verify
+          node scripts/safe-chain.mjs npm safe-chain-verify
+          node scripts/safe-chain.mjs bun safe-chain-verify
       - name: Install locked dependencies
         run: bun install --frozen-lockfile
       - name: Run full static gate
@@ -132,8 +132,8 @@ jobs:
           chmod 0755 "${utsuri_safe_chain_target}"
           node scripts/safe-chain.mjs --version
           node scripts/safe-chain.mjs setup-ci
-          npx safe-chain-verify
-          bunx safe-chain-verify
+          nix develop --command node scripts/safe-chain.mjs npm safe-chain-verify
+          nix develop --command node scripts/safe-chain.mjs bun safe-chain-verify
       - name: Run the Nix Bun compatibility gate through Safe-chain
         run: |
           nix develop --command node scripts/dev-env-check.mjs --json

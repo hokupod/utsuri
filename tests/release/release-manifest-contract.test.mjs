@@ -172,6 +172,45 @@ describe("cross-job distribution transport", () => {
   });
 });
 
+describe("Safe-chain CI contract", () => {
+  test("verifies npm and Bun through the pinned Safe-chain wrapper", async () => {
+    const workflowPaths = [
+      ".github/workflows/ci.yml",
+      ".github/workflows/distribution-candidate.yml",
+      ".github/workflows/plugin-promotion.yml",
+      ".github/workflows/release.yml"
+    ];
+    for (const workflowPath of workflowPaths) {
+      const workflow = await readFile(path.join(repositoryRoot, workflowPath), "utf8");
+      const setups = workflow.match(/node scripts\/safe-chain\.mjs setup-ci/gu) ?? [];
+      const npmVerifications =
+        workflow.match(
+          /(?:nix develop --command )?node scripts\/safe-chain\.mjs npm safe-chain-verify/gu
+        ) ?? [];
+      const bunVerifications =
+        workflow.match(
+          /(?:nix develop --command )?node scripts\/safe-chain\.mjs bun safe-chain-verify/gu
+        ) ?? [];
+      assert.ok(setups.length > 0, `${workflowPath} must configure Safe-chain`);
+      assert.equal(npmVerifications.length, setups.length, workflowPath);
+      assert.equal(bunVerifications.length, setups.length, workflowPath);
+      assert.doesNotMatch(workflow, /\b(?:npx|bunx) safe-chain-verify\b/u);
+    }
+    const ciWorkflow = await readFile(
+      path.join(repositoryRoot, ".github/workflows/ci.yml"),
+      "utf8"
+    );
+    assert.match(
+      ciWorkflow,
+      /nix develop --command node scripts\/safe-chain\.mjs npm safe-chain-verify/u
+    );
+    assert.match(
+      ciWorkflow,
+      /nix develop --command node scripts\/safe-chain\.mjs bun safe-chain-verify/u
+    );
+  });
+});
+
 describe("source and native package contracts", () => {
   test("keeps the workspace CLI private while pinning bundled external inputs", () => {
     const sourceManifest = {

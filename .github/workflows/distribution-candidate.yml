@@ -55,8 +55,8 @@ jobs:
           chmod 0755 "${utsuri_safe_chain_target}"
           node scripts/safe-chain.mjs --version
           node scripts/safe-chain.mjs setup-ci
-          npx safe-chain-verify
-          bunx safe-chain-verify
+          node scripts/safe-chain.mjs npm safe-chain-verify
+          node scripts/safe-chain.mjs bun safe-chain-verify
       - name: Install the exact lockfile
         run: bun install --frozen-lockfile
       - name: Build and execute the target helper proof
@@ -122,8 +122,8 @@ jobs:
           chmod 0755 "${utsuri_safe_chain_target}"
           node scripts/safe-chain.mjs --version
           node scripts/safe-chain.mjs setup-ci
-          npx safe-chain-verify
-          bunx safe-chain-verify
+          node scripts/safe-chain.mjs npm safe-chain-verify
+          node scripts/safe-chain.mjs bun safe-chain-verify
       - name: Install and build from the exact lockfile
         run: |
           bun install --frozen-lockfile
@@ -217,8 +217,8 @@ jobs:
           chmod 0755 "${utsuri_safe_chain_target}"
           node scripts/safe-chain.mjs --version
           node scripts/safe-chain.mjs setup-ci
-          npx safe-chain-verify
-          bunx safe-chain-verify
+          node scripts/safe-chain.mjs npm safe-chain-verify
+          node scripts/safe-chain.mjs bun safe-chain-verify
       - name: Install only the exact local tarballs and run native protocol
         run: |
           utsuri_version="$(node -p "require('./package.json').version")"
