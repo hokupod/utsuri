@@ -16,6 +16,18 @@ import {
 export const repositoryRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 export const nativeTargets = ["darwin-arm64", "darwin-x64", "linux-arm64", "linux-x64"];
 
+export function nativeProofTests(target) {
+  const tests = ["architecture", "contained-read", "no-replace-publication", "path-rejection"];
+  if (target.startsWith("linux-")) {
+    tests.push(
+      "pidfd-browser-termination",
+      "pidfd-forged-executable-rejection",
+      "pidfd-foreign-parent-rejection"
+    );
+  }
+  return tests;
+}
+
 function sha256(bytes) {
   return createHash("sha256").update(bytes).digest("hex");
 }
@@ -200,8 +212,7 @@ export async function assembleNativeHelperPackage(
     proof.target !== target ||
     proof.sourceSha256 !== expectedSourceSha256 ||
     proof.helperSha256 !== expectedHelperSha256 ||
-    JSON.stringify(proof.tests) !==
-      JSON.stringify(["architecture", "contained-read", "no-replace-publication", "path-rejection"])
+    JSON.stringify(proof.tests) !== JSON.stringify(nativeProofTests(target))
   ) {
     throw new Error(`Native helper proof is invalid for ${target}`);
   }

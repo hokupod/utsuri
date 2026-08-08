@@ -1,7 +1,8 @@
 #!/usr/bin/env node
 
-import { spawnSync } from "node:child_process";
+import { spawn, spawnSync } from "node:child_process";
 import { createHash } from "node:crypto";
+import { once } from "node:events";
 import { constants } from "node:fs";
 import {
   chmod,
@@ -10,6 +11,7 @@ import {
   mkdtemp,
   open,
   readFile,
+  realpath,
   rm,
   stat,
   writeFile
@@ -17,7 +19,7 @@ import {
 import os from "node:os";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
-import { assertNativeBinary } from "./assemble-release-package.mjs";
+import { assertNativeBinary, nativeProofTests } from "./assemble-release-package.mjs";
 
 const repositoryRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 
@@ -152,12 +154,94 @@ export async function verifyNativeHelper({ helper, output, source, target }) {
       "destination collision"
     );
 
+    const proofTests = nativeProofTests(target);
+    if (process.platform === "linux") {
+      const executable = await realpath(process.execPath);
+      const token = "native-proof-token";
+      const marker = `--utsuri-capture-token=${token}`;
+      const child = spawn(
+        executable,
+        ["-e", "setInterval(() => {}, 1000)", "--", marker, "--remote-debugging-pipe"],
+        { stdio: "ignore" }
+      );
+      await once(child, "spawn");
+      const childExit = once(child, "exit");
+      requireResult(
+        run(helper, ["browser-terminate", String(child.pid), token, executable]),
+        0,
+        "pidfd browser termination"
+      );
+      await childExit;
+
+      const forgedExecutable = await realpath("/bin/sh");
+      const forged = spawn(
+        executable,
+        ["-e", "setInterval(() => {}, 1000)", "--", marker, "--remote-debugging-pipe"],
+        { argv0: forgedExecutable, stdio: "ignore" }
+      );
+      await once(forged, "spawn");
+      try {
+        requireResult(
+          run(helper, ["browser-terminate", String(forged.pid), token, forgedExecutable]),
+          66,
+          "pidfd forged executable rejection"
+        );
+        process.kill(forged.pid, 0);
+      } finally {
+        if (forged.exitCode === null && forged.signalCode === null) {
+          forged.kill("SIGKILL");
+          await once(forged, "exit");
+        }
+      }
+
+      const foreignParent = spawn(
+        executable,
+        [
+          "-e",
+          [
+            'const { spawn } = require("node:child_process");',
+            'const child = spawn(process.execPath, ["-e", "setInterval(() => {}, 1000)", "--", ...process.argv.slice(1)], { stdio: "ignore" });',
+            "process.stdout.write(`${child.pid}\\n`);",
+            'process.on("SIGTERM", () => child.kill("SIGKILL"));',
+            'child.on("exit", () => process.exit(0));',
+            "setInterval(() => {}, 1000);"
+          ].join("\n"),
+          "--",
+          marker,
+          "--remote-debugging-pipe"
+        ],
+        { stdio: ["ignore", "pipe", "ignore"] }
+      );
+      await once(foreignParent, "spawn");
+      const [foreignPidBytes] = await once(foreignParent.stdout, "data");
+      const foreignPid = Number(String(foreignPidBytes).trim());
+      if (!Number.isSafeInteger(foreignPid) || foreignPid <= 0) {
+        throw new Error("foreign browser proof did not report a valid process identifier");
+      }
+      try {
+        requireResult(
+          run(helper, ["browser-terminate", String(foreignPid), token, executable]),
+          66,
+          "pidfd foreign parent rejection"
+        );
+        process.kill(foreignPid, 0);
+      } finally {
+        const foreignParentExit = once(foreignParent, "exit");
+        try {
+          process.kill(foreignPid, "SIGKILL");
+        } catch {
+          foreignParent.kill("SIGKILL");
+        }
+        await foreignParentExit;
+      }
+    }
+
     const proof = {
       schemaVersion: "1.0",
       target,
       sourceSha256: sha256(sourceBytes),
       helperSha256: sha256(helperBytes),
-      tests: ["architecture", "contained-read", "no-replace-publication", "path-rejection"]
+      tests: proofTests
     };
     await writeProof(output, proof);
     return proof;

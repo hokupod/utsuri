@@ -1,8 +1,17 @@
 import { afterAll, describe, expect, test } from "bun:test";
-import { copyFile, mkdir, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
+import { execFileSync, spawn } from "node:child_process";
+import { randomUUID } from "node:crypto";
+import { once } from "node:events";
+import { copyFile, mkdir, mkdtemp, readFile, rm, symlink, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import path from "node:path";
 import { captureRun, normalizeCaptureConfig } from "../../packages/capture/src";
+import {
+  currentTrackedBrowserProcessIds,
+  resolveTrackedBrowserExecutablePaths,
+  terminateOwnedBrowserProcesses,
+  trackedBrowserProcessIds
+} from "../../packages/capture/src/browser-process";
 import { buildReport, createInitialReport } from "../../packages/report-builder/src";
 import {
   approvedBrowserAvailable,
@@ -28,6 +37,121 @@ async function temporaryRoot(prefix: string): Promise<string> {
 }
 
 describe("capture-runtime", () => {
+  test("canonicalizes a Linux browser symlink before pidfd cleanup", async () => {
+    if (process.platform !== "linux") return;
+
+    const root = await temporaryRoot("utsuri-browser-link-");
+    const link = path.join(root, "browser");
+    await symlink(process.execPath, link);
+    const executablePaths = await resolveTrackedBrowserExecutablePaths(link);
+    const executable = executablePaths.values().next().value!;
+    const token = randomUUID();
+    const child = spawn(
+      executable,
+      [
+        "-e",
+        "setInterval(() => {}, 1000)",
+        "--",
+        `--utsuri-capture-token=${token}`,
+        "--remote-debugging-pipe"
+      ],
+      { stdio: "ignore" }
+    );
+    await once(child, "spawn");
+    const exited = once(child, "exit");
+    try {
+      await expect(
+        terminateOwnedBrowserProcesses(new Set([child.pid!]), executablePaths, token)
+      ).resolves.toBeTrue();
+      await exited;
+      expect(() => process.kill(child.pid!, 0)).toThrow();
+    } finally {
+      if (child.exitCode === null && child.signalCode === null) {
+        child.kill("SIGKILL");
+        await once(child, "exit");
+      }
+    }
+  }, 10_000);
+
+  test("never signals multiple same-executable Linux candidates", async () => {
+    if (process.platform !== "linux") return;
+
+    const executablePaths = await resolveTrackedBrowserExecutablePaths(process.execPath);
+    const token = randomUUID();
+    const args = [
+      "-e",
+      "setInterval(() => {}, 1000)",
+      "--",
+      `--utsuri-capture-token=${token}`,
+      "--remote-debugging-pipe"
+    ];
+    const children = [
+      spawn(process.execPath, args, { stdio: "ignore" }),
+      spawn(process.execPath, args, { stdio: "ignore" })
+    ];
+    await Promise.all(children.map((child) => once(child, "spawn")));
+    try {
+      await expect(
+        terminateOwnedBrowserProcesses(
+          new Set(children.map((child) => child.pid!)),
+          executablePaths,
+          token
+        )
+      ).rejects.toMatchObject({ diagnosticId: "CAPTURE_BROWSER_PROCESS_AMBIGUOUS" });
+      for (const child of children) expect(() => process.kill(child.pid!, 0)).not.toThrow();
+    } finally {
+      for (const child of children) {
+        if (child.exitCode === null && child.signalCode === null) child.kill("SIGKILL");
+      }
+      await Promise.all(
+        children.map((child) =>
+          child.exitCode === null && child.signalCode === null
+            ? once(child, "exit")
+            : Promise.resolve()
+        )
+      );
+    }
+  }, 10_000);
+
+  test("rejects a forged Linux argv without matching executable identity", async () => {
+    if (process.platform !== "linux") return;
+
+    const executablePaths = new Set(["/bin/sh"]);
+    const token = randomUUID();
+    const marker = `--utsuri-capture-token=${token}`;
+    const forged = spawn(
+      process.execPath,
+      ["-e", "setInterval(() => {}, 1000)", "--", marker, "--remote-debugging-pipe"],
+      { argv0: "/bin/sh", stdio: "ignore" }
+    );
+    await once(forged, "spawn");
+    try {
+      let textMatchedProcessIds = new Set<number>();
+      for (let attempt = 0; attempt < 20; attempt += 1) {
+        const processList = execFileSync("ps", ["-axo", "pid=,ppid=,command="], {
+          encoding: "utf8",
+          shell: false
+        });
+        textMatchedProcessIds = trackedBrowserProcessIds(
+          processList,
+          executablePaths,
+          token,
+          process.pid
+        );
+        if (textMatchedProcessIds.has(forged.pid!)) break;
+        await new Promise((resolve) => setTimeout(resolve, 25));
+      }
+
+      expect(textMatchedProcessIds.has(forged.pid!)).toBeTrue();
+      expect(() => currentTrackedBrowserProcessIds(executablePaths, token)).toThrow();
+    } finally {
+      if (forged.exitCode === null && forged.signalCode === null) {
+        forged.kill("SIGKILL");
+        await once(forged, "exit");
+      }
+    }
+  }, 10_000);
+
   browserTest(
     "captures dual-url evidence in isolated contexts with a stable hash",
     async () => {

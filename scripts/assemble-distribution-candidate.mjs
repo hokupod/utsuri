@@ -9,6 +9,7 @@ import {
   assembleCliPackage,
   assembleNativeHelperPackage,
   assertNativeBinary,
+  nativeProofTests,
   nativeTargets,
   preparePrivateDirectory,
   repositoryRoot
@@ -298,7 +299,7 @@ export async function verifyDistributionCandidate(candidate, root = repositoryRo
           target,
           sourceSha256: sha256(sourceBytes),
           helperSha256: sha256(helper),
-          tests: ["architecture", "contained-read", "no-replace-publication", "path-rejection"]
+          tests: nativeProofTests(target)
         })
     ) {
       throw new Error(`Native helper integrity or proof is invalid for ${target}`);

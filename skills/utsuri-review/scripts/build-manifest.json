@@ -1,7 +1,7 @@
 {
   "schemaVersion": "1.1",
   "toolVersion": "0.1.0",
-  "sourceHash": "9d31f32b3a8ba0103a1349e913e0ed6f148dac6c6495354b4646960b6d8829d5",
+  "sourceHash": "09158ea347c0abccf8a8ca787f7ae7bc199f5e56a206c85208afb89b67a3f131",
   "sourceHashes": {
     "packages/adapters/generic/src/index.ts": "0fb851c88f14187773d97373b9d848e831abb629bb4b1834c4393f29917c4169",
     "packages/adapters/playwright/src/index.ts": "7714950f8fbcc160493e649a13e2c96d2843530307150357c30b9155c42b6081",
@@ -9,10 +9,10 @@
     "packages/adapters/storybook/src/index.ts": "c585806d51e46dec7569d8f9b7ac587ca329c7c7ebd286d5c290edc3e85de767",
     "packages/capture/src/actions.ts": "7778fcded209e74c8a5b32693bd844627e04290de235e5417fe15bdc9c1501cf",
     "packages/capture/src/artifacts.ts": "7f234498939667750c17a33f71160e2f992af21acaacc3a3acc3145353ef15b7",
-    "packages/capture/src/browser-process.ts": "98b3e2b14025dc404fcffcfae16f1a94208722a8f21d462a00a017a6456f75b1",
+    "packages/capture/src/browser-process.ts": "4c09c20596d13570831325d6a21206c364e88c26fd3090e7a5fe274293047d17",
     "packages/capture/src/browser.ts": "720488c4b1de50756ff3b2ed5f671307e6c699d90263d022cdc608d2b25a686a",
     "packages/capture/src/capabilities.ts": "e957490bfaf2018862b6c754abd3382793a94e8098639c81ccfc520292375df1",
-    "packages/capture/src/capture.ts": "8352f31149c5b91281a81ecf787d5bf738b819e4563ad239bc1e758ad2f1a268",
+    "packages/capture/src/capture.ts": "bd23e90c9fc7094ae38cd437079a534a4d755cc73f5fbaae4840ec1a05b82c64",
     "packages/capture/src/config.ts": "87b8576f6906976168c21b17bc21a406fb2d9a99858213764f1b1a71a888e5dc",
     "packages/capture/src/failure-evidence.ts": "56ade21ffc963fddd2cbf0069d9748321b1891ca53ed6af5ea826d8de9a3511e",
     "packages/capture/src/index.ts": "a313309ecc7a849f21779644e1ecc1bb366de2bb20023ff7babb5c6cd196bb4e",
@@ -283,5 +283,5 @@
     "app.css": "4c49aa245c933b504b0864bd4eaf7a9fe3564a4378ccf6cfd81d83634110cb0f",
     "app.js": "5a11e1a5496f1bb3ceb41e50934dd6a3b7d650a348f726721c5fcc8a480b9e6f"
   },
-  "bundleSha256": "18b53fe5ec2cbb6576a62a40eaa42a25ba0f3b5842df5c9e79236d455953ee8a"
+  "bundleSha256": "bddfd22ffe4307ae6de02c959939176523181761ac44a388c36de69f5b2e6d71"
 }

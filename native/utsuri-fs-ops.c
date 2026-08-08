@@ -16,6 +16,9 @@
 #include <sys/stdio.h>
 #elif defined(__linux__)
 #include <linux/fs.h>
+#include <limits.h>
+#include <poll.h>
+#include <signal.h>
 #include <sys/syscall.h>
 #else
 #error "utsuri-fs-ops supports only macOS and Linux"
@@ -31,7 +34,8 @@ enum {
   UTSURI_PATH_INVALID = 69,
   UTSURI_FILE_TYPE = 70,
   UTSURI_FILE_SIZE = 71,
-  UTSURI_FILE_MISSING = 72
+  UTSURI_FILE_MISSING = 72,
+  UTSURI_TRACKING_UNAVAILABLE = 73
 };
 
 static int parse_uint64(const char *text, uint64_t *value) {
@@ -394,6 +398,356 @@ static int browser_launch(int argc, char **argv) {
 #endif
 }
 
+#if defined(__linux__) && defined(SYS_pidfd_open) &&                         \
+    defined(SYS_pidfd_send_signal)
+static int valid_capture_token(const char *value) {
+  size_t length = strlen(value);
+  if (length == 0 || length > 128) {
+    return 0;
+  }
+  for (size_t index = 0; index < length; index++) {
+    char character = value[index];
+    if (!((character >= 'a' && character <= 'z') ||
+          (character >= 'A' && character <= 'Z') ||
+          (character >= '0' && character <= '9') || character == '-')) {
+      return 0;
+    }
+  }
+  return 1;
+}
+
+static int poll_process_handle(int pidfd, int timeout_ms, int *exited) {
+  struct pollfd descriptor = {.fd = pidfd, .events = POLLIN, .revents = 0};
+  int result;
+  do {
+    result = poll(&descriptor, 1, timeout_ms);
+  } while (result < 0 && errno == EINTR);
+  if (result < 0) {
+    return fail_with_errno("poll(browser pidfd)");
+  }
+  *exited = result > 0 &&
+            (descriptor.revents & (POLLIN | POLLHUP | POLLERR)) != 0;
+  return UTSURI_OK;
+}
+
+static int process_parent_matches(pid_t pid, pid_t expected_parent) {
+  char process_path[64];
+  int process_length = snprintf(process_path, sizeof(process_path),
+                                "/proc/%ld/stat", (long)pid);
+  if (process_length <= 0 || process_length >= (int)sizeof(process_path)) {
+    fprintf(stderr, "browser process parent path is invalid\n");
+    return UTSURI_SYSTEM_ERROR;
+  }
+  int process_fd = open(process_path, O_RDONLY | O_CLOEXEC | O_NOFOLLOW);
+  if (process_fd < 0) {
+    return fail_with_errno("open(browser process parent)");
+  }
+  char process_stat[4096];
+  size_t total = 0;
+  for (;;) {
+    ssize_t count = read(process_fd, process_stat + total,
+                         sizeof(process_stat) - 1 - total);
+    if (count < 0) {
+      if (errno == EINTR) {
+        continue;
+      }
+      int result = fail_with_errno("read(browser process parent)");
+      close(process_fd);
+      return result;
+    }
+    if (count == 0) {
+      break;
+    }
+    total += (size_t)count;
+    if (total == sizeof(process_stat) - 1) {
+      fprintf(stderr, "browser process parent state exceeds the byte limit\n");
+      close(process_fd);
+      return UTSURI_FILE_SIZE;
+    }
+  }
+  close(process_fd);
+  process_stat[total] = '\0';
+  char *command_end = strrchr(process_stat, ')');
+  char state;
+  long parent_value;
+  if (command_end == NULL ||
+      sscanf(command_end + 1, " %c %ld", &state, &parent_value) != 2 ||
+      parent_value != (long)expected_parent) {
+    fprintf(stderr, "browser process parent identity changed\n");
+    return UTSURI_IDENTITY_MISMATCH;
+  }
+  return UTSURI_OK;
+}
+
+static int process_executable_matches(pid_t pid, int expected_count,
+                                      char **expected_paths) {
+  char process_path[64];
+  int process_length = snprintf(process_path, sizeof(process_path),
+                                "/proc/%ld/exe", (long)pid);
+  if (process_length <= 0 || process_length >= (int)sizeof(process_path)) {
+    fprintf(stderr, "browser process executable path is invalid\n");
+    return UTSURI_SYSTEM_ERROR;
+  }
+  int process_fd = open(process_path, O_PATH | O_CLOEXEC);
+  if (process_fd < 0) {
+    return fail_with_errno("open(browser process executable)");
+  }
+  struct stat process_stat;
+  if (fstat(process_fd, &process_stat) != 0) {
+    int result = fail_with_errno("fstat(browser process executable)");
+    close(process_fd);
+    return result;
+  }
+  if (!S_ISREG(process_stat.st_mode)) {
+    fprintf(stderr, "browser process executable is not a regular file\n");
+    close(process_fd);
+    return UTSURI_IDENTITY_MISMATCH;
+  }
+
+  int matched = 0;
+  for (int index = 0; index < expected_count; index++) {
+    const char *expected_path = expected_paths[index];
+    if (expected_path[0] != '/') {
+      fprintf(stderr, "browser executable path must be absolute\n");
+      close(process_fd);
+      return UTSURI_PATH_INVALID;
+    }
+    char canonical[PATH_MAX];
+    if (realpath(expected_path, canonical) == NULL) {
+      int result = fail_with_errno("realpath(approved browser executable)");
+      close(process_fd);
+      return result;
+    }
+    if (strcmp(canonical, expected_path) != 0) {
+      fprintf(stderr, "approved browser executable path is not canonical\n");
+      close(process_fd);
+      return UTSURI_IDENTITY_MISMATCH;
+    }
+    int expected_fd =
+        open(expected_path, O_PATH | O_CLOEXEC | O_NOFOLLOW);
+    if (expected_fd < 0) {
+      int result = fail_with_errno("open(approved browser executable)");
+      close(process_fd);
+      return result;
+    }
+    struct stat expected_stat;
+    if (fstat(expected_fd, &expected_stat) != 0) {
+      int result = fail_with_errno("fstat(approved browser executable)");
+      close(expected_fd);
+      close(process_fd);
+      return result;
+    }
+    if (!S_ISREG(expected_stat.st_mode) ||
+        (expected_stat.st_mode & 0111) == 0) {
+      fprintf(stderr, "approved browser executable identity is invalid\n");
+      close(expected_fd);
+      close(process_fd);
+      return UTSURI_FILE_TYPE;
+    }
+    if (expected_stat.st_dev == process_stat.st_dev &&
+        expected_stat.st_ino == process_stat.st_ino) {
+      matched = 1;
+    }
+    close(expected_fd);
+  }
+  close(process_fd);
+  if (!matched) {
+    fprintf(stderr, "browser process executable identity changed\n");
+    return UTSURI_IDENTITY_MISMATCH;
+  }
+  return UTSURI_OK;
+}
+
+static int process_arguments_match(pid_t pid, const char *capture_token,
+                                   int expected_count,
+                                   char **expected_paths) {
+  char process_path[64];
+  int process_length = snprintf(process_path, sizeof(process_path),
+                                "/proc/%ld/cmdline", (long)pid);
+  if (process_length <= 0 || process_length >= (int)sizeof(process_path)) {
+    fprintf(stderr, "browser process command path is invalid\n");
+    return UTSURI_SYSTEM_ERROR;
+  }
+  int command_fd = open(process_path, O_RDONLY | O_CLOEXEC | O_NOFOLLOW);
+  if (command_fd < 0) {
+    return fail_with_errno("open(browser process command)");
+  }
+  const size_t maximum_bytes = 1024 * 1024;
+  unsigned char *command = malloc(maximum_bytes + 1);
+  if (command == NULL) {
+    close(command_fd);
+    errno = ENOMEM;
+    return fail_with_errno("allocate(browser process command)");
+  }
+  size_t total = 0;
+  for (;;) {
+    ssize_t count = read(command_fd, command + total,
+                         maximum_bytes + 1 - total);
+    if (count < 0) {
+      if (errno == EINTR) {
+        continue;
+      }
+      int result = fail_with_errno("read(browser process command)");
+      free(command);
+      close(command_fd);
+      return result;
+    }
+    if (count == 0) {
+      break;
+    }
+    total += (size_t)count;
+    if (total > maximum_bytes) {
+      fprintf(stderr, "browser process command exceeds the byte limit\n");
+      free(command);
+      close(command_fd);
+      return UTSURI_FILE_SIZE;
+    }
+  }
+  close(command_fd);
+  if (total == 0 || command[total - 1] != '\0') {
+    fprintf(stderr, "browser process command is malformed\n");
+    free(command);
+    return UTSURI_IDENTITY_MISMATCH;
+  }
+
+  char marker[192];
+  int marker_length = snprintf(marker, sizeof(marker),
+                               "--utsuri-capture-token=%s", capture_token);
+  if (marker_length <= 0 || marker_length >= (int)sizeof(marker)) {
+    fprintf(stderr, "browser capture token is invalid\n");
+    free(command);
+    return UTSURI_USAGE;
+  }
+  int executable_matched = 0;
+  int marker_matched = 0;
+  int pipe_matched = 0;
+  size_t offset = 0;
+  int argument_index = 0;
+  while (offset < total) {
+    size_t available = total - offset;
+    size_t length = strnlen((char *)command + offset, available);
+    if (length == available) {
+      fprintf(stderr, "browser process command is malformed\n");
+      free(command);
+      return UTSURI_IDENTITY_MISMATCH;
+    }
+    const char *argument = (char *)command + offset;
+    if (argument_index == 0) {
+      for (int index = 0; index < expected_count; index++) {
+        if (strcmp(argument, expected_paths[index]) == 0) {
+          executable_matched = 1;
+        }
+      }
+    }
+    if (strcmp(argument, marker) == 0) {
+      marker_matched = 1;
+    }
+    if (strcmp(argument, "--remote-debugging-pipe") == 0) {
+      pipe_matched = 1;
+    }
+    argument_index++;
+    offset += length + 1;
+  }
+  free(command);
+  if (!executable_matched || !marker_matched || !pipe_matched) {
+    fprintf(stderr, "browser process command identity changed\n");
+    return UTSURI_IDENTITY_MISMATCH;
+  }
+  return UTSURI_OK;
+}
+#endif
+
+static int browser_terminate(int argc, char **argv) {
+#if defined(__linux__) && defined(SYS_pidfd_open) &&                         \
+    defined(SYS_pidfd_send_signal)
+  if (argc < 5 || argc > 6 || !valid_capture_token(argv[3])) {
+    fprintf(stderr, "browser termination arguments are invalid\n");
+    return UTSURI_USAGE;
+  }
+  uint64_t process_value;
+  if (parse_uint64(argv[2], &process_value) != 0 || process_value == 0 ||
+      process_value > INT_MAX) {
+    fprintf(stderr, "browser process identifier is invalid\n");
+    return UTSURI_USAGE;
+  }
+  pid_t pid = (pid_t)process_value;
+  int pidfd = (int)syscall(SYS_pidfd_open, pid, 0);
+  if (pidfd < 0) {
+    if (errno == ESRCH) {
+      return UTSURI_OK;
+    }
+    return fail_with_errno("pidfd_open(browser)");
+  }
+
+  int exited = 0;
+  int result = poll_process_handle(pidfd, 0, &exited);
+  if (result != UTSURI_OK || exited) {
+    close(pidfd);
+    return result;
+  }
+  pid_t expected_parent = getppid();
+  result = process_parent_matches(pid, expected_parent);
+  if (result == UTSURI_OK) {
+    result = process_executable_matches(pid, argc - 4, argv + 4);
+  }
+  if (result == UTSURI_OK) {
+    result = process_arguments_match(pid, argv[3], argc - 4, argv + 4);
+  }
+  if (result == UTSURI_OK) {
+    result = process_parent_matches(pid, expected_parent);
+  }
+  if (result != UTSURI_OK) {
+    int exited_after_validation = 0;
+    int polled = poll_process_handle(pidfd, 0, &exited_after_validation);
+    close(pidfd);
+    if (polled == UTSURI_OK && exited_after_validation) {
+      return UTSURI_OK;
+    }
+    return result == UTSURI_IDENTITY_MISMATCH
+               ? UTSURI_IDENTITY_MISMATCH
+               : UTSURI_TRACKING_UNAVAILABLE;
+  }
+  result = poll_process_handle(pidfd, 0, &exited);
+  if (result != UTSURI_OK || exited) {
+    close(pidfd);
+    return result;
+  }
+
+  if (syscall(SYS_pidfd_send_signal, pidfd, SIGTERM, NULL, 0) != 0 &&
+      errno != ESRCH) {
+    result = fail_with_errno("pidfd_send_signal(SIGTERM)");
+    close(pidfd);
+    return result;
+  }
+  result = poll_process_handle(pidfd, 250, &exited);
+  if (result != UTSURI_OK || exited) {
+    close(pidfd);
+    return result;
+  }
+  if (syscall(SYS_pidfd_send_signal, pidfd, SIGKILL, NULL, 0) != 0 &&
+      errno != ESRCH) {
+    result = fail_with_errno("pidfd_send_signal(SIGKILL)");
+    close(pidfd);
+    return result;
+  }
+  result = poll_process_handle(pidfd, 1000, &exited);
+  close(pidfd);
+  if (result != UTSURI_OK) {
+    return result;
+  }
+  if (!exited) {
+    fprintf(stderr, "browser process remained after pidfd termination\n");
+    return UTSURI_SYSTEM_ERROR;
+  }
+  return UTSURI_OK;
+#else
+  (void)argc;
+  (void)argv;
+  fprintf(stderr, "pidfd browser termination is supported only on Linux\n");
+  return UTSURI_UNSUPPORTED;
+#endif
+}
+
 int main(int argc, char **argv) {
   if (getenv("UTSURI_BROWSER_EXECUTABLE") != NULL ||
       getenv("UTSURI_BROWSER_CGROUP_PROCS") != NULL) {
@@ -402,6 +756,9 @@ int main(int argc, char **argv) {
   if (argc >= 2 && strcmp(argv[1], "browser-launch") == 0) {
     argv[1] = argv[0];
     return browser_launch(argc - 1, argv + 1);
+  }
+  if (argc >= 2 && strcmp(argv[1], "browser-terminate") == 0) {
+    return browser_terminate(argc, argv);
   }
   if (argc == 4 && strcmp(argv[1], "read-contained") == 0) {
     uint64_t maximum_bytes;
@@ -457,7 +814,8 @@ int main(int argc, char **argv) {
             "   or: utsuri-fs-ops read-contained RELATIVE MAX_BYTES (root on fd 3)\n"
             "   or: utsuri-fs-ops read-contained-root ROOT RELATIVE MAX_BYTES ROOT_DEV ROOT_INO\n"
             "   or: utsuri-fs-ops publish-contained ROOT SOURCE DESTINATION PARENT_DEV PARENT_INO SOURCE_DEV SOURCE_INO\n"
-            "   or: utsuri-fs-ops browser-launch CHROME_ARGS...\n");
+            "   or: utsuri-fs-ops browser-launch CHROME_ARGS...\n"
+            "   or: utsuri-fs-ops browser-terminate PID TOKEN EXECUTABLE [EXECUTABLE]\n");
     return UTSURI_USAGE;
   }
   return publish_contained(3, argv[1], argv[2], argv[3], argv[4], argv[5],

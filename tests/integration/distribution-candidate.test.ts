@@ -8,7 +8,7 @@ import {
   restorePluginArtifactModes,
   verifyDistributionCandidate
 } from "../../scripts/assemble-distribution-candidate.mjs";
-import { nativeTargets } from "../../scripts/assemble-release-package.mjs";
+import { nativeProofTests, nativeTargets } from "../../scripts/assemble-release-package.mjs";
 import {
   expectedPackageTarballs,
   finalizeReleaseAssets,
@@ -60,7 +60,7 @@ async function nativeFixtureRoot(base: string, targets = nativeTargets): Promise
           target,
           sourceSha256,
           helperSha256: sha256(helper),
-          tests: ["architecture", "contained-read", "no-replace-publication", "path-rejection"]
+          tests: nativeProofTests(target)
         },
         null,
         2

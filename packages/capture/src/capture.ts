@@ -21,8 +21,12 @@ import {
 } from "./artifacts";
 import { resolveBrowserExecutable } from "./browser";
 import {
-  currentTrackedBrowserProcessIds,
-  terminateTrackedBrowserProcesses,
+  type BrowserProcessObservation,
+  browserProcessOwnershipAmbiguous,
+  observeTrackedBrowserProcessIds,
+  resolveTrackedBrowserExecutablePaths,
+  terminateObservedBrowserProcesses,
+  terminateOwnedBrowserProcesses,
   waitForTrackedBrowserProcesses
 } from "./browser-process";
 import { captureCapabilities } from "./capabilities";
@@ -290,7 +294,7 @@ async function readPreviousManifest(
   }
 }
 
-async function retryTransient<T>(
+export async function retryTransient<T>(
   stage: "browser" | "navigation" | "screenshot",
   maxRetries: 0 | 1,
   operation: () => Promise<T>,
@@ -961,35 +965,98 @@ async function boundedClose(operation: () => Promise<void>, timeoutMs: number): 
   }
 }
 
-async function closeBrowserRuntime(
-  browser: Browser | null,
-  browserProcessIds: ReadonlySet<number>,
-  executablePath: string | null,
-  captureToken: string
-): Promise<void> {
-  const closed = browser ? await boundedClose(() => browser.close(), 3000) : true;
-  const currentProcessIds = executablePath
-    ? currentTrackedBrowserProcessIds(executablePath, captureToken)
-    : new Set<number>();
-  const trackedProcessIds = new Set([...browserProcessIds, ...currentProcessIds]);
-  const exited = closed && (await waitForTrackedBrowserProcesses(trackedProcessIds, 1000));
-  const remainingAfterClose = executablePath
-    ? currentTrackedBrowserProcessIds(executablePath, captureToken)
-    : new Set<number>();
-  if (exited && remainingAfterClose.size === 0) return;
-
-  const remainingProcessIds = new Set([...trackedProcessIds, ...remainingAfterClose]);
-  const terminated = await terminateTrackedBrowserProcesses(remainingProcessIds);
-  const remainingAfterTermination = executablePath
-    ? currentTrackedBrowserProcessIds(executablePath, captureToken)
-    : new Set<number>();
-  if (!terminated || remainingAfterTermination.size > 0) {
+export function assertBrowserCleanupOutcome(
+  ownershipAmbiguous: boolean,
+  cleanupComplete: boolean
+): void {
+  if (ownershipAmbiguous) {
+    throw new UtsuriError(
+      "CAPTURE_BROWSER_PROCESS_AMBIGUOUS",
+      "Multiple tracked browser parents were observed during cleanup",
+      ExitCode.Environment
+    );
+  }
+  if (!cleanupComplete) {
     throw new UtsuriError(
       "CAPTURE_BROWSER_CLEANUP_FAILED",
       "Tracked browser processes remained after bounded termination",
       ExitCode.Environment
     );
   }
+}
+
+export interface BrowserRuntimeCleanupOperations {
+  observe?: (
+    executablePaths: ReadonlySet<string>,
+    captureToken: string
+  ) => BrowserProcessObservation;
+  terminate?: (
+    processIds: ReadonlySet<number>,
+    executablePaths: ReadonlySet<string>,
+    captureToken: string
+  ) => Promise<boolean>;
+  wait?: (processIds: ReadonlySet<number>, timeoutMs: number) => Promise<boolean>;
+}
+
+export async function closeBrowserRuntime(
+  browser: Browser | null,
+  initialObservation: BrowserProcessObservation,
+  executablePaths: ReadonlySet<string>,
+  captureToken: string,
+  operations: BrowserRuntimeCleanupOperations = {}
+): Promise<void> {
+  const browserProcessIds = initialObservation.processIds;
+  let ownershipAmbiguous = browserProcessOwnershipAmbiguous(initialObservation.candidateProcessIds);
+  const ownershipProcessIds = new Set(initialObservation.candidateProcessIds);
+  let trackingError: UtsuriError | null = initialObservation.error;
+  let cleanupError: unknown;
+  const observeProcessIds = (): Set<number> => {
+    if (executablePaths.size === 0) return new Set();
+    const observation = (operations.observe ?? observeTrackedBrowserProcessIds)(
+      executablePaths,
+      captureToken
+    );
+    trackingError ??= observation.error;
+    const { processIds, candidateProcessIds } = observation;
+    for (const processId of candidateProcessIds) ownershipProcessIds.add(processId);
+    ownershipAmbiguous ||= browserProcessOwnershipAmbiguous(ownershipProcessIds);
+    return processIds;
+  };
+  const closed = browser ? await boundedClose(() => browser.close(), 3000) : true;
+  const currentProcessIds = observeProcessIds();
+  const trackedProcessIds = new Set([...browserProcessIds, ...currentProcessIds]);
+  ownershipAmbiguous ||= browserProcessOwnershipAmbiguous(browserProcessIds, currentProcessIds);
+  const exited =
+    closed && (await (operations.wait ?? waitForTrackedBrowserProcesses)(trackedProcessIds, 1000));
+  const remainingAfterClose = observeProcessIds();
+  ownershipAmbiguous ||= browserProcessOwnershipAmbiguous(trackedProcessIds, remainingAfterClose);
+  const remainingProcessIds = exited
+    ? new Set(remainingAfterClose)
+    : new Set([...trackedProcessIds, ...remainingAfterClose]);
+  const cleanup = await terminateObservedBrowserProcesses(
+    remainingProcessIds,
+    observeProcessIds,
+    async (processIds) => {
+      for (const processId of processIds) ownershipProcessIds.add(processId);
+      ownershipAmbiguous ||= browserProcessOwnershipAmbiguous(ownershipProcessIds);
+      if (ownershipAmbiguous) return false;
+      try {
+        return await (operations.terminate ?? terminateOwnedBrowserProcesses)(
+          processIds,
+          executablePaths,
+          captureToken
+        );
+      } catch (error) {
+        cleanupError ??= error;
+        return false;
+      }
+    }
+  );
+  ownershipAmbiguous ||= browserProcessOwnershipAmbiguous(cleanup.observedProcessIds);
+  if (ownershipAmbiguous) assertBrowserCleanupOutcome(true, cleanup.complete);
+  if (trackingError) throw trackingError;
+  if (cleanupError) throw cleanupError;
+  assertBrowserCleanupOutcome(false, cleanup.complete);
 }
 
 export async function captureRun(
@@ -1027,7 +1094,13 @@ export async function captureRun(
   let browserMemoryBoundary: BrowserMemoryBoundary | null = null;
   if (config.mode === "container" && !preflightFailure && runtimeCapability.supported) {
     try {
-      containerBrowserExecutable = await resolveBrowserExecutable();
+      const resolvedContainerBrowser = await resolveBrowserExecutable();
+      const trackedContainerBrowserPaths =
+        await resolveTrackedBrowserExecutablePaths(resolvedContainerBrowser);
+      containerBrowserExecutable = trackedContainerBrowserPaths.values().next().value ?? null;
+      if (!containerBrowserExecutable) {
+        throw new Error("container browser executable did not resolve to a canonical path");
+      }
       const prepared = await prepareBrowserMemoryBoundary(
         containerBrowserExecutable,
         config.limits.maxMemoryMiB
@@ -1064,11 +1137,15 @@ export async function captureRun(
   }
   const { handles, failures: serverFailures } = serverRuntime;
   let browser: Browser | null = null;
-  let browserProcessIds = new Set<number>();
+  let browserProcessObservation: BrowserProcessObservation = {
+    processIds: new Set(),
+    candidateProcessIds: new Set(),
+    error: null
+  };
   let browserFailure: CaptureFailure | null = null;
   let browserVersion = previous?.browser.version ?? "unavailable";
   let browserLaunchAttempts = 0;
-  let browserExecutablePath: string | null = null;
+  let browserExecutablePaths: ReadonlySet<string> = new Set();
   const browserProcessToken = randomUUID();
   const ensureBrowser = async (): Promise<Browser | null> => {
     if (browserFailure) return null;
@@ -1076,7 +1153,16 @@ export async function captureRun(
     try {
       const { chromium } = await import("playwright-core");
       const executablePath = containerBrowserExecutable ?? (await resolveBrowserExecutable());
-      browserExecutablePath = executablePath;
+      const trackedExecutablePaths = await resolveTrackedBrowserExecutablePaths(executablePath);
+      const canonicalExecutablePath = trackedExecutablePaths.values().next().value;
+      if (!canonicalExecutablePath) {
+        throw new UtsuriError(
+          "CAPTURE_BROWSER_TRACKING_UNAVAILABLE",
+          "Browser executable tracking resolved no canonical path",
+          ExitCode.Environment
+        );
+      }
+      browserExecutablePaths = trackedExecutablePaths;
       const launched = await retryTransient(
         "browser",
         config.stabilization.maxRetries,
@@ -1084,7 +1170,7 @@ export async function captureRun(
           browserLaunchAttempts += 1;
           try {
             return await chromium.launch({
-              executablePath: browserMemoryBoundary?.launcherPath ?? executablePath,
+              executablePath: browserMemoryBoundary?.launcherPath ?? canonicalExecutablePath,
               headless: config.browser.headless,
               timeout: config.timeoutMs,
               env: {
@@ -1104,28 +1190,34 @@ export async function captureRun(
               ]
             });
           } catch (error) {
-            const failedProcessIds = currentTrackedBrowserProcessIds(
-              executablePath,
+            await closeBrowserRuntime(
+              null,
+              { processIds: new Set(), candidateProcessIds: new Set(), error: null },
+              trackedExecutablePaths,
               browserProcessToken
             );
-            if (!(await terminateTrackedBrowserProcesses(failedProcessIds))) {
-              throw new UtsuriError(
-                "CAPTURE_BROWSER_CLEANUP_FAILED",
-                "A failed browser launch left tracked processes running",
-                ExitCode.Environment
-              );
-            }
             throw error;
           }
         },
         250
       );
       browser = launched.value;
-      browserProcessIds = currentTrackedBrowserProcessIds(executablePath, browserProcessToken);
-      if (browserProcessIds.size !== 1) {
+      browserProcessObservation = observeTrackedBrowserProcessIds(
+        trackedExecutablePaths,
+        browserProcessToken
+      );
+      if (browserProcessOwnershipAmbiguous(browserProcessObservation.candidateProcessIds)) {
         throw new UtsuriError(
           "CAPTURE_BROWSER_PROCESS_AMBIGUOUS",
-          `Expected one tracked browser parent, observed ${browserProcessIds.size}`,
+          `Expected one tracked browser parent, observed ${browserProcessObservation.candidateProcessIds.size} candidates`,
+          ExitCode.Environment
+        );
+      }
+      if (browserProcessObservation.error) throw browserProcessObservation.error;
+      if (browserProcessObservation.processIds.size !== 1) {
+        throw new UtsuriError(
+          "CAPTURE_BROWSER_PROCESS_AMBIGUOUS",
+          `Expected one tracked browser parent, observed ${browserProcessObservation.processIds.size}`,
           ExitCode.Environment
         );
       }
@@ -1259,7 +1351,12 @@ export async function captureRun(
   } finally {
     await runCleanupSteps([
       () =>
-        closeBrowserRuntime(browser, browserProcessIds, browserExecutablePath, browserProcessToken),
+        closeBrowserRuntime(
+          browser,
+          browserProcessObservation,
+          browserExecutablePaths,
+          browserProcessToken
+        ),
       async () => browserMemoryBoundary?.cleanup(),
       () => stopServers(runDirectory, handles, config.limits.maxArtifactBytes)
     ]);

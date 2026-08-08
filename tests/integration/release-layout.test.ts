@@ -64,7 +64,7 @@ describe("release layout security", () => {
     });
     expect(result.status).toBe(0);
     expect(result.stderr).toBe("");
-  });
+  }, 30_000);
 
   test("binds bundled third-party bytes to the reviewed dependency baseline", async () => {
     const manifest = JSON.parse(
