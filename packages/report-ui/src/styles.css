@@ -1025,9 +1025,9 @@ main {
   background: rgb(183 63 45 / 30%);
   box-shadow: 0 0 0 2px var(--coral);
   color: #fff;
-  cursor: pointer;
   font-size: 0.65rem;
   font-weight: 800;
+  pointer-events: none;
 }
 
 .region-marker.active-region {

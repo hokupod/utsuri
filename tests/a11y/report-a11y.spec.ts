@@ -22,3 +22,24 @@ test("has no serious or critical automated accessibility violations", async ({ p
     violations.filter((violation) => new Set(["critical", "serious"]).has(violation.impact ?? ""))
   ).toEqual([]);
 });
+
+test("keeps overlapping visual markers presentational and region controls interactive", async ({
+  page
+}) => {
+  await servePhase3Report(page);
+  const markers = page.locator(".region-marker");
+  await expect(markers).toHaveCount(3);
+  expect(
+    await markers.evaluateAll((elements) =>
+      elements.map((element) => ({
+        ariaHidden: element.getAttribute("aria-hidden"),
+        tagName: element.tagName
+      }))
+    )
+  ).toEqual(Array.from({ length: 3 }, () => ({ ariaHidden: "true", tagName: "SPAN" })));
+
+  const secondRegion = page.getByRole("button", { name: /^Region 2 ·/u });
+  await secondRegion.click();
+  await expect(secondRegion).toHaveAttribute("aria-current", "true");
+  await expect(markers.nth(1)).toHaveClass(/active-region/u);
+});

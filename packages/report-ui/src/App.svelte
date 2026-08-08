@@ -1628,14 +1628,13 @@
                             alt={`After capture for ${activeImage.label}`}
                           />
                           {#each activeImage.regions as region, index (region.id)}
-                            <button
+                            <span
                               id={`visual-region-${index}`}
                               class:active-region={activeRegionIndex === index}
                               class="region-marker"
-                              type="button"
-                              aria-label={`Changed region ${index + 1}, ${region.pixels} pixels`}
+                              aria-hidden="true"
                               style={`left:${(region.x / activeImage.width) * 100}%;top:${(region.y / activeImage.height) * 100}%;width:${(region.width / activeImage.width) * 100}%;height:${(region.height / activeImage.height) * 100}%`}
-                              onclick={() => void jumpRegion(index)}>{index + 1}</button
+                              >{index + 1}</span
                             >
                           {/each}
                           {#each activeVisualThreads as thread, index (thread.id)}
@@ -1747,14 +1746,13 @@
                           alt={`After capture for ${activeImage.label}`}
                         />
                         {#each activeImage.regions as region, index (region.id)}
-                          <button
+                          <span
                             id={`visual-region-${index}`}
                             class:active-region={activeRegionIndex === index}
                             class="region-marker"
-                            type="button"
-                            aria-label={`Changed region ${index + 1}, ${region.pixels} pixels`}
+                            aria-hidden="true"
                             style={`left:${(region.x / activeImage.width) * 100}%;top:${(region.y / activeImage.height) * 100}%;width:${(region.width / activeImage.width) * 100}%;height:${(region.height / activeImage.height) * 100}%`}
-                            onclick={() => void jumpRegion(index)}>{index + 1}</button
+                            >{index + 1}</span
                           >
                         {/each}
                         {#each activeVisualThreads as thread, index (thread.id)}

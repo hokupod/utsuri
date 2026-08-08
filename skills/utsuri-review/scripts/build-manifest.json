@@ -1,7 +1,7 @@
 {
   "schemaVersion": "1.1",
   "toolVersion": "0.1.0",
-  "sourceHash": "09158ea347c0abccf8a8ca787f7ae7bc199f5e56a206c85208afb89b67a3f131",
+  "sourceHash": "97a03b5893e9fa889aca82a1c3016b05ebecb5863bb021b04f002523f87c951c",
   "sourceHashes": {
     "packages/adapters/generic/src/index.ts": "0fb851c88f14187773d97373b9d848e831abb629bb4b1834c4393f29917c4169",
     "packages/adapters/playwright/src/index.ts": "7714950f8fbcc160493e649a13e2c96d2843530307150357c30b9155c42b6081",
@@ -50,7 +50,7 @@
     "packages/git-collector/src/index.ts": "c8686ef8faa57f1fa17a105a57f7306ff8372de171f9469ae6e22aa1b278f86d",
     "packages/git-collector/src/patch.ts": "2ad71151ca382bc5be3b9396e60aeb36394151e5ae5670687414f967fa893e96",
     "packages/interactive-server/src/index.ts": "66bac04d327797d4d57a594f7032b87f0a32dd8ccd3c1ed1647bcf1b6a87b5b1",
-    "packages/report-builder/src/generated-ui-assets.ts": "8108ef87eef0b8e031d072b03a3776045232ed911e911dadc44efdefd937cd4e",
+    "packages/report-builder/src/generated-ui-assets.ts": "b372ada54632990bba22bf8cc38b3955293e1b2f5baf3ffc71e6f192aaf9b682",
     "packages/report-builder/src/index.ts": "9b3822c279dd29cbbf5fbda74f294d00f93ad0d7cc432ed06506a7eaae7fcc17",
     "packages/report-builder/src/native-publish.ts": "1476a27dfbb7172caf656b996b7aa71ca8c7ec3ddf1d85ee0028d11a3029f222",
     "packages/report-builder/src/schema-assets.ts": "ef080b08889e19f291d92f260fc4f731b1505552c5f3481734de9c6414d0c23a",
@@ -280,8 +280,8 @@
     "review-thread.schema.json": "6c5957f14b964dfaf1601ac45870b7f3fae013209dd4964aa3831dd753f06fc1"
   },
   "uiAssetHashes": {
-    "app.css": "4c49aa245c933b504b0864bd4eaf7a9fe3564a4378ccf6cfd81d83634110cb0f",
-    "app.js": "5a11e1a5496f1bb3ceb41e50934dd6a3b7d650a348f726721c5fcc8a480b9e6f"
+    "app.css": "6d4aba25d73e493b97568b0aa75fe921196798b9764b0195afb5b2f17939acbb",
+    "app.js": "15c7823e1f4dbfbc84a2605a0c26abcb05ff2d84ae26b7041af86d1c8904d6b1"
   },
-  "bundleSha256": "bddfd22ffe4307ae6de02c959939176523181761ac44a388c36de69f5b2e6d71"
+  "bundleSha256": "76cecf765b87d7dbc1996b135d3ba027013cc94cb4be4c846f4fb9864bbe641b"
 }
