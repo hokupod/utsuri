@@ -67,13 +67,14 @@ jobs:
           node scripts/safe-chain.mjs bun safe-chain-verify
       - name: Install locked dependencies
         run: bun install --frozen-lockfile
+      - name: Build release inputs
+        run: bun run build
       - name: Run full static gate
         env:
           UTSURI_BROWSER_TESTS: disabled
         run: bun run check
-      - name: Build and validate artifacts
+      - name: Validate artifacts
         run: |
-          bun run build
           bun run validate:fixtures
           bun run verify:release-layout
       - name: Generate machine-readable review artifacts
@@ -142,8 +143,8 @@ jobs:
         run: |
           nix develop --command node scripts/dev-env-check.mjs --json
           nix develop --command node scripts/safe-chain.mjs bun install --frozen-lockfile
-          nix develop --command node scripts/safe-chain.mjs bun run check
           nix develop --command node scripts/safe-chain.mjs bun run build
+          nix develop --command node scripts/safe-chain.mjs bun run check
           nix develop --command node scripts/safe-chain.mjs bun run validate:fixtures
           nix develop --command node scripts/safe-chain.mjs bun run verify:release-layout
       - name: Reject generated or lockfile drift
@@ -187,6 +188,8 @@ jobs:
           nix develop --command node scripts/safe-chain.mjs bun safe-chain-verify
       - name: Install locked dependencies
         run: nix develop --command node scripts/safe-chain.mjs bun install --frozen-lockfile
+      - name: Build browser test inputs
+        run: nix develop --command node scripts/safe-chain.mjs bun run build
       - name: Verify the explicit browser source
         run: nix develop --command node scripts/dev-env-check.mjs --json
       - name: Run real-browser integration and installed-bundle smoke

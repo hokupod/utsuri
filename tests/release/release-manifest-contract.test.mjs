@@ -173,6 +173,34 @@ describe("cross-job distribution transport", () => {
 });
 
 describe("Safe-chain CI contract", () => {
+  test("builds generated release inputs before clean-check tests", async () => {
+    const [ciWorkflow, candidateWorkflow] = await Promise.all([
+      readFile(path.join(repositoryRoot, ".github/workflows/ci.yml"), "utf8"),
+      readFile(path.join(repositoryRoot, ".github/workflows/distribution-candidate.yml"), "utf8")
+    ]);
+    const bunMatrix = ciWorkflow.slice(
+      ciWorkflow.indexOf("  bun-matrix:"),
+      ciWorkflow.indexOf("  nix-compatibility:")
+    );
+    const nixCompatibility = ciWorkflow.slice(
+      ciWorkflow.indexOf("  nix-compatibility:"),
+      ciWorkflow.indexOf("  browser-e2e:")
+    );
+    const browserE2e = ciWorkflow.slice(ciWorkflow.indexOf("  browser-e2e:"));
+    for (const [name, workflow, testCommand] of [
+      ["Bun matrix", bunMatrix, "bun run check"],
+      ["Nix compatibility", nixCompatibility, "bun run check"],
+      ["browser E2E", browserE2e, "bun run test:integration"],
+      ["distribution candidate", candidateWorkflow, "bun run check"]
+    ]) {
+      const buildIndex = workflow.indexOf("bun run build");
+      const testIndex = workflow.indexOf(testCommand);
+      assert.ok(buildIndex >= 0, `${name} must build generated release inputs`);
+      assert.ok(testIndex >= 0, `${name} must run ${testCommand}`);
+      assert.ok(buildIndex < testIndex, `${name} must build before ${testCommand}`);
+    }
+  });
+
   test("verifies npm and Bun through the pinned Safe-chain wrapper", async () => {
     const workflowPaths = [
       ".github/workflows/ci.yml",

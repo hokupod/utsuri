@@ -127,8 +127,8 @@ jobs:
       - name: Install and build from the exact lockfile
         run: |
           bun install --frozen-lockfile
-          bun run check
           bun run build
+          bun run check
           bun run verify:sbom
       - name: Download every platform result
         uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
