@@ -10,7 +10,7 @@ import {
   type FeedbackBatchState
 } from "@utsu-ri/review-inbox";
 import { loadReviewStore, persistReviewStore } from "@utsu-ri/review-state";
-import type { CurrentSessionIdentity } from "@utsu-ri/session-binding";
+import { assertOriginSessionMatch, type CurrentSessionIdentity } from "@utsu-ri/session-binding";
 
 const toolDefinitions = [
   {
@@ -154,6 +154,7 @@ export class ReviewMcpService {
   async callTool(name: string, rawArguments: unknown): Promise<unknown> {
     if (name === "review_list_batches") {
       const arguments_ = exactArguments(rawArguments, [], ["report_id", "state"]);
+      assertOriginSessionMatch(this.#report.origin, this.#currentSession);
       if (arguments_.report_id !== undefined && arguments_.report_id !== this.#report.reportId) {
         serviceError("FEEDBACK_REPORT_MISMATCH", "Requested report does not match this MCP server");
       }
@@ -173,6 +174,7 @@ export class ReviewMcpService {
     }
     if (name === "review_get_batch") {
       const arguments_ = exactArguments(rawArguments, [], ["batch_id"]);
+      assertOriginSessionMatch(this.#report.origin, this.#currentSession);
       const batchId = await this.#uniqueBatchId(arguments_.batch_id, [
         "ready",
         "submitted",
@@ -182,6 +184,7 @@ export class ReviewMcpService {
     }
     if (name === "review_claim_batch") {
       const arguments_ = exactArguments(rawArguments, [], ["batch_id"]);
+      assertOriginSessionMatch(this.#report.origin, this.#currentSession);
       const batchId = await this.#uniqueBatchId(arguments_.batch_id, ["ready", "submitted"]);
       const store = await this.#store();
       const result = await claimFeedbackBatch(store, batchId, this.#currentSession, this.#now());
@@ -195,6 +198,7 @@ export class ReviewMcpService {
     }
     if (name === "review_get_item_context") {
       const arguments_ = exactArguments(rawArguments, ["item_id"]);
+      assertOriginSessionMatch(this.#report.origin, this.#currentSession);
       if (typeof arguments_.item_id !== "string" || !/^item[-:]/u.test(arguments_.item_id)) {
         serviceError("FEEDBACK_ITEM_ID_INVALID", "Feedback Item ID is invalid");
       }
@@ -202,6 +206,7 @@ export class ReviewMcpService {
     }
     if (name === "review_post_answers") {
       const arguments_ = exactArguments(rawArguments, ["batch_id", "answers"]);
+      assertOriginSessionMatch(this.#report.origin, this.#currentSession);
       if (
         typeof arguments_.batch_id !== "string" ||
         !/^fb[-:]/u.test(arguments_.batch_id) ||
@@ -224,6 +229,7 @@ export class ReviewMcpService {
     }
     if (name === "review_release_batch") {
       const arguments_ = exactArguments(rawArguments, ["batch_id"]);
+      assertOriginSessionMatch(this.#report.origin, this.#currentSession);
       if (typeof arguments_.batch_id !== "string" || !/^fb[-:]/u.test(arguments_.batch_id)) {
         serviceError("FEEDBACK_BATCH_ID_INVALID", "Feedback Batch ID is invalid");
       }

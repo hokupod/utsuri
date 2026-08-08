@@ -2,7 +2,12 @@ import { describe, expect, test } from "bun:test";
 import { mkdtemp, rm } from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
-import { assertOriginSessionMatch, createOriginSessionBinding, opaqueSessionRef } from "./index";
+import {
+  assertOriginSessionMatch,
+  createOriginSessionBinding,
+  currentSessionIdentityFromEnvironment,
+  opaqueSessionRef
+} from "./index";
 
 describe("Origin Session binding", () => {
   test("stores only opaque session and project references", async () => {
@@ -43,6 +48,30 @@ describe("Origin Session binding", () => {
         projectFingerprint: "a".repeat(64),
         reportId: "report:123"
       })
+    ).toThrow("does not match");
+  });
+
+  test("does not accept a published opaque reference as current-session proof", async () => {
+    const published = await opaqueSessionRef("codex", "origin");
+    expect(await opaqueSessionRef("codex", published)).not.toBe(published);
+    const current = await currentSessionIdentityFromEnvironment({
+      environment: { UTSURI_CODEX_SESSION_REF: published },
+      projectFingerprint: "a".repeat(64),
+      reportId: "report:123"
+    });
+    expect(current.host).toBe("unknown");
+    expect(() =>
+      assertOriginSessionMatch(
+        {
+          host: "codex",
+          sessionRef: published,
+          projectFingerprint: "a".repeat(64),
+          reportId: "report:123",
+          bindingMode: "return-to-session",
+          createdAt: "2026-08-08T00:00:00.000Z"
+        },
+        current
+      )
     ).toThrow("does not match");
   });
 

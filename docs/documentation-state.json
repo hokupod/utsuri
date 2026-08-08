@@ -6,10 +6,10 @@
   "lastUpdated": "2026-08-08",
   "changeLogEntryId": "design-v2.5-origin-session-feedback",
   "currentHashes": {
-    "docs/design.md": "7ab551f576ca966996ecde4b3e9cfb0364247aaae2492525406807cadee18b76",
-    "README.md": "5ab1f233008d145c4d4660b6de6817db26e3f94a3abd237e7e1002fb673619a3",
-    "README.ja.md": "934962c23b7533059bbf3e6c68296e320b3f322b8f8b7ccf80209cd22beeff8c",
-    "README.zh-CN.md": "2548eeff9ee0251de71d56227bfeeaef25bcd7da96c0b3c405df51a5fec8f71c"
+    "docs/design.md": "93c1a3560436e908cac0d21571fb42a8151cc64eae1113a315433f44387b9f36",
+    "README.md": "89286be71abd3e37debc9d525c912c45613dfaba04f34e9e1657d543a5535f63",
+    "README.ja.md": "ccb0226b9e966379bb9e83883f50d7860a15b4b82841f701eb6fe5c9b23f0eb3",
+    "README.zh-CN.md": "523469d48240a99c8c9a508678c98279d04edca084529ff00d48c9fa3d1d3175"
   },
   "changedSections": [
     "metadata",

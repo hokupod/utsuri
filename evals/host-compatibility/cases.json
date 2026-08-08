@@ -8,7 +8,7 @@
       "skill": "skills/utsuri-review/SKILL.md",
       "bundle": "skills/utsuri-review/scripts/utsuri.mjs",
       "feedback": {
-        "sessionBindingInputs": ["UTSURI_CODEX_SESSION_ID", "UTSURI_CODEX_SESSION_REF"],
+        "sessionBindingInputs": ["UTSURI_CODEX_SESSION_ID"],
         "deliveryMode": "return-to-session",
         "directBridge": false
       }
@@ -20,7 +20,7 @@
       "skill": "skills/utsuri-review/SKILL.md",
       "bundle": "skills/utsuri-review/scripts/utsuri.mjs",
       "feedback": {
-        "sessionBindingInputs": ["CLAUDE_SESSION_ID", "UTSURI_CLAUDE_SESSION_REF"],
+        "sessionBindingInputs": ["CLAUDE_SESSION_ID"],
         "deliveryMode": "return-to-session",
         "directBridge": false
       }

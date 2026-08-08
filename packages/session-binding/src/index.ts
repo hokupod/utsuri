@@ -33,7 +33,6 @@ export async function opaqueSessionRef(
   if (!normalized || normalized.length > 4096) {
     bindingError("SESSION_REF_INVALID", "Origin Session reference is invalid");
   }
-  if (/^session:[a-f0-9]{64}$/u.test(normalized)) return normalized;
   return `session:${await digest({ host, sessionId: normalized })}`;
 }
 
@@ -110,24 +109,25 @@ export function assertOriginSessionMatch(
   }
 }
 
-export function currentSessionIdentityFromEnvironment(input: {
+export async function currentSessionIdentityFromEnvironment(input: {
   environment?: NodeJS.ProcessEnv;
   projectFingerprint: string;
   reportId: string;
-}): CurrentSessionIdentity {
+  digest?: ReviewDigest;
+}): Promise<CurrentSessionIdentity> {
   const environment = input.environment ?? process.env;
-  const codex = environment.UTSURI_CODEX_SESSION_REF;
-  const claude = environment.UTSURI_CLAUDE_SESSION_REF;
+  const codex = environment.UTSURI_CODEX_SESSION_ID;
+  const claude = environment.CLAUDE_SESSION_ID;
   if (codex && claude) {
     bindingError(
       "ORIGIN_SESSION_AMBIGUOUS",
-      "More than one host supplied a current Origin Session reference"
+      "More than one host supplied a current Origin Session identifier"
     );
   }
   if (codex) {
     return {
       host: "codex",
-      sessionRef: codex,
+      sessionRef: await opaqueSessionRef("codex", codex, input.digest),
       projectFingerprint: input.projectFingerprint,
       reportId: input.reportId
     };
@@ -135,7 +135,7 @@ export function currentSessionIdentityFromEnvironment(input: {
   if (claude) {
     return {
       host: "claude-code",
-      sessionRef: claude,
+      sessionRef: await opaqueSessionRef("claude-code", claude, input.digest),
       projectFingerprint: input.projectFingerprint,
       reportId: input.reportId
     };

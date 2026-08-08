@@ -1,5 +1,5 @@
 import { describe, expect, test } from "bun:test";
-import { mkdtemp, readFile, rm } from "node:fs/promises";
+import { mkdtemp, readFile, readdir, rm, writeFile } from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
 import type { UtsuriReport } from "@utsu-ri/report-model";
@@ -12,9 +12,10 @@ import {
   setJudgment,
   setViewed
 } from "./model";
-import { classifyAnchor } from "./anchors";
+import { buildLegacyVisualAnchorCatalog, classifyAnchor } from "./anchors";
 import { browserReviewDigest } from "./browser";
 import { loadReviewStore, persistReviewStore } from "./persistence";
+import type { ReviewAnchor } from "./types";
 
 const root = path.resolve(import.meta.dir, "../../..");
 const now = "2026-08-07T00:00:00.000Z";
@@ -23,6 +24,56 @@ async function report(): Promise<UtsuriReport> {
   return JSON.parse(
     await readFile(path.join(root, "fixtures/code-only-review/expected/report/report.json"), "utf8")
   ) as UtsuriReport;
+}
+
+async function visualReport(): Promise<UtsuriReport> {
+  const source = await report();
+  source.targets = [{ id: "target:button", before: {}, after: {} }] as UtsuriReport["targets"];
+  source.comparisons = [
+    {
+      id: "comparison:button",
+      targetRef: "target:button",
+      images: [
+        {
+          id: "image:desktop",
+          label: "desktop",
+          width: 200,
+          height: 100,
+          beforeRef: "visual/before.png",
+          afterRef: "visual/after.png",
+          diffRef: "visual/diff.png",
+          regions: [{ id: "region:1", x: 50, y: 25, width: 100, height: 50, pixels: 5000 }]
+        }
+      ]
+    }
+  ] as UtsuriReport["comparisons"];
+  return source;
+}
+
+function replaceVisualAnchor<T>(value: T, replacement: ReviewAnchor): T {
+  const result = structuredClone(value);
+  if (!result || typeof result !== "object") return result;
+  const pending: object[] = [result];
+  const visited = new WeakSet<object>();
+  while (pending.length > 0) {
+    const candidate = pending.pop()!;
+    if (visited.has(candidate)) continue;
+    visited.add(candidate);
+    if (Array.isArray(candidate)) {
+      for (const child of candidate) if (child && typeof child === "object") pending.push(child);
+      continue;
+    }
+    const item = candidate as Record<string, unknown>;
+    if (item.type === "visual-region" && item.ref === replacement.ref) {
+      item.targetRef = replacement.targetRef;
+      item.region = structuredClone(replacement.region);
+      item.fingerprint = replacement.fingerprint;
+    }
+    for (const child of Object.values(item)) {
+      if (child && typeof child === "object") pending.push(child);
+    }
+  }
+  return result;
 }
 
 describe("review state", () => {
@@ -105,6 +156,151 @@ describe("review state", () => {
     expect(() =>
       createReviewBundle(imported.store, { base: "base", head: "head" }, now)
     ).not.toThrow();
+  });
+
+  test("migrates Phase 5 pixel anchors before validating a review bundle", async () => {
+    const source = await visualReport();
+    let oldStore = await createReviewStore(source, now);
+    const currentAnchor = oldStore.anchorCatalog.find((entry) => entry.type === "visual-region")!;
+    oldStore = await setViewed(oldStore, currentAnchor, "viewed", "2026-08-07T00:00:01.000Z");
+    oldStore = await createHumanComment(
+      oldStore,
+      currentAnchor,
+      "Keep the visual note.",
+      "note",
+      "2026-08-07T00:00:02.000Z"
+    );
+    const legacyAnchor = (await buildLegacyVisualAnchorCatalog(source, nodeReviewDigest))[0]!;
+    expect(legacyAnchor.region).toEqual({ x: 50, y: 25, width: 100, height: 50 });
+    const legacyBundle = replaceVisualAnchor(
+      createReviewBundle(oldStore, { base: "base", head: "head" }, now),
+      legacyAnchor
+    );
+    const current = await createReviewStore(source, now);
+    const imported = await importReviewBundle(current, legacyBundle, {
+      reanchor: true,
+      importedAt: "2026-08-07T00:00:03.000Z"
+    });
+    expect(imported.store.threads[0]?.messages[0]?.body).toBe("Keep the visual note.");
+    expect(imported.store.threads[0]?.anchor).toEqual(currentAnchor);
+    expect(Object.values(imported.store.state.viewed)[0]?.anchor).toEqual(currentAnchor);
+    expect(imported.reanchored.every((entry) => entry.result === "exact")).toBe(true);
+  });
+
+  test("never promotes a pixel-shaped anchor with a mismatched legacy fingerprint", async () => {
+    const source = await visualReport();
+    let sourceStore = await createReviewStore(source, now);
+    const currentAnchor = sourceStore.anchorCatalog.find(
+      (entry) => entry.type === "visual-region"
+    )!;
+    sourceStore = await createHumanComment(
+      sourceStore,
+      currentAnchor,
+      "Keep this anchor stale.",
+      "note",
+      "2026-08-07T00:00:01.000Z"
+    );
+    const legacyAnchor = (await buildLegacyVisualAnchorCatalog(source, nodeReviewDigest))[0]!;
+    const forgedAnchor = { ...legacyAnchor, fingerprint: "f".repeat(64) };
+    expect(forgedAnchor.fingerprint).not.toBe(legacyAnchor.fingerprint);
+    const forgedBundle = replaceVisualAnchor(
+      createReviewBundle(sourceStore, { base: "base", head: "head" }, now),
+      forgedAnchor
+    );
+    const exact = await createReviewStore(source, now);
+    await expect(
+      importReviewBundle(exact, forgedBundle, {
+        reanchor: true,
+        importedAt: "2026-08-07T00:00:02.000Z"
+      })
+    ).rejects.toMatchObject({ diagnosticId: "REVIEW_BUNDLE_INVALID" });
+
+    const changedReport = structuredClone(source);
+    changedReport.reportId = "report-visual-reanchor-target";
+    changedReport.origin.reportId = changedReport.reportId;
+    changedReport.comparisons[0]!.images[0]!.afterRef = "visual/after-v2.png";
+    const changed = await createReviewStore(changedReport, now);
+    const imported = await importReviewBundle(changed, forgedBundle, {
+      reanchor: true,
+      importedAt: "2026-08-07T00:00:03.000Z"
+    });
+    expect(imported.store.threads[0]?.state).toBe("stale");
+    expect(imported.store.threads[0]?.anchor.fingerprint).toBe(forgedAnchor.fingerprint);
+    expect(imported.store.threads[0]?.anchor.region).toBeUndefined();
+    expect(
+      imported.reanchored
+        .filter((entry) => entry.source.ref === forgedAnchor.ref)
+        .every((entry) => entry.result !== "exact")
+    ).toBe(true);
+  });
+
+  test("migrates Phase 5 pixel anchors before loading a committed generation", async () => {
+    const directory = await mkdtemp(path.join(os.tmpdir(), "utsuri-review-pixel-migration-"));
+    try {
+      const source = await visualReport();
+      let store = await createReviewStore(source, now);
+      const currentAnchor = store.anchorCatalog.find((entry) => entry.type === "visual-region")!;
+      store = await setViewed(store, currentAnchor, "viewed", "2026-08-07T00:00:01.000Z");
+      await persistReviewStore(directory, store, 0);
+      store = await loadReviewStore(directory, source, "2026-08-07T00:00:02.000Z");
+      store = await createHumanComment(
+        store,
+        currentAnchor,
+        "Persist the visual note.",
+        "note",
+        "2026-08-07T00:00:03.000Z"
+      );
+      await persistReviewStore(directory, store, 1);
+
+      const legacyAnchor = (await buildLegacyVisualAnchorCatalog(source, nodeReviewDigest))[0]!;
+      const commit = JSON.parse(
+        await readFile(path.join(directory, "review/commits/revision-000000000002.json"), "utf8")
+      ) as { generation: string };
+      const generation = path.join(directory, "review/generations", commit.generation);
+      for (const filename of ["review-state.json", "review-events.ndjson"]) {
+        const file = path.join(generation, filename);
+        const raw = await readFile(file, "utf8");
+        const value = filename.endsWith(".ndjson")
+          ? raw
+              .trim()
+              .split("\n")
+              .map((line) => JSON.parse(line) as unknown)
+          : (JSON.parse(raw) as unknown);
+        const legacy = replaceVisualAnchor(value, legacyAnchor);
+        await writeFile(
+          file,
+          filename.endsWith(".ndjson")
+            ? `${(legacy as unknown[]).map((entry) => JSON.stringify(entry)).join("\n")}\n`
+            : `${JSON.stringify(legacy, null, 2)}\n`
+        );
+      }
+      const threads = path.join(generation, "threads");
+      for (const filename of await readdir(threads)) {
+        const file = path.join(threads, filename);
+        const legacy = replaceVisualAnchor(
+          JSON.parse(await readFile(file, "utf8")) as unknown,
+          legacyAnchor
+        );
+        await writeFile(file, `${JSON.stringify(legacy, null, 2)}\n`);
+      }
+
+      const loaded = await loadReviewStore(directory, source, "2026-08-07T00:00:04.000Z");
+      expect(Object.values(loaded.state.viewed)[0]?.anchor).toEqual(currentAnchor);
+      expect(loaded.threads[0]?.anchor).toEqual(currentAnchor);
+      expect(loaded.threads[0]?.messages[0]?.body).toBe("Persist the visual note.");
+
+      const stateFile = path.join(generation, "review-state.json");
+      const forgedState = replaceVisualAnchor(
+        JSON.parse(await readFile(stateFile, "utf8")) as unknown,
+        { ...legacyAnchor, fingerprint: "f".repeat(64) }
+      );
+      await writeFile(stateFile, `${JSON.stringify(forgedState, null, 2)}\n`);
+      await expect(
+        loadReviewStore(directory, source, "2026-08-07T00:00:05.000Z")
+      ).rejects.toThrow();
+    } finally {
+      await rm(directory, { recursive: true, force: true });
+    }
   });
 
   test("rejects bundle anchors that are not bound to the anchor catalog", async () => {

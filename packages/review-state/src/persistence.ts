@@ -7,7 +7,11 @@ import type { ReviewEvent, ReviewState, ReviewThread, UtsuriReport } from "@utsu
 import { assertArtifact } from "@utsu-ri/report-model";
 import { parseBoundedJson, readContainedRegularFile } from "@utsu-ri/security";
 import { createReviewStore, nodeReviewDigest } from "./model";
-import { buildAnchorCatalog } from "./anchors";
+import {
+  buildAnchorCatalog,
+  buildLegacyVisualAnchorCatalog,
+  migrateLegacyVisualRegionAnchors
+} from "./anchors";
 import type { ReviewDigest, ReviewStore } from "./types";
 
 const maximumStateBytes = 8 * 1024 * 1024;
@@ -102,7 +106,11 @@ async function readJson<T>(
   return parseBoundedJson(bytes.toString("utf8"), { label, maximumBytes }) as T;
 }
 
-function parseEvents(bytes: Buffer | null): ReviewEvent[] {
+function parseEvents(
+  bytes: Buffer | null,
+  currentCatalog: Awaited<ReturnType<typeof buildAnchorCatalog>>,
+  legacyCatalog: Awaited<ReturnType<typeof buildLegacyVisualAnchorCatalog>>
+): ReviewEvent[] {
   if (!bytes) return [];
   const text = bytes.toString("utf8");
   if (text && !text.endsWith("\n")) {
@@ -116,8 +124,9 @@ function parseEvents(bytes: Buffer | null): ReviewEvent[] {
         label: `review event ${index + 1}`,
         maximumBytes: maximumThreadBytes
       });
-      assertArtifact("review-event", value);
-      return value as ReviewEvent;
+      const migrated = migrateLegacyVisualRegionAnchors(value, currentCatalog, legacyCatalog, true);
+      assertArtifact("review-event", migrated);
+      return migrated as ReviewEvent;
     });
 }
 
@@ -319,15 +328,23 @@ export async function loadReviewStore(
     return createReviewStore(report, initializedAt, digest);
   }
   const generationRoot = `generations/${commit.generation}`;
-  const state = await readJson<ReviewState>(
+  const storedState = await readJson<ReviewState>(
     review,
     `${generationRoot}/review-state.json`,
     "review state",
     maximumStateBytes
   );
-  if (!state) {
+  if (!storedState) {
     persistenceError("REVIEW_SNAPSHOT_MISSING", "Committed review snapshot is missing");
   }
+  const anchorCatalog = await buildAnchorCatalog(report, digest);
+  const legacyAnchorCatalog = await buildLegacyVisualAnchorCatalog(report, digest);
+  const state = migrateLegacyVisualRegionAnchors(
+    storedState,
+    anchorCatalog,
+    legacyAnchorCatalog,
+    true
+  );
   assertArtifact("review-state", state);
   const expectedFingerprint = await digest(report);
   if (
@@ -341,14 +358,20 @@ export async function loadReviewStore(
   }
   const threads: ReviewThread[] = [];
   for (const threadId of state.threadIds) {
-    const value = await readJson<ReviewThread>(
+    const storedThread = await readJson<ReviewThread>(
       review,
       `${generationRoot}/threads/${threadFilename(threadId)}`,
       `review thread ${threadId}`,
       maximumThreadBytes
     );
-    if (!value)
+    if (!storedThread)
       persistenceError("REVIEW_THREAD_MISSING", `Stored review thread is missing: ${threadId}`);
+    const value = migrateLegacyVisualRegionAnchors(
+      storedThread,
+      anchorCatalog,
+      legacyAnchorCatalog,
+      true
+    );
     assertArtifact("review-thread", value);
     if (value.id !== threadId || value.reportId !== report.reportId) {
       persistenceError(
@@ -359,7 +382,13 @@ export async function loadReviewStore(
     threads.push(value);
   }
   const events = parseEvents(
-    await optionalContainedFile(review, `${generationRoot}/review-events.ndjson`, maximumEventBytes)
+    await optionalContainedFile(
+      review,
+      `${generationRoot}/review-events.ndjson`,
+      maximumEventBytes
+    ),
+    anchorCatalog,
+    legacyAnchorCatalog
   );
   for (const [index, event] of events.entries()) {
     if (event.sequence !== index + 1 || event.reportId !== report.reportId) {
@@ -375,7 +404,7 @@ export async function loadReviewStore(
     state,
     threads,
     events,
-    anchorCatalog: await buildAnchorCatalog(report, digest),
+    anchorCatalog,
     sidecarFiles
   };
 }

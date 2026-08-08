@@ -104,6 +104,114 @@ export async function buildAnchorCatalog(
   );
 }
 
+export async function buildLegacyVisualAnchorCatalog(
+  report: UtsuriReport,
+  digest: ReviewDigest
+): Promise<ReviewAnchor[]> {
+  const pending: Array<Promise<ReviewAnchor>> = [];
+  for (const comparison of report.comparisons) {
+    for (const image of comparison.images) {
+      for (const region of image.regions) {
+        pending.push(
+          anchor(
+            digest,
+            {
+              type: "visual-region",
+              ref: `${comparison.id}:${image.id}:${region.id}`,
+              targetRef: comparison.targetRef,
+              region: {
+                x: region.x,
+                y: region.y,
+                width: region.width,
+                height: region.height
+              }
+            },
+            { comparisonId: comparison.id, imageId: image.id, region }
+          )
+        );
+      }
+    }
+  }
+  return Promise.all(pending);
+}
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return Boolean(value && typeof value === "object" && !Array.isArray(value));
+}
+
+function hasLegacyRegionShape(value: unknown): value is {
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+} {
+  if (!isRecord(value)) return false;
+  const keys = Object.keys(value);
+  return (
+    keys.length === 4 &&
+    keys.every((key) => new Set(["x", "y", "width", "height"]).has(key)) &&
+    [value.x, value.y, value.width, value.height].every(
+      (coordinate) => typeof coordinate === "number" && Number.isFinite(coordinate)
+    )
+  );
+}
+
+export function migrateLegacyVisualRegionAnchors<T>(
+  value: T,
+  currentCatalog: readonly ReviewAnchor[],
+  legacyCatalog: readonly ReviewAnchor[],
+  exactReport: boolean
+): T {
+  const migrated = structuredClone(value);
+  if (!migrated || typeof migrated !== "object") return migrated;
+  const currentByKey = new Map(currentCatalog.map((entry) => [anchorKey(entry), entry]));
+  const legacyByKey = new Map(legacyCatalog.map((entry) => [anchorKey(entry), entry]));
+  const pending: object[] = [migrated];
+  const visited = new WeakSet<object>();
+  while (pending.length > 0) {
+    const candidate = pending.pop()!;
+    if (visited.has(candidate)) continue;
+    visited.add(candidate);
+    if (Array.isArray(candidate)) {
+      for (const child of candidate) {
+        if (child && typeof child === "object") pending.push(child);
+      }
+      continue;
+    }
+    const item = candidate as Record<string, unknown>;
+    if (
+      item.type === "visual-region" &&
+      typeof item.ref === "string" &&
+      typeof item.fingerprint === "string" &&
+      hasLegacyRegionShape(item.region)
+    ) {
+      const key = JSON.stringify([item.type, item.ref]);
+      const current = currentByKey.get(key);
+      const legacy = legacyByKey.get(key);
+      const pixelCoordinates = [
+        item.region.x,
+        item.region.y,
+        item.region.width,
+        item.region.height
+      ].some((coordinate) => coordinate > 1);
+      const legacyFingerprint = legacy?.fingerprint === item.fingerprint;
+      if (legacyFingerprint && current) {
+        if (current.region) item.region = structuredClone(current.region);
+        else delete item.region;
+        if (current.targetRef) item.targetRef = current.targetRef;
+        else delete item.targetRef;
+        if (exactReport) item.fingerprint = current.fingerprint;
+      } else if (pixelCoordinates && !exactReport) {
+        delete item.region;
+      }
+    }
+    for (const child of Object.values(item)) {
+      if (child && typeof child === "object") pending.push(child);
+    }
+  }
+  return migrated;
+}
+
 export function anchorKey(anchor: Pick<ReviewAnchor, "type" | "ref">): string {
   return JSON.stringify([anchor.type, anchor.ref]);
 }

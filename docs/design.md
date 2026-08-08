@@ -3658,6 +3658,8 @@ The Phase 5 source checkout implements independent viewed/judgment/comment state
 
 The Phase 6 source checkout implements append-only review events and immutable-generation sidecars under `run/review/`; explicit Agent-attention selection; Feedback Batch preview and idempotent storage; bounded, redacted code/visual Context Packs; opaque host/session/project/report binding; fixed-run CLI and strict NDJSON MCP tools; one answer per original thread; normalized visual anchors and stale/orphaned re-anchoring; and a loopback interactive API protected by a per-start fragment capability, exact Host/Fetch Metadata/report checks, exact Origin on mutations, exact Referer validation when present on read-only GET, and strict request shapes. Static mode exports without claiming a session. Codex and Claude Code use `return-to-session`; the unsupported direct bridge creates no session and returns the same handoff fallback.
 
+Before persisted state, browser storage, or a review bundle is validated, Phase 5 pixel-coordinate visual anchors are recognized by their legacy fingerprint and migrated to the normalized catalog. A cross-report comment with no current anchor remains orphaned instead of being discarded.
+
 ---
 
 ## 41. Release gate
@@ -4165,6 +4167,8 @@ Never bind with:
 
 A session ID is routing information, not an authentication token. A direct bridge requires both capability authentication and the host control channel.
 
+The v1 return-to-session implementation accepts only a raw session ID supplied by the official host integration and hashes it at the process boundary. It never accepts the published opaque `sessionRef` as current-session input. Every Review Inbox CLI/MCP read and write operation verifies the bound host, session reference, project fingerprint, and report ID before opening mutable review data.
+
 ### 46.8 Delivery Mode
 
 #### 46.8.1 `return-to-session` — Must
@@ -4316,7 +4320,7 @@ Processed 3 pending items.
 ```text
 review_list_batches(report_id?, state?)
 review_get_batch(batch_id)
-review_claim_batch(batch_id, origin_session_ref?)
+review_claim_batch(batch_id)
 review_get_item_context(item_id)
 review_post_answers(batch_id, answers[])
 review_release_batch(batch_id)
@@ -4332,7 +4336,7 @@ utsuri feedback get --batch fb_01 --json
 utsuri feedback answer --batch fb_01 --input answers.json --json
 ```
 
-MCP and CLI use the same core service, schemas, and locking.
+MCP and CLI use the same core service, schemas, locking, and fail-closed Origin Session gate. Bound Inbox data is not listed or read when the current host session identity is absent or mismatched.
 
 ### 46.12 Context Pack
 

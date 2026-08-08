@@ -116,4 +116,42 @@ describe("Review Inbox MCP", () => {
     expect(responses[0]?.error).toBeDefined();
     expect(responses[1]).toMatchObject({ id: 2, result: {} });
   });
+
+  test("rejects every inbox operation before reading when Origin Session is absent", async () => {
+    const report = JSON.parse(
+      await readFile(
+        path.join(root, "fixtures/code-only-review/expected/report/report.json"),
+        "utf8"
+      )
+    ) as UtsuriReport;
+    report.origin = {
+      host: "codex",
+      sessionRef: `session:${"1".repeat(64)}`,
+      projectFingerprint: "2".repeat(64),
+      reportId: report.reportId,
+      bindingMode: "return-to-session",
+      createdAt: "2026-08-08T00:00:00.000Z"
+    };
+    const service = new ReviewMcpService({
+      runDirectory: "/not-readable",
+      report,
+      currentSession: {
+        host: "unknown",
+        projectFingerprint: report.origin.projectFingerprint,
+        reportId: report.reportId
+      }
+    });
+    for (const [name, arguments_] of [
+      ["review_list_batches", {}],
+      ["review_get_batch", { batch_id: "fb:test" }],
+      ["review_claim_batch", { batch_id: "fb:test" }],
+      ["review_get_item_context", { item_id: "item:test" }],
+      ["review_post_answers", { batch_id: "fb:test", answers: [] }],
+      ["review_release_batch", { batch_id: "fb:test" }]
+    ] as const) {
+      await expect(service.callTool(name, arguments_)).rejects.toMatchObject({
+        diagnosticId: "ORIGIN_SESSION_MISMATCH"
+      });
+    }
+  });
 });

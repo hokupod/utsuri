@@ -94,13 +94,27 @@ describe("return-to-session CLI", () => {
   });
 
   test("bounds answer-file reads before parsing", async () => {
-    const { root } = await createRun();
+    const environment = { UTSURI_CODEX_SESSION_ID: "bounded-answer-session" };
+    const { root } = await createRun(environment);
     await writeFile(path.join(root, "oversized-answers.json"), Buffer.alloc(2 * 1024 * 1024 + 1));
-    const runtime = await prepareFeedbackRuntime(root, "run");
+    const runtime = await prepareFeedbackRuntime(root, "run", environment);
 
     await expect(
       feedbackAnswer(root, runtime, undefined, "oversized-answers.json")
     ).rejects.toMatchObject({ diagnosticId: "SEC_FILE_SIZE_LIMIT" });
+  });
+
+  test("fails closed before opening a bound inbox without the raw host session ID", async () => {
+    const environment = { UTSURI_CODEX_SESSION_ID: "origin-session" };
+    const { root, report } = await createRun(environment);
+    await expect(prepareFeedbackRuntime(root, "run", {})).rejects.toMatchObject({
+      diagnosticId: "ORIGIN_SESSION_MISMATCH"
+    });
+    await expect(
+      prepareFeedbackRuntime(root, "run", {
+        UTSURI_CODEX_SESSION_REF: report.origin.sessionRef
+      })
+    ).rejects.toMatchObject({ diagnosticId: "ORIGIN_SESSION_MISMATCH" });
   });
 
   for (const [host, environment] of [

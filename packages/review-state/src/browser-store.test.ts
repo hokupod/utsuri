@@ -11,6 +11,9 @@ import {
   loadBrowserReviewStore,
   saveBrowserReviewStore
 } from "./browser-store";
+import { buildLegacyVisualAnchorCatalog } from "./anchors";
+import { browserReviewDigest } from "./browser-digest";
+import type { ReviewAnchor } from "./types";
 
 const root = path.resolve(import.meta.dir, "../../..");
 const now = "2026-08-07T00:00:00.000Z";
@@ -67,6 +70,56 @@ async function report(): Promise<UtsuriReport> {
   return JSON.parse(
     await readFile(path.join(root, "fixtures/code-only-review/expected/report/report.json"), "utf8")
   ) as UtsuriReport;
+}
+
+async function visualReport(): Promise<UtsuriReport> {
+  const source = await report();
+  source.targets = [{ id: "target:button", before: {}, after: {} }] as UtsuriReport["targets"];
+  source.comparisons = [
+    {
+      id: "comparison:button",
+      targetRef: "target:button",
+      images: [
+        {
+          id: "image:desktop",
+          label: "desktop",
+          width: 200,
+          height: 100,
+          beforeRef: "visual/before.png",
+          afterRef: "visual/after.png",
+          diffRef: "visual/diff.png",
+          regions: [{ id: "region:1", x: 50, y: 25, width: 100, height: 50, pixels: 5000 }]
+        }
+      ]
+    }
+  ] as UtsuriReport["comparisons"];
+  return source;
+}
+
+function replaceVisualAnchor<T>(value: T, replacement: ReviewAnchor): T {
+  const result = structuredClone(value);
+  if (!result || typeof result !== "object") return result;
+  const pending: object[] = [result];
+  const visited = new WeakSet<object>();
+  while (pending.length > 0) {
+    const candidate = pending.pop()!;
+    if (visited.has(candidate)) continue;
+    visited.add(candidate);
+    if (Array.isArray(candidate)) {
+      for (const child of candidate) if (child && typeof child === "object") pending.push(child);
+      continue;
+    }
+    const item = candidate as Record<string, unknown>;
+    if (item.type === "visual-region" && item.ref === replacement.ref) {
+      item.targetRef = replacement.targetRef;
+      item.region = structuredClone(replacement.region);
+      item.fingerprint = replacement.fingerprint;
+    }
+    for (const child of Object.values(item)) {
+      if (child && typeof child === "object") pending.push(child);
+    }
+  }
+  return result;
 }
 
 beforeEach(() => {
@@ -159,5 +212,29 @@ describe("browser review storage", () => {
     expect([...(localStorage as MemoryStorage).values.values()]).toEqual(persisted);
     const loaded = await loadBrowserReviewStore(source);
     expect(loaded.state.revision).toBe(1);
+  });
+
+  test("migrates Phase 5 pixel anchors from browser storage before validation", async () => {
+    const source = await visualReport();
+    const current = await createBrowserReviewStore(source, now);
+    const currentAnchor = current.anchorCatalog.find((entry) => entry.type === "visual-region")!;
+    const viewed = await browserSetViewed(
+      current,
+      currentAnchor,
+      "viewed",
+      "2026-08-07T00:00:01.000Z"
+    );
+    await saveBrowserReviewStore(viewed, 0);
+    const storage = localStorage as MemoryStorage;
+    const [key, serialized] = [...storage.values.entries()][0]!;
+    const legacyAnchor = (await buildLegacyVisualAnchorCatalog(source, browserReviewDigest))[0]!;
+    storage.setItem(
+      key,
+      JSON.stringify(replaceVisualAnchor(JSON.parse(serialized) as unknown, legacyAnchor))
+    );
+
+    const loaded = await loadBrowserReviewStore(source);
+    expect(Object.values(loaded.state.viewed)[0]?.anchor).toEqual(currentAnchor);
+    expect(loaded.events[0]?.anchor).toEqual(currentAnchor);
   });
 });

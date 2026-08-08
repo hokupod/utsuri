@@ -2,7 +2,14 @@ import { createHash } from "node:crypto";
 import type { ReviewEvent, ReviewState, ReviewThread, UtsuriReport } from "@utsu-ri/report-model";
 import { assertArtifact, validateReviewBundle } from "@utsu-ri/report-model";
 import { UtsuriError, ExitCode } from "@utsu-ri/core";
-import { buildAnchorCatalog, anchorKey, classifyAnchor, reportFingerprint } from "./anchors";
+import {
+  anchorKey,
+  buildAnchorCatalog,
+  buildLegacyVisualAnchorCatalog,
+  classifyAnchor,
+  migrateLegacyVisualRegionAnchors,
+  reportFingerprint
+} from "./anchors";
 import { canonicalReviewJson } from "./canonical";
 import type {
   AnchorReanchorResult,
@@ -362,13 +369,31 @@ export async function importReviewBundle(
   options: { reanchor: boolean; importedAt: string; digest?: ReviewDigest }
 ): Promise<ReviewImportResult> {
   requireIsoDate(options.importedAt);
-  const validation = validateReviewBundle(bundle);
+  const digest = options.digest ?? nodeReviewDigest;
+  const source =
+    bundle && typeof bundle === "object" && !Array.isArray(bundle) && "source" in bundle
+      ? bundle.source
+      : null;
+  const exactReport = Boolean(
+    source &&
+    typeof source === "object" &&
+    !Array.isArray(source) &&
+    "reportId" in source &&
+    "reportFingerprint" in source &&
+    source.reportId === current.report.reportId &&
+    source.reportFingerprint === current.state.reportFingerprint
+  );
+  const migratedBundle = migrateLegacyVisualRegionAnchors(
+    bundle,
+    current.anchorCatalog,
+    await buildLegacyVisualAnchorCatalog(current.report, digest),
+    exactReport
+  );
+  const validation = validateReviewBundle(migratedBundle);
   if (!validation.ok) {
     throw new UtsuriError("REVIEW_BUNDLE_INVALID", validation.errors.join("; "), ExitCode.Artifact);
   }
-  const exactReport =
-    bundle.source.reportId === current.report.reportId &&
-    bundle.source.reportFingerprint === current.state.reportFingerprint;
+  const sourceBundle = migratedBundle as ReviewBundleDocument;
   if (!exactReport && !options.reanchor) {
     throw new UtsuriError(
       "REVIEW_REPORT_MISMATCH",
@@ -376,12 +401,11 @@ export async function importReviewBundle(
       ExitCode.Artifact
     );
   }
-  const digest = options.digest ?? nodeReviewDigest;
   const reanchored: AnchorReanchorResult[] = [];
   const conflicts: ReviewImportConflict[] = [];
   const state = nextState(current, options.importedAt);
 
-  for (const [key, entry] of Object.entries(bundle.state.viewed)) {
+  for (const [key, entry] of Object.entries(sourceBundle.state.viewed)) {
     const match = classifyAnchor(entry.anchor, current.anchorCatalog);
     reanchored.push(match);
     const targetAnchor = match.result === "exact" ? match.candidate! : entry.anchor;
@@ -397,11 +421,11 @@ export async function importReviewBundle(
   }
 
   const sourceChanges = new Map(
-    bundle.anchorCatalog
+    sourceBundle.anchorCatalog
       .filter((entry) => entry.type === "change")
       .map((entry) => [entry.ref, entry] as const)
   );
-  for (const [changeId, entry] of Object.entries(bundle.state.judgments)) {
+  for (const [changeId, entry] of Object.entries(sourceBundle.state.judgments)) {
     const sourceAnchor = sourceChanges.get(changeId);
     const match = sourceAnchor ? classifyAnchor(sourceAnchor, current.anchorCatalog) : undefined;
     if (match) reanchored.push(match);
@@ -420,7 +444,7 @@ export async function importReviewBundle(
   }
 
   const threads = clone(current.threads);
-  for (const sourceThread of bundle.threads) {
+  for (const sourceThread of sourceBundle.threads) {
     const match = classifyAnchor(sourceThread.anchor, current.anchorCatalog);
     reanchored.push(match);
     const incoming: ReviewThread = {
@@ -445,7 +469,7 @@ export async function importReviewBundle(
     .map((thread) => thread.id);
   const event = await eventFor(current, digest, options.importedAt, {
     type: "state.imported",
-    sourceReportId: bundle.source.reportId
+    sourceReportId: sourceBundle.source.reportId
   });
   const store: ReviewStore = {
     ...current,

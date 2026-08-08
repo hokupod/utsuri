@@ -39,8 +39,8 @@ function sessionInput(environment: NodeJS.ProcessEnv): {
   host: "codex" | "claude-code" | "unknown";
   sessionId?: string;
 } {
-  const codex = environment.UTSURI_CODEX_SESSION_ID ?? environment.UTSURI_CODEX_SESSION_REF;
-  const claude = environment.CLAUDE_SESSION_ID ?? environment.UTSURI_CLAUDE_SESSION_REF;
+  const codex = environment.UTSURI_CODEX_SESSION_ID;
+  const claude = environment.CLAUDE_SESSION_ID;
   if (codex && claude) {
     feedbackError(
       "ORIGIN_SESSION_AMBIGUOUS",
@@ -175,6 +175,7 @@ export async function prepareFeedbackRuntime(
     { label: "feedback report", maximumBytes: 32 * 1024 * 1024 }
   ) as UtsuriReport;
   const { binding, currentSession } = await createRuntimeSessionContext(cwd, report, environment);
+  assertOriginSessionMatch(binding, currentSession);
   return {
     runDirectory,
     report,

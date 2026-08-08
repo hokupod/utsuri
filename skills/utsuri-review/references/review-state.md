@@ -47,4 +47,5 @@ Never activate a probable anchor automatically. Preserve import conflicts in the
 - Never submit stale, orphaned, or resolved threads as current feedback.
 - Agent answers append to their original threads but never mark a change viewed, reviewed, or resolved.
 - A changed screenshot fingerprint makes its visual-region anchor stale even when the region identity is unchanged.
+- Phase 5 pixel-coordinate visual anchors migrate to the normalized catalog before state or bundle validation; an unmappable cross-report comment remains orphaned.
 - Static mode exports an `export-only` batch. Interactive mode stores a fixed-destination batch for return to the Origin Session.

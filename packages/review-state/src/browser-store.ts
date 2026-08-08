@@ -8,7 +8,13 @@ import {
   validateBrowserReviewArtifact,
   validateBrowserReviewBundle
 } from "@utsu-ri/report-model/browser-validator";
-import { anchorKey, buildAnchorCatalog, classifyAnchor } from "./anchors";
+import {
+  anchorKey,
+  buildAnchorCatalog,
+  buildLegacyVisualAnchorCatalog,
+  classifyAnchor,
+  migrateLegacyVisualRegionAnchors
+} from "./anchors";
 import { canonicalReviewJson } from "./canonical";
 import { browserReviewDigest } from "./browser-digest";
 import type {
@@ -158,7 +164,10 @@ function validateStore(store: ReviewStore): void {
   }
 }
 
-function parseStoredReview(store: ReviewStore, serialized: string): BrowserStoredReview {
+async function parseStoredReview(
+  store: ReviewStore,
+  serialized: string
+): Promise<BrowserStoredReview> {
   const stored = safeParse(serialized);
   if (!isStoredReview(stored)) {
     throw browserError("REVIEW_BROWSER_INVALID", "Stored review state has an invalid shape");
@@ -172,13 +181,19 @@ function parseStoredReview(store: ReviewStore, serialized: string): BrowserStore
       "Stored review state belongs to an older report; export it before re-anchoring"
     );
   }
+  const migrated = migrateLegacyVisualRegionAnchors(
+    stored,
+    store.anchorCatalog,
+    await buildLegacyVisualAnchorCatalog(store.report, browserReviewDigest),
+    true
+  );
   validateStore({
     ...store,
-    state: clone(stored.state),
-    threads: clone(stored.threads),
-    events: clone(stored.events)
+    state: clone(migrated.state),
+    threads: clone(migrated.threads),
+    events: clone(migrated.events)
   });
-  return stored;
+  return migrated;
 }
 
 function lockManager(): BrowserLockManager {
@@ -245,7 +260,7 @@ export async function loadBrowserReviewStore(report: UtsuriReport): Promise<Revi
   const current = await createBrowserReviewStore(report, new Date().toISOString());
   const serialized = localStorage.getItem(storageKey(report.reportId));
   if (!serialized) return current;
-  const stored = parseStoredReview(current, serialized);
+  const stored = await parseStoredReview(current, serialized);
   const store: ReviewStore = {
     ...current,
     state: clone(stored.state),
@@ -279,9 +294,9 @@ export async function saveBrowserReviewStore(
     );
   }
   const key = storageKey(store.report.reportId);
-  await lockManager().request(`${key}:write`, { mode: "exclusive" }, () => {
+  await lockManager().request(`${key}:write`, { mode: "exclusive" }, async () => {
     const current = localStorage.getItem(key);
-    const currentRevision = current ? parseStoredReview(store, current).state.revision : 0;
+    const currentRevision = current ? (await parseStoredReview(store, current)).state.revision : 0;
     if (currentRevision !== expectedRevision) {
       throw browserError(
         "REVIEW_REVISION_CONFLICT",
@@ -486,14 +501,30 @@ export async function importBrowserReviewBundle(
   const importedAt = options.importedAt ?? new Date().toISOString();
   const serialized = JSON.stringify(input);
   const parsed = safeParse(serialized);
-  const validation = validateBrowserReviewBundle(parsed);
+  const source =
+    parsed && typeof parsed === "object" && !Array.isArray(parsed) && "source" in parsed
+      ? parsed.source
+      : null;
+  const exactReport = Boolean(
+    source &&
+    typeof source === "object" &&
+    !Array.isArray(source) &&
+    "reportId" in source &&
+    "reportFingerprint" in source &&
+    source.reportId === current.report.reportId &&
+    source.reportFingerprint === current.state.reportFingerprint
+  );
+  const migrated = migrateLegacyVisualRegionAnchors(
+    parsed,
+    current.anchorCatalog,
+    await buildLegacyVisualAnchorCatalog(current.report, browserReviewDigest),
+    exactReport
+  );
+  const validation = validateBrowserReviewBundle(migrated);
   if (!validation.ok) {
     throw browserError("REVIEW_BUNDLE_INVALID", validation.errors.join("; "));
   }
-  const bundle = parsed as ReviewBundleDocument;
-  const exactReport =
-    bundle.source.reportId === current.report.reportId &&
-    bundle.source.reportFingerprint === current.state.reportFingerprint;
+  const bundle = migrated as ReviewBundleDocument;
   if (!exactReport && !options.reanchor) {
     throw browserError(
       "REVIEW_REPORT_MISMATCH",
