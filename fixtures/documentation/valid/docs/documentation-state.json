@@ -7,6 +7,7 @@
   "changeLogEntryId": "design-v1.5-english-canonical",
   "currentHashes": {
     "docs/design.md": "f3b95f23b360cb99e87128bcbcc9392eda7ce7b0be9c8fd036399c631de5a1ef",
+    "docs/release.md": "5e41020e0893074459b9e476dc27136e3086776746225a9cb09c58bf819a7530",
     "README.md": "5c52217788770021c90509f3183770637fafbf06ad0e79c74241d7e7e06c4e4a",
     "README.ja.md": "f501aebfe186279346702df287ab8613058ce321529ff986a1c0e96385413de2",
     "README.zh-CN.md": "599181981f18c96f96f429683e18d86ff58422b265e28bfb2b3881d97ababaa1"
@@ -33,6 +34,7 @@
   ],
   "humanReviewedHashes": {
     "docs/design.md": null,
+    "docs/release.md": null,
     "README.md": null,
     "README.ja.md": null,
     "README.zh-CN.md": null

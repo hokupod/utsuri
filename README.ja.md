@@ -18,9 +18,9 @@ Utsuriは、コード変更を、根拠と意図を伴う人間向けの視覚�
 
 ## 状態
 
-<!-- availability:phase-6-origin-session-feedback -->
+<!-- availability:phase-6-v0-1-0-release-ready -->
 
-完全なv1 source実装をstable-release candidateとして利用できます。Phase 6では、Phase 5 distribution candidateへ、capabilityで保護したinteractive review、Feedback Batchのpreview / 保存、bounded Context Pack、Origin Session binding、Review InboxのCLI / MCP access、itemized answer writeback、安全なreturn-to-session fallbackを追加しました。対応hostのどちらも、認証済みbindingとresponse correlationの全要件を満たすAPIを公開していないため、direct same-session bridgeは有効化していません。npm packageとPluginは未公開です。
+完全なv1 source実装は`v0.1.0` release向けに準備済みです。Phase 6は、capabilityで保護したinteractive review、Feedback Batchのpreview / 保存、bounded Context Pack、Origin Session binding、Review InboxのCLI / MCP access、itemized answer writeback、安全なreturn-to-session fallbackを提供します。read-onlyのDistribution Candidate workflowが全release artifactをbuild / 検証し、別の保護された`v*` tag workflowはrelease gate通過後にのみOIDC publicationを行います。対応hostのどちらも、認証済みbindingとresponse correlationの全要件を満たすAPIを公開していないため、direct same-session bridgeは有効化していません。npm packageとPluginは、初回公開のone-time bootstrapと明示承認されたreleaseまで未公開です。
 
 <a id="capabilities"></a><!-- section:capabilities -->
 
@@ -170,7 +170,7 @@ node scripts/safe-chain.mjs bun run check
 
 bundle済みCLI protocolはnative実行で検証し、wrapper noticeがJSON / NDJSONを汚染しないようにします。
 
-checkとbuild gateは、現在のmacOSまたはLinux target向けに、監査可能なatomic publication helperをcompileします。手動dispatchするcandidate workflowは、対応するrunnerで4種類のOS / architecture helperをbuildし、aggregate Pluginとexact npm tarballをassembleして、Node 22 / 24でisolated installを検証します。candidate modeはregistryへ書き込みません。
+checkとbuild gateは、現在のmacOSまたはLinux target向けに、監査可能なatomic publication helperをcompileします。手動dispatchする`.github/workflows/distribution-candidate.yml`は、対応するrunnerで4種類のOS / architecture helperをbuildし、aggregate Pluginとexact npm tarballをassembleして、release asset / checksumをbindし、Node 22 / 24でisolated installを検証します。registry write権限はありません。`.github/workflows/release.yml`は、exact `main` commitのannotated `v*` tagだけで起動し、OIDC publicationを保護された`release` environmentへ限定します。
 
 <!-- sync-command:native-doctor -->
 
@@ -223,4 +223,4 @@ build outputはexternal JavaScript runtime importを持たない単一のNode 22
 
 ## License・公開状態
 
-publisherは`hokupod`、npm maintainerは`hokupod-npm`、公開方式はGitHub Actions trusted publishing、SPDX licenseは`AGPL-3.0-or-later`です。Phase 6は完全なv1 stable-release candidateを生成します。job間ではmanifestにbindされた通常fileを検証してから宣言済みmodeだけを復元し、downloadしたhelper / Plugin tarballは展開しません。全release gate通過と別途の明示承認までpackageは未公開に保ちます。v1実装計画ではpublish、tag、push、promotionを行いません。
+publisherは`hokupod`、npm maintainerは`hokupod-npm`、公開方式はGitHub Actions trusted publishing、SPDX licenseは`AGPL-3.0-or-later`です。sourceは`v0.1.0` release-readyですが、5つのnpm packageとaggregate Pluginは未公開です。candidate生成はregistryへ書き込みません。tag workflowは、保護された`release` environment、exact release-asset integrity、公開packageのnative smoke、全asset upload成功後にのみ公開されるdraft GitHub Releaseを要求します。npm trusted publishingでは新規packageを作成できないため、初回releaseにはrelease guide記載のone-time bootstrapも必要です。repository変更だけでtag作成やartifact公開は行われません。

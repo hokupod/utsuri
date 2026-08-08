@@ -6,15 +6,15 @@
 - **Plugin name**: `utsuri`
 - **Skill name**: `utsuri-review`
 - **CLI name**: `utsuri`
-- **Document version**: 2.5
+- **Document version**: 2.6
 - **Created**: 2026-08-06
-- **Last updated**: 2026-08-08
+- **Last updated**: 2026-08-09
 - **Language**: English (canonical)
 - **Targets**: Codex / Claude Code / local CLI / CI
 - **Implementation language**: TypeScript
 - **Development environment**: Bun
 - **Report UI**: a static application built with Svelte
-- **v2.5 changes**: implemented the Phase 6 Origin Session feedback loop with capability-bound interactive review, bounded Context Packs, fixed-run Review Inbox CLI/MCP access, itemized answer writeback, and fail-closed return-to-session delivery
+- **v2.6 changes**: prepared the v1 source as `v0.1.0` with a read-only multi-platform candidate workflow, exact release-asset manifests, public-history scanning, protected tag/OIDC publication, partial-publish integrity recovery, and draft-first GitHub Releases
 
 ---
 
@@ -934,7 +934,8 @@ Development source lives under `packages/`. At release time, bundle it as one No
 - Build `@utsu-ri/cli-{darwin-arm64,darwin-x64,linux-arm64,linux-x64}` on the matching GitHub-hosted runner. Every helper package contains the helper, its source, an integrity manifest, and the executable proof produced on that architecture.
 - Assemble all four helper packages, the private-staged `@utsu-ri/cli`, and the shared Plugin into one distribution candidate. Its aggregate manifest binds every file hash and executable mode; a missing target, source mismatch, tamper, symlink, or normal-rename fallback rejects the candidate.
 - Carry helper proofs and Plugin files between workflow jobs as regular Actions-artifact entries rather than downloaded tarballs. Revalidate hashes before restoring only manifest-declared `0644` / `0755` modes, and create the promoted archive only after the exact restored tree passes all promotion gates.
-- Keep candidate generation as the default `workflow_dispatch` mode. Any npm staged-publishing submission requires an explicit `stage` selection, the protected `npm-production` environment, OIDC `id-token: write`, npm 11.15.0 or newer, and packages that already exist on npm. Approval and public availability remain separate operator actions with 2FA.
+- Keep `.github/workflows/distribution-candidate.yml` manually dispatchable and callable without registry-write or OIDC permission. It must bind the five npm tarballs and deterministic Plugin archive in `release-assets.json` and `SHA256SUMS` after the four-platform candidate passes.
+- Run `.github/workflows/release.yml` only for an annotated `v<version>` tag at the exact `main` commit. Require current CHANGELOG and human-reviewed documentation state, public-history PII/secret scans, the protected `release` environment, OIDC trusted publishing without an npm token, exact registry integrity for recovery, native published-package smoke, and draft-first GitHub Release publication. First-package creation remains a separately authorized maintainer bootstrap because trusted publishing cannot create a package.
 - Before Plugin promotion, run native `npx` and `bunx` against the exact published SemVer in isolated caches before Safe-chain or dependency setup. Parse one strict JSON line, reject notices or fallback, use a failing ambient-command sentinel, and terminate the complete process group on timeout.
 - The product name `Utsuri`, CLI name `utsuri`, and Skill name `utsuri-review` remain fixed; changing the package identifier requires an explicit design change.
 
@@ -3400,9 +3401,11 @@ The primary comparison is base versus head. Approved-baseline operation is an ad
 ### 37.4 Distribution workflow boundary
 
 - `ci.yml` produces deterministic review artifacts for both required Bun versions.
-- `release.yml` builds helpers on matching `darwin-arm64`, `darwin-x64`, `linux-arm64`, and `linux-x64` GitHub-hosted runners, then assembles and verifies one candidate.
+- `distribution-candidate.yml` builds helpers on matching `darwin-arm64`, `darwin-x64`, `linux-arm64`, and `linux-x64` GitHub-hosted runners, then assembles and verifies one candidate without registry-write or OIDC permission.
 - Node 22 and Node 24 install only the exact generated CLI/helper tarballs in isolated offline directories.
-- Candidate generation performs no registry write. The optional `stage` path is a separately selected, protected-environment OIDC operation and never approves a staged version.
+- Candidate generation binds every npm tarball and the deterministic Plugin archive by SHA-256, byte size, executable mode where applicable, and npm SHA-512 integrity.
+- `release.yml` requires an annotated version tag at the exact `main` commit, reruns the candidate, and confines trusted publication to the protected `release` environment. It publishes helpers before the CLI, accepts an existing immutable npm version only when integrity matches exactly, runs native published-package smoke, and exposes GitHub Release assets only after a draft upload completes.
+- CI and release preflight scan the selected public history for private local paths and secrets. Tag rules protect `refs/tags/v*` creation, update, and deletion.
 - `plugin-promotion.yml` is manually dispatched only after publication has separate authorization; it verifies the exact published CLI natively before dependency setup and verifies the aggregate Plugin against the approved candidate manifest.
 
 ---
@@ -3658,6 +3661,8 @@ The Phase 5 source checkout implements independent viewed/judgment/comment state
 
 The Phase 6 source checkout implements append-only review events and immutable-generation sidecars under `run/review/`; explicit Agent-attention selection; Feedback Batch preview and idempotent storage; bounded, redacted code/visual Context Packs; opaque host/session/project/report binding; fixed-run CLI and strict NDJSON MCP tools; one answer per original thread; normalized visual anchors and stale/orphaned re-anchoring; and a loopback interactive API protected by a per-start fragment capability, exact Host/Fetch Metadata/report checks, exact Origin on mutations, exact Referer validation when present on read-only GET, and strict request shapes. Static mode exports without claiming a session. Codex and Claude Code use `return-to-session`; the unsupported direct bridge creates no session and returns the same handoff fallback.
 
+The release-ready Phase 6 checkout maps this v1 source to `v0.1.0`. A manual read-only candidate builds all four helpers and exact public artifacts. The separate tag workflow requires exact `main` identity, current human documentation review, public-history scanning, protected-environment approval, OIDC trusted publishing, immutable registry-integrity reconciliation, native `npx`/`bunx` proof, and draft-first GitHub Release assets. It never creates its own tag, and new npm package identities still require an explicitly authorized one-time bootstrap.
+
 Before persisted state, browser storage, or a review bundle is validated, Phase 5 pixel-coordinate visual anchors are recognized by their legacy fingerprint and migrated to the normalized catalog. A cross-report comment with no current anchor remains orphaned instead of being discarded.
 
 ---
@@ -3704,6 +3709,8 @@ Before persisted state, browser storage, or a review bundle is validated, Phase 
 - Immutable reports are published with the verified four-platform no-replace helper set; missing, mismatched, or unsupported helpers fail closed.
 - The published `@utsu-ri/cli` tarball has an exact recursive inventory, no install lifecycle scripts, no runtime dependency on private workspace packages, version-tagged documentation links, and a successful isolated exact-tarball smoke test.
 - A distribution candidate binds all four architecture-matched native-helper packages and the aggregate Plugin by exact file hash and executable mode; candidate generation performs no registry write.
+- Release preflight rejects a tag that is not annotated, does not exactly match the package version, or does not point to the exact current `main` commit. It rejects stale human documentation review, local-path history, or a Gitleaks finding before publication approval.
+- Each release asset is bound by an exact manifest and checksum. Partial npm publication is recoverable only when every pre-existing registry version has the same SHA-512 integrity, and an existing or incomplete GitHub Release never bypasses asset verification.
 - CI policy failure preserves `report.zip`, `report.json`, and `ci-summary.json` and returns exit code `10`; the CLI itself never uploads them.
 - Review export/import preserves viewed progress, human judgment, comments, event history, and explicit stale/orphaned classifications without modifying immutable report assets.
 - The single ESM bundle has no external JavaScript runtime import, embeds the pinned Playwright runtime metadata required by capture, passes an unrelated-project real-browser smoke test, and has deterministic build-manifest, SPDX, and license documents that match the source, lockfile, schemas, and report UI assets.
@@ -3764,7 +3771,7 @@ The v1 source implementation maps every item below to an automated gate or an ex
 22. The English canonical design and all three READMEs remain synchronized and independently reviewed.
 23. Node 24, both required Bun versions, Safe-chain 1.5.14, both hosts, and the release-candidate layout pass their full gates.
 
-Phase 6 adds executable coverage for all §46.25 fixtures, the three-item return-to-session acceptance scenario on both hosts, explicit unsupported-bridge fallback, localhost API boundaries, and independent review-state semantics. A stable public release still requires the separate publication authorization and any environment-specific gates recorded as unavailable in the candidate evidence.
+Phase 6 adds executable coverage for all §46.25 fixtures, the three-item return-to-session acceptance scenario on both hosts, explicit unsupported-bridge fallback, localhost API boundaries, and independent review-state semantics. The source is prepared for `v0.1.0`; public availability still requires current human review of this documentation update, successful remote CI/candidate evidence, protected GitHub configuration, the one-time npm bootstrap and trusted-publisher registrations, and separate authorization for registry and tag writes.
 
 ---
 
@@ -3904,7 +3911,7 @@ Researched: 2026-08-06
 
 ## 46. Detailed interactive review and Origin Session feedback specification
 
-**v1 implementation status**: available in the source stable-release candidate through `return-to-session` and `export-only`. The optional direct bridge is deliberately disabled because no configured host meets the authenticated same-session API and response-correlation requirements. This status never permits a new Agent/session fallback.
+**v1 implementation status**: release-ready as `v0.1.0` source through `return-to-session` and `export-only`. The optional direct bridge is deliberately disabled because no configured host meets the authenticated same-session API and response-correlation requirements. This status never permits a new Agent/session fallback and does not claim that npm or GitHub Release publication has occurred.
 
 ### 46.1 Purpose
 
@@ -4713,7 +4720,7 @@ The implementation keeps the preview separate from storage, writes inbox/batch/c
 
 A feature outside this definition is accepted only when it makes review decisions faster, strengthens the relationship between a question and its evidence, increases evidence reliability, or improves security.
 
-The v1 source stable-release candidate satisfies this definition through local immutable reports and mutable review generations, with `return-to-session` as the host-neutral feedback path. Publication is a separate operator action; direct same-session submission and a shared remote review store remain optional future capabilities.
+The v1 source prepared for `v0.1.0` satisfies this definition through local immutable reports and mutable review generations, with `return-to-session` as the host-neutral feedback path. Publication, first-package bootstrap, and tag creation remain separately authorized operator actions; direct same-session submission and a shared remote review store remain optional future capabilities.
 
 ---
 
@@ -4721,6 +4728,7 @@ The v1 source stable-release candidate satisfies this definition through local i
 
 | Entry ID                                   | Version | Date       | Change                                                                                                                                                                                                                                                                                                                                                                                                                                 |
 | ------------------------------------------ | ------: | ---------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| design-v2.6-v0.1.0-release-readiness       |     2.6 | 2026-08-09 | Prepared the v1 source for `v0.1.0` with a read-only reusable Distribution Candidate, exact npm/Plugin release-asset manifests and checksums, public-history PII and secret scans, annotated exact-main tag validation, protected OIDC trusted publication, integrity-safe partial-publish recovery, native published-package smoke, and draft-first GitHub Release assets.                                                            |
 | design-v2.5-origin-session-feedback        |     2.5 | 2026-08-08 | Implemented capability-bound loopback interactive review, explicit Agent-attention selection, Feedback Batch preview and idempotent Review Inbox storage, bounded and redacted Context Packs, opaque Origin Session binding, fixed-run feedback CLI and strict NDJSON MCP tools, itemized answer writeback, stale visual/code re-anchoring, and safe return-to-session/export-only fallback without creating another Agent or session. |
 | design-v2.4-review-state-integrity         |     2.4 | 2026-08-07 | Hardened browser import/export with canonical schemas, anchor-catalog binding, and byte limits; required explicit cross-report re-anchoring; rejected stale-tab writes through Web Locks plus optimistic revisions; made CLI persistence crash-consistent through immutable generations and hard-linked revision records; and removed downloaded-tar extraction from cross-job distribution transport.                                 |
 | design-v2.3-review-distribution-candidate  |     2.3 | 2026-08-07 | Implemented independent viewed/judgment/comment persistence, canonical review export/import and re-anchoring, loopback-only static serving, deterministic CI artifacts and policy exit code 10, four-platform native-helper and aggregate Plugin candidates, exact package contracts, isolated tarball verification, strict host validation, and approval-gated trusted-publishing workflows.                                          |

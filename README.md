@@ -18,9 +18,9 @@ The name joins the Japanese ideas of how a UI is reflected after a change and ho
 
 ## Status
 
-<!-- availability:phase-6-origin-session-feedback -->
+<!-- availability:phase-6-v0-1-0-release-ready -->
 
-The complete v1 source implementation is available as a stable-release candidate. Phase 6 adds capability-bound interactive review, Feedback Batch preview and storage, bounded Context Packs, Origin Session binding, Review Inbox CLI/MCP access, itemized answer writeback, and safe return-to-session fallback to the Phase 5 distribution candidate. No direct same-session bridge is enabled because neither supported host exposes every required authenticated binding and correlation guarantee. The npm packages and Plugin remain unpublished.
+The complete v1 source implementation is prepared for the `v0.1.0` release. Phase 6 provides capability-bound interactive review, Feedback Batch preview and storage, bounded Context Packs, Origin Session binding, Review Inbox CLI/MCP access, itemized answer writeback, and safe return-to-session fallback. A read-only Distribution Candidate workflow builds and verifies all release artifacts; a separate protected `v*` tag workflow performs OIDC publication only after its release gates pass. No direct same-session bridge is enabled because neither supported host exposes every required authenticated binding and correlation guarantee. The npm packages and Plugin remain unpublished until the one-time first-publication bootstrap and an explicitly authorized release.
 
 <a id="capabilities"></a><!-- section:capabilities -->
 
@@ -170,7 +170,7 @@ node scripts/safe-chain.mjs bun run check
 
 The bundled CLI protocol is verified natively so wrapper notices cannot corrupt JSON or NDJSON.
 
-The check and build gates compile the audited atomic-publication helper for the current macOS or Linux target. The manually dispatched candidate workflow builds all four supported OS/architecture helpers on matching runners, assembles an aggregate Plugin and exact npm tarballs, and verifies isolated installs under Node 22 and 24. Candidate mode performs no registry write.
+The check and build gates compile the audited atomic-publication helper for the current macOS or Linux target. The manually dispatched `.github/workflows/distribution-candidate.yml` workflow builds all four supported OS/architecture helpers on matching runners, assembles an aggregate Plugin and exact npm tarballs, binds the release assets and checksums, and verifies isolated installs under Node 22 and 24. It has no registry-write permission. `.github/workflows/release.yml` runs only for an annotated `v*` tag at the exact `main` commit and confines OIDC publication to the protected `release` environment.
 
 <!-- sync-command:native-doctor -->
 
@@ -223,4 +223,4 @@ The design is canonical in English. User-facing README changes update English, J
 
 ## License and publication status
 
-The publisher is `hokupod`, the npm maintainer is `hokupod-npm`, publication uses GitHub Actions trusted publishing, and the SPDX license is `AGPL-3.0-or-later`. Phase 6 produces a complete v1 stable-release candidate. Cross-job transport verifies manifest-bound regular files before restoring declared modes; it does not extract downloaded helper or Plugin tarballs. Packages remain unpublished until all release gates pass and a separate release is explicitly authorized. The v1 implementation plan does not publish, tag, push, or promote artifacts.
+The publisher is `hokupod`, the npm maintainer is `hokupod-npm`, publication uses GitHub Actions trusted publishing, and the SPDX license is `AGPL-3.0-or-later`. The source is release-ready for `v0.1.0`; the five npm packages and aggregate Plugin are still unpublished. Candidate generation performs no registry write. The tag workflow requires a protected `release` environment, exact release-asset integrity, native published-package smoke tests, and a draft GitHub Release that becomes public only after every asset upload succeeds. Because npm trusted publishing cannot create a new package, the first release also requires the one-time bootstrap documented in the release guide. No repository change alone creates a tag or publishes an artifact.

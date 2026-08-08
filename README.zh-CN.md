@@ -18,9 +18,9 @@ Utsuri 将代码变更转换为有证据、便于人类理解的可视化评审�
 
 ## 状态
 
-<!-- availability:phase-6-origin-session-feedback -->
+<!-- availability:phase-6-v0-1-0-release-ready -->
 
-完整的 v1 source 实现现已作为 stable-release candidate 可用。Phase 6 在 Phase 5 distribution candidate 上增加受 capability 保护的 interactive review、Feedback Batch preview 与存储、bounded Context Pack、Origin Session binding、Review Inbox CLI / MCP access、itemized answer writeback，以及安全的 return-to-session fallback。两个受支持 host 都未公开满足全部 authenticated binding 与 response correlation 要求的 API，因此未启用 direct same-session bridge。npm package 与 Plugin 仍未发布。
+完整的 v1 source 实现已为 `v0.1.0` release 做好准备。Phase 6 提供受 capability 保护的 interactive review、Feedback Batch preview 与存储、bounded Context Pack、Origin Session binding、Review Inbox CLI / MCP access、itemized answer writeback，以及安全的 return-to-session fallback。read-only Distribution Candidate workflow 会 build 并验证全部 release artifact；另一个受保护的 `v*` tag workflow 仅在 release gate 通过后执行 OIDC publication。两个受支持 host 都未公开满足全部 authenticated binding 与 response correlation 要求的 API，因此未启用 direct same-session bridge。在完成首次发布的 one-time bootstrap 并明确授权 release 之前，npm package 与 Plugin 仍保持未发布。
 
 <a id="capabilities"></a><!-- section:capabilities -->
 
@@ -170,7 +170,7 @@ node scripts/safe-chain.mjs bun run check
 
 bundle 后的 CLI protocol 使用 native execution 验证，避免 wrapper notice 污染 JSON / NDJSON。
 
-check 和 build gate 会为当前 macOS 或 Linux target 编译可审计的 atomic publication helper。手动 dispatch 的 candidate workflow 会在对应 runner 上 build 四种 OS / architecture helper，组装 aggregate Plugin 与 exact npm tarball，并在 Node 22 / 24 下验证 isolated install。candidate mode 不会写入 registry。
+check 和 build gate 会为当前 macOS 或 Linux target 编译可审计的 atomic publication helper。手动 dispatch 的 `.github/workflows/distribution-candidate.yml` 会在对应 runner 上 build 四种 OS / architecture helper，组装 aggregate Plugin 与 exact npm tarball，绑定 release asset 与 checksum，并在 Node 22 / 24 下验证 isolated install。它没有 registry write 权限。`.github/workflows/release.yml` 仅由 exact `main` commit 上的 annotated `v*` tag 触发，并将 OIDC publication 限定在受保护的 `release` environment。
 
 <!-- sync-command:native-doctor -->
 
@@ -223,4 +223,4 @@ build output 是不含 external JavaScript runtime import 的单一 Node 22 兼�
 
 ## License 与发布状态
 
-publisher 为 `hokupod`，npm maintainer 为 `hokupod-npm`，发布使用 GitHub Actions trusted publishing，SPDX license 为 `AGPL-3.0-or-later`。Phase 6 生成完整的 v1 stable-release candidate。job 间传输会先验证 manifest 绑定的普通文件，再恢复声明的 mode；不会解压下载的 helper 或 Plugin tarball。在所有 release gate 通过并取得单独明确授权前，package 保持未发布。v1 实现计划不会执行 publish、tag、push 或 promotion。
+publisher 为 `hokupod`，npm maintainer 为 `hokupod-npm`，发布使用 GitHub Actions trusted publishing，SPDX license 为 `AGPL-3.0-or-later`。source 已为 `v0.1.0` release-ready，但五个 npm package 与 aggregate Plugin 仍未发布。candidate 生成不会写入 registry。tag workflow 要求受保护的 `release` environment、exact release-asset integrity、已发布 package 的 native smoke，并仅在全部 asset upload 成功后公开 draft GitHub Release。由于 npm trusted publishing 无法创建新 package，首次 release 还需要按照 release guide 完成 one-time bootstrap。仅修改 repository 不会创建 tag 或发布 artifact。

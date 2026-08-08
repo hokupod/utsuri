@@ -9,7 +9,13 @@ import test from "node:test";
 const repositoryRoot = path.resolve(import.meta.dirname, "../..");
 const fixtureRoot = path.join(repositoryRoot, "fixtures/documentation/valid");
 const checker = path.join(repositoryRoot, "scripts/docs-check.mjs");
-const documents = ["docs/design.md", "README.md", "README.ja.md", "README.zh-CN.md"];
+const documents = [
+  "docs/design.md",
+  "docs/release.md",
+  "README.md",
+  "README.ja.md",
+  "README.zh-CN.md"
+];
 
 function sha256(value) {
   return createHash("sha256").update(value).digest("hex");
@@ -194,6 +200,14 @@ await withFixture("release-candidate rejects unresolved publication metadata", a
 await withFixture("release-candidate rejects stale human review", async (root) => {
   await prepareRelease(root);
   await rewrite(root, "README.md", (value) => value.replace("Utsuri v1", "Utsuri version 1"));
+  const result = run(root, "release-candidate");
+  assert.notEqual(result.status, 0);
+  assert.match(result.combined, /DOC_HUMAN_REVIEW_STALE/u);
+});
+
+await withFixture("release-candidate rejects a changed release guide", async (root) => {
+  await prepareRelease(root);
+  await rewrite(root, "docs/release.md", (value) => `${value}\nChanged release instruction.\n`);
   const result = run(root, "release-candidate");
   assert.notEqual(result.status, 0);
   assert.match(result.combined, /DOC_HUMAN_REVIEW_STALE/u);

@@ -261,6 +261,11 @@ async function main() {
       .filter(({ content }) => content !== null)
       .map(({ descriptor, content }) => ({ path: descriptor.path, content }))
   ];
+  const reviewDocuments = [...publicDocuments];
+  for (const reviewPath of policy.additionalReviewDocuments ?? []) {
+    const content = await readRequired(reviewPath);
+    if (content !== null) reviewDocuments.push({ path: reviewPath, content });
+  }
 
   for (const document of publicDocuments) {
     for (const identifier of policy.forbiddenPublicIdentifiers) {
@@ -380,7 +385,7 @@ async function main() {
           );
         }
 
-        for (const document of publicDocuments) {
+        for (const document of reviewDocuments) {
           const expectedHash = state.currentHashes?.[document.path];
           const actualHash = sha256(document.content);
           if (expectedHash !== actualHash) {
@@ -409,7 +414,7 @@ async function main() {
           if (!state.publicationMetadata?.publisher || !state.publicationMetadata?.spdxLicense) {
             report(diagnostic.placeholder, "publisher identity and SPDX license must be resolved");
           }
-          for (const document of publicDocuments) {
+          for (const document of reviewDocuments) {
             const reviewed = state.humanReviewedHashes?.[document.path];
             const actual = sha256(document.content);
             if (reviewed !== actual) {

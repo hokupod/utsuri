@@ -27,6 +27,7 @@
       "metadata": "<!-- doc-language: zh-CN; canonical: README.md -->"
     }
   ],
+  "additionalReviewDocuments": ["docs/release.md"],
   "languageSwitcher": "[English](https://github.com/hokupod/utsuri/blob/main/README.md) | [日本語](https://github.com/hokupod/utsuri/blob/main/README.ja.md) | [简体中文](https://github.com/hokupod/utsuri/blob/main/README.zh-CN.md)",
   "requiredSectionMarkers": [
     "product-summary",
