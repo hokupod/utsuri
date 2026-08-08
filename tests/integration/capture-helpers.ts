@@ -9,6 +9,7 @@ import type { UtsuriConfig } from "../../packages/report-model/src";
 export const repositoryRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../..");
 
 export async function approvedBrowserAvailable(): Promise<boolean> {
+  if (process.env.UTSURI_BROWSER_TESTS === "disabled") return false;
   try {
     await resolveBrowserExecutable();
     return true;

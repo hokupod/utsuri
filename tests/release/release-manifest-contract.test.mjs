@@ -209,6 +209,19 @@ describe("Safe-chain CI contract", () => {
       /nix develop --command node scripts\/safe-chain\.mjs bun safe-chain-verify/u
     );
   });
+
+  test("isolates real-browser tests to the pinned Nix Chromium job", async () => {
+    const workflow = await readFile(path.join(repositoryRoot, ".github/workflows/ci.yml"), "utf8");
+    assert.match(workflow, /^ {2}browser-e2e:\n/mu);
+    assert.equal((workflow.match(/UTSURI_BROWSER_TESTS: disabled/gu) ?? []).length, 2);
+    assert.match(workflow, /nix develop --command which chromium/u);
+    assert.match(workflow, /\/nix\/store\/\*\/bin\/chromium/u);
+    assert.match(workflow, /UTSURI_BROWSER_EXECUTABLE=.*GITHUB_ENV/u);
+    assert.match(workflow, /bun run test:integration/u);
+    assert.match(workflow, /tests\/cli\/installed-bundle\.test\.ts/u);
+    assert.match(workflow, /bun run test:e2e/u);
+    assert.doesNotMatch(workflow, /playwright(?:-core)?(?:\/cli\.js)? install/u);
+  });
 });
 
 describe("source and native package contracts", () => {

@@ -1,5 +1,6 @@
 import { afterEach, describe, expect, test } from "bun:test";
 import { access, mkdir, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
+import { readFileSync } from "node:fs";
 import os from "node:os";
 import path from "node:path";
 import { spawnSync } from "node:child_process";
@@ -27,7 +28,15 @@ function runBundle(cwd: string, args: string[]): Record<string, unknown> {
     stdio: ["ignore", "pipe", "pipe"]
   });
   if (result.error) throw result.error;
-  expect(result.status, `${result.stdout}${result.stderr}`).toBe(0);
+  let captureManifest = "";
+  if (result.status !== 0) {
+    try {
+      captureManifest = readFileSync(path.join(cwd, "run/capture.json"), "utf8");
+    } catch {
+      // The command may have failed before publishing a capture manifest.
+    }
+  }
+  expect(result.status, `${result.stdout}${result.stderr}${captureManifest}`).toBe(0);
   expect(result.stderr).toBe("");
   return JSON.parse(result.stdout) as Record<string, unknown>;
 }
