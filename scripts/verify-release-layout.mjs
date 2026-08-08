@@ -459,7 +459,7 @@ if (documentationStateContent) {
     const expectedPublicationMetadata = {
       publisher: "hokupod",
       npmMaintainer: "hokupod-npm",
-      npmPublishing: "GitHub Actions trusted publishing",
+      npmPublishing: "manual v0.1.0 bootstrap, then GitHub Actions trusted publishing",
       spdxLicense: "AGPL-3.0-or-later"
     };
     const actualMetadata = state.publicationMetadata;

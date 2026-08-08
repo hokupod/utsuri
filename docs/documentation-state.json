@@ -2,27 +2,25 @@
   "schemaVersion": 1,
   "currentPhase": 6,
   "availability": "phase-6-v0-1-0-release-ready",
-  "designVersion": "2.6",
+  "designVersion": "2.7",
   "lastUpdated": "2026-08-09",
-  "changeLogEntryId": "design-v2.6-v0.1.0-release-readiness",
+  "changeLogEntryId": "design-v2.7-release-document-contract",
   "currentHashes": {
-    "docs/design.md": "9a56f14499b77b1cf43a6ea1e1379ce7d0b47f9117c97f181790a616acc680e5",
-    "docs/release.md": "0dd6933710a46fddee4208dac3f175456446d82a203a137da32d20fb9da4efed",
-    "README.md": "2407a1c6338744661f95e85a633745f217fdd853b9feda5030624b218fd5f454",
-    "README.ja.md": "2cd782085ec2258140e133a58a0d54e16c30e9e3462ba3349bb330ace71adaa3",
-    "README.zh-CN.md": "c174eddc0a7145de47b1f10706acff9fae87d50d5b79c8e7a93e8c5f41efeb80"
+    "docs/design.md": "be609c2d437d71dfc5352660ef8bb6bcf167076d9aacafdeeb7ec58699db96e0",
+    "docs/release.md": "c0f14f3b8805a2f47a8ae23fa3ce658159860123003e7565f4a9083785c9b017",
+    "README.md": "bed30f516fa1b0b3e7af60cb2f0ae060b3f48c4ff223af917dfd0bfcb3023518",
+    "README.ja.md": "d2f655814d4425e367e0b029954d0145b962835bcd3b651ffc8d55b1d02b5f97",
+    "README.zh-CN.md": "9170d3a5701b3c7f1a755d76b6c48e226accdecf7256861a7755c3d384ab642f"
   },
   "changedSections": [
     "metadata",
+    "7",
     "10",
-    "37",
+    "11",
     "40",
     "41",
     "42",
-    "47",
     "document-change-log",
-    "readme:status",
-    "readme:development",
     "readme:license-status",
     "release-guide"
   ],
@@ -39,7 +37,7 @@
   "publicationMetadata": {
     "publisher": "hokupod",
     "npmMaintainer": "hokupod-npm",
-    "npmPublishing": "GitHub Actions trusted publishing",
+    "npmPublishing": "manual v0.1.0 bootstrap, then GitHub Actions trusted publishing",
     "spdxLicense": "AGPL-3.0-or-later"
   }
 }

@@ -11,9 +11,9 @@
 
 `.github/workflows/distribution-candidate.yml` is the default, manually dispatched release check. It produces a private GitHub Actions artifact and has no registry-write or OIDC permission. It does not publish, tag, promote, or approve an npm version.
 
-`.github/workflows/release.yml` runs only after an operator pushes an annotated `v*` tag. It requires the tag to match the root and CLI versions and to point to the exact `origin/main` commit. Registry writes are confined to its protected `release` environment and use GitHub OIDC trusted publishing without an npm token.
+`.github/workflows/release.yml` runs only after an operator pushes an annotated `v*` tag. It requires the tag to match the root and CLI versions and to point to the exact `origin/main` commit. Except for the separately authorized first-publication bootstrap below, registry writes are confined to its protected `release` environment and use GitHub OIDC trusted publishing without an npm token.
 
-The workflow never creates or pushes a tag. Package creation, the first registry write, tag creation, and environment approval remain separate operator actions. The first version of a new package cannot use npm trusted or staged publishing because the package must already exist; follow the one-time bootstrap procedure below.
+The workflow never creates or pushes a tag. Package creation, the first registry write, tag creation, and environment approval remain separate operator actions. The first version of a new package cannot use npm trusted or staged publishing because the package must already exist; follow the one-time bootstrap procedure below. The manual `v0.1.0` bootstrap does not receive GitHub Actions OIDC provenance and must not be represented as a trusted-publisher write.
 
 ## Package identities
 
@@ -95,11 +95,12 @@ npm trusted publishing and staged publishing cannot create a package. For the fi
 
 1. Push the verified release-ready commit to `main`; do not create the release tag yet.
 2. Run the manual Distribution Candidate workflow on that exact `main` commit and download `utsuri-release-candidate` by exact run ID.
-3. Verify `release-assets.json`, `SHA256SUMS`, all five tarballs, and the candidate manifest locally. Record the run ID and artifact digest.
-4. Using the authorized npm maintainer account and npm's current 2FA-required first-publication procedure, publish those exact four helper tarballs before the exact CLI tarball. Do not store a registry token in this repository or GitHub Actions.
-5. Confirm each public registry version has the exact SHA-512 integrity recorded in `release-assets.json`.
-6. Configure the five trusted publishers with the exact owner, repository, workflow filename, and environment listed above.
-7. Create the annotated `v0.1.0` tag at the still-current exact `main` commit and push only that tag. The release workflow will accept the already-published versions only when every integrity matches, run the published smoke, and create the GitHub Release.
+3. Verify `release-assets.json`, `SHA256SUMS`, all five tarballs, and the candidate manifest locally. Record the exact source SHA, run ID, and artifact digest.
+4. Using the authorized npm maintainer account and npm's current 2FA-required first-publication procedure, publish those exact four helper tarballs before the exact CLI tarball. Do not store a registry token in this repository or GitHub Actions, and do not claim `--provenance` or GitHub Actions OIDC provenance for these manual writes.
+5. Retain non-secret audit evidence for each write: maintainer identity, UTC time, source SHA, candidate run ID and artifact digest, tarball SHA-256, expected SHA-512 integrity, registry response, and the explicit provenance limitation.
+6. Confirm each public registry version has the exact SHA-512 integrity recorded in `release-assets.json`.
+7. Configure the five trusted publishers with the exact owner, repository, workflow filename, and environment listed above. Later missing versions are published through this protected OIDC path.
+8. Create the annotated `v0.1.0` tag at the still-current exact `main` commit and push only that tag. The release workflow will accept the already-published versions only when every integrity matches, run the published smoke, and create the GitHub Release.
 
 If a draft GitHub Release remains after an upload failure, the workflow intentionally refuses to overwrite it. Inspect and remove or reconcile that draft explicitly before retrying. Follow [npm trusted publishing](https://docs.npmjs.com/trusted-publishers/), [npm staged publishing](https://docs.npmjs.com/staged-publishing/), and [npm provenance](https://docs.npmjs.com/generating-provenance-statements/) for current operator-side behavior.
 
@@ -121,7 +122,7 @@ No post-publication smoke may filter wrapper output to make invalid JSON appear 
 
 The v1 source and local implementation gates are complete. Public `v0.1.0` still requires external evidence that cannot be established by source changes alone:
 
-- a current human semantic review of this release update in the English design and all three READMEs;
+- a current human semantic review of this release guide, the English design, and all three READMEs, bound to all five exact hashes;
 - successful `main` CI and a manual four-platform Distribution Candidate run on the exact release commit;
 - the protected GitHub Environment and `v*` tag ruleset described above;
 - exact first-publication bootstrap and all five npm trusted-publisher registrations;
