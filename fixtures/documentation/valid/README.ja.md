@@ -98,7 +98,7 @@ Utsuriはrepository content、diff、HTML、SVG、comment、Context Pack、captu
 ## ドキュメント
 
 - [英語の詳細設計正本](docs/design.md)
-- [v1実装計画](ai/plans/active/v1-実装/README.md)
+- [v1実装計画](docs/plans/v1-implementation.md)
 
 詳細設計は英語を正本とします。user-facingなREADME変更は英語・日本語・簡体字中国語を同じchangeで更新します。
 

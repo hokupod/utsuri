@@ -215,7 +215,6 @@ Build output is one Node 22-compatible ESM file with no external JavaScript runt
 - [Capture modes and runtime boundary](https://github.com/hokupod/utsuri/blob/main/skills/utsuri-review/references/capture-modes.md)
 - [CLI contract](https://github.com/hokupod/utsuri/blob/main/skills/utsuri-review/references/cli-contract.md)
 - [Origin Session feedback workflow](https://github.com/hokupod/utsuri/blob/main/skills/utsuri-review/references/feedback.md)
-- [v1 implementation plan](https://github.com/hokupod/utsuri/blob/main/ai/plans/active/v1-%E5%AE%9F%E8%A3%85/README.md)
 
 The design is canonical in English. User-facing README changes update English, Japanese, and Simplified Chinese in the same change.
 

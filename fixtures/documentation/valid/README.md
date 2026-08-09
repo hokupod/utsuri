@@ -98,7 +98,7 @@ Generated `report/` content is immutable. Mutable human-review data is stored se
 ## Documentation
 
 - [Canonical detailed design](docs/design.md)
-- [v1 implementation plan](ai/plans/active/v1-実装/README.md)
+- [v1 implementation plan](docs/plans/v1-implementation.md)
 
 The design is canonical in English. User-facing README changes update English, Japanese, and Simplified Chinese in the same change.
 

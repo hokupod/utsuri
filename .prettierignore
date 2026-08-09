@@ -1,5 +1,6 @@
 .artifacts/
 .direnv/
+docs/review-evidence/
 ai/log/
 ai/tmp/
 bun.lock

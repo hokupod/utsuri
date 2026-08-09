@@ -215,7 +215,6 @@ build outputはexternal JavaScript runtime importを持たない単一のNode 22
 - [Capture modeとruntime boundary](https://github.com/hokupod/utsuri/blob/main/skills/utsuri-review/references/capture-modes.md)
 - [CLI contract](https://github.com/hokupod/utsuri/blob/main/skills/utsuri-review/references/cli-contract.md)
 - [Origin Session feedback workflow](https://github.com/hokupod/utsuri/blob/main/skills/utsuri-review/references/feedback.md)
-- [v1実装計画](https://github.com/hokupod/utsuri/blob/main/ai/plans/active/v1-%E5%AE%9F%E8%A3%85/README.md)
 
 詳細設計は英語を正本とします。user-facingなREADME変更は英語・日本語・簡体字中国語を同じchangeで更新します。
 

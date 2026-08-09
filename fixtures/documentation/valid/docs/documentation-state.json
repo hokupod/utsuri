@@ -8,9 +8,9 @@
   "currentHashes": {
     "docs/design.md": "f3b95f23b360cb99e87128bcbcc9392eda7ce7b0be9c8fd036399c631de5a1ef",
     "docs/release.md": "5e41020e0893074459b9e476dc27136e3086776746225a9cb09c58bf819a7530",
-    "README.md": "5c52217788770021c90509f3183770637fafbf06ad0e79c74241d7e7e06c4e4a",
-    "README.ja.md": "f501aebfe186279346702df287ab8613058ce321529ff986a1c0e96385413de2",
-    "README.zh-CN.md": "599181981f18c96f96f429683e18d86ff58422b265e28bfb2b3881d97ababaa1"
+    "README.md": "5dca3e9721f4c1478c0e7fee06152d8cca3b2cf18ed72a641e2fdcf331009aa6",
+    "README.ja.md": "f3f6610189ce70d9acbc7efce63a294e2d193dc0fbb62f88dde9024dc61ea63d",
+    "README.zh-CN.md": "fc8ef26fa2452136cdeff7515e3f9acd911c1c5477be262fd3eb782fe483ee50"
   },
   "changedSections": [
     "metadata",
@@ -39,7 +39,7 @@
     "README.ja.md": null,
     "README.zh-CN.md": null
   },
-  "reviewEvidencePath": "ai/log/tests/2026-08-06-phase-0-documentation-review.md",
+  "reviewEvidencePath": "docs/review-evidence/phase-0-documentation-review.md",
   "reviewEvidenceSha256": null,
   "reviewedPhase": null,
   "publicationMetadata": {

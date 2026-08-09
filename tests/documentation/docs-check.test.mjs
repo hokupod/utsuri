@@ -35,7 +35,7 @@ function run(root, mode) {
 }
 
 test("valid fixture keeps its linked implementation plan tracked", () => {
-  const relativePath = "fixtures/documentation/valid/ai/plans/active/v1-実装/README.md";
+  const relativePath = "fixtures/documentation/valid/docs/plans/v1-implementation.md";
   const result = spawnSync("git", ["ls-files", "--error-unmatch", relativePath], {
     cwd: repositoryRoot,
     encoding: "utf8",
@@ -64,7 +64,7 @@ async function prepareRelease(root) {
   for (const relativePath of documents) {
     hashes[relativePath] = sha256(await readFile(path.join(root, relativePath), "utf8"));
   }
-  const evidencePath = "ai/log/tests/release-review.md";
+  const evidencePath = "docs/review-evidence/release-review.md";
   const evidence = "Fixture human review: PASS\n";
   await mkdir(path.dirname(path.join(root, evidencePath)), { recursive: true });
   await writeFile(path.join(root, evidencePath), evidence, "utf8");
@@ -225,7 +225,7 @@ await withFixture("release-candidate rejects a changed release guide", async (ro
 
 await withFixture("release-candidate rejects changed review evidence", async (root) => {
   await prepareRelease(root);
-  await rewrite(root, "ai/log/tests/release-review.md", (value) => `${value}changed\n`);
+  await rewrite(root, "docs/review-evidence/release-review.md", (value) => `${value}changed\n`);
   const result = run(root, "release-candidate");
   assert.notEqual(result.status, 0);
   assert.match(result.combined, /DOC_REVIEW_EVIDENCE_HASH/u);

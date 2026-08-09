@@ -98,7 +98,7 @@ Utsuri 将 repository content、diff、HTML、SVG、comment、Context Pack 和 c
 ## 文档
 
 - [英文详细设计正本](docs/design.md)
-- [v1 实现计划](ai/plans/active/v1-実装/README.md)
+- [v1 实现计划](docs/plans/v1-implementation.md)
 
 详细设计以英文为正本。面向用户的 README 变更必须在同一个 change 中同步英文、日文和简体中文。
 

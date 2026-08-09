@@ -173,7 +173,7 @@ There are no unresolved Phase 3 Must items in this checklist; its documentation/
 | Integration    | Static serve                                  | Loopback-only random port, Host validation, traversal rejection, and no implicit browser open. | `tests/integration/phase5-serve-pack.test.ts`                           |
 | Schema         | Review event and bundle                       | Unknown events, invalid anchors, oversized text, and malformed state fail validation.          | `schemas/review-event.schema.json`, `schemas/review-bundle.schema.json` |
 
-Browser-backed E2E execution uses the pinned Nix Chromium job and never launches the user's normal Chrome profile. Exact-SHA evidence is retained in the [Phase 6 browser record](../ai/log/tests/2026-08-09-phase-6-browser-evidence.md).
+Browser-backed E2E execution uses the pinned Nix Chromium job and never launches the user's normal Chrome profile. Exact-SHA evidence is retained in the [Phase 6 browser job](https://github.com/hokupod/utsuri/actions/runs/31274872922/job/93146719488).
 
 ## 14. Phase 5 Must checklist
 
