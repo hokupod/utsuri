@@ -176,6 +176,7 @@ jobs:
         with:
           name: utsuri-release-candidate
           path: .artifacts/release-candidate
+          include-hidden-files: true
           if-no-files-found: error
           retention-days: 7
 

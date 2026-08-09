@@ -154,6 +154,19 @@ describe("cross-job distribution transport", () => {
     assert.match(promotionWorkflow, /Package only the verified aggregate Plugin/u);
   });
 
+  test("preserves hidden Plugin manifests in the release candidate artifact", async () => {
+    const candidateWorkflow = await readFile(
+      path.join(repositoryRoot, ".github/workflows/distribution-candidate.yml"),
+      "utf8"
+    );
+    const uploadStep = candidateWorkflow.match(
+      /^ {6}- name: Upload the release candidate\n(?: {8,}.*\n?)*/mu
+    );
+    assert.ok(uploadStep);
+    assert.match(uploadStep[0], /path: \.artifacts\/release-candidate/u);
+    assert.match(uploadStep[0], /include-hidden-files: true/u);
+  });
+
   test("keeps candidate generation read-only and isolates trusted publication", async () => {
     const [candidateWorkflow, releaseWorkflow] = await Promise.all([
       readFile(path.join(repositoryRoot, ".github/workflows/distribution-candidate.yml"), "utf8"),
