@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, test } from "bun:test";
-import { chmod, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
+import { chmod, mkdtemp, readFile, rm, symlink, writeFile } from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
 import { verifyPublishedCli } from "../../scripts/verify-published-cli.mjs";
@@ -78,7 +78,13 @@ process.stdout.write(${JSON.stringify(`${response()}\n`)});`;
       "--version",
       "--json"
     ]);
-    expect(calls[1]?.args).toEqual(["--bun", "@utsu-ri/cli@0.1.0", "--version", "--json"]);
+    expect(calls[1]?.args).toEqual([
+      "--silent",
+      "--bun",
+      "@utsu-ri/cli@0.1.0",
+      "--version",
+      "--json"
+    ]);
     for (const call of calls) {
       expect(String(call.path).split(path.delimiter)[0]).toEndWith("path-sentinel");
       expect(String(call.npmCache)).toContain("utsuri-published-smoke-");
@@ -87,6 +93,33 @@ process.stdout.write(${JSON.stringify(`${response()}\n`)});`;
       expect(call.hasToken).toBeFalse();
       expect(JSON.stringify(call)).not.toContain("@latest");
     }
+  });
+
+  test("preserves the bunx invocation path when it resolves to a shared runtime", async () => {
+    if (process.platform === "win32") return;
+    const directory = await temporaryDirectory();
+    await fakeManager(
+      directory,
+      "npx",
+      `process.stdout.write(${JSON.stringify(`${response()}\n`)});`
+    );
+    const runtime = await fakeManager(
+      directory,
+      "bun-runtime",
+      `
+const path = require("node:path");
+if (path.basename(process.argv[1]) !== "bunx") process.exit(87);
+process.stdout.write(${JSON.stringify(`${response()}\n`)});`
+    );
+    await symlink(runtime, path.join(directory, "bunx"));
+
+    await expect(
+      verifyPublishedCli({
+        version: "0.1.0",
+        pathValue: `${directory}${path.delimiter}${process.env.PATH ?? ""}`,
+        timeoutMs: 5_000
+      })
+    ).resolves.toEqual({ package: "@utsu-ri/cli", version: "0.1.0", protocols: 2 });
   });
 
   test("rejects package-manager notices instead of filtering stdout or stderr", async () => {

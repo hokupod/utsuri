@@ -185,7 +185,7 @@ export async function verifyPublishedCli(options) {
   const inheritedPath = options.pathValue ?? process.env.PATH ?? "";
   const commands = options.commands ?? {
     npx: await resolveExecutable("npx", inheritedPath),
-    bunx: await resolveExecutable("bunx", inheritedPath)
+    bunx: await resolveExecutable("bunx", inheritedPath, { preserveInvocationPath: true })
   };
   for (const [name, executable] of Object.entries(commands)) {
     if (!path.isAbsolute(executable)) throw new Error(`${name} executable must be absolute`);
@@ -244,7 +244,7 @@ export async function verifyPublishedCli(options) {
       {
         label: "native bunx",
         executable: commands.bunx,
-        args: ["--bun", specifier, "--version", "--json"]
+        args: ["--silent", "--bun", specifier, "--version", "--json"]
       }
     ];
     const results = [];
