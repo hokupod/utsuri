@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 
 import { createHash } from "node:crypto";
-import { gzipSync } from "node:zlib";
+import { gunzipSync, gzipSync } from "node:zlib";
 import { lstat, readFile, writeFile } from "node:fs/promises";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
@@ -67,7 +67,7 @@ function padded(bytes) {
   return remainder === 0 ? bytes : Buffer.concat([bytes, Buffer.alloc(512 - remainder, 0)]);
 }
 
-export function createDeterministicTarGzip(entries) {
+export function createDeterministicTar(entries) {
   const chunks = [];
   for (const entry of entries) {
     const directory = entry.type === "directory";
@@ -76,10 +76,26 @@ export function createDeterministicTarGzip(entries) {
     if (!directory) chunks.push(padded(bytes));
   }
   chunks.push(Buffer.alloc(1024, 0));
-  return gzipSync(Buffer.concat(chunks), { level: 9, mtime: 0 });
+  return Buffer.concat(chunks);
 }
 
-async function pluginArchiveBytes(plugin, candidateManifest) {
+export function createDeterministicTarGzip(entries) {
+  return gzipSync(createDeterministicTar(entries), { level: 9, mtime: 0 });
+}
+
+export function assertDeterministicTarGzip(archive, expectedTar) {
+  let actualTar;
+  try {
+    actualTar = gunzipSync(archive, { maxOutputLength: expectedTar.length });
+  } catch {
+    throw new Error("Plugin archive is not a bounded gzip archive");
+  }
+  if (!actualTar.equals(expectedTar)) {
+    throw new Error("Plugin archive does not contain the deterministic candidate tar");
+  }
+}
+
+async function pluginArchiveTarBytes(plugin, candidateManifest) {
   const files = Object.entries(candidateManifest.files)
     .filter(([relative]) => relative.startsWith("plugin/"))
     .map(([relative, descriptor]) => [relative.slice("plugin/".length), descriptor])
@@ -104,7 +120,14 @@ async function pluginArchiveBytes(plugin, candidateManifest) {
       bytes: await readFile(path.join(plugin, relative))
     });
   }
-  return createDeterministicTarGzip(entries);
+  return createDeterministicTar(entries);
+}
+
+async function pluginArchiveBytes(plugin, candidateManifest) {
+  return gzipSync(await pluginArchiveTarBytes(plugin, candidateManifest), {
+    level: 9,
+    mtime: 0
+  });
 }
 
 function exactKeys(value, expected) {
@@ -238,13 +261,14 @@ export async function verifyReleaseAssets(candidate, root = repositoryRoot) {
     }
   }
 
-  const expectedArchive = await pluginArchiveBytes(
+  const expectedArchiveTar = await pluginArchiveTarBytes(
     path.join(candidateRoot, "plugin"),
     candidateManifest
   );
-  if (!(await readFile(path.join(candidateRoot, archiveRelative))).equals(expectedArchive)) {
-    throw new Error("Plugin archive is not the deterministic candidate archive");
-  }
+  assertDeterministicTarGzip(
+    await readFile(path.join(candidateRoot, archiveRelative)),
+    expectedArchiveTar
+  );
   const sums = await readFile(path.join(candidateRoot, "SHA256SUMS"), "utf8");
   if (sums !== sha256Sums(releaseManifest.files)) throw new Error("SHA256SUMS is invalid");
 
