@@ -15,8 +15,8 @@
     "relativeExecutable": ".safe-chain/bin/safe-chain",
     "allowEnvironmentOverride": false,
     "assets": {
-      "darwin-arm64": "safe-chain-mac-arm64",
-      "darwin-x64": "safe-chain-mac-x64",
+      "darwin-arm64": "safe-chain-macos-arm64",
+      "darwin-x64": "safe-chain-macos-x64",
       "linux-arm64": "safe-chain-linux-arm64",
       "linux-x64": "safe-chain-linux-x64"
     },

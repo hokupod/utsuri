@@ -173,6 +173,24 @@ describe("cross-job distribution transport", () => {
 });
 
 describe("Safe-chain CI contract", () => {
+  test("pins the exact Safe-chain release assets and digests", async () => {
+    const policy = JSON.parse(
+      await readFile(path.join(repositoryRoot, "toolchain-policy.json"), "utf8")
+    );
+    assert.deepEqual(policy.safeChain.assets, {
+      "darwin-arm64": "safe-chain-macos-arm64",
+      "darwin-x64": "safe-chain-macos-x64",
+      "linux-arm64": "safe-chain-linux-arm64",
+      "linux-x64": "safe-chain-linux-x64"
+    });
+    assert.deepEqual(policy.safeChain.sha256, {
+      "darwin-arm64": "a1a827589c46db5600c5a96d5efc5fea7c5431df6bc4d28db90bd971988075ff",
+      "darwin-x64": "c250cf0a5b7b0f75a5d10566ec10638d0e0a75fa9719db3055afb78ca1fab2d0",
+      "linux-arm64": "ae5b758820a2bf317ee843c6c4d032be04907c7d7a7579be3373372504108f94",
+      "linux-x64": "565d62360c7d17e1508e76c88319b6b58940bce5495071dca133f51eb30768cf"
+    });
+  });
+
   test("builds generated release inputs before clean-check tests", async () => {
     const [ciWorkflow, candidateWorkflow] = await Promise.all([
       readFile(path.join(repositoryRoot, ".github/workflows/ci.yml"), "utf8"),
