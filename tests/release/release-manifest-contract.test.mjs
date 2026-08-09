@@ -282,7 +282,7 @@ describe("Safe-chain CI contract", () => {
       candidateWorkflow.indexOf("  isolated-install:")
     );
     const installAndBuildStep = candidateAggregate.match(
-      /^      - name: Install and build from the exact lockfile\n(?: {8,}.*\n?)*/mu
+      /^ {6}- name: Install and build from the exact lockfile\n(?: {8,}.*\n?)*/mu
     );
     assert.ok(installAndBuildStep);
     assert.match(installAndBuildStep[0], /env:\n\s+UTSURI_BROWSER_TESTS: disabled/u);
