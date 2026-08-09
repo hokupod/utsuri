@@ -18,7 +18,7 @@ function encodedPackageName(name) {
 export async function registryIntegrity(fetchImpl, registry, name, version) {
   const endpoint = `${registry.replace(/\/$/u, "")}/${encodedPackageName(name)}/${encodeURIComponent(version)}`;
   const response = await fetchImpl(endpoint, {
-    headers: { accept: "application/vnd.npm.install-v1+json" },
+    headers: { accept: "application/json" },
     redirect: "error"
   });
   if (response.status === 404) return null;

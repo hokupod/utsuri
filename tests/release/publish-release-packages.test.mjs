@@ -1,6 +1,9 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
-import { publishPackageSequence } from "../../scripts/publish-release-packages.mjs";
+import {
+  publishPackageSequence,
+  registryIntegrity
+} from "../../scripts/publish-release-packages.mjs";
 
 const helper = {
   name: "@utsu-ri/cli-linux-x64",
@@ -14,6 +17,36 @@ const cli = {
   integrity: "sha512-Y2xp",
   tarball: "/candidate/cli.tgz"
 };
+
+test("requests exact version metadata as JSON", async () => {
+  let request;
+  const integrity = await registryIntegrity(
+    async (url, options) => {
+      request = { url, options };
+      return {
+        ok: true,
+        status: 200,
+        json: async () => ({
+          name: helper.name,
+          version: helper.version,
+          dist: { integrity: helper.integrity }
+        })
+      };
+    },
+    "https://registry.npmjs.org/",
+    helper.name,
+    helper.version
+  );
+
+  assert.deepEqual(request, {
+    url: "https://registry.npmjs.org/@utsu-ri%2Fcli-linux-x64/0.1.0",
+    options: {
+      headers: { accept: "application/json" },
+      redirect: "error"
+    }
+  });
+  assert.equal(integrity, helper.integrity);
+});
 
 test("skips matching versions and publishes missing packages in order", async () => {
   const calls = [];
