@@ -257,7 +257,10 @@ describe("Safe-chain CI contract", () => {
   });
 
   test("isolates real-browser tests to the pinned Nix Chromium job", async () => {
-    const workflow = await readFile(path.join(repositoryRoot, ".github/workflows/ci.yml"), "utf8");
+    const [workflow, candidateWorkflow] = await Promise.all([
+      readFile(path.join(repositoryRoot, ".github/workflows/ci.yml"), "utf8"),
+      readFile(path.join(repositoryRoot, ".github/workflows/distribution-candidate.yml"), "utf8")
+    ]);
     assert.match(workflow, /^ {2}browser-e2e:\n/mu);
     assert.equal(
       (workflow.match(/UTSURI_BROWSER_TESTS(?:: disabled|=disabled)/gu) ?? []).length,
@@ -273,6 +276,17 @@ describe("Safe-chain CI contract", () => {
     assert.match(workflow, /tests\/cli\/installed-bundle\.test\.ts/u);
     assert.match(workflow, /bun run test:e2e/u);
     assert.doesNotMatch(workflow, /playwright(?:-core)?(?:\/cli\.js)? install/u);
+
+    const candidateAggregate = candidateWorkflow.slice(
+      candidateWorkflow.indexOf("  aggregate:"),
+      candidateWorkflow.indexOf("  isolated-install:")
+    );
+    const installAndBuildStep = candidateAggregate.match(
+      /^      - name: Install and build from the exact lockfile\n(?: {8,}.*\n?)*/mu
+    );
+    assert.ok(installAndBuildStep);
+    assert.match(installAndBuildStep[0], /env:\n\s+UTSURI_BROWSER_TESTS: disabled/u);
+    assert.match(installAndBuildStep[0], /run: \|\n(?:\s+.*\n)*?\s+bun run check/u);
   });
 });
 
