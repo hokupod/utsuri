@@ -1,4 +1,5 @@
 .artifacts/
+/ai/
 .direnv/
 dist/
 node_modules/
