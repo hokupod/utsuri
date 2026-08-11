@@ -410,6 +410,29 @@ describe("cross-job distribution transport", () => {
     assert.doesNotMatch(promotionWorkflow, /safe-chain-skip-minimum-package-age/u);
   });
 
+  test("stages only the verified published helper before Skill evals", async () => {
+    const promotionWorkflow = await readFile(
+      path.join(repositoryRoot, ".github/workflows/plugin-promotion.yml"),
+      "utf8"
+    );
+    const helperSource =
+      '"${utsuri_install_root}/node_modules/@utsu-ri/cli-linux-x64/bin/utsuri-fs-ops"';
+    const helperTarget = ".artifacts/native/linux-x64/utsuri-fs-ops";
+    const verifierOffset = promotionWorkflow.indexOf("node scripts/verify-installed-cli.mjs");
+    const stagingOffset = promotionWorkflow.indexOf(
+      `install -m 0755 \\\n            ${helperSource} \\\n            ${helperTarget}`
+    );
+    const copyCheckOffset = promotionWorkflow.indexOf(
+      `cmp --silent \\\n            ${helperSource} \\\n            ${helperTarget}`
+    );
+    const evalOffset = promotionWorkflow.indexOf("node scripts/safe-chain.mjs bun run eval:skills");
+
+    assert.ok(verifierOffset >= 0);
+    assert.ok(stagingOffset > verifierOffset);
+    assert.ok(copyCheckOffset > stagingOffset);
+    assert.ok(evalOffset > copyCheckOffset);
+  });
+
   test("preserves hidden Plugin manifests in the release candidate artifact", async () => {
     const candidateWorkflow = await readFile(
       path.join(repositoryRoot, ".github/workflows/distribution-candidate.yml"),

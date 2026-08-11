@@ -15,3 +15,7 @@
 - Keep JSON Schema canonical and regenerate TypeScript declarations with `schemas:generate`.
 - Update `docs/design.md` and all three README files in the same change when a public contract, command, version, security warning, or feature status changes.
 - Keep `report/` immutable. Store mutable review state under `run/review/`.
+
+## Review scope
+
+- Do not implement advisory-only review findings unless the user explicitly requests them; keep fixes limited to decision-active findings and observed failures.

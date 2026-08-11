@@ -63,6 +63,13 @@ jobs:
             --root "${utsuri_install_root}" \
             --target linux-x64 \
             --version "${UTSURI_VERSION}"
+          install -d -m 0755 .artifacts/native/linux-x64
+          install -m 0755 \
+            "${utsuri_install_root}/node_modules/@utsu-ri/cli-linux-x64/bin/utsuri-fs-ops" \
+            .artifacts/native/linux-x64/utsuri-fs-ops
+          cmp --silent \
+            "${utsuri_install_root}/node_modules/@utsu-ri/cli-linux-x64/bin/utsuri-fs-ops" \
+            .artifacts/native/linux-x64/utsuri-fs-ops
       - name: Run the controlled Git Plugin promotion preflight
         env:
           UTSURI_VERSION: ${{ inputs.version }}
