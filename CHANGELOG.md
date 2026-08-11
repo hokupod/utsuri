@@ -7,6 +7,30 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- Add Git Marketplace catalogs and a source-only Utsuri Plugin for Codex and
+  Claude Code, synchronized with CLI `0.2.0` and exact-pinned to that release.
+- Add bounded, versioned run registration and the argumentless `utsuri mcp`
+  broker with explicit zero, one, multiple, cross-project, and cross-session
+  handling.
+- Add deterministic Plugin generation, verification, promotion dry-run,
+  atomic rollback, read-only CI, and current-host compatibility probes.
+
+### Changed
+
+- Reorganize all three READMEs around user installation, first review, report
+  interpretation, security, and troubleshooting; move source development to
+  `CONTRIBUTING.md`.
+- Keep release numbers out of user READMEs and use the runtime compatibility
+  record as the versioned source of truth.
+
+### Security
+
+- Preserve the Origin Session boundary without persisting or exposing raw
+  session values, reject arbitrary MCP paths and destinations, and fail closed
+  on ambiguous, stale, swapped, or mismatched registrations.
+
 ## [0.1.0] - 2026-08-09
 
 ### Added

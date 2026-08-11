@@ -18,8 +18,8 @@ import {
 import { createPhase6RunFixture } from "./phase6-review-fixture";
 
 for (const [host, environment] of [
-  ["codex", { UTSURI_CODEX_SESSION_ID: "codex-origin-session" }],
-  ["claude-code", { CLAUDE_SESSION_ID: "claude-origin-session" }]
+  ["codex", { CODEX_THREAD_ID: "codex-origin-session" }],
+  ["claude-code", { CLAUDE_CODE_SESSION_ID: "claude-origin-session" }]
 ] as const) {
   test(`returns three itemized answers to the originating ${host} conversation`, async () => {
     const fixture = await createPhase6RunFixture(environment);

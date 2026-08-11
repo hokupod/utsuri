@@ -1,16 +1,17 @@
 {
   "schemaVersion": 1,
   "currentPhase": 0,
-  "availability": "phase-0-documentation",
+  "availability": "git-marketplace-public",
   "designVersion": "1.5",
   "lastUpdated": "2026-08-06",
   "changeLogEntryId": "design-v1.5-english-canonical",
   "currentHashes": {
     "docs/design.md": "f3b95f23b360cb99e87128bcbcc9392eda7ce7b0be9c8fd036399c631de5a1ef",
     "docs/release.md": "5e41020e0893074459b9e476dc27136e3086776746225a9cb09c58bf819a7530",
-    "README.md": "5dca3e9721f4c1478c0e7fee06152d8cca3b2cf18ed72a641e2fdcf331009aa6",
-    "README.ja.md": "f3f6610189ce70d9acbc7efce63a294e2d193dc0fbb62f88dde9024dc61ea63d",
-    "README.zh-CN.md": "fc8ef26fa2452136cdeff7515e3f9acd911c1c5477be262fd3eb782fe483ee50"
+    "CONTRIBUTING.md": "85018731a910d59197ae9b333bce8d73e7fcb13f877fd8b01b8f745146c3331d",
+    "README.md": "89794f6d871e86cf3c86c0702784abdcaa6bc73db4b5e8e7d05b2c7013f086b8",
+    "README.ja.md": "5ca75660ff3c13714038ea1294716899384bf627fe23480761b9862dd1eaf371",
+    "README.zh-CN.md": "64dbeccf9caacb0899310779f4b4944e63332e60f3ebe4b25686aa6b2cbf89f7"
   },
   "changedSections": [
     "metadata",

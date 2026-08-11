@@ -14,6 +14,7 @@ import {
   validateCliSourceManifest,
   validateExactFileInventory
 } from "./release-manifest-contract.mjs";
+import { fullShaActionErrors, publishedCliSmokeErrors } from "./workflow-contract.mjs";
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const errors = [];
@@ -459,7 +460,7 @@ if (documentationStateContent) {
     const expectedPublicationMetadata = {
       publisher: "hokupod",
       npmMaintainer: "hokupod-npm",
-      npmPublishing: "manual v0.1.0 bootstrap, then GitHub Actions trusted publishing",
+      npmPublishing: "protected GitHub Actions trusted publishing after exact release approval",
       spdxLicense: "AGPL-3.0-or-later"
     };
     const actualMetadata = state.publicationMetadata;
@@ -482,15 +483,98 @@ if (toolchainPolicyContent) {
   try {
     const policy = JSON.parse(toolchainPolicyContent.toString("utf8"));
     const expectedText = `Safe-chain ${policy.safeChain?.version}`;
-    for (const relativePath of ["README.md", "README.ja.md", "README.zh-CN.md"]) {
-      const content = await readRegular(relativePath);
-      if (content && !content.toString("utf8").includes(expectedText)) {
-        errors.push(`${relativePath} does not match the Safe-chain policy version`);
-      }
+    const content = await readRegular("CONTRIBUTING.md");
+    if (content && !content.toString("utf8").includes(expectedText)) {
+      errors.push("CONTRIBUTING.md does not match the Safe-chain policy version");
     }
   } catch (error) {
     errors.push(`toolchain-policy.json is not valid JSON: ${error.message}`);
   }
+}
+
+async function verifyReadOnlyPluginWorkflow(relativePath, requirements) {
+  const content = await readRegular(relativePath);
+  if (!content) return;
+  const text = content.toString("utf8");
+  errors.push(...fullShaActionErrors(relativePath, text));
+  if (!/^permissions:\s*\n(?:\s+[^\n]+\n)*?\s+contents:\s+read\s*$/mu.test(text)) {
+    errors.push(`${relativePath} must declare top-level contents: read`);
+  }
+  if (!text.includes("persist-credentials: false")) {
+    errors.push(`${relativePath} must disable checkout credential persistence`);
+  }
+  for (const forbidden of [
+    "contents: write",
+    "id-token: write",
+    "plugin-promote.mjs --write",
+    "git push",
+    "gh pr ",
+    "npm publish"
+  ]) {
+    if (text.includes(forbidden)) {
+      errors.push(`${relativePath} contains a forbidden mutation: ${forbidden}`);
+    }
+  }
+  for (const required of requirements) {
+    if (!text.includes(required)) {
+      errors.push(`${relativePath} omits required pinned contract: ${required}`);
+    }
+  }
+}
+
+await verifyReadOnlyPluginWorkflow(".github/workflows/git-plugin-verification.yml", [
+  "node-version: 24.16.0",
+  "bun-version: 1.3.14",
+  "releases/download/1.5.14/",
+  "@openai/codex@0.146.0",
+  "@anthropic-ai/claude-code@2.1.220",
+  "@anthropic-ai/claude-code-linux-x64@2.1.220",
+  "node_modules/@anthropic-ai/claude-code-linux-x64/claude",
+  'test "$(command -v claude)" = "${utsuri_host_bin}/claude"',
+  '"skills/utsuri-review/**"',
+  '"package.json"',
+  '"packages/*/package.json"',
+  '"packages/security/src/**"',
+  '"packages/session-binding/src/**"',
+  '"docs/compatibility/plugin-runtime.json"',
+  '"scripts/safe-chain.mjs"',
+  '"tests/integration/verify-published-cli.test.ts"',
+  '".github/workflows/plugin-promotion.yml"',
+  '".github/workflows/release.yml"',
+  "bun run plugin:verify",
+  "plugin-runtime-probe.mjs --host codex --version 0.146.0",
+  "plugin-runtime-probe.mjs --host claude --version 2.1.220",
+  "claude plugin validate plugins/utsuri --strict"
+]);
+await verifyReadOnlyPluginWorkflow(".github/workflows/plugin-promotion.yml", [
+  "verify-published-cli.mjs",
+  "plugin-promote.mjs --version",
+  "plugin validate .artifacts/release-candidate/plugin --strict",
+  "plugin validate plugins/utsuri --strict"
+]);
+
+const releaseWorkflowContent = await readRegular(".github/workflows/release.yml");
+if (releaseWorkflowContent) {
+  const releaseWorkflow = releaseWorkflowContent.toString("utf8");
+  errors.push(
+    ...fullShaActionErrors(".github/workflows/release.yml", releaseWorkflow, {
+      allowedLocalReferences: ["./.github/workflows/distribution-candidate.yml"]
+    })
+  );
+  errors.push(...publishedCliSmokeErrors(".github/workflows/release.yml", releaseWorkflow));
+  if (releaseWorkflow.includes("plugin-promote.mjs")) {
+    errors.push("Release workflow must not automatically promote the Git Plugin");
+  }
+}
+
+const candidateWorkflowContent = await readRegular(".github/workflows/distribution-candidate.yml");
+if (candidateWorkflowContent) {
+  errors.push(
+    ...fullShaActionErrors(
+      ".github/workflows/distribution-candidate.yml",
+      candidateWorkflowContent.toString("utf8")
+    )
+  );
 }
 
 const cliManifestContent = await readRegular("packages/cli/package.json");

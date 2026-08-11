@@ -1,0 +1,23 @@
+{
+  "name": "utsuri",
+  "version": "0.2.0",
+  "description": "Evidence-backed code and visual change review for Codex and Claude Code",
+  "author": {
+    "name": "hokupod",
+    "url": "https://github.com/hokupod"
+  },
+  "homepage": "https://github.com/hokupod/utsuri#readme",
+  "repository": "https://github.com/hokupod/utsuri",
+  "license": "AGPL-3.0-or-later",
+  "keywords": ["diff", "visual-review", "accessibility", "code-review"],
+  "skills": "./skills/",
+  "mcpServers": {
+    "utsuri": {
+      "command": "npx",
+      "args": ["-y", "--package=@utsu-ri/cli@0.2.0", "utsuri", "mcp"],
+      "env": {
+        "CODEX_THREAD_ID": ""
+      }
+    }
+  }
+}

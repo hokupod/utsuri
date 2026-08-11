@@ -1,11 +1,28 @@
 import { executeCli } from "./cli";
 import { parseArguments, optionString } from "./arguments";
 import { prepareFeedbackRuntime } from "./feedback";
+import { PluginBrokerMcpService, resolvePluginProjectContext } from "./mcp";
 import { runReviewMcpStdio } from "@utsu-ri/review-mcp-server";
 import { ExitCode, toUtsuriError, UtsuriError } from "@utsu-ri/core";
 
 const argv = process.argv.slice(2);
-if (argv[0] === "review-mcp") {
+if (argv[0] === "mcp") {
+  try {
+    if (argv.length !== 1) {
+      throw new UtsuriError(
+        "CLI_MCP_ARGUMENTS",
+        "mcp accepts no arguments or options",
+        ExitCode.Arguments
+      );
+    }
+    const context = await resolvePluginProjectContext(process.cwd(), process.env);
+    await runReviewMcpStdio(new PluginBrokerMcpService(context.projectRoot, process.env));
+  } catch (error) {
+    const normalized = toUtsuriError(error);
+    process.stderr.write(`${normalized.diagnosticId}: ${normalized.message}\n`);
+    process.exitCode = normalized.exitCode;
+  }
+} else if (argv[0] === "review-mcp") {
   try {
     const arguments_ = parseArguments(argv);
     if (

@@ -1,4 +1,4 @@
-import { ExitCode, UtsuriError } from "@utsu-ri/core";
+import { ExitCode, toUtsuriError, UtsuriError } from "@utsu-ri/core";
 import type { ReviewAnswer, UtsuriReport } from "@utsu-ri/report-model";
 import {
   claimFeedbackBatch,
@@ -113,7 +113,17 @@ export interface ReviewMcpServiceOptions {
   now?: () => string;
 }
 
+export interface ReviewMcpTransportService {
+  readonly toolDefinitions?: readonly unknown[];
+  readonly structuredToolErrors?: boolean;
+  readonly serverInfo?: { name: string; version: string };
+  callTool(name: string, rawArguments: unknown): Promise<unknown>;
+}
+
 export class ReviewMcpService {
+  readonly toolDefinitions = toolDefinitions;
+  readonly structuredToolErrors = false;
+  readonly serverInfo = { name: "utsu-ri-review", version: "0.2.0" };
   readonly #runDirectory: string;
   readonly #report: UtsuriReport;
   readonly #currentSession: CurrentSessionIdentity;
@@ -317,7 +327,7 @@ function rpcError(id: JsonRpcRequest["id"], code: number, message: string): unkn
 }
 
 export async function runReviewMcpStdio(
-  service: ReviewMcpService,
+  service: ReviewMcpTransportService,
   streams: { input?: NodeJS.ReadableStream; output?: NodeJS.WritableStream } = {}
 ): Promise<void> {
   const input = streams.input ?? process.stdin;
@@ -348,21 +358,36 @@ export async function runReviewMcpStdio(
         result = {
           protocolVersion: "2025-06-18",
           capabilities: { tools: { listChanged: false } },
-          serverInfo: { name: "utsu-ri-review", version: "0.1.0" }
+          serverInfo: service.serverInfo ?? { name: "utsu-ri-review", version: "0.2.0" }
         };
       } else if (request.method === "ping") result = {};
-      else if (request.method === "tools/list") result = { tools: toolDefinitions };
+      else if (request.method === "tools/list")
+        result = { tools: service.toolDefinitions ?? toolDefinitions };
       else if (request.method === "tools/call") {
         const params = exactArguments(request.params, ["name"], ["arguments"]);
         if (typeof params.name !== "string") {
           serviceError("MCP_TOOL_INVALID", "MCP tool name is invalid");
         }
-        const data = await service.callTool(params.name, params.arguments ?? {});
-        result = {
-          content: [{ type: "text", text: JSON.stringify(data) }],
-          structuredContent: data,
-          isError: false
-        };
+        try {
+          const data = await service.callTool(params.name, params.arguments ?? {});
+          result = {
+            content: [{ type: "text", text: JSON.stringify(data) }],
+            structuredContent: data,
+            isError: false
+          };
+        } catch (error) {
+          if (!service.structuredToolErrors) throw error;
+          const normalized = toUtsuriError(error);
+          const data = {
+            ok: false,
+            error: { id: normalized.diagnosticId, message: normalized.message }
+          };
+          result = {
+            content: [{ type: "text", text: JSON.stringify(data) }],
+            structuredContent: data,
+            isError: true
+          };
+        }
       } else {
         output.write(`${JSON.stringify(rpcError(request.id, -32601, "Method not found"))}\n`);
         continue;
@@ -376,3 +401,11 @@ export async function runReviewMcpStdio(
 }
 
 export { toolDefinitions as reviewMcpToolDefinitions };
+export {
+  assertSafeRegistrationRunPath,
+  maximumRegistrationEntries,
+  mcpRegistrationDirectory,
+  readMcpRunRegistrations,
+  registerMcpRun,
+  type RegisterMcpRunResult
+} from "./run-registry";

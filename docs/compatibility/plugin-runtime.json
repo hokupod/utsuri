@@ -1,0 +1,61 @@
+{
+  "schemaVersion": 1,
+  "minimumSupported": {
+    "codex": "0.146.0",
+    "claude": "2.1.220"
+  },
+  "distribution": {
+    "pluginVersion": "0.2.0",
+    "cliVersion": "0.2.0",
+    "mcpPackagePin": "@utsu-ri/cli@0.2.0"
+  },
+  "hosts": {
+    "codex": {
+      "version": "0.146.0",
+      "verifiedAt": "2026-08-11",
+      "os": {
+        "platform": "darwin",
+        "release": "25.5.0",
+        "arch": "arm64"
+      },
+      "contract": {
+        "marketplaceListed": true,
+        "selector": "utsuri@utsuri-probe",
+        "beforeInstalled": true,
+        "installed": true,
+        "enabled": true,
+        "disabled": true,
+        "removed": true,
+        "mcpDiscovered": true,
+        "toolsListed": true,
+        "cwdIsWorkspace": true,
+        "sessionInputForwarded": true,
+        "deniedSentinelForwarded": false
+      }
+    },
+    "claude": {
+      "version": "2.1.220",
+      "verifiedAt": "2026-08-11",
+      "os": {
+        "platform": "darwin",
+        "release": "25.5.0",
+        "arch": "arm64"
+      },
+      "contract": {
+        "marketplaceListed": true,
+        "selector": "utsuri@utsuri-probe",
+        "installed": true,
+        "enabled": true,
+        "disabled": true,
+        "removed": true,
+        "mcpDiscovered": true,
+        "toolsListed": true,
+        "cwdIsWorkspace": true,
+        "projectDirectoryForwarded": true,
+        "sessionInputForwarded": true,
+        "codexThreadCleared": true,
+        "ambientDeniedSentinelForwarded": true
+      }
+    }
+  }
+}

@@ -29,7 +29,7 @@ export interface Phase6RunFixture {
 }
 
 export async function createPhase6RunFixture(
-  environment: NodeJS.ProcessEnv = { UTSURI_CODEX_SESSION_ID: "codex-origin-session" }
+  environment: NodeJS.ProcessEnv = { CODEX_THREAD_ID: "codex-origin-session" }
 ): Promise<Phase6RunFixture> {
   const root = await mkdtemp(path.join(os.tmpdir(), "utsuri-phase-6-e2e-"));
   const run = path.join(root, "run");

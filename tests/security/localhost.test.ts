@@ -54,7 +54,7 @@ async function fixture(): Promise<{
   await cp(path.join(source, "logs/collect.ndjson"), path.join(run, "logs/collect.ndjson"));
   const initial = await createInitialReport(run);
   const bound = await bindReportToCurrentSession(root, initial, {
-    UTSURI_CODEX_SESSION_ID: "localhost-origin-session"
+    CODEX_THREAD_ID: "localhost-origin-session"
   });
   const built = await buildReport(run, bound, {
     toolVersion: "0.1.0",

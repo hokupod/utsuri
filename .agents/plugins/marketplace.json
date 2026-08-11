@@ -1,0 +1,20 @@
+{
+  "name": "utsuri",
+  "interface": {
+    "displayName": "Utsuri"
+  },
+  "plugins": [
+    {
+      "name": "utsuri",
+      "source": {
+        "source": "local",
+        "path": "./plugins/utsuri"
+      },
+      "policy": {
+        "installation": "AVAILABLE",
+        "authentication": "ON_USE"
+      },
+      "category": "Engineering"
+    }
+  ]
+}

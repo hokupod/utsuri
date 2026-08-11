@@ -4,11 +4,11 @@
   "lockfileSha256": "de680198df088328333bfc628c92f876890fdd9ec6bc12d4f583607c843f1660",
   "packages": [
     {
-      "checksum": "SHA256:65122518b87d70e4c5b793c04a919b96fdc6bc47a9ffef013a119eca5183c9c8",
+      "checksum": "SHA256:361abe9656db5c6acb342a418c44f03c9466835aa9e5ab84e4e019cef53327dd",
       "license": "AGPL-3.0-or-later",
       "name": "utsuri-workspace",
       "packageVerificationCode": null,
-      "version": "0.1.0"
+      "version": "0.2.0"
     },
     {
       "checksum": "SHA512:3e55cf78458c5cc67bb0f60e1ea983c8227371f36b52bddf18d2ad7b35f5e3291738422fc8af3577eab2771f3d298e4eef514a30f690daf05f04523934747adc",
