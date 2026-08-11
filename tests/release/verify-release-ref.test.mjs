@@ -1,11 +1,13 @@
 import assert from "node:assert/strict";
 import { spawnSync } from "node:child_process";
-import { mkdtemp, mkdir, rm, writeFile } from "node:fs/promises";
+import { mkdtemp, mkdir, readFile, rm, writeFile } from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
 import { test } from "node:test";
+import { fileURLToPath } from "node:url";
 import { validateReleaseMetadata, verifyReleaseRef } from "../../scripts/verify-release-ref.mjs";
 
+const repositoryRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../..");
 const validRoot = { version: "0.1.0" };
 const validCli = { version: "0.1.0", private: true };
 const validChangelog = "# Changelog\n\n## [0.1.0] - 2026-08-08\n\n- Initial release.\n";
@@ -33,6 +35,67 @@ test("release metadata requires an exact stable version and dated changelog entr
       changelog: ""
     }).join("\n"),
     /stable SemVer|private|CHANGELOG/u
+  );
+});
+
+test("current repository metadata is ready for its release tag", async () => {
+  const [
+    rootManifest,
+    cliManifest,
+    rootCodexPlugin,
+    rootClaudePlugin,
+    bundledCodexPlugin,
+    bundledCodexMcp,
+    bundledClaudePlugin,
+    claudeMarketplace,
+    changelog
+  ] = await Promise.all([
+    readFile(path.join(repositoryRoot, "package.json"), "utf8").then(JSON.parse),
+    readFile(path.join(repositoryRoot, "packages/cli/package.json"), "utf8").then(JSON.parse),
+    readFile(path.join(repositoryRoot, ".codex-plugin/plugin.json"), "utf8").then(JSON.parse),
+    readFile(path.join(repositoryRoot, ".claude-plugin/plugin.json"), "utf8").then(JSON.parse),
+    readFile(path.join(repositoryRoot, "plugins/utsuri/.codex-plugin/plugin.json"), "utf8").then(
+      JSON.parse
+    ),
+    readFile(path.join(repositoryRoot, "plugins/utsuri/.codex-plugin/mcp.json"), "utf8").then(
+      JSON.parse
+    ),
+    readFile(path.join(repositoryRoot, "plugins/utsuri/.claude-plugin/plugin.json"), "utf8").then(
+      JSON.parse
+    ),
+    readFile(path.join(repositoryRoot, ".claude-plugin/marketplace.json"), "utf8").then(JSON.parse),
+    readFile(path.join(repositoryRoot, "CHANGELOG.md"), "utf8")
+  ]);
+  const utsuriMarketplacePlugin = claudeMarketplace.plugins.find(({ name }) => name === "utsuri");
+
+  for (const [source, version] of [
+    [".codex-plugin/plugin.json", rootCodexPlugin.version],
+    [".claude-plugin/plugin.json", rootClaudePlugin.version],
+    ["plugins/utsuri/.codex-plugin/plugin.json", bundledCodexPlugin.version],
+    ["plugins/utsuri/.claude-plugin/plugin.json", bundledClaudePlugin.version],
+    [".claude-plugin/marketplace.json metadata", claudeMarketplace.metadata.version],
+    [".claude-plugin/marketplace.json utsuri entry", utsuriMarketplacePlugin?.version]
+  ]) {
+    assert.equal(version, rootManifest.version, `${source} must match the release version`);
+  }
+
+  const expectedMcpArguments = [
+    "-y",
+    `--package=@utsu-ri/cli@${rootManifest.version}`,
+    "utsuri",
+    "mcp"
+  ];
+  assert.deepEqual(bundledCodexMcp.utsuri.args, expectedMcpArguments);
+  assert.deepEqual(bundledClaudePlugin.mcpServers.utsuri.args, expectedMcpArguments);
+
+  assert.deepEqual(
+    validateReleaseMetadata({
+      tag: `v${rootManifest.version}`,
+      rootManifest,
+      cliManifest,
+      changelog
+    }),
+    []
   );
 });
 
