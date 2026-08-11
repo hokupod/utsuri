@@ -74,6 +74,12 @@
     ]
   },
   "forbiddenPublicIdentifiers": ["@utsuri/"],
+  "requiredPublicationMetadata": {
+    "publisher": "Utsuri fixture publisher",
+    "npmMaintainer": "fixture-maintainer",
+    "npmPublishing": "protected annotated-tag GitHub Actions trusted publishing",
+    "spdxLicense": "MIT"
+  },
   "modeRules": {
     "bootstrap": {
       "requireStateHashes": false,
@@ -84,7 +90,7 @@
       "requireHumanReview": false
     },
     "release-candidate": {
-      "allowedAvailability": ["git-marketplace-public"],
+      "allowedAvailability": ["git-marketplace-source-ready-cli-publication-pending"],
       "requireStateHashes": true,
       "requireHumanReview": true
     }

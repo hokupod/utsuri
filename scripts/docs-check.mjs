@@ -435,7 +435,7 @@ async function main() {
         ) {
           report(
             diagnostic.availabilityMismatch,
-            `release-candidate availability is not public: ${state.availability}`
+            `release-candidate availability is not releasable: ${state.availability}`
           );
         }
 
@@ -465,8 +465,29 @@ async function main() {
         }
 
         if (args.mode === "release-candidate") {
-          if (!state.publicationMetadata?.publisher || !state.publicationMetadata?.spdxLicense) {
-            report(diagnostic.placeholder, "publisher identity and SPDX license must be resolved");
+          const expectedPublicationMetadata = policy.requiredPublicationMetadata;
+          const publicationMetadata = state.publicationMetadata;
+          const expectedKeys =
+            expectedPublicationMetadata && typeof expectedPublicationMetadata === "object"
+              ? Object.keys(expectedPublicationMetadata)
+              : [];
+          const actualKeys =
+            publicationMetadata &&
+            typeof publicationMetadata === "object" &&
+            !Array.isArray(publicationMetadata)
+              ? Object.keys(publicationMetadata)
+              : [];
+          const publicationMetadataMatches =
+            expectedKeys.length > 0 &&
+            expectedKeys.length === actualKeys.length &&
+            expectedKeys.every(
+              (key) =>
+                typeof expectedPublicationMetadata[key] === "string" &&
+                expectedPublicationMetadata[key].length > 0 &&
+                publicationMetadata[key] === expectedPublicationMetadata[key]
+            );
+          if (!publicationMetadataMatches) {
+            report(diagnostic.placeholder, "publication metadata must exactly match policy");
           }
           for (const document of reviewDocuments) {
             const reviewed = state.humanReviewedHashes?.[document.path];

@@ -14,7 +14,7 @@
 
 ## 提供状況と要件
 
-<!-- availability:git-marketplace-public -->
+<!-- availability:git-marketplace-source-ready-cli-publication-pending -->
 <!-- support-contract:macos-linux-windows-unsupported -->
 
 Codex と Claude Code は macOS と Linux に対応し、native Windows は非対応です。
