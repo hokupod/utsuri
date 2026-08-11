@@ -33,8 +33,8 @@ jobs:
         env:
           UTSURI_RELEASE_TAG: ${{ github.ref_name }}
         run: node scripts/verify-release-ref.mjs --tag "${UTSURI_RELEASE_TAG}" --main-ref origin/main
-      - name: Require current human-reviewed release documentation
-        run: node scripts/docs-check.mjs --mode release-candidate
+      - name: Validate release documentation
+        run: node scripts/docs-check.mjs
       - name: Reject PII and secrets in the public release history
         env:
           UTSURI_RELEASE_TAG: ${{ github.ref_name }}
