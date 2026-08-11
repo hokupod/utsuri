@@ -345,22 +345,16 @@ describe("cross-job distribution transport", () => {
     assert.equal(promotionWorkflow.split(claudePin).length - 1, 2);
   });
 
-  test("verifies newly published packages before Safe-chain minimum-age filtering", async () => {
+  test("verifies published packages and the promotion preflight before Safe-chain filtering", async () => {
     const promotionWorkflow = await readFile(
       path.join(repositoryRoot, ".github/workflows/plugin-promotion.yml"),
       "utf8"
     );
-    const publishedHelperOffset = promotionWorkflow.indexOf(
-      "      - name: Verify the exact published helper package and immutable report path"
-    );
-    const safeChainSetup = promotionWorkflow.indexOf(
-      "      - name: Install and verify Safe-chain trust anchor"
-    );
+    const promotionCommand =
+      '        run: node scripts/plugin-promote.mjs --version "${UTSURI_VERSION}"';
     const publishedHelper = promotionWorkflow.match(
       /^ {6}- name: Verify the exact published helper package and immutable report path\n(?: {8,}.*\n?)*/mu
     );
-    assert.ok(publishedHelperOffset >= 0);
-    assert.ok(safeChainSetup > publishedHelperOffset);
     assert.ok(publishedHelper);
     for (const required of [
       /--ignore-scripts/u,
@@ -376,6 +370,43 @@ describe("cross-job distribution transport", () => {
     ]) {
       assert.match(publishedHelper[0], required);
     }
+
+    const assertPromotionOrder = (workflow) => {
+      const publishedCliOffset = workflow.indexOf(
+        "      - name: Verify the exact published CLI before Safe-chain or dependency setup"
+      );
+      const publishedHelperOffset = workflow.indexOf(
+        "      - name: Verify the exact published helper package and immutable report path"
+      );
+      const safeChainSetup = workflow.indexOf(
+        "      - name: Install and verify Safe-chain trust anchor"
+      );
+      const promotionPreflights = [
+        ...workflow.matchAll(
+          /^ {6}- name: Run the controlled Git Plugin promotion preflight\n(?: {8,}.*\n?)*/gmu
+        )
+      ];
+      assert.equal(promotionPreflights.length, 1);
+      const promotionPreflight = promotionPreflights[0];
+      const promotionPreflightOffset = promotionPreflight.index ?? -1;
+      assert.equal(workflow.split(promotionCommand).length - 1, 1);
+      assert.equal(promotionPreflight[0].split(promotionCommand).length - 1, 1);
+      assert.doesNotMatch(promotionPreflight[0], /--write/u);
+      assert.ok(publishedCliOffset >= 0);
+      assert.ok(publishedHelperOffset > publishedCliOffset);
+      assert.ok(promotionPreflightOffset > publishedHelperOffset);
+      assert.ok(safeChainSetup > promotionPreflightOffset);
+    };
+
+    assertPromotionOrder(promotionWorkflow);
+    const skillStep = "      - name: Run Skill evals and Claude Plugin strict validation";
+    const regressedWorkflow = promotionWorkflow
+      .replace(promotionCommand, "        run: node --version")
+      .replace(
+        skillStep,
+        ["      - name: Late promotion command", promotionCommand, skillStep].join("\n")
+      );
+    assert.throws(() => assertPromotionOrder(regressedWorkflow));
     assert.doesNotMatch(promotionWorkflow, /safe-chain-skip-minimum-package-age/u);
   });
 

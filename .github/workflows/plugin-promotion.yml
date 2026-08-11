@@ -63,6 +63,10 @@ jobs:
             --root "${utsuri_install_root}" \
             --target linux-x64 \
             --version "${UTSURI_VERSION}"
+      - name: Run the controlled Git Plugin promotion preflight
+        env:
+          UTSURI_VERSION: ${{ inputs.version }}
+        run: node scripts/plugin-promote.mjs --version "${UTSURI_VERSION}"
       - name: Install and verify Safe-chain trust anchor
         run: |
           utsuri_safe_chain_version="$(node -p "require('./toolchain-policy.json').safeChain.version")"
@@ -95,10 +99,6 @@ jobs:
             --restore-plugin-modes .artifacts/release-candidate/plugin \
             --manifest .artifacts/release-candidate/candidate-manifest.json
           node scripts/verify-release-layout.mjs --scan .artifacts/release-candidate/plugin
-      - name: Run the controlled Git Plugin promotion preflight
-        env:
-          UTSURI_VERSION: ${{ inputs.version }}
-        run: node scripts/plugin-promote.mjs --version "${UTSURI_VERSION}"
       - name: Run Skill evals and Claude Plugin strict validation
         run: |
           node scripts/safe-chain.mjs bun run eval:skills
