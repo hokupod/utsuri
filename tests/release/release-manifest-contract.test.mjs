@@ -345,6 +345,40 @@ describe("cross-job distribution transport", () => {
     assert.equal(promotionWorkflow.split(claudePin).length - 1, 2);
   });
 
+  test("verifies newly published packages before Safe-chain minimum-age filtering", async () => {
+    const promotionWorkflow = await readFile(
+      path.join(repositoryRoot, ".github/workflows/plugin-promotion.yml"),
+      "utf8"
+    );
+    const publishedHelperOffset = promotionWorkflow.indexOf(
+      "      - name: Verify the exact published helper package and immutable report path"
+    );
+    const safeChainSetup = promotionWorkflow.indexOf(
+      "      - name: Install and verify Safe-chain trust anchor"
+    );
+    const publishedHelper = promotionWorkflow.match(
+      /^ {6}- name: Verify the exact published helper package and immutable report path\n(?: {8,}.*\n?)*/mu
+    );
+    assert.ok(publishedHelperOffset >= 0);
+    assert.ok(safeChainSetup > publishedHelperOffset);
+    assert.ok(publishedHelper);
+    for (const required of [
+      /--ignore-scripts/u,
+      /--no-audit/u,
+      /--no-fund/u,
+      /--package-lock=false/u,
+      /--cache "\$\{utsuri_install_root\}\/cache"/u,
+      /--userconfig "\$\{utsuri_install_root\}\/npmrc"/u,
+      /--globalconfig "\$\{utsuri_install_root\}\/npmrc-global"/u,
+      /"@utsu-ri\/cli-linux-x64@\$\{UTSURI_VERSION\}"/u,
+      /"@utsu-ri\/cli@\$\{UTSURI_VERSION\}"/u,
+      /node scripts\/verify-installed-cli\.mjs/u
+    ]) {
+      assert.match(publishedHelper[0], required);
+    }
+    assert.doesNotMatch(promotionWorkflow, /safe-chain-skip-minimum-package-age/u);
+  });
+
   test("preserves hidden Plugin manifests in the release candidate artifact", async () => {
     const candidateWorkflow = await readFile(
       path.join(repositoryRoot, ".github/workflows/distribution-candidate.yml"),

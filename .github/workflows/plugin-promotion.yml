@@ -40,6 +40,29 @@ jobs:
         run: |
           test "$(node -p "require('./package.json').version")" = "${UTSURI_VERSION}"
           node scripts/verify-published-cli.mjs --version "${UTSURI_VERSION}"
+      - name: Verify the exact published helper package and immutable report path
+        env:
+          UTSURI_VERSION: ${{ inputs.version }}
+        run: |
+          utsuri_install_root="$(mktemp -d)"
+          trap 'rm -rf "${utsuri_install_root}"' EXIT
+          : > "${utsuri_install_root}/npmrc"
+          : > "${utsuri_install_root}/npmrc-global"
+          npm install \
+            --prefix "${utsuri_install_root}" \
+            --ignore-scripts \
+            --no-audit \
+            --no-fund \
+            --package-lock=false \
+            --cache "${utsuri_install_root}/cache" \
+            --userconfig "${utsuri_install_root}/npmrc" \
+            --globalconfig "${utsuri_install_root}/npmrc-global" \
+            "@utsu-ri/cli-linux-x64@${UTSURI_VERSION}" \
+            "@utsu-ri/cli@${UTSURI_VERSION}"
+          node scripts/verify-installed-cli.mjs \
+            --root "${utsuri_install_root}" \
+            --target linux-x64 \
+            --version "${UTSURI_VERSION}"
       - name: Install and verify Safe-chain trust anchor
         run: |
           utsuri_safe_chain_version="$(node -p "require('./toolchain-policy.json').safeChain.version")"
@@ -72,29 +95,6 @@ jobs:
             --restore-plugin-modes .artifacts/release-candidate/plugin \
             --manifest .artifacts/release-candidate/candidate-manifest.json
           node scripts/verify-release-layout.mjs --scan .artifacts/release-candidate/plugin
-      - name: Verify the exact published helper package and immutable report path
-        env:
-          UTSURI_VERSION: ${{ inputs.version }}
-        run: |
-          utsuri_install_root="$(mktemp -d)"
-          trap 'rm -rf "${utsuri_install_root}"' EXIT
-          : > "${utsuri_install_root}/npmrc"
-          : > "${utsuri_install_root}/npmrc-global"
-          npm install \
-            --prefix "${utsuri_install_root}" \
-            --ignore-scripts \
-            --no-audit \
-            --no-fund \
-            --package-lock=false \
-            --cache "${utsuri_install_root}/cache" \
-            --userconfig "${utsuri_install_root}/npmrc" \
-            --globalconfig "${utsuri_install_root}/npmrc-global" \
-            "@utsu-ri/cli-linux-x64@${UTSURI_VERSION}" \
-            "@utsu-ri/cli@${UTSURI_VERSION}"
-          node scripts/verify-installed-cli.mjs \
-            --root "${utsuri_install_root}" \
-            --target linux-x64 \
-            --version "${UTSURI_VERSION}"
       - name: Run the controlled Git Plugin promotion preflight
         env:
           UTSURI_VERSION: ${{ inputs.version }}
