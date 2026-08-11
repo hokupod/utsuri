@@ -14,6 +14,9 @@ import {
   finalizeReleaseAssets,
   verifyReleaseAssets
 } from "../../scripts/release-assets.mjs";
+import { expectedInstalledCliIdentity } from "../../scripts/verify-installed-cli.mjs";
+import { executeCli } from "../../packages/cli/src/cli";
+import { nativeHelperPackageVersion } from "../../packages/security/src/native-helper";
 import { repositoryRoot } from "./capture-helpers";
 
 const temporaryDirectories: string[] = [];
@@ -103,12 +106,41 @@ async function repositoryFixtureRoot(base: string, version: string): Promise<str
 }
 
 describe("distribution candidate assembly", () => {
+  test("keeps the isolated install identity synchronized with the CLI", async () => {
+    const manifest = JSON.parse(
+      await readFile(path.join(repositoryRoot, "package.json"), "utf8")
+    ) as { version: string };
+    const result = await executeCli(["--version", "--json"]);
+
+    expect(result.exitCode).toBe(0);
+    expect(result.data).toEqual(expectedInstalledCliIdentity(manifest.version));
+    expect(nativeHelperPackageVersion).toBe(manifest.version);
+  });
+
   test("requires and binds all four helper packages and aggregate Plugin copies", async () => {
     const scratch = await mkdtemp(path.join(os.tmpdir(), "utsuri-candidate-test-"));
     temporaryDirectories.push(scratch);
     const nativeRoot = await nativeFixtureRoot(scratch);
     const candidate = path.join(scratch, "candidate");
     const assembled = await assembleDistributionCandidate(candidate, nativeRoot, repositoryRoot);
+    const rootManifest = JSON.parse(
+      await readFile(path.join(repositoryRoot, "package.json"), "utf8")
+    ) as { version: string };
+    const candidateVersions = await Promise.all(
+      [
+        "packages/cli/package.json",
+        ...nativeTargets.map((target) => `packages/native/${target}/package.json`),
+        "plugin/.codex-plugin/plugin.json",
+        "plugin/.claude-plugin/plugin.json"
+      ].map(async (relative) => {
+        const manifest = JSON.parse(await readFile(path.join(candidate, relative), "utf8")) as {
+          version: string;
+        };
+        return manifest.version;
+      })
+    );
+
+    expect(candidateVersions).toEqual(candidateVersions.map(() => rootManifest.version));
     expect(assembled.manifest.targets).toEqual(nativeTargets);
     expect(assembled.manifest.files["plugin/.claude-plugin/marketplace.json"]).toBeUndefined();
     expect(
