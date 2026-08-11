@@ -13,7 +13,7 @@
 
 `.github/workflows/release.yml` runs only after an operator pushes an annotated `v*` tag. It requires the tag to match the root and CLI versions and to point to the exact `origin/main` commit. Except for the separately authorized first-publication bootstrap below, registry writes are confined to its protected `release` environment and use GitHub OIDC trusted publishing without an npm token.
 
-The workflow never creates or pushes a tag. Package creation, the first registry write, tag creation, and environment approval remain separate operator actions. The first version of a new package cannot use npm trusted or staged publishing because the package must already exist; follow the one-time bootstrap procedure below. The manual `v0.1.0` bootstrap does not receive GitHub Actions OIDC provenance and must not be represented as a trusted-publisher write.
+The workflow never creates or pushes a tag. Package creation, the first registry write, tag creation, and environment approval remain separate operator actions. The first version of a new package cannot use npm trusted or staged publishing because the package must already exist; follow the one-time bootstrap procedure below. The manual `v0.2.0` bootstrap does not receive GitHub Actions OIDC provenance and must not be represented as a trusted-publisher write.
 
 ## Two distribution surfaces and authorization
 

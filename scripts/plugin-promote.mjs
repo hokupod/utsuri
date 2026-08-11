@@ -28,10 +28,16 @@ import {
 import { verifyPublishedCli } from "./verify-published-cli.mjs";
 
 if (process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
-  runPluginPromotion(parsePromotionOptions(process.argv.slice(2))).catch((error) => {
-    process.stderr.write(`${errorMessage(error)}\n`);
-    process.exitCode = 1;
-  });
+  try {
+    runPluginPromotion(parsePromotionOptions(process.argv.slice(2))).catch(reportPromotionFailure);
+  } catch (error) {
+    reportPromotionFailure(error);
+  }
+}
+
+function reportPromotionFailure(error) {
+  process.stderr.write(`${errorMessage(error)}\n`);
+  process.exitCode = 1;
 }
 
 export function parsePromotionOptions(args) {

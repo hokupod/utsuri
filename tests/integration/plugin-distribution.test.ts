@@ -147,6 +147,15 @@ describe("Git Marketplace Plugin distribution", () => {
     expect(() => verifyPluginDistribution({ root })).not.toThrow();
   });
 
+  test("rejects a dangling generated-Skill symlink before synchronization", () => {
+    const root = fixtureRoot();
+    const skill = join(root, "plugins/utsuri/skills/utsuri-review");
+    rmSync(skill, { recursive: true });
+    symlinkSync("missing-skill-target", skill);
+    expect(() => syncPluginSkill(root)).toThrow("Plugin Skill destination must not be a symlink");
+    expect(lstatSync(skill).isSymbolicLink()).toBe(true);
+  });
+
   test("rejects synchronized Plugin bytes containing NUL before text and secret scanning", () => {
     const root = fixtureRoot();
     const canonical = join(root, "skills/utsuri-review/references/security.md");

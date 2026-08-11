@@ -11,7 +11,11 @@ import {
   validateExactFileInventory,
   validateNativeHelperManifest
 } from "../../scripts/release-manifest-contract.mjs";
-import { fullShaActionErrors, publishedCliSmokeErrors } from "../../scripts/workflow-contract.mjs";
+import {
+  fullShaActionErrors,
+  publishedCliSmokeErrors,
+  readOnlyPermissionErrors
+} from "../../scripts/workflow-contract.mjs";
 
 const repositoryRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../..");
 
@@ -187,6 +191,41 @@ describe("cross-job distribution transport", () => {
     );
   });
 
+  test("parses read-only workflow permissions without regex bypasses", () => {
+    const valid = [
+      "permissions:",
+      "  actions: read",
+      "  contents: read",
+      "jobs:",
+      "  verify:",
+      "    permissions:",
+      "      contents: none",
+      "    steps: []"
+    ].join("\n");
+    assert.deepEqual(readOnlyPermissionErrors("workflow.yml", valid), []);
+    assert.match(
+      readOnlyPermissionErrors(
+        "workflow.yml",
+        valid.replace("      contents: none", "      id-token: write")
+      ).join("\n"),
+      /job verify id-token permission is not read-only/u
+    );
+    assert.match(
+      readOnlyPermissionErrors(
+        "workflow.yml",
+        valid.replace("permissions:\n  actions: read\n  contents: read", "permissions: read-all")
+      ).join("\n"),
+      /top-level contents: read|permissions must be a mapping/u
+    );
+    assert.match(
+      readOnlyPermissionErrors(
+        "workflow.yml",
+        valid.replace("  contents: read", "  contents: write # contents: read")
+      ).join("\n"),
+      /contents permission is not read-only/u
+    );
+  });
+
   test("scopes published CLI smoke ordering to its release job", () => {
     const workflow = [
       "jobs:",
@@ -201,7 +240,7 @@ describe("cross-job distribution transport", () => {
       "        with:",
       "          node-version: 24",
       "          package-manager-cache: false",
-      "      - uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6",
+      "      - uses: oven-sh/setup-bun@735343b667d3e6f658f44d0eca948eb6282f2b76",
       "        with:",
       "          bun-version: 1.3.14",
       "      - run: node scripts/verify-published-cli.mjs --version-from-package",
@@ -361,6 +400,39 @@ describe("Safe-chain CI contract", () => {
       assert.ok(testIndex >= 0, `${name} must run ${testCommand}`);
       assert.ok(buildIndex < testIndex, `${name} must build before ${testCommand}`);
     }
+  });
+
+  test("builds native inputs before the Git Plugin focused tests", async () => {
+    const workflow = await readFile(
+      path.join(repositoryRoot, ".github/workflows/git-plugin-verification.yml"),
+      "utf8"
+    );
+    const buildIndex = workflow.indexOf("bun run native:build");
+    const testIndex = workflow.indexOf("bun test");
+    assert.ok(buildIndex >= 0, "Git Plugin verification must build the native helper");
+    assert.ok(testIndex >= 0, "Git Plugin verification must run its focused tests");
+    assert.ok(buildIndex < testIndex, "Git Plugin verification must build before focused tests");
+  });
+
+  test("runs the manifest-derived native CLI identity smoke in the full check", async () => {
+    const [manifestText, cliManifestText, checkScript, verifier] = await Promise.all([
+      readFile(path.join(repositoryRoot, "package.json"), "utf8"),
+      readFile(path.join(repositoryRoot, "packages/cli/package.json"), "utf8"),
+      readFile(path.join(repositoryRoot, "scripts/check.mjs"), "utf8"),
+      readFile(path.join(repositoryRoot, "scripts/verify-native-cli-json.mjs"), "utf8")
+    ]);
+    const manifest = JSON.parse(manifestText);
+    const cliManifest = JSON.parse(cliManifestText);
+    assert.equal(cliManifest.name, "@utsu-ri/cli");
+    assert.equal(manifest.version, cliManifest.version);
+    assert.equal(
+      manifest.scripts["verify:native-cli-json"],
+      "node scripts/verify-native-cli-json.mjs"
+    );
+    assert.match(checkScript, /"verify:native-cli-json"/u);
+    assert.match(verifier, /rootManifest\.version !== cliManifest\.version/u);
+    assert.match(verifier, /version\.version !== cliManifest\.version/u);
+    assert.doesNotMatch(verifier, /version\.version !== "\d+\.\d+\.\d+"/u);
   });
 
   test("verifies npm and Bun through the pinned Safe-chain wrapper", async () => {

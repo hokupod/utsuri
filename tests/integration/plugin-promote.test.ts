@@ -1,4 +1,5 @@
 import { afterEach, describe, expect, test } from "bun:test";
+import { spawnSync } from "node:child_process";
 import { createHash } from "node:crypto";
 import {
   cpSync,
@@ -126,6 +127,17 @@ describe("Plugin promotion", () => {
     expect(() => parsePromotionOptions([])).toThrow("Usage");
     expect(() => parsePromotionOptions(["--cli-version", "0.2.0"])).toThrow("Unknown");
     expect(() => parsePromotionOptions(["--plugin-version", "0.2.0"])).toThrow("Unknown");
+  });
+
+  test("reports synchronous CLI argument failures without an uncaught stack", () => {
+    const result = spawnSync(
+      process.execPath,
+      [join(repositoryRoot, "scripts/plugin-promote.mjs"), "--version", "latest"],
+      { cwd: repositoryRoot, encoding: "utf8" }
+    );
+    expect(result.status).toBe(1);
+    expect(result.stdout).toBe("");
+    expect(result.stderr.trim()).toBe("--version must be a complete SemVer version");
   });
 
   test("compares complete SemVer precedence without build metadata loss or hyphen truncation", () => {

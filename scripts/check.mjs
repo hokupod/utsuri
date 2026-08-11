@@ -4,6 +4,7 @@ import { spawnSync } from "node:child_process";
 
 const tasks = [
   "native:build",
+  "verify:native-cli-json",
   "format:check",
   "lint",
   "typecheck",

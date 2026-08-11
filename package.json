@@ -31,6 +31,7 @@
     "test:security": "node scripts/run-test-files.mjs security",
     "test:a11y": "playwright test --project=a11y",
     "native:build": "node scripts/build-native-helper.mjs",
+    "verify:native-cli-json": "node scripts/verify-native-cli-json.mjs",
     "build": "node scripts/build.mjs",
     "check": "node scripts/check.mjs",
     "validate:fixtures": "node scripts/validate-fixtures.mjs",

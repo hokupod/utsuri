@@ -10,8 +10,8 @@
     "docs/release.md": "5e41020e0893074459b9e476dc27136e3086776746225a9cb09c58bf819a7530",
     "CONTRIBUTING.md": "85018731a910d59197ae9b333bce8d73e7fcb13f877fd8b01b8f745146c3331d",
     "README.md": "89794f6d871e86cf3c86c0702784abdcaa6bc73db4b5e8e7d05b2c7013f086b8",
-    "README.ja.md": "5ca75660ff3c13714038ea1294716899384bf627fe23480761b9862dd1eaf371",
-    "README.zh-CN.md": "64dbeccf9caacb0899310779f4b4944e63332e60f3ebe4b25686aa6b2cbf89f7"
+    "README.ja.md": "d6ad8a546a4a2aedf65a6c41477eced232ff531a53d24d3eb6951ad3decbecd7",
+    "README.zh-CN.md": "70fbbd25464010cf6da017749e13a4b38708f0d4d924ded7140acb5fa3a69cf6"
   },
   "changedSections": [
     "metadata",

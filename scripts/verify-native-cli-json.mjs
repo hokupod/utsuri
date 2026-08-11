@@ -1,11 +1,24 @@
 #!/usr/bin/env node
 
 import { spawnSync } from "node:child_process";
+import { readFileSync } from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const cli = path.join(root, "skills/utsuri-review/scripts/utsuri.mjs");
+const rootManifest = JSON.parse(readFileSync(path.join(root, "package.json"), "utf8"));
+const cliManifest = JSON.parse(readFileSync(path.join(root, "packages/cli/package.json"), "utf8"));
+const completeSemver =
+  /^(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)(?:-[0-9A-Za-z-]+(?:\.[0-9A-Za-z-]+)*)?(?:\+[0-9A-Za-z-]+(?:\.[0-9A-Za-z-]+)*)?$/u;
+
+if (
+  cliManifest.name !== "@utsu-ri/cli" ||
+  !completeSemver.test(rootManifest.version) ||
+  rootManifest.version !== cliManifest.version
+) {
+  throw new Error("Root and CLI manifests must define one synchronized CLI release identity");
+}
 
 function run(args, options = {}) {
   const result = spawnSync(process.execPath, [cli, ...args], {
@@ -33,9 +46,9 @@ const version = run(["--version", "--json"], { path: "" });
 if (
   version.ok !== true ||
   version.command !== "version" ||
-  version.package !== "@utsu-ri/cli" ||
-  version.version !== "0.1.0" ||
-  version.protocolVersion !== "1.0"
+  version.package !== cliManifest.name ||
+  version.version !== cliManifest.version ||
+  version.protocolVersion !== "1.1"
 ) {
   throw new Error("Unexpected CLI version response");
 }

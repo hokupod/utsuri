@@ -61,7 +61,7 @@ Review the current change with Utsuri. Create a local evidence-backed report and
 
 ## 仕組み
 
-境界付きのローカル証拠を collect、compare、finalize、review します。
+範囲を限定したローカル証拠に対して、収集、比較、確定、レビューを行います。
 
 <a id="understand-report"></a><!-- section:understand-report -->
 
