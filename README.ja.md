@@ -14,6 +14,10 @@ Utsuri は Git の変更を、コード・ブラウザキャプチャ・構造�
 
 コードや UI の変更に、永続的なレポート、明確な未検証項目、またはレポートを作成したコーディングセッションへ返す構造化された質問が必要なときに利用します。
 
+<p align="center">
+  <img src="https://raw.githubusercontent.com/hokupod/utsuri/main/docs/assets/utsuri.jpg" alt="折りたたまれた鏡越しに向かい合う二人のキャラクター" width="480">
+</p>
+
 <a id="availability-requirements"></a><!-- section:availability-requirements -->
 
 ## 提供状況と要件

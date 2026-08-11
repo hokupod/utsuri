@@ -14,6 +14,10 @@ Utsuri turns a Git change into a local review that connects code, browser captur
 
 Use it when a code or UI change needs a durable report, a clear list of review gaps, or structured questions returned to the coding session that created the report.
 
+<p align="center">
+  <img src="https://raw.githubusercontent.com/hokupod/utsuri/main/docs/assets/utsuri.jpg" alt="Two figures facing each other across a folded mirror" width="480">
+</p>
+
 <a id="availability-requirements"></a><!-- section:availability-requirements -->
 
 ## Availability and requirements

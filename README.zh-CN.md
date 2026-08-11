@@ -14,6 +14,10 @@ Utsuri 将 Git 变更转换为本地审查，把代码、浏览器截图、结�
 
 当代码或 UI 变更需要可持久审查报告、清晰的验证缺口，或需要把结构化问题返回到创建报告的编码会话时，请使用 Utsuri。
 
+<p align="center">
+  <img src="https://raw.githubusercontent.com/hokupod/utsuri/main/docs/assets/utsuri.jpg" alt="两个角色隔着折叠镜面相对而立" width="480">
+</p>
+
 <a id="availability-requirements"></a><!-- section:availability-requirements -->
 
 ## 可用性与要求
