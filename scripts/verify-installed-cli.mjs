@@ -47,6 +47,16 @@ function strictJsonCommand(executable, args, cwd) {
   return JSON.parse(lines[0]);
 }
 
+export function expectedInstalledCliIdentity(version) {
+  return {
+    ok: true,
+    command: "version",
+    package: "@utsu-ri/cli",
+    version,
+    protocolVersion: "1.1"
+  };
+}
+
 export async function verifyInstalledCli({ installRoot, target, version }) {
   if (target !== `${process.platform}-${process.arch}`) {
     throw new Error(`Install target ${target} does not match current runtime`);
@@ -121,16 +131,7 @@ export async function verifyInstalledCli({ installRoot, target, version }) {
     [cli, "--version", "--json"],
     installRoot
   );
-  if (
-    JSON.stringify(versionResult) !==
-    JSON.stringify({
-      ok: true,
-      command: "version",
-      package: "@utsu-ri/cli",
-      version,
-      protocolVersion: "1.0"
-    })
-  ) {
+  if (JSON.stringify(versionResult) !== JSON.stringify(expectedInstalledCliIdentity(version))) {
     throw new Error("Installed CLI returned the wrong identity");
   }
 

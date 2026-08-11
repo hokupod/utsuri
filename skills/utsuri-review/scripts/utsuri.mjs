@@ -211302,7 +211302,7 @@ var nativeHelperTargets = [
   "linux-arm64",
   "linux-x64"
 ];
-var nativeHelperPackageVersion = "0.1.0";
+var nativeHelperPackageVersion = "0.2.0";
 function currentTarget() {
   const value2 = `${process.platform}-${process.arch}`;
   return nativeHelperTargets.find((target) => target === value2) ?? null;

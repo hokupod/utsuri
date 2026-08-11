@@ -1,7 +1,7 @@
 {
   "schemaVersion": "1.1",
   "toolVersion": "0.2.0",
-  "sourceHash": "4ae7c19fbbabe813d3a7fd8199302447159b6f7759942cf2abb285bdd5fa0f7d",
+  "sourceHash": "6acebe5922d7f2e718eaf999578a56664a579886b57691cf0c154a67f8524ad0",
   "sourceHashes": {
     "packages/adapters/generic/src/index.ts": "0fb851c88f14187773d97373b9d848e831abb629bb4b1834c4393f29917c4169",
     "packages/adapters/playwright/src/index.ts": "7714950f8fbcc160493e649a13e2c96d2843530307150357c30b9155c42b6081",
@@ -66,7 +66,7 @@
     "packages/review-state/src/model.ts": "523b4f5ab2cc1ead45e272285b93835b29846b74ae1ae9458d5149c4550c2926",
     "packages/review-state/src/persistence.ts": "e825604b9cafac8d22137075e9846fea53d5ea924faaac2aeb6dfbe246f1520f",
     "packages/security/src/index.ts": "a161e28fc3cc3e62f75fed63d3ad8eca363af6f255f27197882c2b2398e2ca50",
-    "packages/security/src/native-helper.ts": "37cad92c638993ccdb694466a35f5e16fd5cd47e918a4194e94347f6d51eb4bd",
+    "packages/security/src/native-helper.ts": "7940b4eece17827bb41cf39d60bda82bb9955e437c787836647c7a71dddef967",
     "packages/security/src/report.ts": "61d67acfeb62d4b86fdd56c9f054fbeeba545a394cb683dfba47710ddfc83add",
     "packages/session-binding/src/index.ts": "57221d67fcff2d6922287a1efbcef7074e7c1df847b09466a43e3310b075825b",
     "schemas/annotations.schema.json": "463cd4ca0baeca7c17624d9b7a260471713c1f2e3a0380a1f21643c40ecc6061",
@@ -287,5 +287,5 @@
     "app.css": "24367977f02573eef337192857d07e9cc3d237d7870a9607cd7c7d1ae9b71c92",
     "app.js": "68aeb0d987d16e181dba7570570bf3a0409b09464401f6c11d0dde881e33f9bc"
   },
-  "bundleSha256": "6c6a25d9a6f0c0327507d02d897fc6fede8ee57c278bd2923f0be3a8c85e02a3"
+  "bundleSha256": "4181c72ff425175ac297220c665daf1dc35e5927f46150dd9ea79bf7bdac767d"
 }
