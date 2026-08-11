@@ -313,6 +313,24 @@ describe("cross-job distribution transport", () => {
     assert.match(promotionWorkflow, /Package only the verified aggregate Plugin/u);
   });
 
+  test("isolates npm user and global configuration for release-candidate installs", async () => {
+    const workflowPaths = [
+      ".github/workflows/distribution-candidate.yml",
+      ".github/workflows/plugin-promotion.yml"
+    ];
+    for (const workflowPath of workflowPaths) {
+      const workflow = await readFile(path.join(repositoryRoot, workflowPath), "utf8");
+      assert.match(workflow, /: > "\$\{utsuri_install_root\}\/npmrc"/u, workflowPath);
+      assert.match(workflow, /: > "\$\{utsuri_install_root\}\/npmrc-global"/u, workflowPath);
+      assert.match(workflow, /--userconfig "\$\{utsuri_install_root\}\/npmrc"/u, workflowPath);
+      assert.match(
+        workflow,
+        /--globalconfig "\$\{utsuri_install_root\}\/npmrc-global"/u,
+        workflowPath
+      );
+    }
+  });
+
   test("uses one synchronized release version for Plugin promotion", async () => {
     const [promotionWorkflow, compatibilityText] = await Promise.all([
       readFile(path.join(repositoryRoot, ".github/workflows/plugin-promotion.yml"), "utf8"),
