@@ -1,11 +1,13 @@
 import assert from "node:assert/strict";
-import { mkdtemp, mkdir, readFile, rm, writeFile } from "node:fs/promises";
+import { spawnSync } from "node:child_process";
+import { mkdtemp, mkdir, readFile, rm, symlink, writeFile } from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
 import { describe, test } from "node:test";
 import { fileURLToPath } from "node:url";
 import {
   expectedNativeOptionalDependencies,
+  isCompleteSemver,
   validateCliManifest,
   validateCliSourceManifest,
   validateExactFileInventory,
@@ -243,6 +245,7 @@ describe("cross-job distribution transport", () => {
       "      - uses: oven-sh/setup-bun@735343b667d3e6f658f44d0eca948eb6282f2b76",
       "        with:",
       "          bun-version: 1.3.14",
+      "          no-cache: true",
       "      - run: node scripts/verify-published-cli.mjs --version-from-package",
       "  later-job:",
       "    steps:",
@@ -433,6 +436,59 @@ describe("Safe-chain CI contract", () => {
     assert.match(verifier, /rootManifest\.version !== cliManifest\.version/u);
     assert.match(verifier, /version\.version !== cliManifest\.version/u);
     assert.doesNotMatch(verifier, /version\.version !== "\d+\.\d+\.\d+"/u);
+    assert.equal(isCompleteSemver("1.2.3-0"), true);
+    assert.equal(isCompleteSemver("1.2.3-alpha.1+build.01"), true);
+    assert.equal(isCompleteSemver("1.2.3+01"), true);
+    assert.equal(isCompleteSemver("1.2.3-01"), false);
+    assert.equal(isCompleteSemver("1.2.3-alpha.01"), false);
+    assert.equal(isCompleteSemver("1.2.3\n"), false);
+    assert.equal(isCompleteSemver("1.2.3\r\n"), false);
+  });
+
+  test("runs native CLI verification through a symlink without skipping main", async () => {
+    const temporaryRoot = await mkdtemp(path.join(os.tmpdir(), "utsuri-native-json-"));
+    const linkedVerifier = path.join(temporaryRoot, "verify-native-cli-json.mjs");
+    try {
+      await symlink(
+        path.join(repositoryRoot, "scripts/verify-native-cli-json.mjs"),
+        linkedVerifier
+      );
+      const result = spawnSync(process.execPath, [linkedVerifier], {
+        cwd: repositoryRoot,
+        encoding: "utf8",
+        env: {
+          LANG: process.env.LANG ?? "C.UTF-8",
+          NODE_NO_WARNINGS: "1",
+          PATH: "",
+          TMPDIR: process.env.TMPDIR
+        },
+        shell: false,
+        timeout: 30000
+      });
+      assert.equal(result.error, undefined);
+      assert.equal(result.status, 0);
+      assert.equal(result.stderr, "");
+      assert.equal(
+        result.stdout,
+        "Native Node CLI strict JSON and Bun-free command startup smoke passed\n"
+      );
+    } finally {
+      await rm(temporaryRoot, { recursive: true, force: true });
+    }
+  });
+
+  test("disables setup-bun caching for public release jobs", async () => {
+    const workflow = await readFile(
+      path.join(repositoryRoot, ".github/workflows/release.yml"),
+      "utf8"
+    );
+    const uncachedSetups =
+      workflow.match(
+        /uses: oven-sh\/setup-bun@[a-f0-9]{40}[^\n]*\n\s+with:\n\s+bun-version: 1\.3\.14\n\s+no-cache: true/gu
+      ) ?? [];
+    const allSetups = workflow.match(/uses: oven-sh\/setup-bun@/gu) ?? [];
+    assert.ok(allSetups.length >= 2);
+    assert.equal(uncachedSetups.length, allSetups.length);
   });
 
   test("verifies npm and Bun through the pinned Safe-chain wrapper", async () => {

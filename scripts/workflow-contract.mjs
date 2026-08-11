@@ -145,7 +145,7 @@ export function publishedCliSmokeErrors(relativePath, text) {
     },
     {
       action: "oven-sh/setup-bun",
-      with: { "bun-version": "1.3.14" }
+      with: { "bun-version": "1.3.14", "no-cache": true }
     }
   ];
   let actionIndex = 0;
