@@ -1,7 +1,7 @@
 # Utsuri release and distribution guide
 
-- **Current status**: CLI and Git Plugin `0.2.0` source prepared
-- **Public availability**: exact CLI `0.2.0` publication and Git Plugin promotion pending
+- **Current status**: CLI and Git Plugin `0.2.0` published
+- **Public availability**: exact CLI publication and Git Plugin verification complete
 - **Version source**: root `package.json`
 - **Publisher**: `hokupod`
 - **npm maintainer**: `hokupod-npm`
@@ -137,15 +137,12 @@ Commit, push, pull request, and merge remain further separate approvals. Only af
 
 No post-publication smoke may filter wrapper output to make invalid JSON appear valid.
 
-## Remaining synchronized `0.2.0` release gates
+## Completed release evidence
 
-Local source verification cannot establish these external or human gates:
+The synchronized release completed its external and human gates:
 
-- a current human semantic review of this release guide, the English design, `CONTRIBUTING.md`, and all three READMEs, bound to all six exact hashes;
-- successful `main` CI and a manual four-platform Distribution Candidate run on the exact release commit;
-- the protected GitHub Environment and `v*` tag ruleset described above;
-- explicit authorization and successful publication of exact CLI/native-helper `0.2.0` artifacts;
-- native registry JSON and MCP NDJSON verification of the exact published bytes;
-- a separately authorized Plugin promotion write and human-reviewed source change;
-- a separately authorized Git push / pull request / merge; and
-- live Git-source install, discovery, disable, and removal on every host release listed in `docs/compatibility/plugin-runtime.json` after merge.
+- the pre-publication design, release guide, contributor guide, and three READMEs were human-reviewed at their recorded exact hashes;
+- the annotated tag workflow published all five npm packages with provenance and the verified GitHub Release assets;
+- Distribution Candidate run `31462072624` produced the approved four-platform candidate;
+- Plugin verification run `31472790560` passed against exact main commit `e31774e9b7194262e60b7a171872b586dfa7298d` and uploaded the verified aggregate Plugin; and
+- the public Git Plugin tree `8ad84dd87b706bd805e27961c6ccf3197124e3e7` passed install, discovery, tool listing, disable, and removal on the host releases recorded in `docs/compatibility/plugin-runtime.json`.

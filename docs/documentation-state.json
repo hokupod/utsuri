@@ -1,17 +1,17 @@
 {
   "schemaVersion": 1,
   "currentPhase": 6,
-  "availability": "git-marketplace-source-ready-cli-publication-pending",
+  "availability": "git-marketplace-public",
   "designVersion": "2.8",
   "lastUpdated": "2026-08-11",
   "changeLogEntryId": "design-v2.8-git-marketplace-mcp",
   "currentHashes": {
-    "docs/design.md": "fa84fb47df0c7d14c9dcc23d65437e0c31fb5e7a7c7ad55083246fb0d0bfcf45",
-    "docs/release.md": "fc1c52baec1a67b3f8d208e51773a3562d4a46620328efd7249437e3e5e0c0ac",
+    "docs/design.md": "d50f96bbd1770f00846b79af5968bd494d89c4dcce9e2b9cec65e4b19a6c8972",
+    "docs/release.md": "f562f5449d2f4ed87c91378421d3c35928e8eb6992600f0a968c604bfe17a6e0",
     "CONTRIBUTING.md": "aad5786183238a2559aab7e90b62f661e2029cf21e51972df54ae7980ee2fdd5",
-    "README.md": "f89d1b3c643c1c5eec3ccccf5b87c6c5157cbd9ede5bb88c171e1b1fce507bfb",
-    "README.ja.md": "856b828726630b8c2c29d554390d035961ff97bac333b1692c94aa8cbb9984c8",
-    "README.zh-CN.md": "154cfd4b74bb2ab34507a1558c1742cf558415e9e796d0c3de7aeeb6523b4084"
+    "README.md": "dc746f3524c883cd9ae539c9d4a327bd462c05085571151622ce26809b29215a",
+    "README.ja.md": "358313639e740c1e3eb02ae224491c815e9c8fd5744d1ec5f80013b119813f3b",
+    "README.zh-CN.md": "a37923d371edd49e7b8e3b0732cffe7650059f9d858640827a488921237ea187"
   },
   "changedSections": [
     "metadata",
@@ -27,18 +27,19 @@
     "release-guide:git-plugin",
     "release-guide:tag-triggered-publication",
     "release-version-synchronization",
-    "readme:release-number-minimization"
+    "readme:release-number-minimization",
+    "post-publication-availability"
   ],
   "humanReviewedHashes": {
-    "docs/design.md": "fa84fb47df0c7d14c9dcc23d65437e0c31fb5e7a7c7ad55083246fb0d0bfcf45",
-    "docs/release.md": "fc1c52baec1a67b3f8d208e51773a3562d4a46620328efd7249437e3e5e0c0ac",
+    "docs/design.md": "d50f96bbd1770f00846b79af5968bd494d89c4dcce9e2b9cec65e4b19a6c8972",
+    "docs/release.md": "f562f5449d2f4ed87c91378421d3c35928e8eb6992600f0a968c604bfe17a6e0",
     "CONTRIBUTING.md": "aad5786183238a2559aab7e90b62f661e2029cf21e51972df54ae7980ee2fdd5",
-    "README.md": "f89d1b3c643c1c5eec3ccccf5b87c6c5157cbd9ede5bb88c171e1b1fce507bfb",
-    "README.ja.md": "856b828726630b8c2c29d554390d035961ff97bac333b1692c94aa8cbb9984c8",
-    "README.zh-CN.md": "154cfd4b74bb2ab34507a1558c1742cf558415e9e796d0c3de7aeeb6523b4084"
+    "README.md": "dc746f3524c883cd9ae539c9d4a327bd462c05085571151622ce26809b29215a",
+    "README.ja.md": "358313639e740c1e3eb02ae224491c815e9c8fd5744d1ec5f80013b119813f3b",
+    "README.zh-CN.md": "a37923d371edd49e7b8e3b0732cffe7650059f9d858640827a488921237ea187"
   },
   "reviewEvidencePath": "docs/review-evidence/v0.2.0-documentation.md",
-  "reviewEvidenceSha256": "785ef55633e693d656245151279500f9d845e0bc3bb366e80c387a23ed6daecc",
+  "reviewEvidenceSha256": "de1fc3a0360f9390b4a376a3488d45c2ac985a06206dc72016f46e785a82edd2",
   "reviewedPhase": 6,
   "publicationMetadata": {
     "publisher": "hokupod",

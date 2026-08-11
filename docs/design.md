@@ -3802,7 +3802,7 @@ The v1 source implementation maps every item below to an automated gate or an ex
 22. The English canonical design, release guide, and all three READMEs remain synchronized and independently reviewed.
 23. Node 24, both required Bun versions, Safe-chain 1.5.14, both hosts, and the release-candidate layout pass their full gates.
 
-Phase 6 adds executable coverage for all §46.25 fixtures, the three-item return-to-session acceptance scenario on both hosts, explicit unsupported-bridge fallback, localhost API boundaries, and independent review-state semantics. The source is prepared for synchronized CLI and Plugin version `v0.2.0`; public availability still requires current human review of this documentation update, successful remote CI/candidate evidence, protected GitHub configuration, the existing package identities and trusted-publisher registrations, and separate authorization for the tag write and protected release-environment approval.
+Phase 6 adds executable coverage for all §46.25 fixtures, the three-item return-to-session acceptance scenario on both hosts, explicit unsupported-bridge fallback, localhost API boundaries, and independent review-state semantics. The synchronized CLI and Plugin version `v0.2.0` is public after the human-reviewed documentation, protected tag workflow, registry and Release verification, separate Plugin promotion, and live host lifecycle checks completed.
 
 ---
 

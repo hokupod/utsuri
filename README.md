@@ -18,10 +18,10 @@ Use it when a code or UI change needs a durable report, a clear list of review g
 
 ## Availability and requirements
 
-<!-- availability:git-marketplace-source-ready-cli-publication-pending -->
+<!-- availability:git-marketplace-public -->
 <!-- support-contract:macos-linux-windows-unsupported -->
 
-The source contains a Git Plugin that exact-pins the matching published `@utsu-ri/cli` release. Public Git installation remains gated until that CLI release is published and the Plugin source is merged. The commands below are verified host command shapes; do not substitute `latest`, a range, or another package.
+The public Git Plugin exact-pins the matching published `@utsu-ri/cli` release. The synchronized CLI and Plugin are available through the commands below. These are verified host command shapes; do not substitute `latest`, a range, or another package.
 
 - A Codex or Claude Code release listed in the [runtime compatibility record](https://github.com/hokupod/utsuri/blob/main/docs/compatibility/plugin-runtime.json).
 - macOS or Linux, Node.js 22 or later, and `npx` for first MCP startup.
