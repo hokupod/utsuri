@@ -26,7 +26,11 @@ const FALLBACK = {
   placeholder: "DOC_PLACEHOLDER",
   humanReviewStale: "DOC_HUMAN_REVIEW_STALE",
   reviewEvidenceMissing: "DOC_REVIEW_EVIDENCE_MISSING",
-  reviewEvidenceHash: "DOC_REVIEW_EVIDENCE_HASH"
+  reviewEvidenceHash: "DOC_REVIEW_EVIDENCE_HASH",
+  developerContent: "DOC_DEVELOPER_CONTENT",
+  releaseVersion: "DOC_RELEASE_VERSION",
+  supportOverclaim: "DOC_SUPPORT_OVERCLAIM",
+  contributorLink: "DOC_CONTRIBUTOR_LINK"
 };
 
 function parseArguments(argv) {
@@ -242,6 +246,37 @@ async function main() {
     for (const id of policy.syncCommandIds) {
       if (!commands.has(id)) report(diagnostic.commandMissing, `${descriptor.path}: ${id}`);
     }
+
+    if (countExact(content, policy.requiredSupportMarker ?? "") !== 1) {
+      report(diagnostic.supportOverclaim, `${descriptor.path}: support contract marker`);
+    }
+    const supportBoundary = policy.requiredSupportBoundaryText?.[descriptor.language];
+    if (!supportBoundary || !content.includes(supportBoundary)) {
+      report(diagnostic.supportOverclaim, `${descriptor.path}: native Windows boundary`);
+    }
+    if (
+      typeof policy.requiredContributorTarget !== "string" ||
+      !content.includes(`](${policy.requiredContributorTarget})`)
+    ) {
+      report(diagnostic.contributorLink, `${descriptor.path}: contributor target`);
+    }
+    for (const literal of policy.forbiddenReadmeLiterals ?? []) {
+      if (content.includes(literal)) {
+        report(diagnostic.developerContent, `${descriptor.path}: ${literal}`);
+      }
+    }
+    for (const pattern of policy.forbiddenReadmePatterns ?? []) {
+      let matcher;
+      try {
+        matcher = new RegExp(pattern, "u");
+      } catch (error) {
+        report(diagnostic.releaseVersion, `invalid README release pattern: ${error.message}`);
+        continue;
+      }
+      if (matcher.test(content)) {
+        report(diagnostic.releaseVersion, `${descriptor.path}: release number must be canonical`);
+      }
+    }
   }
 
   const baselineCommands = commandSets[0]?.commands;
@@ -377,11 +412,30 @@ async function main() {
           state.currentPhase < 0 ||
           state.currentPhase > 6 ||
           typeof state.availability !== "string" ||
-          !state.availability.startsWith(`phase-${state.currentPhase}-`)
+          !/^[a-z0-9]+(?:-[a-z0-9]+)+$/u.test(state.availability)
         ) {
           report(
             diagnostic.phaseMismatch,
-            `Phase ${String(state.currentPhase)} does not match ${String(state.availability)}`
+            `documentation state is invalid: ${String(state.availability)}`
+          );
+        }
+
+        const phaseAvailability = policy.phaseAvailability?.[String(state.currentPhase)];
+        if (!Array.isArray(phaseAvailability) || !phaseAvailability.includes(state.availability)) {
+          report(
+            diagnostic.phaseMismatch,
+            `phase ${String(state.currentPhase)} does not allow ${String(state.availability)}`
+          );
+        }
+
+        const allowedAvailability = policy.modeRules?.[args.mode]?.allowedAvailability;
+        if (
+          args.mode === "release-candidate" &&
+          (!Array.isArray(allowedAvailability) || !allowedAvailability.includes(state.availability))
+        ) {
+          report(
+            diagnostic.availabilityMismatch,
+            `release-candidate availability is not public: ${state.availability}`
           );
         }
 

@@ -1,7 +1,7 @@
 {
   "schemaVersion": "1.1",
-  "toolVersion": "0.1.0",
-  "sourceHash": "854c79ca7263ef55825568e9b7b8a70bc24e6e1c5915fe5b89e28d29e109450e",
+  "toolVersion": "0.2.0",
+  "sourceHash": "4ae7c19fbbabe813d3a7fd8199302447159b6f7759942cf2abb285bdd5fa0f7d",
   "sourceHashes": {
     "packages/adapters/generic/src/index.ts": "0fb851c88f14187773d97373b9d848e831abb629bb4b1834c4393f29917c4169",
     "packages/adapters/playwright/src/index.ts": "7714950f8fbcc160493e649a13e2c96d2843530307150357c30b9155c42b6081",
@@ -23,11 +23,12 @@
     "packages/capture/src/runtime/container.ts": "d6f53ec8d03dcf2f9774436c533fc0cd6dd72c85fe7f1d60f4f3daf5f3c18452",
     "packages/capture/src/server-runtime.ts": "8b4055dad80efa008548c9efcd502f80ca29abcfae062c63fa3cf701a41a0472",
     "packages/cli/src/arguments.ts": "0ab06574a833531cb6084b555d11847d6deca4fd082fa3035c5e2a72a8870005",
-    "packages/cli/src/cli.ts": "4a997a2454408d380a5867a42e306acadc62cc1913d10453be60dd1c80c58273",
+    "packages/cli/src/cli.ts": "94a61922650a3e2c9b0b5f4b55882524de8e8787dd5084269696f0eef2c6a7e8",
     "packages/cli/src/doctor.ts": "fdf26a40387b433878e257c3f857348e6bbe510e63b56a6a9623c1a5b6876287",
-    "packages/cli/src/feedback.ts": "471f35bc1e0b1ed51aaccd7e17732a34f60634756ec8641ad2a37d910fc71492",
+    "packages/cli/src/feedback.ts": "5c85a25385d488b8813edf10ab16f9a071128e67bd3c97aa792820ab54f68892",
     "packages/cli/src/init.ts": "5250d75ae8de6a7471bce58ff4f1b27b830cbf090bc55a8ec16c9125376cfb65",
-    "packages/cli/src/main.ts": "e6beef0b206175e8bdf0f3b65b724dd4aa07e097d67847125fde1569b35370c5",
+    "packages/cli/src/main.ts": "d399e4b4a8a951cbb18fb6244ffa789dd3ed16cc49d6b7edb4f62078ab9a18fe",
+    "packages/cli/src/mcp.ts": "e37e4188db24534133e83c373c0539537735861cf4d7e0585ecaed881f10d782",
     "packages/cli/src/pack.ts": "2e59a6fd8c28adaa34219eb1b7f2467d1f742f8fc3cf6c55925dc002cc2be2fc",
     "packages/cli/src/review.ts": "6dd667da53cd5efae84899e23d2381ab3a04193b3ca0590a3c39802e69187709",
     "packages/cli/src/serve.ts": "0a3a302b5b2630354464b3fc6c15ac838649879a820a3a4db0df09f033e4cf88",
@@ -54,10 +55,11 @@
     "packages/report-builder/src/index.ts": "9b3822c279dd29cbbf5fbda74f294d00f93ad0d7cc432ed06506a7eaae7fcc17",
     "packages/report-builder/src/native-publish.ts": "1476a27dfbb7172caf656b996b7aa71ca8c7ec3ddf1d85ee0028d11a3029f222",
     "packages/report-builder/src/schema-assets.ts": "ef080b08889e19f291d92f260fc4f731b1505552c5f3481734de9c6414d0c23a",
-    "packages/report-model/src/index.ts": "f93ea5cb121a43d8d85254f6da3a129b7c35cc32911523e263dabd9a13e33a66",
-    "packages/report-model/src/validator.ts": "2bed24889f93dd4cdf385cf96f5c7b27d745396aec357a3ddfb1095a6b3cfba7",
+    "packages/report-model/src/index.ts": "38ba6c90d0404cacc4d738adccbfd7daf0a2c5cfef40178842c776945db226f2",
+    "packages/report-model/src/validator.ts": "1d0b77a813bb2f2323de3791a9f76d5f390cf89148ffcc4c30c759ea47a568e1",
     "packages/review-inbox/src/index.ts": "f05a3f004952c5752b842eb0c3b5cae5abcf7ad9c38c3d628a4a18ac42745832",
-    "packages/review-mcp-server/src/index.ts": "9f0c4e0db459a493bed31afd21590d9742b8b72c931b848fa73dee6d988562f2",
+    "packages/review-mcp-server/src/index.ts": "560c00d3c5113b7a467735f3b0f1a8d062fbb18471ae75f5acf3350652f2674d",
+    "packages/review-mcp-server/src/run-registry.ts": "7bdb8aa633b7757bce50652ae8a64636b805622ab9b85de8e5a1c94d2a5809ca",
     "packages/review-state/src/anchors.ts": "5e1488281d5fc2ce64bda08649f8fd14b9993ad0d48b667a07d2e1587b314a42",
     "packages/review-state/src/canonical.ts": "844b47cee854771c920f55e24d25d1487551dd4edff80ce90b7914bb4b63c434",
     "packages/review-state/src/index.ts": "f886a53f98cf9de1ab3b3172417c319f9edf8ca2dc37a5cbad78647acdb685d5",
@@ -74,6 +76,7 @@
     "schemas/diff.schema.json": "be0188f12c5b4ed65957d9ac1401007f8e31912a0f21ed2af8e33ce274e9ebef",
     "schemas/evidence-index.schema.json": "2d907acba09f208673849354afc8cb5aa788b8b213658e04641b3ccdeafd7c4e",
     "schemas/feedback-batch.schema.json": "1da68f409506fd1a1f999785f666f15883e7c8d51a57b7996ba73b61eb3c24ef",
+    "schemas/mcp-run-registration.schema.json": "7bbf67677302463fd01ee157f13885340dbb624aeca4260be6aca1e8c2098320",
     "schemas/origin-session.schema.json": "39e49ff5cfa7fa033cca453048a1e8b0ae631ddc98ca10e9d1bcd8ecb9b33538",
     "schemas/report.schema.json": "8eb9f70ea1ae6897bf48891d67ab1245f6ef3a3a177bb212633a6546f3fb12dd",
     "schemas/review-answer.schema.json": "fd7765261d2c71c0cf9fcd604f0607beeff6d21d59402468cf2ff84a57b4c42b",
@@ -283,5 +286,5 @@
     "app.css": "24367977f02573eef337192857d07e9cc3d237d7870a9607cd7c7d1ae9b71c92",
     "app.js": "68aeb0d987d16e181dba7570570bf3a0409b09464401f6c11d0dde881e33f9bc"
   },
-  "bundleSha256": "873611f23778fbbeee4e45dcec646bb3748e0bb8e7f9f4d6212c1576c5faa8c0"
+  "bundleSha256": "6c6a25d9a6f0c0327507d02d897fc6fede8ee57c278bd2923f0be3a8c85e02a3"
 }

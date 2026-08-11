@@ -128,7 +128,10 @@ export async function assembleDistributionCandidate(output, nativeRoot, root = r
   await mkdir(pluginRoot, { mode: 0o700 });
   await Promise.all([
     copyTree(path.join(root, ".codex-plugin"), path.join(pluginRoot, ".codex-plugin")),
-    copyTree(path.join(root, ".claude-plugin"), path.join(pluginRoot, ".claude-plugin")),
+    copyTree(path.join(root, ".claude-plugin"), path.join(pluginRoot, ".claude-plugin"), {
+      prefix: ".claude-plugin",
+      skip: (relative) => relative === ".claude-plugin/marketplace.json"
+    }),
     copyTree(path.join(root, "skills"), path.join(pluginRoot, "skills"), {
       prefix: "skills",
       skip: (relative) => relative === "skills/utsuri-review/scripts/native"
@@ -233,6 +236,19 @@ export async function verifyDistributionCandidate(candidate, root = repositoryRo
     "candidate-manifest.json"
   ]);
   if (inventoryErrors.length > 0) throw new Error(inventoryErrors.join("; "));
+  for (const forbidden of [
+    "plugin/.agents",
+    "plugin/plugins",
+    "plugin/.claude-plugin/marketplace.json"
+  ]) {
+    if (
+      Object.keys(manifest.files).some(
+        (relative) => relative === forbidden || relative.startsWith(`${forbidden}/`)
+      )
+    ) {
+      throw new Error(`Aggregate Plugin must not contain Git Marketplace material: ${forbidden}`);
+    }
+  }
   for (const [relative, expected] of Object.entries(manifest.files)) {
     const filename = path.join(candidate, relative);
     const fileStat = await lstat(filename);

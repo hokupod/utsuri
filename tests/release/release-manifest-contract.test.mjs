@@ -11,6 +11,7 @@ import {
   validateExactFileInventory,
   validateNativeHelperManifest
 } from "../../scripts/release-manifest-contract.mjs";
+import { fullShaActionErrors, publishedCliSmokeErrors } from "../../scripts/workflow-contract.mjs";
 
 const repositoryRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../..");
 
@@ -141,6 +142,122 @@ describe("release file inventory", () => {
 });
 
 describe("cross-job distribution transport", () => {
+  test("requires commented third-party actions to use a full SHA", () => {
+    assert.deepEqual(
+      fullShaActionErrors(
+        "workflow.yml",
+        [
+          "jobs:",
+          "  verify:",
+          "    steps:",
+          "      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0",
+          "  reusable:",
+          "    uses: ./.github/workflows/local.yml"
+        ].join("\n"),
+        { allowedLocalReferences: ["./.github/workflows/local.yml"] }
+      ),
+      []
+    );
+    assert.match(
+      fullShaActionErrors(
+        "workflow.yml",
+        [
+          "jobs:",
+          "  verify:",
+          "    steps:",
+          "      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020",
+          "      - { uses: actions/checkout@v7 }"
+        ].join("\n")
+      ).join("\n"),
+      /not pinned to a full SHA/u
+    );
+    assert.match(
+      fullShaActionErrors(
+        "workflow.yml",
+        "jobs: { verify: { steps: [ { uses: actions/checkout@v7 trailing } ] } }"
+      ).join("\n"),
+      /not pinned to a full SHA/u
+    );
+    assert.match(
+      fullShaActionErrors(
+        "workflow.yml",
+        "jobs: { reusable: { uses: ./.github/workflows/local.yml } }"
+      ).join("\n"),
+      /unapproved local action/u
+    );
+  });
+
+  test("scopes published CLI smoke ordering to its release job", () => {
+    const workflow = [
+      "jobs:",
+      "  published-smoke:",
+      "    needs: publish",
+      "    runs-on: ubuntu-24.04",
+      "    steps:",
+      "      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0",
+      "        with:",
+      "          persist-credentials: false",
+      "      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020",
+      "        with:",
+      "          node-version: 24",
+      "          package-manager-cache: false",
+      "      - uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6",
+      "        with:",
+      "          bun-version: 1.3.14",
+      "      - run: node scripts/verify-published-cli.mjs --version-from-package",
+      "  later-job:",
+      "    steps:",
+      "      - name: Install and verify Safe-chain trust anchor"
+    ].join("\n");
+    assert.deepEqual(publishedCliSmokeErrors("release.yml", workflow), []);
+    assert.match(
+      publishedCliSmokeErrors(
+        "release.yml",
+        workflow.replace(
+          "      - run: node scripts/verify-published-cli.mjs --version-from-package",
+          [
+            "      - name: Renamed setup",
+            "        run: node scripts/safe-chain.mjs setup-ci",
+            "      - run: node scripts/verify-published-cli.mjs --version-from-package"
+          ].join("\n")
+        )
+      ).join("\n"),
+      /unapproved command/u
+    );
+    assert.match(
+      publishedCliSmokeErrors(
+        "release.yml",
+        workflow.replace(
+          "      - run: node scripts/verify-published-cli.mjs --version-from-package",
+          [
+            "      - name: Verify published CLI",
+            "        env:",
+            "          NODE_OPTIONS: --require ./scripts/inject.cjs",
+            "        run: node scripts/verify-published-cli.mjs --version-from-package"
+          ].join("\n")
+        )
+      ).join("\n"),
+      /unapproved keys: env/u
+    );
+    assert.match(
+      publishedCliSmokeErrors(
+        "release.yml",
+        workflow.replace("          node-version: 24", "          node-version: 23")
+      ).join("\n"),
+      /wrong setup action or inputs/u
+    );
+    assert.match(
+      publishedCliSmokeErrors(
+        "release.yml",
+        workflow.replace(
+          "    runs-on: ubuntu-24.04",
+          "    runs-on: ubuntu-24.04\n    env: { NODE_OPTIONS: --require ./scripts/inject.cjs }"
+        )
+      ).join("\n"),
+      /job has unapproved keys: env/u
+    );
+  });
+
   test("never extracts a downloaded helper or Plugin tarball", async () => {
     const [candidateWorkflow, releaseWorkflow, promotionWorkflow] = await Promise.all([
       readFile(path.join(repositoryRoot, ".github/workflows/distribution-candidate.yml"), "utf8"),
@@ -152,6 +269,20 @@ describe("cross-job distribution transport", () => {
     }
     assert.match(promotionWorkflow, /--restore-plugin-modes/u);
     assert.match(promotionWorkflow, /Package only the verified aggregate Plugin/u);
+  });
+
+  test("uses one synchronized release version for Plugin promotion", async () => {
+    const [promotionWorkflow, compatibilityText] = await Promise.all([
+      readFile(path.join(repositoryRoot, ".github/workflows/plugin-promotion.yml"), "utf8"),
+      readFile(path.join(repositoryRoot, "docs/compatibility/plugin-runtime.json"), "utf8")
+    ]);
+    const compatibility = JSON.parse(compatibilityText);
+    assert.match(promotionWorkflow, /plugin-promote\.mjs --version/u);
+    assert.doesNotMatch(promotionWorkflow, /plugin_version|--cli-version|--plugin-version/u);
+    assert.doesNotMatch(promotionWorkflow, /bun run plugin:verify/u);
+    assert.equal(compatibility.minimumSupported.claude, compatibility.hosts.claude.version);
+    const claudePin = `@anthropic-ai/claude-code@${compatibility.hosts.claude.version}`;
+    assert.equal(promotionWorkflow.split(claudePin).length - 1, 2);
   });
 
   test("preserves hidden Plugin manifests in the release candidate artifact", async () => {

@@ -34,6 +34,7 @@ describe("schema contracts", () => {
       "diff",
       "evidence-index",
       "feedback-batch",
+      "mcp-run-registration",
       "origin-session",
       "report",
       "review-answer",
@@ -69,6 +70,32 @@ describe("schema contracts", () => {
             : { ok: true, errors: [] };
       expect(schema.ok && references.ok, fixture.filename).toBeFalse();
     }
+  });
+
+  test("accepts bounded Unicode run paths and rejects ambiguous registration paths", async () => {
+    const registration = JSON.parse(
+      await readFile(
+        path.join(root, "fixtures/schemas/valid/mcp-run-registration.minimal.json"),
+        "utf8"
+      )
+    ) as Record<string, unknown>;
+    expect(validateArtifact("mcp-run-registration", registration).errors).toEqual([]);
+    expect(
+      validateArtifact("mcp-run-registration", { ...registration, runPath: "a".repeat(4096) })
+        .errors
+    ).toEqual([]);
+    for (const runPath of [".", "run/.", "run/../other", "run//other", "run\\other", "/run"]) {
+      expect(
+        validateArtifact("mcp-run-registration", { ...registration, runPath }).ok,
+        runPath
+      ).toBeFalse();
+    }
+    expect(
+      validateArtifact("mcp-run-registration", {
+        ...registration,
+        runPath: "a".repeat(4097)
+      }).ok
+    ).toBeFalse();
   });
 
   test("requires every hunk to be classified exactly once", async () => {

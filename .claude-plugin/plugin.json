@@ -1,7 +1,7 @@
 {
   "name": "utsuri",
   "displayName": "Utsuri",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "Evidence-backed code and visual change review for Codex and Claude Code",
   "author": {
     "name": "hokupod",

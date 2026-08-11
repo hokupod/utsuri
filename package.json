@@ -1,6 +1,6 @@
 {
   "name": "utsuri-workspace",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "private": true,
   "description": "Evidence-backed visual change review for Codex and Claude Code",
   "license": "AGPL-3.0-or-later",
@@ -37,6 +37,9 @@
     "fixtures:refresh-report-assets": "node scripts/refresh-report-fixture-assets.mjs",
     "verify:release-layout": "node scripts/verify-release-layout.mjs",
     "verify:sbom": "node scripts/verify-sbom.mjs",
+    "plugin:verify": "node scripts/verify-plugin.mjs",
+    "plugin:runtime:verify": "node scripts/plugin-runtime-probe.mjs --local-e2e",
+    "plugin:promote": "node scripts/plugin-promote.mjs",
     "supply-chain:baseline": "node scripts/generate-dependency-baseline.mjs",
     "eval:skills": "node scripts/eval-skills.mjs"
   },

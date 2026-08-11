@@ -19,6 +19,7 @@ Do not invoke Utsuri for a one-line explanation, a repository with no reviewable
 - Keep generated `report/` content immutable. Store review updates under the run's `review/` directory.
 - Never weaken container isolation, inherit host secrets, pull a missing image, or treat unavailable runtime capability as PASS.
 - Strictly validate report hashes and inventories; direct SVG and active HTML are not report evidence.
+- Use Marketplace MCP only for reports registered by finalization in this canonical project and Origin Session. Never provide or request a raw session value or arbitrary run path.
 
 ## Workflow
 
@@ -32,6 +33,7 @@ Do not invoke Utsuri for a one-line explanation, a repository with no reviewable
 8. Keep viewed progress, human judgment, and comments separate. Use `review export` before moving mutable state and `review import --reanchor` only when stale/orphaned classifications have been inspected.
 9. Use static `serve` only when a loopback viewer is useful, or `pack` when the user needs deterministic local CI artifacts. Do not upload them.
 10. When comments explicitly request Agent attention, preview the Feedback Batch first. In the originating conversation only, use `feedback list`, `feedback get`, and `feedback answer` to return exactly one structured answer per item. Never start another Agent or guess a session.
+11. When the Plugin MCP is available, call its bounded tools without a path argument. If more than one report is eligible, use only the reviewer-selected opaque `report_id`; never select the newest report silently.
 
 Invoke the bundled CLI with:
 

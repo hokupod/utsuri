@@ -6,6 +6,7 @@ import { ExitCode, toUtsuriError, UtsuriError } from "@utsu-ri/core";
 import { discoverRun } from "@utsu-ri/discovery";
 import { collectGit } from "@utsu-ri/git-collector";
 import { buildReport, createInitialReport, validateReportDirectory } from "@utsu-ri/report-builder";
+import { registerMcpRun } from "@utsu-ri/review-mcp-server";
 import type { OriginSessionBinding, UtsuriReport } from "@utsu-ri/report-model";
 import { assertArtifact } from "@utsu-ri/report-model";
 import {
@@ -25,7 +26,8 @@ import {
   feedbackGet,
   feedbackHandoff,
   feedbackList,
-  prepareFeedbackRuntime
+  prepareFeedbackRuntime,
+  resolveFeedbackProjectRoot
 } from "./feedback";
 
 async function readArtifactJson(filename: string, label: string): Promise<unknown> {
@@ -55,7 +57,7 @@ async function readPublishedOrigin(
   return structuredClone((report as UtsuriReport).origin);
 }
 
-const help = `Utsuri 0.1.0
+const help = `Utsuri 0.2.0
 
 Usage: utsuri <command> [options]
 
@@ -78,6 +80,7 @@ Commands:
   feedback answer        Write one structured answer per claimed item
   feedback handoff       Print portable return-to-session text
   review-mcp             Run the fixed-run Review Inbox MCP server over stdio
+  mcp                    Run the project-bound Plugin MCP broker over stdio
 
 Global options:
   --json                  Emit one strict JSON value
@@ -108,10 +111,10 @@ export async function executeCli(
           ok: true,
           command: "version",
           package: "@utsu-ri/cli",
-          version: "0.1.0",
-          protocolVersion: "1.0"
+          version: "0.2.0",
+          protocolVersion: "1.1"
         },
-        human: "0.1.0",
+        human: "0.2.0",
         json
       };
     }
@@ -182,34 +185,66 @@ export async function executeCli(
       const runValue = optionString(args, "--run");
       if (!runValue)
         throw new UtsuriError("CLI_RUN_REQUIRED", "finalize requires --run", ExitCode.Arguments);
-      const runDirectory = await resolveContainedPath(cwd, runValue);
+      const projectRoot = await resolveFeedbackProjectRoot(cwd, environment);
+      const runDirectory = await resolveContainedPath(projectRoot, runValue);
       const annotationsValue = optionString(args, "--annotations");
       let annotations: unknown | null = null;
       if (annotationsValue) {
-        const filename = await resolveContainedPath(cwd, annotationsValue);
+        const filename = await resolveContainedPath(projectRoot, annotationsValue);
         annotations = await readArtifactJson(filename, "annotations");
         assertArtifact("annotations", annotations);
       }
       const initialReport = await createInitialReport(runDirectory, annotations);
       const publishedOrigin = await readPublishedOrigin(runDirectory);
       const report = await bindReportToCurrentSession(
-        cwd,
+        projectRoot,
         initialReport,
         environment,
         publishedOrigin
       );
       const built = await buildReport(runDirectory, report, {
-        toolVersion: "0.1.0",
+        toolVersion: "0.2.0",
         annotations,
         ...(report.origin.bindingMode === "unbound" ? {} : { origin: report.origin })
       });
-      const relative = path.relative(cwd, built.reportDirectory).replaceAll(path.sep, "/");
+      const relative = path.relative(projectRoot, built.reportDirectory).replaceAll(path.sep, "/");
+      let registration;
+      try {
+        registration = await registerMcpRun({
+          projectRoot,
+          runDirectory,
+          report
+        });
+      } catch (error) {
+        const normalized = toUtsuriError(error);
+        const data = {
+          ok: false,
+          command: "finalize",
+          reportId: built.manifest.reportId,
+          reportDirectory: relative,
+          reused: built.reused,
+          error: {
+            id: "MCP_REGISTRATION_FAILED",
+            message: "Report is complete, but same-session MCP registration failed",
+            exitCode: normalized.exitCode,
+            details: { cause: normalized.diagnosticId }
+          }
+        };
+        return {
+          exitCode: normalized.exitCode,
+          data,
+          human: `MCP_REGISTRATION_FAILED: Report ready at ${relative}; MCP registration failed`,
+          json
+        };
+      }
       const data = {
         ok: true,
         command: "finalize",
         reportId: built.manifest.reportId,
         reportDirectory: relative,
-        reused: built.reused
+        reused: built.reused,
+        mcpRegistration: registration.state,
+        mcpRegistrationReused: registration.reused
       };
       return { exitCode: 0, data, human: `Report ready: ${relative}`, json };
     }
@@ -461,6 +496,14 @@ export async function executeCli(
       throw new UtsuriError(
         "CLI_MCP_STDIO_REQUIRED",
         "review-mcp must be launched through the CLI entrypoint with --run",
+        ExitCode.Arguments
+      );
+    }
+
+    if (args.command === "mcp") {
+      throw new UtsuriError(
+        "CLI_MCP_STDIO_REQUIRED",
+        "mcp must be launched through the CLI entrypoint without arguments",
         ExitCode.Arguments
       );
     }

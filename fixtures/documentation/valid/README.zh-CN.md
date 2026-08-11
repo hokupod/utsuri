@@ -2,108 +2,103 @@
 
 [English](README.md) | [日本語](README.ja.md) | [简体中文](README.zh-CN.md)
 
-# Utsuri
+# Utsuri fixture
 
-> 看见变化，理解原因。
+<a id="product-outcome"></a><!-- section:product-outcome -->
 
-<a id="product-summary"></a><!-- section:product-summary -->
+## 审查结果
 
-## 产品概述
+创建基于证据的本地报告，并保持未完成检查可见。
 
-Utsuri 将代码变更转换为有证据、便于人类理解的可视化评审。它在一个本地报告中关联 Git hunk、变更意图、真实浏览器渲染、结构化证据、覆盖范围和人工评审状态。
+<a id="availability-requirements"></a><!-- section:availability-requirements -->
 
-名称同时表达 UI 在变更后的“呈现”，以及从 before 到 after 的“转变”。
+## 可用性与要求
 
-<a id="status"></a><!-- section:status -->
+<!-- availability:git-marketplace-public -->
+<!-- support-contract:macos-linux-windows-unsupported -->
 
-## 状态
+Codex 和 Claude Code 支持 macOS 与 Linux；不支持原生 Windows。
 
-<!-- availability:phase-0-documentation -->
+<a id="install"></a><!-- section:install -->
 
-Utsuri v1 正在实现。npm package 和 Plugin 尚未发布，以下命令仅适用于此 source checkout。
+## 安装
 
-<a id="capabilities"></a><!-- section:capabilities -->
-
-## 功能
-
-v1 的目标包括：
-
-- 对所有 Git hunk 进行语义分组；
-- 隔离的 before / after 浏览器捕获；
-- visual、DOM、ARIA、style、accessibility、runtime 和 coverage 证据；
-- 自包含并符合 WCAG 2.2 AA 的 report；
-- review state、锚定 comment 和 Origin Session feedback；以及
-- Codex Plugin、Claude Code Plugin、standalone Skill、local CLI 和 CI。
-
-每项功能仅在对应 Phase gate 通过后可用。捕获失败或未覆盖绝不会显示为“无差异”。
-
-<a id="quick-start"></a><!-- section:quick-start -->
-
-## Quick Start
-
-前提条件：Nix、Node 24，以及由操作者管理的 Safe-chain 1.5.14。请将其可执行文件的绝对路径设置到 `UTSURI_SAFE_CHAIN_BIN`。
-
-<!-- sync-command:dev-shell -->
+<!-- sync-command:codex-marketplace-add -->
 
 ```bash
-nix develop
+codex plugin marketplace add hokupod/utsuri
 ```
 
-<!-- sync-command:dev-env-check -->
+<!-- sync-command:codex-plugin-install -->
 
 ```bash
-node scripts/dev-env-check.mjs --json
+codex plugin add utsuri@utsuri
 ```
 
-<!-- sync-command:install -->
+<!-- sync-command:claude-marketplace-add -->
 
 ```bash
-"$UTSURI_SAFE_CHAIN_BIN" bun install --frozen-lockfile
+claude plugin marketplace add hokupod/utsuri
 ```
 
-setup script、Skill 或 CLI 都不会自动安装依赖或下载浏览器。
-
-<a id="development"></a><!-- section:development -->
-
-## 开发
-
-所有 package manager 操作必须通过指定的 exact Safe-chain executable。
-
-<!-- sync-command:check -->
+<!-- sync-command:claude-plugin-install -->
 
 ```bash
-"$UTSURI_SAFE_CHAIN_BIN" bun run check
+claude plugin install utsuri@utsuri
 ```
 
-bundle 后的 CLI protocol 使用 native execution 验证，避免 wrapper notice 污染 JSON / NDJSON。
+<a id="first-review"></a><!-- section:first-review -->
 
-<!-- sync-command:native-doctor -->
+## 第一次审查
 
-```bash
-node skills/utsuri-review/scripts/utsuri.mjs doctor --json
+<!-- sync-command:first-review-prompt -->
+
+```text
+Review the current change with Utsuri. Create a local evidence-backed report and call out every incomplete or uncovered check.
 ```
+
+<a id="how-it-works"></a><!-- section:how-it-works -->
+
+## 工作方式
+
+Collect、compare、finalize 并 review 有边界的本地证据。
+
+<a id="understand-report"></a><!-- section:understand-report -->
+
+## 理解报告
+
+`INCOMPLETE` 和 `UNCOVERED` 绝不是全局 pass 状态。
 
 <a id="security-privacy"></a><!-- section:security-privacy -->
 
 ## 安全与隐私
 
-Utsuri 将 repository content、diff、HTML、SVG、comment、Context Pack 和 captured text 视为不可信证据。
+不要在 capture 中使用生产 credential，并将 feedback 保留在 Origin Session 中。
 
-**安全警告：**不要向 capture 提供 production credential、production browser state、不受限制的 external network、推测的 setup command 或父进程环境变量。before 与 after 使用独立 Browser Context；默认阻止 external request 和 Service Worker。
+<a id="troubleshooting-lifecycle"></a><!-- section:troubleshooting-lifecycle -->
 
-生成的 `report/` 是 immutable。可变的人工 review data 单独存储在 `run/review/`。static viewer 不连接外部服务。
+## 故障排除与生命周期
 
-<a id="documentation"></a><!-- section:documentation -->
+<!-- sync-command:codex-plugin-remove -->
 
-## 文档
+```bash
+codex plugin remove utsuri@utsuri
+```
 
-- [英文详细设计正本](docs/design.md)
-- [v1 实现计划](docs/plans/v1-implementation.md)
+<!-- sync-command:claude-plugin-disable -->
 
-详细设计以英文为正本。面向用户的 README 变更必须在同一个 change 中同步英文、日文和简体中文。
+```bash
+claude plugin disable utsuri@utsuri
+```
 
-<a id="license-status"></a><!-- section:license-status -->
+<!-- sync-command:claude-plugin-uninstall -->
 
-## License 与发布状态
+```bash
+claude plugin uninstall utsuri@utsuri
+```
 
-publisher identity 和 SPDX license 尚未决定。在两者确认并且所有 release gate 通过前，所有 package 保持 private 且未发布。v1 实现计划不会执行 publish、tag、push 或 promotion。
+<a id="documentation-contributing-license"></a><!-- section:documentation-contributing-license -->
+
+## 文档、贡献与许可证
+
+[贡献](https://github.com/hokupod/utsuri/blob/main/CONTRIBUTING.md)

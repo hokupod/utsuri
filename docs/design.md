@@ -6,15 +6,15 @@
 - **Plugin name**: `utsuri`
 - **Skill name**: `utsuri-review`
 - **CLI name**: `utsuri`
-- **Document version**: 2.7
+- **Document version**: 2.8
 - **Created**: 2026-08-06
-- **Last updated**: 2026-08-09
+- **Last updated**: 2026-08-11
 - **Language**: English (canonical)
 - **Targets**: Codex / Claude Code / local CLI / CI
 - **Implementation language**: TypeScript
 - **Development environment**: Bun
 - **Report UI**: a static application built with Svelte
-- **v2.7 changes**: aligned the shipped CLI command contract, required exact-hash review of the release guide with the design and READMEs, and documented that the manual `v0.1.0` first-publication bootstrap does not carry GitHub Actions OIDC provenance
+- **v2.8 changes**: added the separate Git Marketplace distribution, versioned bounded run registration, parameterless same-session MCP broker, exact npm pin promotion, and user-first Marketplace documentation contract
 
 ---
 
@@ -967,7 +967,7 @@ Development source lives under `packages/`. At release time, bundle it as one No
 ```json
 {
   "name": "utsuri",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "Evidence-based visual change review for Codex and Claude Code",
   "skills": "./skills/"
 }
@@ -979,7 +979,7 @@ Development source lives under `packages/`. At release time, bundle it as one No
 {
   "name": "utsuri",
   "displayName": "Utsuri",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "Evidence-based visual change review for Codex and Claude Code",
   "author": {
     "name": "hokupod",
@@ -1079,6 +1079,31 @@ Design decisions:
 - Generate Agent answers in the same conversation and write them back structurally to each Feedback Item.
 - Perform normal permission confirmation in the current conversation when deeper investigation or a change is required.
 - The report UI requests answers; it never executes repository changes automatically.
+
+#### Git Marketplace distribution and MCP broker
+
+Utsuri has two deliberately isolated distribution surfaces:
+
+1. The **aggregate Plugin** under the root `.codex-plugin/`, `.claude-plugin/`, and `skills/` directories is a release artifact. It contains the compiled CLI, report UI, schemas, metadata, and architecture-matched native helper.
+2. The **Git Marketplace Plugin** under `plugins/utsuri/` is source-distributed. It contains only host manifests and a deterministic documentation-only Skill generated from the root canonical Skill. It must not contain compiled JavaScript, a native helper, report UI assets, schemas, SBOM files, absolute local paths, secrets, or any `ai/` path.
+
+`.agents/plugins/marketplace.json` and `.claude-plugin/marketplace.json` both resolve the relative source `./plugins/utsuri`. The Git Plugin, root aggregate, and CLI share one complete SemVer, and both host MCP manifests execute native `npx` with that exact `@utsu-ri/cli` version; a floating tag, range, independently versioned Plugin, or ambient Utsuri executable is invalid. CLI publication and Plugin promotion remain separately authorized operations even though their source versions match.
+
+The public `utsuri mcp` command accepts no positional argument or option. The existing `utsuri review-mcp --run <relative-run>` command remains a fixed-run compatibility surface. Marketplace tools expose only their operation-specific bounded fields and an optional opaque `report_id`; they never accept a path, working directory, command, provider, model, destination, or raw session identity.
+
+After a bound report is finalized, Utsuri writes a schema-versioned registration below `.artifacts/utsuri/mcp/registrations/`. The registration stores only the opaque session reference, project fingerprint, report ID, contained project-relative run path, immutable report SHA-256, and creation time. The POSIX run path permits spaces and Unicode names within a 4096-character bound; absolute paths, empty, `.` or `..` components, duplicate separators, backslashes, NUL, symlinks, and paths outside the project remain invalid. The filename is derived from the report ID. Directories and files are private and every access revalidates the canonical parent identity. A new registration atomically claims one of 64 fixed hard-link slots containing the complete canonical registration bytes; a reader can idempotently promote a crash-left slot to its final digest name, but never frees capacity that a resumed writer could exceed. Fresh internal temporary files are ignored, stale internal temporary files are recovered, and unrelated inventory fails closed. A byte-identical retry is the only idempotent reuse case. Raw session values and absolute paths are never persisted or returned.
+
+The broker resolves its root and identity from the host rather than from tool input:
+
+- Codex requires only `CODEX_THREAD_ID` forwarded by the manifest and uses the canonical non-symlink process working directory as the project root.
+- Claude Code requires the host-provided `CLAUDE_PROJECT_DIR` and `CLAUDE_CODE_SESSION_ID`. The Claude manifest clears `CODEX_THREAD_ID` so a nested Codex environment cannot create an ambiguous host identity.
+- More than one host identity, a partial Claude identity, a symlinked root, or any Origin Session mismatch fails closed.
+
+The fixed-run `finalize`, `feedback`, and `review-mcp` compatibility surface additionally accepts `UTSURI_CODEX_SESSION_ID` and `CLAUDE_SESSION_ID`. Same-host legacy and Plugin variables may coexist only when their values match; a conflict fails closed. The Marketplace broker itself remains new-variable-only. New Claude finalization and fixed-run access resolve runs and project fingerprints from the canonical `CLAUDE_PROJECT_DIR`, even when the process working directory is a contained child. Legacy Claude and Codex fixed-run access preserve working-directory root behavior.
+
+Claude Code may inherit ambient variables into an MCP subprocess. Utsuri does not use such variables as identity and never persists, diagnoses, or returns their values. Host-wide subprocess scrubbing is optional host hardening and cannot be claimed or enforced by the Plugin.
+
+For every request, the broker rereads all bounded registrations and strictly validates the registration, project fingerprint, report inventory, immutable report digest, and Origin Session. A valid registration bound to another host, session, or project is an invisible non-candidate; its identifiers are never diagnosed. A stale, malformed, digest-changed, binding-changed, or filesystem-invalid registration still blocks the request rather than allowing fallback to another run. Zero eligible reports returns `MCP_RUN_UNAVAILABLE`; exactly one is selected without a path argument; multiple eligible reports return `MCP_RUN_AMBIGUOUS` and require an exact opaque `report_id`. Mutation tools revalidate the selected registration and report immediately before writing mutable review state.
 
 ---
 
@@ -1186,6 +1211,8 @@ utsuri pack
 utsuri review export
 utsuri review import
 utsuri feedback
+utsuri mcp
+utsuri review-mcp --run RUN
 ```
 
 ### 13.2 `doctor`
@@ -1426,6 +1453,10 @@ utsuri feedback handoff \
 - The CLI never starts an Agent process or new session.
 - The host integration supplies the current session identity through its recognized runtime input; the CLI converts raw IDs to opaque references and checks equality without accepting a browser-selected destination.
 - A mismatch fails closed and must not be consumed in another session without explicit rebinding.
+
+#### Parameterless Marketplace MCP broker
+
+`utsuri mcp` is argumentless and resolves only same-project, same-session registrations described in §11.7. Its `initialize`, `ping`, `tools/list`, and `tools/call` transport is strict one-object-per-line NDJSON. Zero, one, and multiple eligible reports follow the explicit selection rules above. `report_id` is stripped before delegation to the existing fixed-run review service.
 
 ### 13.14 Exit codes
 
@@ -4720,7 +4751,7 @@ The implementation keeps the preview separate from storage, writes inbox/batch/c
 
 A feature outside this definition is accepted only when it makes review decisions faster, strengthens the relationship between a question and its evidence, increases evidence reliability, or improves security.
 
-The v1 source prepared for `v0.1.0` satisfies this definition through local immutable reports and mutable review generations, with `return-to-session` as the host-neutral feedback path. Publication, first-package bootstrap, and tag creation remain separately authorized operator actions; direct same-session submission and a shared remote review store remain optional future capabilities.
+The source prepared for synchronized CLI and Git Plugin version `0.2.0` satisfies this definition through local immutable reports, mutable review generations, and a same-project/same-session Marketplace MCP broker, with `return-to-session` as the host-neutral feedback path. CLI publication, Plugin promotion, Git push, tag creation, and release remain separately authorized operator actions; direct same-session submission and a shared remote review store remain optional future capabilities.
 
 ---
 
@@ -4728,6 +4759,7 @@ The v1 source prepared for `v0.1.0` satisfies this definition through local immu
 
 | Entry ID                                   | Version | Date       | Change                                                                                                                                                                                                                                                                                                                                                                                                                                 |
 | ------------------------------------------ | ------: | ---------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| design-v2.8-git-marketplace-mcp            |     2.8 | 2026-08-11 | Added the source-only Git Marketplace Plugin, deterministic canonical-Skill transform, synchronized Plugin and CLI SemVer with exact pin promotion, versioned bounded run registrations, canonical host-root resolution, parameterless same-project/same-session MCP selection, explicit zero/one/multiple behavior, current host compatibility probes, and the user-first multilingual installation contract.                         |
 | design-v2.7-release-document-contract      |     2.7 | 2026-08-09 | Aligned the canonical CLI command inventory with the shipped help, required exact-hash human review of the release guide alongside the design and three READMEs, and made the manual `v0.1.0` first-publication exception plus its missing GitHub Actions OIDC provenance and retained non-secret audit evidence explicit.                                                                                                             |
 | design-v2.6-v0.1.0-release-readiness       |     2.6 | 2026-08-09 | Prepared the v1 source for `v0.1.0` with a read-only reusable Distribution Candidate, exact npm/Plugin release-asset manifests and checksums, public-history PII and secret scans, annotated exact-main tag validation, protected OIDC trusted publication, integrity-safe partial-publish recovery, native published-package smoke, and draft-first GitHub Release assets.                                                            |
 | design-v2.5-origin-session-feedback        |     2.5 | 2026-08-08 | Implemented capability-bound loopback interactive review, explicit Agent-attention selection, Feedback Batch preview and idempotent Review Inbox storage, bounded and redacted Context Packs, opaque Origin Session binding, fixed-run feedback CLI and strict NDJSON MCP tools, itemized answer writeback, stale visual/code re-anchoring, and safe return-to-session/export-only fallback without creating another Agent or session. |

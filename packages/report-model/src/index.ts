@@ -5,6 +5,7 @@ export type { ContextPack } from "./generated/context-pack.schema";
 export type { GitDiffDocument } from "./generated/diff.schema";
 export type { EvidenceIndex } from "./generated/evidence-index.schema";
 export type { FeedbackBatch } from "./generated/feedback-batch.schema";
+export type { McpRunRegistration } from "./generated/mcp-run-registration.schema";
 export type { OriginSessionBinding } from "./generated/origin-session.schema";
 export type { UtsuriReport } from "./generated/report.schema";
 export type { ReviewAnswer } from "./generated/review-answer.schema";

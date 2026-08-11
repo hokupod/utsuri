@@ -1,0 +1,23 @@
+{
+  "name": "utsuri",
+  "owner": {
+    "name": "hokupod"
+  },
+  "metadata": {
+    "description": "Utsuri plugin marketplace for Claude Code",
+    "version": "0.2.0"
+  },
+  "plugins": [
+    {
+      "name": "utsuri",
+      "source": "./plugins/utsuri",
+      "description": "Evidence-backed code and visual change review for Codex and Claude Code.",
+      "version": "0.2.0",
+      "author": {
+        "name": "hokupod"
+      },
+      "category": "development",
+      "keywords": ["diff", "visual-review", "accessibility", "code-review"]
+    }
+  ]
+}

@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 
 import { spawn } from "node:child_process";
+import { randomUUID } from "node:crypto";
 import { constants } from "node:fs";
 import {
   access,
@@ -16,10 +17,75 @@ import {
 import os from "node:os";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
+import { isDeepStrictEqual } from "node:util";
 
 const repositoryRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const packageName = "@utsu-ri/cli";
 const maximumOutputBytes = 1024 * 1024;
+const reportSelector = {
+  type: "string",
+  pattern: "^report[-:][A-Za-z0-9._:-]+$",
+  maxLength: 256
+};
+const expectedMcpToolSchemas = {
+  review_list_batches: {
+    type: "object",
+    additionalProperties: false,
+    properties: {
+      report_id: reportSelector,
+      state: { enum: ["draft", "ready", "submitted", "consumed", "answered", "stale"] }
+    }
+  },
+  review_get_batch: {
+    type: "object",
+    additionalProperties: false,
+    properties: {
+      batch_id: { type: "string", pattern: "^fb[-:]" },
+      report_id: reportSelector
+    }
+  },
+  review_claim_batch: {
+    type: "object",
+    additionalProperties: false,
+    properties: {
+      batch_id: { type: "string", pattern: "^fb[-:]" },
+      report_id: reportSelector
+    }
+  },
+  review_get_item_context: {
+    type: "object",
+    additionalProperties: false,
+    required: ["item_id"],
+    properties: {
+      item_id: { type: "string", pattern: "^item[-:]" },
+      report_id: reportSelector
+    }
+  },
+  review_post_answers: {
+    type: "object",
+    additionalProperties: false,
+    required: ["batch_id", "answers"],
+    properties: {
+      batch_id: { type: "string", pattern: "^fb[-:]" },
+      answers: {
+        type: "array",
+        minItems: 1,
+        maxItems: 20,
+        items: { type: "object" }
+      },
+      report_id: reportSelector
+    }
+  },
+  review_release_batch: {
+    type: "object",
+    additionalProperties: false,
+    required: ["batch_id"],
+    properties: {
+      batch_id: { type: "string", pattern: "^fb[-:]" },
+      report_id: reportSelector
+    }
+  }
+};
 
 function exactVersion(value) {
   if (typeof value !== "string" || !/^\d+\.\d+\.\d+(?:-[0-9A-Za-z.-]+)?$/u.test(value)) {
@@ -93,7 +159,7 @@ async function runBounded(executable, args, options) {
     detached: process.platform !== "win32",
     env: options.env,
     shell: false,
-    stdio: ["ignore", "pipe", "pipe"]
+    stdio: [options.stdin === undefined ? "ignore" : "pipe", "pipe", "pipe"]
   });
   let stdout = "";
   let stderr = "";
@@ -116,6 +182,10 @@ async function runBounded(executable, args, options) {
     }
     stderr += chunk;
   });
+  if (options.stdin !== undefined) {
+    child.stdin.on("error", () => undefined);
+    child.stdin.end(options.stdin);
+  }
   let timedOut = false;
   const timer = setTimeout(() => {
     timedOut = true;
@@ -163,12 +233,60 @@ function strictVersionResponse(label, output, version) {
     command: "version",
     package: packageName,
     version,
-    protocolVersion: "1.0"
+    protocolVersion: "1.1"
   };
   if (JSON.stringify(value) !== JSON.stringify(expected)) {
     throw new Error(`${label} returned the wrong package, version, or protocol identity`);
   }
   return value;
+}
+
+function strictMcpResponse(label, output, version) {
+  if (output.stderr !== "") throw new Error(`${label} wrote to stderr`);
+  if (!output.stdout.endsWith("\n")) {
+    throw new Error(`${label} stdout is not newline terminated`);
+  }
+  const lines = output.stdout.split(/\r?\n/u);
+  if (lines.at(-1) !== "") throw new Error(`${label} stdout framing is invalid`);
+  lines.pop();
+  if (lines.length !== 2 || lines.some((line) => line === "")) {
+    throw new Error(`${label} must emit exactly two NDJSON response lines`);
+  }
+  let initialize;
+  let toolsList;
+  try {
+    initialize = JSON.parse(lines[0]);
+    toolsList = JSON.parse(lines[1]);
+  } catch {
+    throw new Error(`${label} stdout is not strict NDJSON`);
+  }
+  if (
+    initialize?.jsonrpc !== "2.0" ||
+    initialize?.id !== 1 ||
+    initialize?.result?.protocolVersion !== "2025-06-18" ||
+    initialize?.result?.serverInfo?.name !== "utsu-ri-plugin-broker" ||
+    initialize?.result?.serverInfo?.version !== version
+  ) {
+    throw new Error(`${label} returned the wrong MCP protocol or server identity`);
+  }
+  const tools = toolsList?.result?.tools;
+  if (toolsList?.jsonrpc !== "2.0" || toolsList?.id !== 2 || !Array.isArray(tools)) {
+    throw new Error(`${label} returned an invalid tools/list response`);
+  }
+  const expectedNames = Object.keys(expectedMcpToolSchemas);
+  if (
+    tools.length !== expectedNames.length ||
+    new Set(tools.map((tool) => tool?.name)).size !== expectedNames.length
+  ) {
+    throw new Error(`${label} returned the wrong MCP tool inventory`);
+  }
+  for (const tool of tools) {
+    const expected = expectedMcpToolSchemas[tool?.name];
+    if (!expected || !isDeepStrictEqual(tool?.inputSchema, expected)) {
+      throw new Error(`${label} returned a non-canonical MCP tool schema`);
+    }
+  }
+  return { tools: tools.length };
 }
 
 async function writePrivate(filename, content, mode = 0o600) {
@@ -192,7 +310,10 @@ export async function verifyPublishedCli(options) {
     await access(executable, constants.X_OK);
   }
 
-  const scratch = await mkdtemp(path.join(os.tmpdir(), "utsuri-published-smoke-"));
+  const scratchParent = await realpath(options.scratchParent ?? os.tmpdir());
+  const scratch = await realpath(
+    await mkdtemp(path.join(scratchParent, "utsuri-published-smoke-"))
+  );
   await chmod(scratch, 0o700);
   try {
     const sentinel = path.join(scratch, "path-sentinel");
@@ -234,8 +355,12 @@ export async function verifyPublishedCli(options) {
       XDG_CONFIG_HOME: path.join(scratch, "xdg-config"),
       XDG_CACHE_HOME: path.join(scratch, "xdg-cache")
     };
+    const mcpEnvironment = {
+      ...childEnvironment,
+      CODEX_THREAD_ID: `published-smoke-${randomUUID()}`
+    };
     const specifier = `${packageName}@${version}`;
-    const invocations = [
+    const versionInvocations = [
       {
         label: "native npx",
         executable: commands.npx,
@@ -247,8 +372,20 @@ export async function verifyPublishedCli(options) {
         args: ["--silent", "--bun", specifier, "--version", "--json"]
       }
     ];
+    const mcpInvocations = [
+      {
+        label: "native npx MCP",
+        executable: commands.npx,
+        args: ["--yes", "--package", specifier, "--", "utsuri", "mcp"]
+      },
+      {
+        label: "native bunx MCP",
+        executable: commands.bunx,
+        args: ["--silent", "--bun", specifier, "mcp"]
+      }
+    ];
     const results = [];
-    for (const invocation of invocations) {
+    for (const invocation of versionInvocations) {
       const output = await runBounded(invocation.executable, invocation.args, {
         cwd: scratch,
         env: childEnvironment,
@@ -256,6 +393,27 @@ export async function verifyPublishedCli(options) {
         timeoutMs
       });
       results.push(strictVersionResponse(invocation.label, output, version));
+    }
+    const mcpInput =
+      `${JSON.stringify({
+        jsonrpc: "2.0",
+        id: 1,
+        method: "initialize",
+        params: {
+          protocolVersion: "2025-06-18",
+          capabilities: {},
+          clientInfo: { name: "utsuri-published-smoke", version: "1.0.0" }
+        }
+      })}\n` + `${JSON.stringify({ jsonrpc: "2.0", id: 2, method: "tools/list", params: {} })}\n`;
+    for (const invocation of mcpInvocations) {
+      const output = await runBounded(invocation.executable, invocation.args, {
+        cwd: scratch,
+        env: mcpEnvironment,
+        label: invocation.label,
+        timeoutMs,
+        stdin: mcpInput
+      });
+      results.push(strictMcpResponse(invocation.label, output, version));
     }
     try {
       await lstat(sentinelMarker);
@@ -275,7 +433,7 @@ function option(name) {
   return index === -1 ? undefined : process.argv[index + 1];
 }
 
-if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
+async function main() {
   let version = option("--version");
   if (process.argv.includes("--version-from-package")) {
     if (version) throw new Error("Use only one published version source");
@@ -287,6 +445,13 @@ if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.me
   }
   const result = await verifyPublishedCli({ version });
   console.log(
-    `Verified ${result.package}@${result.version} through native npx and bunx strict JSON`
+    `Verified ${result.package}@${result.version} through native npx and bunx strict JSON and MCP NDJSON`
   );
+}
+
+if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
+  main().catch((error) => {
+    process.stderr.write(`${error instanceof Error ? error.message : String(error)}\n`);
+    process.exitCode = 1;
+  });
 }

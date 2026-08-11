@@ -2,108 +2,103 @@
 
 [English](README.md) | [日本語](README.ja.md) | [简体中文](README.zh-CN.md)
 
-# Utsuri
+# Utsuri fixture
 
-> See what changed. Understand why.
+<a id="product-outcome"></a><!-- section:product-outcome -->
 
-<a id="product-summary"></a><!-- section:product-summary -->
+## Review outcome
 
-## Product summary
+Create a local evidence-backed report without hiding incomplete checks.
 
-Utsuri transforms code changes into evidence-based, human-readable visual reviews. It connects Git hunks, intent, real-browser rendering, structural evidence, coverage, and human review state in one local report.
+<a id="availability-requirements"></a><!-- section:availability-requirements -->
 
-The name joins the Japanese ideas of how a UI is reflected after a change and how it transitions from before to after.
+## Availability and requirements
 
-<a id="status"></a><!-- section:status -->
+<!-- availability:git-marketplace-public -->
+<!-- support-contract:macos-linux-windows-unsupported -->
 
-## Status
+Codex and Claude Code are supported on macOS and Linux. Native Windows is unsupported.
 
-<!-- availability:phase-0-documentation -->
+<a id="install"></a><!-- section:install -->
 
-Utsuri v1 is under active implementation. The npm package is not published, the Plugin is not distributed, and commands shown below are for this source checkout only.
+## Install
 
-<a id="capabilities"></a><!-- section:capabilities -->
-
-## Capabilities
-
-The v1 target includes:
-
-- semantic grouping of every Git hunk;
-- isolated before/after browser capture;
-- visual, DOM, ARIA, style, accessibility, runtime, and coverage evidence;
-- a self-contained WCAG 2.2 AA report;
-- review state, anchored comments, and Origin Session feedback; and
-- Codex Plugin, Claude Code Plugin, standalone Skill, local CLI, and CI use.
-
-These capabilities become available only as their phase gates pass. A failed or uncovered capture is never reported as no difference.
-
-<a id="quick-start"></a><!-- section:quick-start -->
-
-## Quick Start
-
-Prerequisites: Nix, Node 24, and an operator-managed Safe-chain 1.5.14 executable whose absolute path is stored in `UTSURI_SAFE_CHAIN_BIN`.
-
-<!-- sync-command:dev-shell -->
+<!-- sync-command:codex-marketplace-add -->
 
 ```bash
-nix develop
+codex plugin marketplace add hokupod/utsuri
 ```
 
-<!-- sync-command:dev-env-check -->
+<!-- sync-command:codex-plugin-install -->
 
 ```bash
-node scripts/dev-env-check.mjs --json
+codex plugin add utsuri@utsuri
 ```
 
-<!-- sync-command:install -->
+<!-- sync-command:claude-marketplace-add -->
 
 ```bash
-"$UTSURI_SAFE_CHAIN_BIN" bun install --frozen-lockfile
+claude plugin marketplace add hokupod/utsuri
 ```
 
-No setup script, Skill, or CLI command installs dependencies or downloads a browser automatically.
-
-<a id="development"></a><!-- section:development -->
-
-## Development
-
-Run package-manager operations through the exact Safe-chain executable.
-
-<!-- sync-command:check -->
+<!-- sync-command:claude-plugin-install -->
 
 ```bash
-"$UTSURI_SAFE_CHAIN_BIN" bun run check
+claude plugin install utsuri@utsuri
 ```
 
-The bundled CLI protocol is verified natively so wrapper notices cannot corrupt JSON or NDJSON.
+<a id="first-review"></a><!-- section:first-review -->
 
-<!-- sync-command:native-doctor -->
+## First review
 
-```bash
-node skills/utsuri-review/scripts/utsuri.mjs doctor --json
+<!-- sync-command:first-review-prompt -->
+
+```text
+Review the current change with Utsuri. Create a local evidence-backed report and call out every incomplete or uncovered check.
 ```
+
+<a id="how-it-works"></a><!-- section:how-it-works -->
+
+## How it works
+
+Collect, compare, finalize, and review bounded local evidence.
+
+<a id="understand-report"></a><!-- section:understand-report -->
+
+## Understand the report
+
+`INCOMPLETE` and `UNCOVERED` are never global pass states.
 
 <a id="security-privacy"></a><!-- section:security-privacy -->
 
 ## Security and privacy
 
-Utsuri treats repository content, diffs, HTML, SVG, comments, Context Packs, and captured text as untrusted evidence.
+Keep production credentials out of captures and keep feedback in the Origin Session.
 
-**Security warning:** never provide production credentials, production browser state, unrestricted external network access, inferred setup commands, or parent-process environment variables to a capture. Before and after use separate Browser Contexts; external requests and Service Workers are blocked by default.
+<a id="troubleshooting-lifecycle"></a><!-- section:troubleshooting-lifecycle -->
 
-Generated `report/` content is immutable. Mutable human-review data is stored separately in `run/review/`. The static viewer does not contact external services.
+## Troubleshooting and lifecycle
 
-<a id="documentation"></a><!-- section:documentation -->
+<!-- sync-command:codex-plugin-remove -->
 
-## Documentation
+```bash
+codex plugin remove utsuri@utsuri
+```
 
-- [Canonical detailed design](docs/design.md)
-- [v1 implementation plan](docs/plans/v1-implementation.md)
+<!-- sync-command:claude-plugin-disable -->
 
-The design is canonical in English. User-facing README changes update English, Japanese, and Simplified Chinese in the same change.
+```bash
+claude plugin disable utsuri@utsuri
+```
 
-<a id="license-status"></a><!-- section:license-status -->
+<!-- sync-command:claude-plugin-uninstall -->
 
-## License and publication status
+```bash
+claude plugin uninstall utsuri@utsuri
+```
 
-Publisher identity and SPDX license are not yet decided. Every package remains private and unpublished until both are confirmed and all release gates pass. This repository must not be published, tagged, pushed, or promoted as part of the v1 implementation plan.
+<a id="documentation-contributing-license"></a><!-- section:documentation-contributing-license -->
+
+## Documentation, contributing, and license
+
+[Contributing](https://github.com/hokupod/utsuri/blob/main/CONTRIBUTING.md)

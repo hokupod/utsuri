@@ -27,31 +27,44 @@
       "metadata": "<!-- doc-language: zh-CN; canonical: README.md -->"
     }
   ],
-  "additionalReviewDocuments": ["docs/release.md"],
+  "additionalReviewDocuments": ["docs/release.md", "CONTRIBUTING.md"],
   "languageSwitcher": "[English](https://github.com/hokupod/utsuri/blob/main/README.md) | [日本語](https://github.com/hokupod/utsuri/blob/main/README.ja.md) | [简体中文](https://github.com/hokupod/utsuri/blob/main/README.zh-CN.md)",
   "requiredSectionMarkers": [
-    "product-summary",
-    "status",
-    "capabilities",
-    "quick-start",
-    "development",
+    "product-outcome",
+    "availability-requirements",
+    "install",
+    "first-review",
+    "how-it-works",
+    "understand-report",
     "security-privacy",
-    "documentation",
-    "license-status"
+    "troubleshooting-lifecycle",
+    "documentation-contributing-license"
   ],
   "syncCommandIds": [
-    "dev-shell",
-    "dev-env-check",
-    "install",
-    "init-capture-config",
-    "collect-patch",
-    "capture-run",
-    "discover-run",
-    "compare-run",
-    "finalize-report",
-    "validate-report",
-    "check",
-    "native-doctor"
+    "codex-marketplace-add",
+    "codex-plugin-install",
+    "claude-marketplace-add",
+    "claude-plugin-install",
+    "first-review-prompt",
+    "codex-plugin-remove",
+    "claude-plugin-disable",
+    "claude-plugin-uninstall"
+  ],
+  "requiredSupportMarker": "<!-- support-contract:macos-linux-windows-unsupported -->",
+  "requiredSupportBoundaryText": {
+    "en": "Native Windows is unsupported",
+    "ja": "native Windows は非対応",
+    "zh-CN": "不支持原生 Windows"
+  },
+  "requiredContributorTarget": "https://github.com/hokupod/utsuri/blob/main/CONTRIBUTING.md",
+  "forbiddenReadmeLiterals": [
+    "nix develop",
+    "scripts/safe-chain.mjs",
+    "bun install",
+    "bun run check"
+  ],
+  "forbiddenReadmePatterns": [
+    "(?:^|[^0-9])v?\\d+\\.\\d+\\.\\d+(?:-[0-9A-Za-z-]+(?:\\.[0-9A-Za-z-]+)*)?(?:\\+[0-9A-Za-z-]+(?:\\.[0-9A-Za-z-]+)*)?(?:$|[^0-9])"
   ],
   "allowedEnglishCjk": {
     "designHtmlLangs": ["ja"],
@@ -63,20 +76,26 @@
   "forbiddenPublicIdentifiers": ["@utsuri/"],
   "modeRules": {
     "bootstrap": {
-      "allowUnpublishedStatus": true,
       "requireStateHashes": false,
       "requireHumanReview": false
     },
     "development": {
-      "allowUnpublishedStatus": true,
       "requireStateHashes": true,
       "requireHumanReview": false
     },
     "release-candidate": {
-      "allowUnpublishedStatus": false,
+      "allowedAvailability": ["git-marketplace-public"],
       "requireStateHashes": true,
       "requireHumanReview": true
     }
+  },
+  "phaseAvailability": {
+    "0": ["git-marketplace-public"],
+    "6": [
+      "git-marketplace-source-ready",
+      "git-marketplace-source-ready-cli-publication-pending",
+      "git-marketplace-public"
+    ]
   },
   "diagnostics": {
     "fileMissing": "DOC_FILE_MISSING",
@@ -100,6 +119,10 @@
     "placeholder": "DOC_PLACEHOLDER",
     "humanReviewStale": "DOC_HUMAN_REVIEW_STALE",
     "reviewEvidenceMissing": "DOC_REVIEW_EVIDENCE_MISSING",
-    "reviewEvidenceHash": "DOC_REVIEW_EVIDENCE_HASH"
+    "reviewEvidenceHash": "DOC_REVIEW_EVIDENCE_HASH",
+    "developerContent": "DOC_DEVELOPER_CONTENT",
+    "releaseVersion": "DOC_RELEASE_VERSION",
+    "supportOverclaim": "DOC_SUPPORT_OVERCLAIM",
+    "contributorLink": "DOC_CONTRIBUTOR_LINK"
   }
 }

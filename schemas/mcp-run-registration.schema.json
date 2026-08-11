@@ -1,0 +1,33 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://utsu-ri.dev/schemas/mcp-run-registration/v1",
+  "title": "McpRunRegistration",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion",
+    "sessionRef",
+    "projectFingerprint",
+    "reportId",
+    "runPath",
+    "reportSha256",
+    "createdAt"
+  ],
+  "properties": {
+    "schemaVersion": { "const": "1.0" },
+    "sessionRef": { "type": "string", "pattern": "^session:[a-f0-9]{64}$" },
+    "projectFingerprint": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
+    "reportId": {
+      "type": "string",
+      "pattern": "^report[-:][A-Za-z0-9._:-]+$",
+      "maxLength": 256
+    },
+    "runPath": {
+      "type": "string",
+      "pattern": "^(?!/)(?![\\s\\S]*//)(?![\\s\\S]*(?:^|/)\\.{1,2}(?:/|$))(?![\\s\\S]*\\\\)(?![\\s\\S]*\\u0000)[^/\\\\]+(?:/[^/\\\\]+)*$",
+      "maxLength": 4096
+    },
+    "reportSha256": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
+    "createdAt": { "type": "string", "format": "date-time" }
+  }
+}

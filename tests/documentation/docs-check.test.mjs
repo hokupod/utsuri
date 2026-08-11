@@ -12,6 +12,7 @@ const checker = path.join(repositoryRoot, "scripts/docs-check.mjs");
 const documents = [
   "docs/design.md",
   "docs/release.md",
+  "CONTRIBUTING.md",
   "README.md",
   "README.ja.md",
   "README.zh-CN.md"
@@ -136,10 +137,56 @@ await withFixture("bootstrap rejects a superseded npm scope", async (root) => {
 });
 
 await withFixture("bootstrap rejects synchronized command drift", async (root) => {
-  await rewrite(root, "README.ja.md", (value) => value.replace("nix develop", "nix develop ."));
+  await rewrite(root, "README.ja.md", (value) =>
+    value.replace("codex plugin add utsuri@utsuri", "codex plugin add utsuri@utsuri --json")
+  );
   const result = run(root, "bootstrap");
   assert.notEqual(result.status, 0);
   assert.match(result.combined, /DOC_COMMAND_DRIFT/u);
+});
+
+await withFixture("bootstrap rejects a missing user-facing section", async (root) => {
+  await rewrite(root, "README.md", (value) =>
+    value.replace('<a id="first-review"></a><!-- section:first-review -->\n', "")
+  );
+  const result = run(root, "bootstrap");
+  assert.notEqual(result.status, 0);
+  assert.match(result.combined, /DOC_SECTION_MISSING/u);
+});
+
+await withFixture("bootstrap rejects developer commands in a user README", async (root) => {
+  await rewrite(root, "README.md", (value) => `${value}\nnix develop\n`);
+  const result = run(root, "bootstrap");
+  assert.notEqual(result.status, 0);
+  assert.match(result.combined, /DOC_DEVELOPER_CONTENT/u);
+});
+
+await withFixture("bootstrap rejects release numbers in a user README", async (root) => {
+  await rewrite(root, "README.md", (value) => `${value}\nRelease v9.9.9\n`);
+  const result = run(root, "bootstrap");
+  assert.notEqual(result.status, 0);
+  assert.match(result.combined, /DOC_RELEASE_VERSION/u);
+});
+
+await withFixture("bootstrap rejects a native Windows support overclaim", async (root) => {
+  await rewrite(root, "README.md", (value) =>
+    value.replace("Native Windows is unsupported", "Native Windows is supported")
+  );
+  const result = run(root, "bootstrap");
+  assert.notEqual(result.status, 0);
+  assert.match(result.combined, /DOC_SUPPORT_OVERCLAIM/u);
+});
+
+await withFixture("bootstrap rejects a broken contributor target", async (root) => {
+  await rewrite(root, "README.md", (value) =>
+    value.replace(
+      "](https://github.com/hokupod/utsuri/blob/main/CONTRIBUTING.md)",
+      "](https://github.com/hokupod/utsuri/blob/main/missing-contributor.md)"
+    )
+  );
+  const result = run(root, "bootstrap");
+  assert.notEqual(result.status, 0);
+  assert.match(result.combined, /DOC_CONTRIBUTOR_LINK/u);
 });
 
 await withFixture("bootstrap rejects a broken local file link", async (root) => {
@@ -182,15 +229,24 @@ await withFixture("development rejects missing change-log state", async (root) =
 });
 
 await withFixture("development rejects stale current hashes", async (root) => {
-  await rewrite(root, "README.md", (value) => value.replace("Utsuri v1", "Utsuri version 1"));
+  await rewrite(root, "README.md", (value) => `${value}\nChanged prose.\n`);
   const result = run(root, "development");
   assert.notEqual(result.status, 0);
   assert.match(result.combined, /DOC_HASH_STALE/u);
 });
 
-await withFixture("development rejects a Phase and availability mismatch", async (root) => {
+await withFixture("development rejects an invalid availability state", async (root) => {
   await updateState(root, (state) => {
-    state.currentPhase = 1;
+    state.availability = "invalid availability";
+  });
+  const result = run(root, "development");
+  assert.notEqual(result.status, 0);
+  assert.match(result.combined, /DOC_PHASE_MISMATCH/u);
+});
+
+await withFixture("development rejects a phase and availability mismatch", async (root) => {
+  await updateState(root, (state) => {
+    state.currentPhase = 5;
   });
   const result = run(root, "development");
   assert.notEqual(result.status, 0);
@@ -207,12 +263,41 @@ await withFixture("release-candidate rejects unresolved publication metadata", a
   assert.match(result.combined, /DOC_PLACEHOLDER/u);
 });
 
+await withFixture("release-candidate rejects non-public availability", async (root) => {
+  for (const relativePath of ["README.md", "README.ja.md", "README.zh-CN.md"]) {
+    await rewrite(root, relativePath, (value) =>
+      value.replace(
+        "<!-- availability:git-marketplace-public -->",
+        "<!-- availability:git-marketplace-source-ready -->"
+      )
+    );
+  }
+  await prepareRelease(root);
+  await updateState(root, (state) => {
+    state.currentPhase = 6;
+    state.availability = "git-marketplace-source-ready";
+  });
+  const result = run(root, "release-candidate");
+  assert.notEqual(result.status, 0);
+  assert.match(result.combined, /DOC_AVAILABILITY_MISMATCH/u);
+});
+
 await withFixture("release-candidate rejects stale human review", async (root) => {
   await prepareRelease(root);
-  await rewrite(root, "README.md", (value) => value.replace("Utsuri v1", "Utsuri version 1"));
+  await rewrite(root, "README.md", (value) => `${value}\nChanged after review.\n`);
   const result = run(root, "release-candidate");
   assert.notEqual(result.status, 0);
   assert.match(result.combined, /DOC_HUMAN_REVIEW_STALE/u);
+});
+
+await withFixture("release-candidate rejects missing human review", async (root) => {
+  await prepareRelease(root);
+  await updateState(root, (state) => {
+    delete state.humanReviewedHashes["CONTRIBUTING.md"];
+  });
+  const result = run(root, "release-candidate");
+  assert.notEqual(result.status, 0);
+  assert.match(result.combined, /DOC_HUMAN_REVIEW_STALE: CONTRIBUTING\.md/u);
 });
 
 await withFixture("release-candidate rejects a changed release guide", async (root) => {

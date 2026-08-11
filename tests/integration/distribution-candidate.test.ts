@@ -110,6 +110,12 @@ describe("distribution candidate assembly", () => {
     const candidate = path.join(scratch, "candidate");
     const assembled = await assembleDistributionCandidate(candidate, nativeRoot, repositoryRoot);
     expect(assembled.manifest.targets).toEqual(nativeTargets);
+    expect(assembled.manifest.files["plugin/.claude-plugin/marketplace.json"]).toBeUndefined();
+    expect(
+      Object.keys(assembled.manifest.files).some((relative) =>
+        relative.startsWith("plugin/plugins/")
+      )
+    ).toBe(false);
     await expect(verifyDistributionCandidate(candidate, repositoryRoot)).resolves.toBeDefined();
 
     const releaseCandidate = path.join(scratch, "release-candidate");

@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, test } from "bun:test";
-import { cp, mkdtemp, mkdir, rm, writeFile } from "node:fs/promises";
+import { cp, mkdtemp, mkdir, realpath, rm, writeFile } from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
 import type { ContextPack, ReviewAnswer, UtsuriReport } from "@utsu-ri/report-model";
@@ -34,8 +34,8 @@ afterEach(async () => {
 });
 
 async function createRun(
-  environment?: NodeJS.ProcessEnv
-): Promise<{ root: string; run: string; report: UtsuriReport }> {
+  environmentInput?: NodeJS.ProcessEnv | ((root: string) => NodeJS.ProcessEnv)
+): Promise<{ root: string; run: string; report: UtsuriReport; environment?: NodeJS.ProcessEnv }> {
   const root = await mkdtemp(path.join(os.tmpdir(), "utsuri-feedback-cli-"));
   temporaryDirectories.push(root);
   const run = path.join(root, "run");
@@ -52,6 +52,10 @@ async function createRun(
   }
   await mkdir(path.join(run, "logs"));
   await cp(path.join(source, "logs/collect.ndjson"), path.join(run, "logs/collect.ndjson"));
+  const environment =
+    typeof environmentInput === "function"
+      ? environmentInput(await realpath(root))
+      : environmentInput;
   const initial = await createInitialReport(run);
   const report = environment
     ? await bindReportToCurrentSession(root, initial, environment)
@@ -60,14 +64,14 @@ async function createRun(
     toolVersion: "0.1.0",
     ...(report.origin.bindingMode === "unbound" ? {} : { origin: report.origin })
   });
-  return { root, run, report };
+  return { root, run, report, environment };
 }
 
 describe("return-to-session CLI", () => {
   test("fixes an opaque Origin Session at report generation and detects a later mismatch", async () => {
     const { root, report } = await createRun();
     const unboundRuntime = await createRuntimeSessionContext(root, report, {
-      UTSURI_CODEX_SESSION_ID: "late-session"
+      CODEX_THREAD_ID: "late-session"
     });
     expect(unboundRuntime.binding.bindingMode).toBe("unbound");
     expect(unboundRuntime.binding.host).toBe("unknown");
@@ -75,18 +79,18 @@ describe("return-to-session CLI", () => {
     expect(unboundRuntime.currentSession.host).toBe("codex");
 
     const bound = await bindReportToCurrentSession(root, report, {
-      UTSURI_CODEX_SESSION_ID: "origin-session"
+      CODEX_THREAD_ID: "origin-session"
     });
     expect(bound.origin.bindingMode).toBe("return-to-session");
     expect(bound.origin.sessionRef).toMatch(/^session:[a-f0-9]{64}$/u);
     expect(JSON.stringify(bound.origin)).not.toContain("origin-session");
 
     const same = await createRuntimeSessionContext(root, bound, {
-      UTSURI_CODEX_SESSION_ID: "origin-session"
+      CODEX_THREAD_ID: "origin-session"
     });
     expect(() => assertOriginSessionMatch(same.binding, same.currentSession)).not.toThrow();
     const other = await createRuntimeSessionContext(root, bound, {
-      UTSURI_CODEX_SESSION_ID: "different-session"
+      CODEX_THREAD_ID: "different-session"
     });
     expect(() => assertOriginSessionMatch(other.binding, other.currentSession)).toThrow(
       "Current conversation does not match"
@@ -94,7 +98,7 @@ describe("return-to-session CLI", () => {
   });
 
   test("bounds answer-file reads before parsing", async () => {
-    const environment = { UTSURI_CODEX_SESSION_ID: "bounded-answer-session" };
+    const environment = { CODEX_THREAD_ID: "bounded-answer-session" };
     const { root } = await createRun(environment);
     await writeFile(path.join(root, "oversized-answers.json"), Buffer.alloc(2 * 1024 * 1024 + 1));
     const runtime = await prepareFeedbackRuntime(root, "run", environment);
@@ -105,7 +109,7 @@ describe("return-to-session CLI", () => {
   });
 
   test("fails closed before opening a bound inbox without the raw host session ID", async () => {
-    const environment = { UTSURI_CODEX_SESSION_ID: "origin-session" };
+    const environment = { CODEX_THREAD_ID: "origin-session" };
     const { root, report } = await createRun(environment);
     await expect(prepareFeedbackRuntime(root, "run", {})).rejects.toMatchObject({
       diagnosticId: "ORIGIN_SESSION_MISMATCH"
@@ -117,12 +121,52 @@ describe("return-to-session CLI", () => {
     ).rejects.toMatchObject({ diagnosticId: "ORIGIN_SESSION_MISMATCH" });
   });
 
-  for (const [host, environment] of [
-    ["codex", { UTSURI_CODEX_SESSION_ID: "codex-origin-session" }],
-    ["claude-code", { CLAUDE_SESSION_ID: "claude-origin-session" }]
+  test("keeps legacy fixed-run identities compatible and rejects conflicting aliases", async () => {
+    for (const environment of [
+      { UTSURI_CODEX_SESSION_ID: "legacy-codex-session" },
+      { CLAUDE_SESSION_ID: "legacy-claude-session" }
+    ]) {
+      const { root, report } = await createRun(environment);
+      const runtime = await prepareFeedbackRuntime(root, "run", environment);
+      expect(runtime.currentSession.host).toBe(report.origin.host);
+      expect(runtime.currentSession.sessionRef).toBe(report.origin.sessionRef);
+    }
+
+    const { root, report } = await createRun();
+    await expect(
+      bindReportToCurrentSession(root, report, {
+        CODEX_THREAD_ID: "new-codex",
+        UTSURI_CODEX_SESSION_ID: "legacy-codex"
+      })
+    ).rejects.toMatchObject({ diagnosticId: "ORIGIN_SESSION_IDENTITY_CONFLICT" });
+    await expect(
+      bindReportToCurrentSession(root, report, {
+        CLAUDE_CODE_SESSION_ID: "new-claude",
+        CLAUDE_SESSION_ID: "legacy-claude",
+        CLAUDE_PROJECT_DIR: root
+      })
+    ).rejects.toMatchObject({ diagnosticId: "ORIGIN_SESSION_IDENTITY_CONFLICT" });
+    await expect(
+      bindReportToCurrentSession(root, report, {
+        CODEX_THREAD_ID: "same-codex",
+        UTSURI_CODEX_SESSION_ID: "same-codex"
+      })
+    ).resolves.toMatchObject({ origin: { host: "codex" } });
+  });
+
+  for (const [host, environmentForRoot] of [
+    ["codex", () => ({ CODEX_THREAD_ID: "codex-origin-session" })],
+    [
+      "claude-code",
+      (root: string) => ({
+        CLAUDE_CODE_SESSION_ID: "claude-origin-session",
+        CLAUDE_PROJECT_DIR: root
+      })
+    ]
   ] as const) {
     test(`processes itemized answers in the bound ${host} conversation`, async () => {
-      const { root, run, report } = await createRun(environment);
+      const { root, run, report, environment } = await createRun(environmentForRoot);
+      if (!environment) throw new Error("Expected host environment");
       const runtime = await prepareFeedbackRuntime(root, "run", environment);
       let store = await loadReviewStore(run, report, "2026-08-08T00:00:00.000Z");
       const anchor = store.anchorCatalog.find((entry) => entry.type === "hunk")!;

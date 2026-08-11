@@ -1,7 +1,7 @@
 # Utsuri release and distribution guide
 
-- **Current status**: Phase 6 / `v0.1.0` release-ready source
-- **Public availability**: unpublished
+- **Current status**: CLI and Git Plugin `0.2.0` source prepared
+- **Public availability**: exact CLI `0.2.0` publication and Git Plugin promotion pending
 - **Version source**: root `package.json`
 - **Publisher**: `hokupod`
 - **npm maintainer**: `hokupod-npm`
@@ -15,6 +15,17 @@
 
 The workflow never creates or pushes a tag. Package creation, the first registry write, tag creation, and environment approval remain separate operator actions. The first version of a new package cannot use npm trusted or staged publishing because the package must already exist; follow the one-time bootstrap procedure below. The manual `v0.1.0` bootstrap does not receive GitHub Actions OIDC provenance and must not be represented as a trusted-publisher write.
 
+## Two distribution surfaces and authorization
+
+The aggregate Plugin and Git Marketplace Plugin are independent outputs:
+
+- The aggregate Plugin is assembled only inside a verified release candidate from the root manifests and bundled `skills/` tree. It contains compiled CLI/runtime assets and all four architecture-matched native helpers in the multi-platform candidate.
+- The Git Marketplace Plugin is tracked under `plugins/utsuri/`. It contains only manifests plus a deterministic documentation-only Skill, and starts an exact published CLI through native `npx`. Git catalog files and `plugins/utsuri/` must never enter the aggregate artifact.
+
+CLI release and Git Plugin promotion are always separate operations and approvals. One complete SemVer identifies both surfaces, so the authorized version-change transaction updates the CLI version, Plugin version, and exact Plugin pin together. Promotion preflight may observe only one controlled skew: synchronized root/CLI package manifests at the target while every old Plugin version and MCP pin still matches. The normal verifier rejects that transient state, and promotion must end with complete synchronization. No source change authorizes npm publication, Plugin promotion, a Git commit, push, pull request, merge, tag, GitHub Release, or live Git installation test.
+
+The current source decision is one synchronized CLI/root aggregate/Git Plugin version: `0.2.0`. Both Codex and Claude MCP manifests must pin exactly `@utsu-ri/cli@0.2.0`. Complete SemVer is mandatory; `latest`, tags, ranges, and workspace specifiers fail verification.
+
 ## Package identities
 
 | Artifact         | Package or directory        | Runtime target        |
@@ -25,6 +36,7 @@ The workflow never creates or pushes a tag. Package creation, the first registry
 | Native helper    | `@utsu-ri/cli-linux-arm64`  | Linux arm64           |
 | Native helper    | `@utsu-ri/cli-linux-x64`    | Linux x64             |
 | Aggregate Plugin | `plugin/` in the candidate  | Codex and Claude Code |
+| Git Plugin       | `plugins/utsuri/` in Git    | Codex and Claude Code |
 
 The CLI JavaScript is bundled. Private workspace packages are never registry runtime dependencies. Each native package contains exactly `LICENSE`, `package.json`, `bin/utsuri-fs-ops`, `integrity.json`, and `proof.json` according to the release manifest contract. The proof binds the separately reviewed source hash used to build the helper.
 
@@ -41,6 +53,8 @@ The CLI JavaScript is bundled. Private workspace packages are never registry run
 7. Create the deterministic aggregate Plugin archive, `release-assets.json`, and `SHA256SUMS`; verify their exact inventory and bytes.
 8. Install only the exact local CLI and current-platform helper tarballs under Node 22 and Node 24 with registry fallback disabled.
 9. Upload the candidate artifact with seven-day retention.
+
+Candidate assembly explicitly omits `.claude-plugin/marketplace.json`, `.agents/`, and `plugins/utsuri/`. The aggregate verifier rejects any Git Marketplace catalog or Plugin source path in its manifest.
 
 Local structural verification uses:
 
@@ -80,7 +94,7 @@ The tag-triggered workflow performs these ordered gates:
 3. Call the same read-only four-platform Distribution Candidate workflow.
 4. Enter the protected `release` environment with `id-token: write`, verify the downloaded candidate, and publish through npm trusted publishing without `NODE_AUTH_TOKEN` or `NPM_TOKEN`.
 5. Process the four helper packages before the CLI. A missing version is published; an existing version is accepted only when registry integrity exactly equals the candidate. Different bytes fail closed, allowing safe recovery after a partial multi-package publish.
-6. Run the exact published SemVer through native `npx` and `bunx` before Safe-chain setup and require one strict JSON line with no stderr or ambient fallback.
+6. Run the exact published SemVer through native `npx` and `bunx` before Safe-chain setup. Require one strict version JSON line plus strict `initialize` and `tools/list` NDJSON, no stderr, no notices, no ambient fallback, the exact broker identity, six bounded tools, and no arbitrary path/session/destination input.
 7. Create a draft GitHub Release, upload the five npm tarballs, Plugin archive, manifests, and checksums, then publish the draft only after every upload succeeds. Any pre-existing release fails closed instead of bypassing asset verification.
 
 Required repository configuration mirrors Kyoso:
@@ -100,7 +114,7 @@ npm trusted publishing and staged publishing cannot create a package. For the fi
 5. Retain non-secret audit evidence for each write: maintainer identity, UTC time, source SHA, candidate run ID and artifact digest, tarball SHA-256, expected SHA-512 integrity, registry response, and the explicit provenance limitation.
 6. Confirm each public registry version has the exact SHA-512 integrity recorded in `release-assets.json`.
 7. Configure the five trusted publishers with the exact owner, repository, workflow filename, and environment listed above. Later missing versions are published through this protected OIDC path.
-8. Create the annotated `v0.1.0` tag at the still-current exact `main` commit and push only that tag. The release workflow will accept the already-published versions only when every integrity matches, run the published smoke, and create the GitHub Release.
+8. Create the annotated `v0.2.0` tag at the still-current exact `main` commit and push only that tag. The release workflow will accept the already-published versions only when every integrity matches, run the published smoke, and create the GitHub Release.
 
 If a draft GitHub Release remains after an upload failure, the workflow intentionally refuses to overwrite it. Inspect and remove or reconcile that draft explicitly before retrying. Follow [npm trusted publishing](https://docs.npmjs.com/trusted-publishers/), [npm staged publishing](https://docs.npmjs.com/staged-publishing/), and [npm provenance](https://docs.npmjs.com/generating-provenance-statements/) for current operator-side behavior.
 
@@ -109,22 +123,28 @@ If a draft GitHub Release remains after an upload failure, the workflow intentio
 `.github/workflows/plugin-promotion.yml` is manually dispatched only after a separate publication approval. It must:
 
 1. run `scripts/verify-published-cli.mjs` before Safe-chain setup or dependency installation;
-2. execute the exact SemVer through native `npx` and `bunx` with isolated cache/config and strict JSON stdout;
-3. reject `latest`, ranges, notices, ambient executables, timeouts, and surviving descendants;
-4. download the approved candidate by exact workflow run ID;
-5. verify the aggregate Plugin against its candidate manifest;
-6. install and verify the exact published current-platform helper and CLI; and
-7. rerun Skill evaluations and Claude strict validation before uploading the promoted Plugin artifact.
+2. execute the exact SemVer through native `npx` and `bunx` with isolated cache/config and strict JSON plus MCP NDJSON stdout;
+3. reject `latest`, ranges, notices, ambient executables, unsafe tool schemas, timeouts, and surviving descendants;
+4. download the approved candidate by exact workflow run ID and verify the aggregate Plugin against its candidate manifest;
+5. install and verify the exact published current-platform helper and CLI;
+6. run `plugin-promote.mjs` with one operator-supplied exact version in its default no-write dry-run mode; its controlled preflight verifies the tracked Git Plugin inventory, coherent previous version and exact pin, generated Skill digest, and allowed environment inputs; and
+7. rerun Skill evaluations and Claude strict validation before uploading the separately verified aggregate Plugin artifact.
+
+The workflow does not run ordinary `plugin:verify` before the dry-run because that strict verifier correctly rejects the controlled pre-write version skew. The workflow never passes `--write`, commits, pushes, or opens a pull request. After the dry-run passes, an operator may separately authorize a local `--write`. The write rechecks every preimage, stages same-directory files, atomically replaces only the declared catalog/manifest/generated-Skill/compatibility targets, and runs the complete strict Plugin verifier. Any post-write failure restores every original byte and mode; rollback failure is terminal and must be investigated before retrying. The separate source-change CI also requires ordinary `plugin:verify` after the synchronized bytes are committed for review.
+
+Commit, push, pull request, and merge remain further separate approvals. Only after the exact promoted source is merged and publicly reachable may an operator run live Git-source installation in isolated Codex and Claude configurations. Record the exact commit, host versions, package identity, and sanitized boolean results. Never copy raw session values, credentials, local paths, or support correspondence into repository evidence.
 
 No post-publication smoke may filter wrapper output to make invalid JSON appear valid.
 
-## Remaining `v0.1.0` release gates
+## Remaining synchronized `0.2.0` release gates
 
-The v1 source and local implementation gates are complete. Public `v0.1.0` still requires external evidence that cannot be established by source changes alone:
+Local source verification cannot establish these external or human gates:
 
-- a current human semantic review of this release guide, the English design, and all three READMEs, bound to all five exact hashes;
+- a current human semantic review of this release guide, the English design, `CONTRIBUTING.md`, and all three READMEs, bound to all six exact hashes;
 - successful `main` CI and a manual four-platform Distribution Candidate run on the exact release commit;
 - the protected GitHub Environment and `v*` tag ruleset described above;
-- exact first-publication bootstrap and all five npm trusted-publisher registrations;
-- explicit authorization for the first registry writes and annotated tag push; and
-- successful tag workflow, published-package smoke, and GitHub Release creation.
+- explicit authorization and successful publication of exact CLI/native-helper `0.2.0` artifacts;
+- native registry JSON and MCP NDJSON verification of the exact published bytes;
+- a separately authorized Plugin promotion write and human-reviewed source change;
+- a separately authorized Git push / pull request / merge; and
+- live Git-source install, discovery, disable, and removal on every host release listed in `docs/compatibility/plugin-runtime.json` after merge.

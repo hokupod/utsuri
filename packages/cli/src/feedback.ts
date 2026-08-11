@@ -1,7 +1,14 @@
+import { createHash } from "node:crypto";
+import { realpath } from "node:fs/promises";
 import path from "node:path";
 import { createFeedbackHandoff } from "@utsu-ri/clipboard-handoff";
 import { ExitCode, UtsuriError, type ExitCodeValue } from "@utsu-ri/core";
-import type { OriginSessionBinding, ReviewAnswer, UtsuriReport } from "@utsu-ri/report-model";
+import type {
+  McpRunRegistration,
+  OriginSessionBinding,
+  ReviewAnswer,
+  UtsuriReport
+} from "@utsu-ri/report-model";
 import { assertArtifact } from "@utsu-ri/report-model";
 import { validateReportDirectory } from "@utsu-ri/report-builder";
 import { type FeedbackBatchState } from "@utsu-ri/review-inbox";
@@ -38,9 +45,28 @@ function feedbackError(
 function sessionInput(environment: NodeJS.ProcessEnv): {
   host: "codex" | "claude-code" | "unknown";
   sessionId?: string;
+  usesClaudeProjectContract: boolean;
 } {
-  const codex = environment.UTSURI_CODEX_SESSION_ID;
-  const claude = environment.CLAUDE_SESSION_ID;
+  const codexPlugin = environment.CODEX_THREAD_ID?.trim() || undefined;
+  const codexLegacy = environment.UTSURI_CODEX_SESSION_ID?.trim() || undefined;
+  const claudePlugin = environment.CLAUDE_CODE_SESSION_ID?.trim() || undefined;
+  const claudeLegacy = environment.CLAUDE_SESSION_ID?.trim() || undefined;
+  if (codexPlugin && codexLegacy && codexPlugin !== codexLegacy) {
+    feedbackError(
+      "ORIGIN_SESSION_IDENTITY_CONFLICT",
+      "Codex Plugin and fixed-run Origin Session inputs conflict",
+      ExitCode.Security
+    );
+  }
+  if (claudePlugin && claudeLegacy && claudePlugin !== claudeLegacy) {
+    feedbackError(
+      "ORIGIN_SESSION_IDENTITY_CONFLICT",
+      "Claude Code Plugin and fixed-run Origin Session inputs conflict",
+      ExitCode.Security
+    );
+  }
+  const codex = codexPlugin ?? codexLegacy;
+  const claude = claudePlugin ?? claudeLegacy;
   if (codex && claude) {
     feedbackError(
       "ORIGIN_SESSION_AMBIGUOUS",
@@ -48,9 +74,76 @@ function sessionInput(environment: NodeJS.ProcessEnv): {
       ExitCode.Security
     );
   }
-  if (codex) return { host: "codex", sessionId: codex };
-  if (claude) return { host: "claude-code", sessionId: claude };
-  return { host: "unknown" };
+  if (codex) return { host: "codex", sessionId: codex, usesClaudeProjectContract: false };
+  if (claude) {
+    return {
+      host: "claude-code",
+      sessionId: claude,
+      usesClaudeProjectContract: Boolean(claudePlugin)
+    };
+  }
+  return { host: "unknown", usesClaudeProjectContract: false };
+}
+
+export async function resolveFeedbackProjectRoot(
+  cwd: string,
+  environment: NodeJS.ProcessEnv = process.env
+): Promise<string> {
+  const detected = sessionInput(environment);
+  if (detected.host !== "claude-code" || !detected.usesClaudeProjectContract) {
+    return realpath(cwd).catch(() =>
+      feedbackError(
+        "ORIGIN_PROJECT_INVALID",
+        "Current project root is unavailable",
+        ExitCode.Security
+      )
+    );
+  }
+  const projectInput = environment.CLAUDE_PROJECT_DIR?.trim() || undefined;
+  if (!projectInput || !path.isAbsolute(projectInput)) {
+    feedbackError(
+      "ORIGIN_PROJECT_CONTEXT_REQUIRED",
+      "Claude Code Plugin requires an absolute host project root",
+      ExitCode.Security
+    );
+  }
+  const projectRoot = await realpath(projectInput).catch(() =>
+    feedbackError(
+      "ORIGIN_PROJECT_INVALID",
+      "Claude Code project root is unavailable",
+      ExitCode.Security
+    )
+  );
+  if (projectRoot === path.parse(projectRoot).root) {
+    feedbackError(
+      "ORIGIN_PROJECT_INVALID",
+      "Filesystem root cannot be an Origin project",
+      ExitCode.Security
+    );
+  }
+  if (path.resolve(projectInput) !== projectRoot) {
+    feedbackError(
+      "ORIGIN_PROJECT_AMBIGUOUS",
+      "Claude Code project root contains a symbolic link",
+      ExitCode.Security
+    );
+  }
+  const canonicalCwd = await realpath(cwd).catch(() =>
+    feedbackError(
+      "ORIGIN_PROJECT_INVALID",
+      "Current project directory is unavailable",
+      ExitCode.Security
+    )
+  );
+  const relative = path.relative(projectRoot, canonicalCwd);
+  if (relative === ".." || relative.startsWith(`..${path.sep}`) || path.isAbsolute(relative)) {
+    feedbackError(
+      "ORIGIN_PROJECT_MISMATCH",
+      "Current directory is outside the Claude Code project root",
+      ExitCode.Security
+    );
+  }
+  return projectRoot;
 }
 
 export async function createRuntimeSessionContext(
@@ -111,11 +204,12 @@ export async function createRuntimeSessionContext(
 }
 
 export async function bindReportToCurrentSession(
-  projectRoot: string,
+  cwd: string,
   report: UtsuriReport,
   environment: NodeJS.ProcessEnv = process.env,
   publishedOrigin?: OriginSessionBinding
 ): Promise<UtsuriReport> {
+  const projectRoot = await resolveFeedbackProjectRoot(cwd, environment);
   const detected = sessionInput(environment);
   if (publishedOrigin) {
     assertArtifact("origin-session", publishedOrigin);
@@ -160,7 +254,8 @@ export async function prepareFeedbackRuntime(
   runValue: string,
   environment: NodeJS.ProcessEnv = process.env
 ): Promise<FeedbackRuntime> {
-  const runDirectory = await resolveContainedPath(cwd, runValue);
+  const projectRoot = await resolveFeedbackProjectRoot(cwd, environment);
+  const runDirectory = await resolveContainedPath(projectRoot, runValue);
   const reportDirectory = path.join(runDirectory, "report");
   const validation = await validateReportDirectory(reportDirectory, { strict: true });
   if (!validation.ok) {
@@ -174,7 +269,70 @@ export async function prepareFeedbackRuntime(
     ).toString("utf8"),
     { label: "feedback report", maximumBytes: 32 * 1024 * 1024 }
   ) as UtsuriReport;
-  const { binding, currentSession } = await createRuntimeSessionContext(cwd, report, environment);
+  const { binding, currentSession } = await createRuntimeSessionContext(
+    projectRoot,
+    report,
+    environment
+  );
+  assertOriginSessionMatch(binding, currentSession);
+  return {
+    runDirectory,
+    report,
+    binding,
+    currentSession,
+    service: new ReviewMcpService({ runDirectory, report, currentSession })
+  };
+}
+
+export async function prepareRegisteredFeedbackRuntime(
+  projectRoot: string,
+  registration: McpRunRegistration,
+  environment: NodeJS.ProcessEnv = process.env
+): Promise<FeedbackRuntime> {
+  assertArtifact("mcp-run-registration", registration);
+  const runDirectory = await resolveContainedPath(projectRoot, registration.runPath);
+  const reportDirectory = path.join(runDirectory, "report");
+  const validation = await validateReportDirectory(reportDirectory, { strict: true });
+  if (!validation.ok) {
+    feedbackError(
+      "MCP_REGISTRATION_REPORT_INVALID",
+      "Registered report is no longer strict-valid",
+      ExitCode.Artifact
+    );
+  }
+  const reportBytes = await readContainedRegularFile(reportDirectory, "report.json", {
+    maximumBytes: 32 * 1024 * 1024
+  });
+  if (createHash("sha256").update(reportBytes).digest("hex") !== registration.reportSha256) {
+    feedbackError(
+      "MCP_REGISTRATION_REPORT_CHANGED",
+      "Registered report bytes changed",
+      ExitCode.Security
+    );
+  }
+  const report = parseBoundedJson(reportBytes.toString("utf8"), {
+    label: "registered feedback report",
+    maximumBytes: 32 * 1024 * 1024
+  }) as UtsuriReport;
+  assertArtifact("report", report);
+  if (
+    report.reportId !== registration.reportId ||
+    report.origin.reportId !== registration.reportId ||
+    report.origin.sessionRef !== registration.sessionRef ||
+    report.origin.projectFingerprint !== registration.projectFingerprint ||
+    report.origin.createdAt !== registration.createdAt
+  ) {
+    feedbackError(
+      "MCP_REGISTRATION_BINDING_CHANGED",
+      "Registered report binding changed",
+      ExitCode.Security
+    );
+  }
+  const { binding, currentSession } = await createRuntimeSessionContext(
+    projectRoot,
+    report,
+    environment
+  );
   assertOriginSessionMatch(binding, currentSession);
   return {
     runDirectory,

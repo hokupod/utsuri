@@ -8,6 +8,7 @@ import contextPackSchema from "../../../schemas/context-pack.schema.json" with {
 import diffSchema from "../../../schemas/diff.schema.json" with { type: "json" };
 import evidenceIndexSchema from "../../../schemas/evidence-index.schema.json" with { type: "json" };
 import feedbackBatchSchema from "../../../schemas/feedback-batch.schema.json" with { type: "json" };
+import mcpRunRegistrationSchema from "../../../schemas/mcp-run-registration.schema.json" with { type: "json" };
 import originSessionSchema from "../../../schemas/origin-session.schema.json" with { type: "json" };
 import reportSchema from "../../../schemas/report.schema.json" with { type: "json" };
 import reviewAnswerSchema from "../../../schemas/review-answer.schema.json" with { type: "json" };
@@ -29,6 +30,7 @@ const schemaMap = {
   diff: diffSchema,
   "evidence-index": evidenceIndexSchema,
   "feedback-batch": feedbackBatchSchema,
+  "mcp-run-registration": mcpRunRegistrationSchema,
   "origin-session": originSessionSchema,
   report: reportSchema,
   "review-answer": reviewAnswerSchema,

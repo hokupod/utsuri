@@ -8,6 +8,7 @@ import {
   readFile,
   realpath,
   rm,
+  symlink,
   writeFile
 } from "node:fs/promises";
 import { tmpdir } from "node:os";
@@ -15,6 +16,8 @@ import path from "node:path";
 import { parse } from "yaml";
 import { executeCli } from "./cli";
 import { validateArtifact } from "@utsu-ri/report-model";
+import { readMcpRunRegistrations } from "@utsu-ri/review-mcp-server";
+import { PluginBrokerMcpService } from "./mcp";
 
 const temporaryDirectories: string[] = [];
 
@@ -72,8 +75,8 @@ describe("CLI", () => {
       ok: true,
       command: "version",
       package: "@utsu-ri/cli",
-      version: "0.1.0",
-      protocolVersion: "1.0"
+      version: "0.2.0",
+      protocolVersion: "1.1"
     });
   });
 
@@ -132,9 +135,12 @@ describe("CLI", () => {
     const finalized = await executeCli(["finalize", "--run", "run", "--json"], root, {});
     expect(finalized.exitCode).toBe(0);
     const repeated = await executeCli(["finalize", "--run", "run", "--json"], root, {
-      UTSURI_CODEX_SESSION_ID: "late-origin-session"
+      CODEX_THREAD_ID: "late-origin-session"
     });
-    expect(repeated).toMatchObject({ exitCode: 0, data: { reused: true } });
+    expect(repeated).toMatchObject({
+      exitCode: 0,
+      data: { reused: true, mcpRegistration: "not-registered", mcpRegistrationReused: false }
+    });
     const report = JSON.parse(await readFile(path.join(run, "report/report.json"), "utf8")) as {
       origin: { bindingMode: string };
     };
@@ -147,11 +153,12 @@ describe("CLI", () => {
     const { root, run } = await createRun();
 
     const environment = {
-      UTSURI_CODEX_SESSION_ID: "fixture-origin-session"
+      CODEX_THREAD_ID: "fixture-origin-session"
     };
     const finalized = await executeCli(["finalize", "--run", "run", "--json"], root, environment);
     const repeated = await executeCli(["finalize", "--run", "run", "--json"], root, environment);
     const report = JSON.parse(await readFile(path.join(run, "report/report.json"), "utf8")) as {
+      reportId: string;
       origin: {
         host: string;
         sessionRef?: string;
@@ -160,17 +167,79 @@ describe("CLI", () => {
     };
 
     expect(finalized.exitCode, JSON.stringify(finalized.data)).toBe(0);
-    expect(repeated).toMatchObject({ exitCode: 0, data: { reused: true } });
+    expect(repeated).toMatchObject({
+      exitCode: 0,
+      data: { reused: true, mcpRegistration: "registered", mcpRegistrationReused: true }
+    });
     expect(report.origin.host).toBe("codex");
     expect(report.origin.bindingMode).toBe("return-to-session");
     expect(report.origin.sessionRef).toMatch(/^session:[a-f0-9]{64}$/u);
     expect(JSON.stringify(report.origin)).not.toContain("fixture-origin-session");
+    const registrations = await readMcpRunRegistrations(root);
+    expect(registrations).toHaveLength(1);
+    expect(registrations[0]?.reportId).toBe(report.reportId);
+    expect(JSON.stringify(registrations)).not.toContain("fixture-origin-session");
+    expect(JSON.stringify(registrations)).not.toContain(root);
 
     const mismatched = await executeCli(["finalize", "--run", "run", "--json"], root, {
-      UTSURI_CODEX_SESSION_ID: "another-origin-session"
+      CODEX_THREAD_ID: "another-origin-session"
     });
     expect(mismatched.exitCode).toBe(6);
     expect(errorId(mismatched)).toBe("ORIGIN_SESSION_MISMATCH");
+  });
+
+  test("keeps legacy fixed-run finalize identities compatible", async () => {
+    for (const environment of [
+      { UTSURI_CODEX_SESSION_ID: "legacy-finalize-codex" },
+      { CLAUDE_SESSION_ID: "legacy-finalize-claude" }
+    ]) {
+      const { root } = await createRun();
+      const finalized = await executeCli(["finalize", "--run", "run", "--json"], root, environment);
+      expect(finalized.exitCode, JSON.stringify(finalized.data)).toBe(0);
+      expect(finalized.data).toMatchObject({ mcpRegistration: "registered" });
+    }
+  });
+
+  test("binds Claude finalize from a child cwd to the canonical host project root", async () => {
+    const { root } = await createRun();
+    const child = path.join(root, "child");
+    await mkdir(child);
+    const environment = {
+      CLAUDE_CODE_SESSION_ID: "claude-child-session",
+      CLAUDE_PROJECT_DIR: await realpath(root)
+    };
+    const finalized = await executeCli(["finalize", "--run", "run", "--json"], child, environment);
+    expect(finalized.exitCode, JSON.stringify(finalized.data)).toBe(0);
+    const reportId = (finalized.data as { reportId: string }).reportId;
+    expect(await readMcpRunRegistrations(root)).toHaveLength(1);
+    const visible = await new PluginBrokerMcpService(root, environment).callTool(
+      "review_list_batches",
+      {}
+    );
+    expect(visible).toMatchObject({ reportId });
+  });
+
+  test("rejects missing, filesystem-root, symlinked, and unrelated Claude project roots", async () => {
+    const { root } = await createRun();
+    const child = path.join(root, "child");
+    await mkdir(child);
+    const linked = `${root}-link`;
+    temporaryDirectories.push(linked);
+    await symlink(root, linked);
+    const other = await mkdtemp(path.join(tmpdir(), "utsuri-cli-other-project-"));
+    temporaryDirectories.push(other);
+    for (const [projectRoot, expected] of [
+      [undefined, "ORIGIN_PROJECT_CONTEXT_REQUIRED"],
+      [path.parse(root).root, "ORIGIN_PROJECT_INVALID"],
+      [linked, "ORIGIN_PROJECT_AMBIGUOUS"],
+      [await realpath(other), "ORIGIN_PROJECT_MISMATCH"]
+    ] as const) {
+      const result = await executeCli(["finalize", "--run", "run", "--json"], child, {
+        CLAUDE_CODE_SESSION_ID: "claude-invalid-project",
+        ...(projectRoot ? { CLAUDE_PROJECT_DIR: projectRoot } : {})
+      });
+      expect(errorId(result)).toBe(expected);
+    }
   });
 
   test("collects a patch and finalizes an uncovered code-only report", async () => {
