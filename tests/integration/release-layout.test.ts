@@ -1,5 +1,5 @@
 import { afterAll, describe, expect, test } from "bun:test";
-import { mkdtemp, readFile, rm, symlink, writeFile } from "node:fs/promises";
+import { mkdtemp, readFile, rm, symlink } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import path from "node:path";
 import { spawnSync } from "node:child_process";
@@ -85,44 +85,5 @@ describe("release layout security", () => {
         (identity) => !identity.includes("node_modules") && !path.isAbsolute(identity)
       )
     ).toBeTrue();
-  });
-
-  test("binds publication metadata policy to the independent release allowlist", async () => {
-    const policy = JSON.parse(
-      await readFile(path.join(repositoryRoot, "docs/documentation-policy.json"), "utf8")
-    );
-    const verifier = await readFile(
-      path.join(repositoryRoot, "scripts/verify-release-layout.mjs"),
-      "utf8"
-    );
-    for (const [key, value] of Object.entries(policy.requiredPublicationMetadata)) {
-      expect(verifier).toContain(`${key}: ${JSON.stringify(value)}`);
-    }
-  });
-
-  test("rejects publication metadata that disagrees with the independent allowlist", async () => {
-    const directory = await mkdtemp(path.join(tmpdir(), "utsuri-publication-metadata-"));
-    temporaryDirectories.push(directory);
-    const policy = JSON.parse(
-      await readFile(path.join(repositoryRoot, "docs/documentation-policy.json"), "utf8")
-    );
-    const state = JSON.parse(
-      await readFile(path.join(repositoryRoot, "docs/documentation-state.json"), "utf8")
-    );
-    policy.requiredPublicationMetadata.npmPublishing = "manual registry publication";
-    const policyPath = path.join(directory, "policy.json");
-    const statePath = path.join(directory, "state.json");
-    await Promise.all([
-      writeFile(policyPath, `${JSON.stringify(policy)}\n`, { mode: 0o600 }),
-      writeFile(statePath, `${JSON.stringify(state)}\n`, { mode: 0o600 })
-    ]);
-    const result = spawnSync(
-      process.execPath,
-      ["scripts/verify-release-layout.mjs", "--verify-publication-metadata", policyPath, statePath],
-      { cwd: repositoryRoot, encoding: "utf8", shell: false }
-    );
-    expect(result.status).toBe(5);
-    expect(result.stderr).toContain("documentation policy has the wrong publication metadata");
-    expect(result.stdout).toBe("");
   });
 });

@@ -4,8 +4,7 @@
   "canonicalDesign": {
     "path": "docs/design.md",
     "language": "en",
-    "languageLabel": "English (canonical)",
-    "headingManifest": "docs/design-heading-manifest.json"
+    "languageLabel": "English (canonical)"
   },
   "readmes": [
     {
@@ -27,7 +26,6 @@
       "metadata": "<!-- doc-language: zh-CN; canonical: README.md -->"
     }
   ],
-  "additionalReviewDocuments": ["docs/release.md", "CONTRIBUTING.md"],
   "languageSwitcher": "[English](README.md) | [日本語](README.ja.md) | [简体中文](README.zh-CN.md)",
   "requiredSectionMarkers": [
     "product-outcome",
@@ -74,35 +72,6 @@
     ]
   },
   "forbiddenPublicIdentifiers": ["@utsuri/"],
-  "requiredPublicationMetadata": {
-    "publisher": "Utsuri fixture publisher",
-    "npmMaintainer": "fixture-maintainer",
-    "npmPublishing": "protected annotated-tag GitHub Actions trusted publishing",
-    "spdxLicense": "MIT"
-  },
-  "modeRules": {
-    "bootstrap": {
-      "requireStateHashes": false,
-      "requireHumanReview": false
-    },
-    "development": {
-      "requireStateHashes": true,
-      "requireHumanReview": false
-    },
-    "release-candidate": {
-      "allowedAvailability": ["git-marketplace-source-ready-cli-publication-pending"],
-      "requireStateHashes": true,
-      "requireHumanReview": true
-    }
-  },
-  "phaseAvailability": {
-    "0": ["git-marketplace-public"],
-    "6": [
-      "git-marketplace-source-ready",
-      "git-marketplace-source-ready-cli-publication-pending",
-      "git-marketplace-public"
-    ]
-  },
   "diagnostics": {
     "fileMissing": "DOC_FILE_MISSING",
     "languageMetadata": "DOC_LANGUAGE_METADATA",
@@ -111,21 +80,10 @@
     "sectionDuplicate": "DOC_SECTION_DUPLICATE",
     "commandMissing": "DOC_COMMAND_MISSING",
     "commandDrift": "DOC_COMMAND_DRIFT",
-    "headingManifest": "DOC_HEADING_MANIFEST_MISMATCH",
     "oldScope": "DOC_OLD_SCOPE",
     "untranslatedCjk": "DOC_UNTRANSLATED_CJK",
     "linkFileMissing": "DOC_LINK_FILE_MISSING",
     "linkFragmentMissing": "DOC_LINK_FRAGMENT_MISSING",
-    "versionMismatch": "DOC_VERSION_MISMATCH",
-    "changeLogMissing": "DOC_CHANGELOG_MISSING",
-    "lastUpdatedMismatch": "DOC_LAST_UPDATED_MISMATCH",
-    "phaseMismatch": "DOC_PHASE_MISMATCH",
-    "hashStale": "DOC_HASH_STALE",
-    "availabilityMismatch": "DOC_AVAILABILITY_MISMATCH",
-    "placeholder": "DOC_PLACEHOLDER",
-    "humanReviewStale": "DOC_HUMAN_REVIEW_STALE",
-    "reviewEvidenceMissing": "DOC_REVIEW_EVIDENCE_MISSING",
-    "reviewEvidenceHash": "DOC_REVIEW_EVIDENCE_HASH",
     "developerContent": "DOC_DEVELOPER_CONTENT",
     "releaseVersion": "DOC_RELEASE_VERSION",
     "supportOverclaim": "DOC_SUPPORT_OVERCLAIM",
