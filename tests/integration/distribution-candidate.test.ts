@@ -1,4 +1,5 @@
 import { afterAll, describe, expect, test } from "bun:test";
+import { spawnSync } from "node:child_process";
 import { createHash } from "node:crypto";
 import { chmod, cp, mkdtemp, mkdir, readFile, rm, writeFile } from "node:fs/promises";
 import os from "node:os";
@@ -15,7 +16,6 @@ import {
   verifyReleaseAssets
 } from "../../scripts/release-assets.mjs";
 import { expectedInstalledCliIdentity } from "../../scripts/verify-installed-cli.mjs";
-import { executeCli } from "../../packages/cli/src/cli";
 import { nativeHelperPackageVersion } from "../../packages/security/src/native-helper";
 import { repositoryRoot } from "./capture-helpers";
 
@@ -31,6 +31,26 @@ afterAll(async () => {
 
 function sha256(bytes: Uint8Array): string {
   return createHash("sha256").update(bytes).digest("hex");
+}
+
+function runCommand(executable: string, arguments_: string[], cwd: string) {
+  const result = spawnSync(executable, arguments_, {
+    cwd,
+    encoding: "utf8",
+    env: {
+      LANG: process.env.LANG ?? "C.UTF-8",
+      LC_ALL: process.env.LC_ALL ?? "C.UTF-8",
+      PATH: process.env.PATH,
+      TMPDIR: process.env.TMPDIR
+    },
+    shell: false,
+    timeout: 30_000
+  });
+  if (result.error) throw result.error;
+  if (result.status !== 0 || result.signal) {
+    throw new Error(`${executable} failed: ${result.stderr || result.stdout}`);
+  }
+  return result;
 }
 
 function fixtureBinary(target: string): Buffer {
@@ -107,13 +127,72 @@ async function repositoryFixtureRoot(base: string, version: string): Promise<str
 
 describe("distribution candidate assembly", () => {
   test("keeps the isolated install identity synchronized with the CLI", async () => {
-    const manifest = JSON.parse(
-      await readFile(path.join(repositoryRoot, "package.json"), "utf8")
-    ) as { version: string };
-    const result = await executeCli(["--version", "--json"]);
+    const scratch = await mkdtemp(path.join(os.tmpdir(), "utsuri-candidate-install-test-"));
+    temporaryDirectories.push(scratch);
+    const nativeRoot = await nativeFixtureRoot(scratch);
+    const candidate = path.join(scratch, "candidate");
+    const { manifest } = await assembleDistributionCandidate(candidate, nativeRoot, repositoryRoot);
+    const target = `${process.platform}-${process.arch}`;
+    if (!nativeTargets.includes(target)) throw new Error(`unsupported test target: ${target}`);
 
-    expect(result.exitCode).toBe(0);
-    expect(result.data).toEqual(expectedInstalledCliIdentity(manifest.version));
+    const tarballs = path.join(scratch, "tarballs");
+    const installRoot = path.join(scratch, "install");
+    const npmCache = path.join(scratch, "npm-cache");
+    const npmUserConfig = path.join(scratch, "npmrc");
+    const npmGlobalConfig = path.join(scratch, "npmrc-global");
+    await Promise.all([
+      mkdir(tarballs, { mode: 0o700 }),
+      mkdir(installRoot, { mode: 0o700 }),
+      writeFile(npmUserConfig, "", { mode: 0o600 }),
+      writeFile(npmGlobalConfig, "", { mode: 0o600 })
+    ]);
+    const npmIsolation = [
+      "--offline",
+      "--ignore-scripts",
+      "--no-audit",
+      "--no-fund",
+      "--package-lock=false",
+      "--update-notifier=false",
+      "--cache",
+      npmCache,
+      "--userconfig",
+      npmUserConfig,
+      "--globalconfig",
+      npmGlobalConfig
+    ];
+    for (const packageRoot of [
+      path.join(candidate, "packages/native", target),
+      path.join(candidate, "packages/cli")
+    ]) {
+      runCommand(
+        "npm",
+        ["pack", packageRoot, "--json", "--pack-destination", tarballs, ...npmIsolation],
+        scratch
+      );
+    }
+
+    const packageTarballs = new Map<string, string>(
+      expectedPackageTarballs(manifest.version).map(
+        ({ packageName, relative }) => [packageName, path.join(scratch, relative)] as const
+      )
+    );
+    const nativeTarball = packageTarballs.get(`@utsu-ri/cli-${target}`);
+    const cliTarball = packageTarballs.get("@utsu-ri/cli");
+    if (!nativeTarball || !cliTarball) throw new Error("expected host and CLI tarballs");
+    runCommand(
+      "npm",
+      ["install", "--prefix", installRoot, ...npmIsolation, nativeTarball, cliTarball],
+      scratch
+    );
+
+    const result = runCommand(
+      path.join(installRoot, "node_modules/.bin/utsuri"),
+      ["--version", "--json"],
+      installRoot
+    );
+
+    expect(result.stderr).toBe("");
+    expect(JSON.parse(result.stdout)).toEqual(expectedInstalledCliIdentity(manifest.version));
     expect(nativeHelperPackageVersion).toBe(manifest.version);
   });
 

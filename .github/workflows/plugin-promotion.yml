@@ -79,6 +79,7 @@ jobs:
           utsuri_install_root="$(mktemp -d)"
           trap 'rm -rf "${utsuri_install_root}"' EXIT
           : > "${utsuri_install_root}/npmrc"
+          : > "${utsuri_install_root}/npmrc-global"
           npm install \
             --prefix "${utsuri_install_root}" \
             --ignore-scripts \
@@ -87,6 +88,7 @@ jobs:
             --package-lock=false \
             --cache "${utsuri_install_root}/cache" \
             --userconfig "${utsuri_install_root}/npmrc" \
+            --globalconfig "${utsuri_install_root}/npmrc-global" \
             "@utsu-ri/cli-linux-x64@${UTSURI_VERSION}" \
             "@utsu-ri/cli@${UTSURI_VERSION}"
           node scripts/verify-installed-cli.mjs \
