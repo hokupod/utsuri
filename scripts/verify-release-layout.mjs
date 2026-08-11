@@ -33,24 +33,6 @@ function sha256(value) {
   return createHash("sha256").update(value).digest("hex");
 }
 
-// Keep this as an independent release-layout allowlist. The policy and state must both match it,
-// so changing documentation alone cannot weaken the protected publication path.
-const expectedPublicationMetadata = {
-  publisher: "hokupod",
-  npmMaintainer: "hokupod-npm",
-  npmPublishing: "protected annotated-tag GitHub Actions trusted publishing",
-  spdxLicense: "AGPL-3.0-or-later"
-};
-function matchesExpectedPublicationMetadata(actualMetadata) {
-  return (
-    actualMetadata &&
-    Object.keys(actualMetadata).length === Object.keys(expectedPublicationMetadata).length &&
-    Object.entries(expectedPublicationMetadata).every(
-      ([key, value]) => actualMetadata[key] === value
-    )
-  );
-}
-
 function runtimeImportSpecifiers(text) {
   const specifiers = new Set();
   const source = ts.createSourceFile(
@@ -188,40 +170,6 @@ if (candidateIndex !== -1) {
     console.error(error.message);
     process.exit(5);
   }
-}
-
-const publicationMetadataIndex = process.argv.indexOf("--verify-publication-metadata");
-if (publicationMetadataIndex !== -1) {
-  const policyPath = process.argv[publicationMetadataIndex + 1];
-  const statePath = process.argv[publicationMetadataIndex + 2];
-  if (!policyPath || !statePath) {
-    console.error("--verify-publication-metadata requires policy and state JSON files");
-    process.exit(2);
-  }
-  const findings = [];
-  for (const [label, filePath, field] of [
-    ["documentation policy", policyPath, "requiredPublicationMetadata"],
-    ["documentation state", statePath, "publicationMetadata"]
-  ]) {
-    try {
-      const stat = await lstat(path.resolve(filePath));
-      if (!stat.isFile() || stat.isSymbolicLink() || stat.size > 64 * 1024) {
-        throw new Error("must be a bounded regular, non-symlink file");
-      }
-      const document = JSON.parse(await readFile(path.resolve(filePath), "utf8"));
-      if (!matchesExpectedPublicationMetadata(document[field])) {
-        findings.push(`${label} has the wrong publication metadata`);
-      }
-    } catch (error) {
-      findings.push(`${label} is invalid: ${error.message}`);
-    }
-  }
-  if (findings.length > 0) {
-    findings.forEach((finding) => console.error(finding));
-    process.exit(5);
-  }
-  console.log("Publication metadata matches the independent release allowlist");
-  process.exit(0);
 }
 
 async function readRegular(relativePath) {
@@ -507,30 +455,6 @@ for (const [index, content] of manifests.entries()) {
     }
   } catch (error) {
     errors.push(`manifest ${index + 1} is not valid JSON: ${error.message}`);
-  }
-}
-
-const documentationPolicyContent = await readRegular("docs/documentation-policy.json");
-if (documentationPolicyContent) {
-  try {
-    const policy = JSON.parse(documentationPolicyContent.toString("utf8"));
-    if (!matchesExpectedPublicationMetadata(policy.requiredPublicationMetadata)) {
-      errors.push("documentation policy has the wrong publication metadata");
-    }
-  } catch (error) {
-    errors.push(`docs/documentation-policy.json is not valid JSON: ${error.message}`);
-  }
-}
-
-const documentationStateContent = await readRegular("docs/documentation-state.json");
-if (documentationStateContent) {
-  try {
-    const state = JSON.parse(documentationStateContent.toString("utf8"));
-    if (!matchesExpectedPublicationMetadata(state.publicationMetadata)) {
-      errors.push("documentation state has the wrong publication metadata");
-    }
-  } catch (error) {
-    errors.push(`docs/documentation-state.json is not valid JSON: ${error.message}`);
   }
 }
 

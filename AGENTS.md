@@ -19,3 +19,9 @@
 ## Review scope
 
 - Do not implement advisory-only review findings unless the user explicitly requests them; keep fixes limited to decision-active findings and observed failures.
+
+## Harness scope
+
+- Keep verification proportional to an observed failure boundary. Do not add document-byte hashes, approval transcripts, or parallel state files; Git history and pull-request review are the documentation record.
+- Do not run the same test or verifier more than once in a required local or CI path unless each invocation exercises a distinct runtime or artifact.
+- Before adding a gate, identify the unique failure it catches and prefer extending the smallest existing check.

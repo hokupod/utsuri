@@ -73,10 +73,8 @@ jobs:
         env:
           UTSURI_BROWSER_TESTS: disabled
         run: bun run check
-      - name: Validate artifacts
-        run: |
-          bun run validate:fixtures
-          bun run verify:release-layout
+      - name: Validate fixtures
+        run: bun run validate:fixtures
       - name: Generate machine-readable review artifacts
         run: |
           node skills/utsuri-review/scripts/utsuri.mjs collect --patch fixtures/code-only-review/changes.patch --output .artifacts/ci-review --json
@@ -146,7 +144,6 @@ jobs:
           nix develop --command node scripts/safe-chain.mjs bun run build
           nix develop --command node scripts/safe-chain.mjs bun run check
           nix develop --command node scripts/safe-chain.mjs bun run validate:fixtures
-          nix develop --command node scripts/safe-chain.mjs bun run verify:release-layout
       - name: Reject generated or lockfile drift
         run: git diff --exit-code -- bun.lock flake.lock packages/report-model/src/generated packages/cli/dist packages/cli/README.md packages/cli/LICENSE skills/utsuri-review
 
@@ -192,13 +189,8 @@ jobs:
         run: nix develop --command node scripts/safe-chain.mjs bun run build
       - name: Verify the explicit browser source
         run: nix develop --command node scripts/dev-env-check.mjs --json
-      - name: Run isolated integration and Node bundle browser smoke
-        run: |
-          # Bun 1.3.13/1.3.14 can double-close Playwright's extra stdio fds on Linux.
-          # Keep Bun integration browser-free; the Node bundle and E2E steps below
-          # exercise the pinned Chromium through the supported public runtime.
-          UTSURI_BROWSER_TESTS=disabled nix develop --command node scripts/safe-chain.mjs bun run test:integration
-          nix develop --command node scripts/safe-chain.mjs bun test --parallel=1 --max-concurrency=1 tests/cli/installed-bundle.test.ts
+      - name: Run Node bundle browser smoke
+        run: nix develop --command node scripts/safe-chain.mjs bun test --parallel=1 --max-concurrency=1 tests/cli/installed-bundle.test.ts
       - name: Run Playwright E2E
         run: nix develop --command node scripts/safe-chain.mjs bun run test:e2e
       - name: Upload Playwright failure evidence

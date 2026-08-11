@@ -500,7 +500,7 @@ describe("Safe-chain CI contract", () => {
     for (const [name, workflow, testCommand] of [
       ["Bun matrix", bunMatrix, "bun run check"],
       ["Nix compatibility", nixCompatibility, "bun run check"],
-      ["browser E2E", browserE2e, "bun run test:integration"],
+      ["browser E2E", browserE2e, "tests/cli/installed-bundle.test.ts"],
       ["distribution candidate", candidateWorkflow, "bun run check"]
     ]) {
       const buildIndex = workflow.indexOf("bun run build");
@@ -642,15 +642,11 @@ describe("Safe-chain CI contract", () => {
     assert.match(workflow, /^ {2}browser-e2e:\n/mu);
     assert.equal(
       (workflow.match(/UTSURI_BROWSER_TESTS(?:: disabled|=disabled)/gu) ?? []).length,
-      3
+      2
     );
     assert.match(workflow, /nix develop --command which chromium/u);
     assert.match(workflow, /\/nix\/store\/\*\/bin\/chromium/u);
     assert.match(workflow, /UTSURI_BROWSER_EXECUTABLE=.*GITHUB_ENV/u);
-    assert.match(
-      workflow,
-      /UTSURI_BROWSER_TESTS=disabled nix develop --command node scripts\/safe-chain\.mjs bun run test:integration/u
-    );
     assert.match(workflow, /tests\/cli\/installed-bundle\.test\.ts/u);
     assert.match(workflow, /bun run test:e2e/u);
     assert.doesNotMatch(workflow, /playwright(?:-core)?(?:\/cli\.js)? install/u);

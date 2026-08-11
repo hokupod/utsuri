@@ -89,7 +89,7 @@ The four-platform aggregate cannot be claimed from one host. The workflow must p
 
 The tag-triggered workflow performs these ordered gates:
 
-1. Require an annotated `v<version>` tag at the exact `main` commit, a dated CHANGELOG entry, and current human-reviewed documentation hashes.
+1. Require an annotated `v<version>` tag at the exact `main` commit, a dated CHANGELOG entry, and successful exact-main CI.
 2. Scan the complete release history for private local paths and secrets with the repository scanner and Gitleaks.
 3. Call the same read-only four-platform Distribution Candidate workflow.
 4. Enter the protected `release` environment with `id-token: write`, verify the downloaded candidate, and publish through npm trusted publishing without `NODE_AUTH_TOKEN` or `NPM_TOKEN`.
@@ -113,9 +113,7 @@ Required repository configuration mirrors Kyoso:
 6. Approve the protected `release` environment. The workflow publishes the four helpers before the CLI, verifies every registry integrity, runs native `npx` and `bunx` smoke, and creates the immutable GitHub Release.
 7. Verify the published tag, five package integrities, provenance, release assets, and live Plugin installation before declaring availability.
 
-The pre-publication candidate intentionally keeps documentation availability at `git-marketplace-source-ready-cli-publication-pending`. Release-candidate validation accepts that state only when the source, publication metadata, and human-review evidence are complete. Change availability to `git-marketplace-public` in a post-publication documentation update only after step 7 succeeds.
-
-For a later synchronized release, its version-preparation change moves availability from `git-marketplace-public` back to `git-marketplace-source-ready-cli-publication-pending` before candidate validation; already-published versions remain public while that new version is pending.
+Do not declare a release publicly available until step 7 succeeds. A later release remains publicly available while its new candidate is prepared; documentation alone is not a release-authorization signal.
 
 If publication fails after some package versions appear, rerun the same immutable tag workflow; the integrity reconciliation accepts only exact candidate bytes. Never move or recreate the tag. If a draft GitHub Release remains after an upload failure, the workflow intentionally refuses to overwrite it; inspect and reconcile that draft explicitly before retrying. Follow [npm trusted publishing](https://docs.npmjs.com/trusted-publishers/) and [npm provenance](https://docs.npmjs.com/generating-provenance-statements/) for current operator-side behavior.
 
@@ -141,11 +139,11 @@ No post-publication smoke may filter wrapper output to make invalid JSON appear 
 
 Local source verification cannot establish these external or human gates:
 
-- a current human semantic review of this release guide, the English design, `CONTRIBUTING.md`, and all three READMEs, bound to all six exact hashes;
+- normal pull-request review of the changed release and user documentation;
 - successful `main` CI and a manual four-platform Distribution Candidate run on the exact release commit;
 - the protected GitHub Environment and `v*` tag ruleset described above;
 - explicit authorization and successful publication of exact CLI/native-helper `0.2.0` artifacts;
 - native registry JSON and MCP NDJSON verification of the exact published bytes;
-- a separately authorized Plugin promotion write and human-reviewed source change;
+- a separately authorized Plugin promotion write and reviewed source change;
 - a separately authorized Git push / pull request / merge; and
 - live Git-source install, discovery, disable, and removal on every host release listed in `docs/compatibility/plugin-runtime.json` after merge.

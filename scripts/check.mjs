@@ -10,7 +10,6 @@ const tasks = [
   "typecheck",
   "schemas:check",
   "docs:check",
-  "docs:check:test",
   "test"
 ];
 

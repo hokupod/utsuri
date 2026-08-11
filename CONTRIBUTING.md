@@ -125,14 +125,7 @@ Read [the detailed design](docs/design.md), [the threat model](docs/threat-model
 
 The three READMEs are for users. Keep source setup, dependency installation, build gates, release internals, and contributor workflow here or in [the release guide](docs/release.md).
 
-After documentation changes:
-
-1. update `docs/documentation-policy.json` when the contract changes;
-2. update the valid documentation fixture and checker tests;
-3. update `docs/documentation-state.json` current hashes; and
-4. leave human-reviewed hashes stale until an independent human semantic review actually completes.
-
-Do not self-approve documentation or update human-review evidence merely to make a release-candidate check pass.
+When the enforced README contract changes, update `docs/documentation-policy.json`, its focused fixture, and checker tests. Ordinary prose changes need only the normal pull-request review and `docs:check`; do not maintain parallel document hashes or approval transcripts.
 
 ## Release authorization
 

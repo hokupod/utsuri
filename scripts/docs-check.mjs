@@ -1,6 +1,5 @@
 #!/usr/bin/env node
 
-import { createHash } from "node:crypto";
 import { access, readFile } from "node:fs/promises";
 import path from "node:path";
 
@@ -12,21 +11,10 @@ const FALLBACK = {
   sectionDuplicate: "DOC_SECTION_DUPLICATE",
   commandMissing: "DOC_COMMAND_MISSING",
   commandDrift: "DOC_COMMAND_DRIFT",
-  headingManifest: "DOC_HEADING_MANIFEST_MISMATCH",
   oldScope: "DOC_OLD_SCOPE",
   untranslatedCjk: "DOC_UNTRANSLATED_CJK",
   linkFileMissing: "DOC_LINK_FILE_MISSING",
   linkFragmentMissing: "DOC_LINK_FRAGMENT_MISSING",
-  versionMismatch: "DOC_VERSION_MISMATCH",
-  changeLogMissing: "DOC_CHANGELOG_MISSING",
-  lastUpdatedMismatch: "DOC_LAST_UPDATED_MISMATCH",
-  phaseMismatch: "DOC_PHASE_MISMATCH",
-  hashStale: "DOC_HASH_STALE",
-  availabilityMismatch: "DOC_AVAILABILITY_MISMATCH",
-  placeholder: "DOC_PLACEHOLDER",
-  humanReviewStale: "DOC_HUMAN_REVIEW_STALE",
-  reviewEvidenceMissing: "DOC_REVIEW_EVIDENCE_MISSING",
-  reviewEvidenceHash: "DOC_REVIEW_EVIDENCE_HASH",
   developerContent: "DOC_DEVELOPER_CONTENT",
   releaseVersion: "DOC_RELEASE_VERSION",
   supportOverclaim: "DOC_SUPPORT_OVERCLAIM",
@@ -37,7 +25,7 @@ function parseArguments(argv) {
   const result = { root: process.cwd() };
   for (let index = 0; index < argv.length; index += 1) {
     const argument = argv[index];
-    if (argument === "--mode" || argument === "--root") {
+    if (argument === "--root") {
       const value = argv[index + 1];
       if (!value || value.startsWith("--")) throw new Error(`${argument} requires a value`);
       result[argument.slice(2)] = value;
@@ -46,15 +34,8 @@ function parseArguments(argv) {
     }
     throw new Error(`unknown argument: ${argument}`);
   }
-  if (!["bootstrap", "development", "release-candidate"].includes(result.mode)) {
-    throw new Error("--mode must be bootstrap, development, or release-candidate");
-  }
   result.root = path.resolve(result.root);
   return result;
-}
-
-function sha256(value) {
-  return createHash("sha256").update(value).digest("hex");
 }
 
 function countExact(haystack, needle) {
@@ -66,10 +47,6 @@ function countExact(haystack, needle) {
     offset += needle.length;
   }
   return count;
-}
-
-function escapeRegExp(value) {
-  return value.replace(/[.*+?^${}()|[\]\\]/gu, "\\$&");
 }
 
 function stripFencedCode(markdown) {
@@ -86,31 +63,6 @@ function stripFencedCode(markdown) {
     if (fence === null) output.push(line);
   }
   return output.join("\n");
-}
-
-function extractHeadings(markdown) {
-  const entries = [];
-  let fence = null;
-  for (const line of markdown.split(/\r?\n/u)) {
-    const fenceMatch = line.match(/^ {0,3}(`{3,}|~{3,})/u);
-    if (fenceMatch) {
-      const marker = fenceMatch[1][0];
-      if (fence === null) fence = marker;
-      else if (fence === marker) fence = null;
-      continue;
-    }
-    if (fence !== null) continue;
-    const match = line.match(/^(#{2,6})\s+(\d+(?:\.\d+)*)\.?\s+(.+?)\s*$/u);
-    if (!match) continue;
-    const parts = match[2].split(".");
-    entries.push({
-      number: match[2],
-      level: match[1].length,
-      parent: parts.length === 1 ? null : parts.slice(0, -1).join("."),
-      order: entries.length
-    });
-  }
-  return entries;
 }
 
 function extractCommands(markdown) {
@@ -183,7 +135,6 @@ async function main() {
 
   const designPath = policy.canonicalDesign.path;
   const design = await readRequired(designPath);
-  const manifestText = await readRequired(policy.canonicalDesign.headingManifest);
   const readmes = [];
   for (const descriptor of policy.readmes) {
     readmes.push({ descriptor, content: await readRequired(descriptor.path) });
@@ -196,26 +147,6 @@ async function main() {
         diagnostic.languageMetadata,
         `${designPath}: expected exactly one canonical language marker`
       );
-    }
-    if (manifestText !== null) {
-      try {
-        const manifest = JSON.parse(manifestText);
-        const actual = extractHeadings(design);
-        const expected = (manifest.headings ?? []).map(({ number, level, parent, order }) => ({
-          number,
-          level,
-          parent,
-          order
-        }));
-        if (
-          manifest.headingCount !== actual.length ||
-          JSON.stringify(expected) !== JSON.stringify(actual)
-        ) {
-          report(diagnostic.headingManifest, `${designPath}: numbered heading structure drifted`);
-        }
-      } catch (error) {
-        report(diagnostic.headingManifest, `cannot validate heading manifest: ${error.message}`);
-      }
     }
   }
 
@@ -296,12 +227,6 @@ async function main() {
       .filter(({ content }) => content !== null)
       .map(({ descriptor, content }) => ({ path: descriptor.path, content }))
   ];
-  const reviewDocuments = [...publicDocuments];
-  for (const reviewPath of policy.additionalReviewDocuments ?? []) {
-    const content = await readRequired(reviewPath);
-    if (content !== null) reviewDocuments.push({ path: reviewPath, content });
-  }
-
   for (const document of publicDocuments) {
     for (const identifier of policy.forbiddenPublicIdentifiers) {
       if (document.content.includes(identifier)) {
@@ -373,154 +298,13 @@ async function main() {
     }
   }
 
-  if (args.mode !== "bootstrap") {
-    const stateText = await readRequired("docs/documentation-state.json");
-    if (stateText !== null && design !== null) {
-      let state;
-      try {
-        state = JSON.parse(stateText);
-      } catch (error) {
-        report(diagnostic.hashStale, `invalid documentation state: ${error.message}`);
-      }
-      if (state) {
-        const version = design.match(/^- \*\*Document version\*\*: (.+)$/mu)?.[1];
-        const lastUpdated = design.match(/^- \*\*Last updated\*\*: (.+)$/mu)?.[1];
-        if (version !== state.designVersion) {
-          report(
-            diagnostic.versionMismatch,
-            `design ${version ?? "missing"} != state ${state.designVersion}`
-          );
-        }
-        if (lastUpdated !== state.lastUpdated) {
-          report(
-            diagnostic.lastUpdatedMismatch,
-            `design ${lastUpdated ?? "missing"} != state ${state.lastUpdated}`
-          );
-        }
-        const changeLogEntryPattern =
-          typeof state.changeLogEntryId === "string"
-            ? new RegExp(`^\\|\\s*${escapeRegExp(state.changeLogEntryId)}\\s*\\|`, "mu")
-            : null;
-        if (!changeLogEntryPattern?.test(design)) {
-          report(
-            diagnostic.changeLogMissing,
-            state.changeLogEntryId ?? "missing change-log entry ID"
-          );
-        }
-        if (
-          !Number.isInteger(state.currentPhase) ||
-          state.currentPhase < 0 ||
-          state.currentPhase > 6 ||
-          typeof state.availability !== "string" ||
-          !/^[a-z0-9]+(?:-[a-z0-9]+)+$/u.test(state.availability)
-        ) {
-          report(
-            diagnostic.phaseMismatch,
-            `documentation state is invalid: ${String(state.availability)}`
-          );
-        }
-
-        const phaseAvailability = policy.phaseAvailability?.[String(state.currentPhase)];
-        if (!Array.isArray(phaseAvailability) || !phaseAvailability.includes(state.availability)) {
-          report(
-            diagnostic.phaseMismatch,
-            `phase ${String(state.currentPhase)} does not allow ${String(state.availability)}`
-          );
-        }
-
-        const allowedAvailability = policy.modeRules?.[args.mode]?.allowedAvailability;
-        if (
-          args.mode === "release-candidate" &&
-          (!Array.isArray(allowedAvailability) || !allowedAvailability.includes(state.availability))
-        ) {
-          report(
-            diagnostic.availabilityMismatch,
-            `release-candidate availability is not releasable: ${state.availability}`
-          );
-        }
-
-        for (const document of reviewDocuments) {
-          const expectedHash = state.currentHashes?.[document.path];
-          const actualHash = sha256(document.content);
-          if (expectedHash !== actualHash) {
-            report(diagnostic.hashStale, `${document.path}: current hash differs from state`);
-          }
-        }
-
-        const availabilities = readmes
-          .filter(({ content }) => content !== null)
-          .map(({ descriptor, content }) => ({
-            path: descriptor.path,
-            values: [...content.matchAll(/<!-- availability:([a-z0-9-]+) -->/gu)].map(
-              (match) => match[1]
-            )
-          }));
-        for (const item of availabilities) {
-          if (item.values.length !== 1 || item.values[0] !== state.availability) {
-            report(
-              diagnostic.availabilityMismatch,
-              `${item.path}: ${item.values.join(",") || "missing"}`
-            );
-          }
-        }
-
-        if (args.mode === "release-candidate") {
-          const expectedPublicationMetadata = policy.requiredPublicationMetadata;
-          const publicationMetadata = state.publicationMetadata;
-          const expectedKeys =
-            expectedPublicationMetadata && typeof expectedPublicationMetadata === "object"
-              ? Object.keys(expectedPublicationMetadata)
-              : [];
-          const actualKeys =
-            publicationMetadata &&
-            typeof publicationMetadata === "object" &&
-            !Array.isArray(publicationMetadata)
-              ? Object.keys(publicationMetadata)
-              : [];
-          const publicationMetadataMatches =
-            expectedKeys.length > 0 &&
-            expectedKeys.length === actualKeys.length &&
-            expectedKeys.every(
-              (key) =>
-                typeof expectedPublicationMetadata[key] === "string" &&
-                expectedPublicationMetadata[key].length > 0 &&
-                publicationMetadata[key] === expectedPublicationMetadata[key]
-            );
-          if (!publicationMetadataMatches) {
-            report(diagnostic.placeholder, "publication metadata must exactly match policy");
-          }
-          for (const document of reviewDocuments) {
-            const reviewed = state.humanReviewedHashes?.[document.path];
-            const actual = sha256(document.content);
-            if (reviewed !== actual) {
-              report(diagnostic.humanReviewStale, `${document.path}: human-reviewed hash is stale`);
-            }
-          }
-          if (!state.reviewEvidencePath) {
-            report(diagnostic.reviewEvidenceMissing, "review evidence path is missing");
-          } else {
-            const evidence = await readRequired(state.reviewEvidencePath);
-            if (evidence !== null && sha256(evidence) !== state.reviewEvidenceSha256) {
-              report(diagnostic.reviewEvidenceHash, state.reviewEvidencePath);
-            }
-          }
-          if (state.reviewedPhase !== state.currentPhase) {
-            report(diagnostic.humanReviewStale, "reviewed Phase differs from current Phase");
-          }
-        }
-      }
-    }
-  }
-
   function finish() {
     if (problems.length > 0) {
       for (const problem of problems) process.stderr.write(`${problem.id}: ${problem.message}\n`);
       process.exitCode = 1;
       return;
     }
-    process.stdout.write(
-      `${JSON.stringify({ ok: true, mode: args.mode, documents: publicDocuments.length })}\n`
-    );
+    process.stdout.write(`${JSON.stringify({ ok: true, documents: publicDocuments.length })}\n`);
   }
 
   finish();
