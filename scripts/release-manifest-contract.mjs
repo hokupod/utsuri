@@ -21,6 +21,13 @@ const expectedManifestKeys = [
 ].sort();
 const expectedDependencies = {};
 const nativeTargets = ["darwin-arm64", "darwin-x64", "linux-arm64", "linux-x64"];
+const completeSemver =
+  /^(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)(?:-(?:(?:0|[1-9]\d*)|\d*[A-Za-z-][0-9A-Za-z-]*)(?:\.(?:(?:0|[1-9]\d*)|\d*[A-Za-z-][0-9A-Za-z-]*))*)?(?:\+[0-9A-Za-z-]+(?:\.[0-9A-Za-z-]+)*)?$/u;
+
+export function isCompleteSemver(value) {
+  if (typeof value !== "string") return false;
+  return completeSemver.exec(value)?.[0] === value;
+}
 
 export function expectedNativeOptionalDependencies(version) {
   return Object.fromEntries(nativeTargets.map((target) => [`@utsu-ri/cli-${target}`, version]));
