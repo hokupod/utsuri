@@ -11,9 +11,9 @@
 
 `.github/workflows/distribution-candidate.yml` is the default, manually dispatched release check. It produces a private GitHub Actions artifact and has no registry-write or OIDC permission. It does not publish, tag, promote, or approve an npm version.
 
-`.github/workflows/release.yml` runs only after an operator pushes an annotated `v*` tag. It requires the tag to match the root and CLI versions and to point to the exact `origin/main` commit. Except for the separately authorized first-publication bootstrap below, registry writes are confined to its protected `release` environment and use GitHub OIDC trusted publishing without an npm token.
+`.github/workflows/release.yml` runs only after an operator pushes an annotated `v*` tag. It requires the tag to match the root and CLI versions and to point to the exact `origin/main` commit. Registry writes are confined to its protected `release` environment and use GitHub OIDC trusted publishing without an npm token.
 
-The workflow never creates or pushes a tag. Package creation, the first registry write, tag creation, and environment approval remain separate operator actions. The first version of a new package cannot use npm trusted or staged publishing because the package must already exist; follow the one-time bootstrap procedure below. The manual `v0.2.0` bootstrap does not receive GitHub Actions OIDC provenance and must not be represented as a trusted-publisher write.
+The workflow never creates or pushes a tag. All five package identities already exist publicly at `0.1.0`; release `0.2.0` therefore uses only the protected tag workflow. Tag creation and release-environment approval remain separate operator actions. A missing package identity or trusted-publisher configuration is release drift: stop and restore the protected configuration instead of falling back to a manual publish.
 
 ## Two distribution surfaces and authorization
 
@@ -103,20 +103,21 @@ Required repository configuration mirrors Kyoso:
 - active tag ruleset `protect-release-tags` for `refs/tags/v*`, restricting creation, update, and deletion with only the intended repository-role bypass; and
 - an npm trusted publisher on each of the five packages with owner `hokupod`, repository `utsuri`, workflow `release.yml`, and environment `release`.
 
-## First-publication bootstrap
+## Tag-triggered release procedure
 
-npm trusted publishing and staged publishing cannot create a package. For the first Utsuri release:
+1. Merge the verified release-ready commit to `main` and require successful `main` CI.
+2. Confirm that all five package identities still exist and that each trusted publisher allows `npm publish` only from owner `hokupod`, repository `utsuri`, workflow `release.yml`, and environment `release`.
+3. Run the manual Distribution Candidate workflow on the exact `main` commit. Verify the exact run SHA and successful four-platform candidate before tagging.
+4. Confirm that none of the five `0.2.0` versions already exists. If one exists, reconcile its registry integrity against the approved candidate before continuing.
+5. Create annotated tag `v0.2.0` at the still-current exact `main` commit and push only that tag.
+6. Approve the protected `release` environment. The workflow publishes the four helpers before the CLI, verifies every registry integrity, runs native `npx` and `bunx` smoke, and creates the immutable GitHub Release.
+7. Verify the published tag, five package integrities, provenance, release assets, and live Plugin installation before declaring availability.
 
-1. Push the verified release-ready commit to `main`; do not create the release tag yet.
-2. Run the manual Distribution Candidate workflow on that exact `main` commit and download `utsuri-release-candidate` by exact run ID.
-3. Verify `release-assets.json`, `SHA256SUMS`, all five tarballs, and the candidate manifest locally. Record the exact source SHA, run ID, and artifact digest.
-4. Using the authorized npm maintainer account and npm's current 2FA-required first-publication procedure, publish those exact four helper tarballs before the exact CLI tarball. Do not store a registry token in this repository or GitHub Actions, and do not claim `--provenance` or GitHub Actions OIDC provenance for these manual writes.
-5. Retain non-secret audit evidence for each write: maintainer identity, UTC time, source SHA, candidate run ID and artifact digest, tarball SHA-256, expected SHA-512 integrity, registry response, and the explicit provenance limitation.
-6. Confirm each public registry version has the exact SHA-512 integrity recorded in `release-assets.json`.
-7. Configure the five trusted publishers with the exact owner, repository, workflow filename, and environment listed above. Later missing versions are published through this protected OIDC path.
-8. Create the annotated `v0.2.0` tag at the still-current exact `main` commit and push only that tag. The release workflow will accept the already-published versions only when every integrity matches, run the published smoke, and create the GitHub Release.
+The pre-publication candidate intentionally keeps documentation availability at `git-marketplace-source-ready-cli-publication-pending`. Release-candidate validation accepts that state only when the source, publication metadata, and human-review evidence are complete. Change availability to `git-marketplace-public` in a post-publication documentation update only after step 7 succeeds.
 
-If a draft GitHub Release remains after an upload failure, the workflow intentionally refuses to overwrite it. Inspect and remove or reconcile that draft explicitly before retrying. Follow [npm trusted publishing](https://docs.npmjs.com/trusted-publishers/), [npm staged publishing](https://docs.npmjs.com/staged-publishing/), and [npm provenance](https://docs.npmjs.com/generating-provenance-statements/) for current operator-side behavior.
+For a later synchronized release, its version-preparation change moves availability from `git-marketplace-public` back to `git-marketplace-source-ready-cli-publication-pending` before candidate validation; already-published versions remain public while that new version is pending.
+
+If publication fails after some package versions appear, rerun the same immutable tag workflow; the integrity reconciliation accepts only exact candidate bytes. Never move or recreate the tag. If a draft GitHub Release remains after an upload failure, the workflow intentionally refuses to overwrite it; inspect and reconcile that draft explicitly before retrying. Follow [npm trusted publishing](https://docs.npmjs.com/trusted-publishers/) and [npm provenance](https://docs.npmjs.com/generating-provenance-statements/) for current operator-side behavior.
 
 ## Post-publication promotion
 

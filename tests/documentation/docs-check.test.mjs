@@ -69,16 +69,16 @@ async function prepareRelease(root) {
   const evidence = "Fixture human review: PASS\n";
   await mkdir(path.dirname(path.join(root, evidencePath)), { recursive: true });
   await writeFile(path.join(root, evidencePath), evidence, "utf8");
+  const policy = JSON.parse(
+    await readFile(path.join(root, "docs/documentation-policy.json"), "utf8")
+  );
   await updateState(root, (state) => {
     state.currentHashes = hashes;
     state.humanReviewedHashes = { ...hashes };
     state.reviewEvidencePath = evidencePath;
     state.reviewEvidenceSha256 = sha256(evidence);
     state.reviewedPhase = state.currentPhase;
-    state.publicationMetadata = {
-      publisher: "Utsuri fixture publisher",
-      spdxLicense: "MIT"
-    };
+    state.publicationMetadata = { ...policy.requiredPublicationMetadata };
   });
 }
 
@@ -263,11 +263,77 @@ await withFixture("release-candidate rejects unresolved publication metadata", a
   assert.match(result.combined, /DOC_PLACEHOLDER/u);
 });
 
-await withFixture("release-candidate rejects non-public availability", async (root) => {
+await withFixture("release-candidate rejects missing npm maintainer metadata", async (root) => {
+  await prepareRelease(root);
+  await updateState(root, (state) => {
+    delete state.publicationMetadata.npmMaintainer;
+  });
+  const result = run(root, "release-candidate");
+  assert.notEqual(result.status, 0);
+  assert.match(result.combined, /DOC_PLACEHOLDER/u);
+});
+
+await withFixture(
+  "release-candidate rejects manual-bootstrap publishing metadata",
+  async (root) => {
+    await prepareRelease(root);
+    await updateState(root, (state) => {
+      state.publicationMetadata.npmPublishing = "manual exact-tarball bootstrap";
+    });
+    const result = run(root, "release-candidate");
+    assert.notEqual(result.status, 0);
+    assert.match(result.combined, /DOC_PLACEHOLDER/u);
+  }
+);
+
+await withFixture("release-candidate rejects missing publication metadata policy", async (root) => {
+  await prepareRelease(root);
+  await rewrite(root, "docs/documentation-policy.json", (value) => {
+    const policy = JSON.parse(value);
+    delete policy.requiredPublicationMetadata;
+    return `${JSON.stringify(policy, null, 2)}\n`;
+  });
+  const result = run(root, "release-candidate");
+  assert.notEqual(result.status, 0);
+  assert.match(result.combined, /DOC_PLACEHOLDER/u);
+});
+
+await withFixture("release-candidate rejects extra publication metadata", async (root) => {
+  await prepareRelease(root);
+  await updateState(root, (state) => {
+    state.publicationMetadata.unexpected = "value";
+  });
+  const result = run(root, "release-candidate");
+  assert.notEqual(result.status, 0);
+  assert.match(result.combined, /DOC_PLACEHOLDER/u);
+});
+
+await withFixture(
+  "release-candidate rejects public availability before publication",
+  async (root) => {
+    for (const relativePath of ["README.md", "README.ja.md", "README.zh-CN.md"]) {
+      await rewrite(root, relativePath, (value) =>
+        value.replace(
+          "<!-- availability:git-marketplace-source-ready-cli-publication-pending -->",
+          "<!-- availability:git-marketplace-public -->"
+        )
+      );
+    }
+    await prepareRelease(root);
+    await updateState(root, (state) => {
+      state.availability = "git-marketplace-public";
+    });
+    const result = run(root, "release-candidate");
+    assert.notEqual(result.status, 0);
+    assert.match(result.combined, /DOC_AVAILABILITY_MISMATCH/u);
+  }
+);
+
+await withFixture("release-candidate rejects source-only availability", async (root) => {
   for (const relativePath of ["README.md", "README.ja.md", "README.zh-CN.md"]) {
     await rewrite(root, relativePath, (value) =>
       value.replace(
-        "<!-- availability:git-marketplace-public -->",
+        "<!-- availability:git-marketplace-source-ready-cli-publication-pending -->",
         "<!-- availability:git-marketplace-source-ready -->"
       )
     );
@@ -282,7 +348,7 @@ await withFixture("release-candidate rejects non-public availability", async (ro
   assert.match(result.combined, /DOC_AVAILABILITY_MISMATCH/u);
 });
 
-await withFixture("release-candidate rejects stale human review", async (root) => {
+await withFixture("publication-pending release rejects stale human review", async (root) => {
   await prepareRelease(root);
   await rewrite(root, "README.md", (value) => `${value}\nChanged after review.\n`);
   const result = run(root, "release-candidate");

@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
-  "currentPhase": 0,
-  "availability": "git-marketplace-public",
+  "currentPhase": 6,
+  "availability": "git-marketplace-source-ready-cli-publication-pending",
   "designVersion": "1.5",
   "lastUpdated": "2026-08-06",
   "changeLogEntryId": "design-v1.5-english-canonical",
@@ -9,9 +9,9 @@
     "docs/design.md": "f3b95f23b360cb99e87128bcbcc9392eda7ce7b0be9c8fd036399c631de5a1ef",
     "docs/release.md": "5e41020e0893074459b9e476dc27136e3086776746225a9cb09c58bf819a7530",
     "CONTRIBUTING.md": "85018731a910d59197ae9b333bce8d73e7fcb13f877fd8b01b8f745146c3331d",
-    "README.md": "89794f6d871e86cf3c86c0702784abdcaa6bc73db4b5e8e7d05b2c7013f086b8",
-    "README.ja.md": "d6ad8a546a4a2aedf65a6c41477eced232ff531a53d24d3eb6951ad3decbecd7",
-    "README.zh-CN.md": "70fbbd25464010cf6da017749e13a4b38708f0d4d924ded7140acb5fa3a69cf6"
+    "README.md": "7195f84c8d9a25e69191a4efd2ebc3040f25b2c35329c31dd937c1002dba3ca4",
+    "README.ja.md": "dd05dd9813b6176e6f9a1fbff898e2a01e200dd0d453ca4e86e50113a154eb0a",
+    "README.zh-CN.md": "fddcd3cfa94d9778c93436ce55dc527ec007d110cc3d6054953fc38659e10f93"
   },
   "changedSections": [
     "metadata",
@@ -45,6 +45,8 @@
   "reviewedPhase": null,
   "publicationMetadata": {
     "publisher": null,
+    "npmMaintainer": null,
+    "npmPublishing": null,
     "spdxLicense": null
   }
 }

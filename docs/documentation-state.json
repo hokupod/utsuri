@@ -6,8 +6,8 @@
   "lastUpdated": "2026-08-11",
   "changeLogEntryId": "design-v2.8-git-marketplace-mcp",
   "currentHashes": {
-    "docs/design.md": "ab9d51898f7c59e1edd8173bbd31299b67b7097a2e22f9044341b16fbcc95c44",
-    "docs/release.md": "8b5c7aa7f769210db602aa78ae31534967b8cad1ec30035862792ece3e31c615",
+    "docs/design.md": "fa84fb47df0c7d14c9dcc23d65437e0c31fb5e7a7c7ad55083246fb0d0bfcf45",
+    "docs/release.md": "fc1c52baec1a67b3f8d208e51773a3562d4a46620328efd7249437e3e5e0c0ac",
     "CONTRIBUTING.md": "aad5786183238a2559aab7e90b62f661e2029cf21e51972df54ae7980ee2fdd5",
     "README.md": "f89d1b3c643c1c5eec3ccccf5b87c6c5157cbd9ede5bb88c171e1b1fce507bfb",
     "README.ja.md": "856b828726630b8c2c29d554390d035961ff97bac333b1692c94aa8cbb9984c8",
@@ -25,25 +25,25 @@
     "readme:security-troubleshooting",
     "contributing",
     "release-guide:git-plugin",
-    "release-guide:first-publication-bootstrap",
+    "release-guide:tag-triggered-publication",
     "release-version-synchronization",
     "readme:release-number-minimization"
   ],
   "humanReviewedHashes": {
-    "docs/design.md": "191ac9fea122949afd07f6ef8d52ab246f38e0091ebef002f2567d2ba5d4afa3",
-    "docs/release.md": "95b2bb385ba65604f07da5b4c0e05f46f5b1688818d65f73ec04f07ff18d9e24",
+    "docs/design.md": "fa84fb47df0c7d14c9dcc23d65437e0c31fb5e7a7c7ad55083246fb0d0bfcf45",
+    "docs/release.md": "fc1c52baec1a67b3f8d208e51773a3562d4a46620328efd7249437e3e5e0c0ac",
     "CONTRIBUTING.md": "aad5786183238a2559aab7e90b62f661e2029cf21e51972df54ae7980ee2fdd5",
     "README.md": "f89d1b3c643c1c5eec3ccccf5b87c6c5157cbd9ede5bb88c171e1b1fce507bfb",
     "README.ja.md": "856b828726630b8c2c29d554390d035961ff97bac333b1692c94aa8cbb9984c8",
     "README.zh-CN.md": "154cfd4b74bb2ab34507a1558c1742cf558415e9e796d0c3de7aeeb6523b4084"
   },
   "reviewEvidencePath": "docs/review-evidence/v0.2.0-documentation.md",
-  "reviewEvidenceSha256": "4df1d5c9d253e3de053be439ef89e905f42e04def4dda5d9416465e9a7a09ec2",
+  "reviewEvidenceSha256": "785ef55633e693d656245151279500f9d845e0bc3bb366e80c387a23ed6daecc",
   "reviewedPhase": 6,
   "publicationMetadata": {
     "publisher": "hokupod",
     "npmMaintainer": "hokupod-npm",
-    "npmPublishing": "manual exact-tarball v0.2.0 bootstrap for first package creation, then protected GitHub Actions trusted publishing",
+    "npmPublishing": "protected annotated-tag GitHub Actions trusted publishing",
     "spdxLicense": "AGPL-3.0-or-later"
   }
 }

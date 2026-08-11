@@ -14,7 +14,7 @@
 
 ## 可用性与要求
 
-<!-- availability:git-marketplace-public -->
+<!-- availability:git-marketplace-source-ready-cli-publication-pending -->
 <!-- support-contract:macos-linux-windows-unsupported -->
 
 Codex 和 Claude Code 支持 macOS 与 Linux；不支持原生 Windows。

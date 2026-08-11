@@ -86,4 +86,17 @@ describe("release layout security", () => {
       )
     ).toBeTrue();
   });
+
+  test("binds publication metadata policy to the independent release allowlist", async () => {
+    const policy = JSON.parse(
+      await readFile(path.join(repositoryRoot, "docs/documentation-policy.json"), "utf8")
+    );
+    const verifier = await readFile(
+      path.join(repositoryRoot, "scripts/verify-release-layout.mjs"),
+      "utf8"
+    );
+    for (const [key, value] of Object.entries(policy.requiredPublicationMetadata)) {
+      expect(verifier).toContain(`${key}: ${JSON.stringify(value)}`);
+    }
+  });
 });

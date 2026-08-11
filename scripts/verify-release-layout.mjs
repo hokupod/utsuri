@@ -458,25 +458,41 @@ for (const [index, content] of manifests.entries()) {
   }
 }
 
+// Keep this as an independent release-layout allowlist. The policy and state must both match it,
+// so changing documentation alone cannot weaken the protected publication path.
+const expectedPublicationMetadata = {
+  publisher: "hokupod",
+  npmMaintainer: "hokupod-npm",
+  npmPublishing: "protected annotated-tag GitHub Actions trusted publishing",
+  spdxLicense: "AGPL-3.0-or-later"
+};
+function matchesExpectedPublicationMetadata(actualMetadata) {
+  return (
+    actualMetadata &&
+    Object.keys(actualMetadata).length === Object.keys(expectedPublicationMetadata).length &&
+    Object.entries(expectedPublicationMetadata).every(
+      ([key, value]) => actualMetadata[key] === value
+    )
+  );
+}
+
+const documentationPolicyContent = await readRegular("docs/documentation-policy.json");
+if (documentationPolicyContent) {
+  try {
+    const policy = JSON.parse(documentationPolicyContent.toString("utf8"));
+    if (!matchesExpectedPublicationMetadata(policy.requiredPublicationMetadata)) {
+      errors.push("documentation policy has the wrong publication metadata");
+    }
+  } catch (error) {
+    errors.push(`docs/documentation-policy.json is not valid JSON: ${error.message}`);
+  }
+}
+
 const documentationStateContent = await readRegular("docs/documentation-state.json");
 if (documentationStateContent) {
   try {
     const state = JSON.parse(documentationStateContent.toString("utf8"));
-    const expectedPublicationMetadata = {
-      publisher: "hokupod",
-      npmMaintainer: "hokupod-npm",
-      npmPublishing:
-        "manual exact-tarball v0.2.0 bootstrap for first package creation, then protected GitHub Actions trusted publishing",
-      spdxLicense: "AGPL-3.0-or-later"
-    };
-    const actualMetadata = state.publicationMetadata;
-    if (
-      !actualMetadata ||
-      Object.keys(actualMetadata).length !== Object.keys(expectedPublicationMetadata).length ||
-      Object.entries(expectedPublicationMetadata).some(
-        ([key, value]) => actualMetadata[key] !== value
-      )
-    ) {
+    if (!matchesExpectedPublicationMetadata(state.publicationMetadata)) {
       errors.push("documentation state has the wrong publication metadata");
     }
   } catch (error) {

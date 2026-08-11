@@ -14,7 +14,7 @@ Create a local evidence-backed report without hiding incomplete checks.
 
 ## Availability and requirements
 
-<!-- availability:git-marketplace-public -->
+<!-- availability:git-marketplace-source-ready-cli-publication-pending -->
 <!-- support-contract:macos-linux-windows-unsupported -->
 
 Codex and Claude Code are supported on macOS and Linux. Native Windows is unsupported.
