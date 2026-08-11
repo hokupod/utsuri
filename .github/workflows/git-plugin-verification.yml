@@ -6,6 +6,8 @@ on:
       - ".agents/plugins/**"
       - ".claude-plugin/**"
       - ".codex-plugin/**"
+      - "assets/**"
+      - "docs/assets/utsuri.jpg"
       - "plugins/utsuri/**"
       - "skills/utsuri-review/**"
       - "docs/compatibility/plugin-runtime.json"

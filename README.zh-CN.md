@@ -53,7 +53,7 @@ codex plugin marketplace add hokupod/utsuri
 codex plugin add utsuri@utsuri
 ```
 
-安装时会启用 Plugin。在 Codex app 中，也可以通过 Plugin UI 查看或更改启用状态。
+安装时会启用 Plugin。在 Codex app 中，也可以通过 Plugin UI 查看或更改启用状态。Codex 将 Utsuri 产品插图同时用作 composer icon 和 Plugin logo。
 
 ### Claude Code
 
@@ -68,6 +68,8 @@ claude plugin marketplace add hokupod/utsuri
 ```bash
 claude plugin install utsuri@utsuri
 ```
+
+Claude Code 当前的 Plugin manifest 没有 icon 或 logo 字段，因此 Utsuri 不会添加不受支持的图片 metadata。
 
 如果 host 在安装或更新后要求重启，请重新启动。Plugin 通过原生 `npx` 启动精确版本的 CLI；无需也不会使用全局 Utsuri 安装。
 

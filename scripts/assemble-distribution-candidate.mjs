@@ -132,6 +132,7 @@ export async function assembleDistributionCandidate(output, nativeRoot, root = r
       prefix: ".claude-plugin",
       skip: (relative) => relative === ".claude-plugin/marketplace.json"
     }),
+    copyTree(path.join(root, "assets"), path.join(pluginRoot, "assets")),
     copyTree(path.join(root, "skills"), path.join(pluginRoot, "skills"), {
       prefix: "skills",
       skip: (relative) => relative === "skills/utsuri-review/scripts/native"
@@ -269,6 +270,27 @@ export async function verifyDistributionCandidate(candidate, root = repositoryRo
     path.join(candidate, "plugin/skills/utsuri-review/scripts/native"),
     nativeTargets
   );
+  const pluginAssetErrors = await validateExactFileInventory(
+    path.join(candidate, "plugin/assets"),
+    ["utsuri.jpg"]
+  );
+  if (pluginAssetErrors.length > 0) throw new Error(pluginAssetErrors.join("; "));
+  const candidateCodexManifest = JSON.parse(
+    await readFile(path.join(candidate, "plugin/.codex-plugin/plugin.json"), "utf8")
+  );
+  if (
+    candidateCodexManifest.interface?.composerIcon !== "./assets/utsuri.jpg" ||
+    candidateCodexManifest.interface?.logo !== "./assets/utsuri.jpg"
+  ) {
+    throw new Error("Aggregate Codex Plugin does not reference the product illustration");
+  }
+  const [candidateIcon, canonicalIcon] = await Promise.all([
+    readFile(path.join(candidate, "plugin/assets/utsuri.jpg")),
+    readFile(path.join(root, "docs/assets/utsuri.jpg"))
+  ]);
+  if (!candidateIcon.equals(canonicalIcon)) {
+    throw new Error("Aggregate Plugin product illustration differs from the canonical image");
+  }
   const cliPackage = JSON.parse(
     await readFile(path.join(candidate, "packages/cli/package.json"), "utf8")
   );

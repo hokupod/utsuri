@@ -34,6 +34,7 @@ function fixtureRoot(): string {
     "packages/cli/package.json",
     ".agents/plugins/marketplace.json",
     ".claude-plugin/marketplace.json",
+    "docs/assets/utsuri.jpg",
     "docs/compatibility/plugin-runtime.json"
   ];
   for (const relativePath of files) copyFile(relativePath, root);
@@ -73,6 +74,20 @@ describe("Git Marketplace Plugin distribution", () => {
       cliVersion: "0.2.0",
       sourcePath: "./plugins/utsuri"
     });
+  });
+
+  test("requires canonical Codex product illustration paths and bytes", () => {
+    const root = fixtureRoot();
+    mutateJson(root, "plugins/utsuri/.codex-plugin/plugin.json", (value) => {
+      value.interface.logo = "../utsuri.jpg";
+    });
+    writeFileSync(join(root, "plugins/utsuri/assets/utsuri.jpg"), "not the canonical image\n");
+    expect(() => verifyPluginDistribution({ root })).toThrow(
+      "Codex Plugin manifest must reference the product illustration"
+    );
+    expect(() => verifyPluginDistribution({ root })).toThrow(
+      "Git Plugin product illustration does not match the canonical image"
+    );
   });
 
   test("rejects a floating package pin", () => {

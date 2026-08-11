@@ -53,7 +53,7 @@ codex plugin marketplace add hokupod/utsuri
 codex plugin add utsuri@utsuri
 ```
 
-インストール時に Plugin は有効になります。Codex app では Plugin UI から有効状態を確認・変更できます。
+インストール時に Plugin は有効になります。Codex app では Plugin UI から有効状態を確認・変更できます。Codex では Utsuri のプロダクトイメージを composer icon と Plugin logo の両方に使用します。
 
 ### Claude Code
 
@@ -68,6 +68,8 @@ claude plugin marketplace add hokupod/utsuri
 ```bash
 claude plugin install utsuri@utsuri
 ```
+
+Claude Code の現行 Plugin manifest には icon または logo field がないため、Utsuri は未対応の画像metadataを追加しません。
 
 インストールまたは更新後に host から求められた場合は再起動してください。Plugin は native `npx` から正確な CLI を起動します。Utsuri の global install は不要で、利用もされません。
 

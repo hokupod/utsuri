@@ -98,7 +98,15 @@ async function repositoryFixtureRoot(base: string, version: string): Promise<str
   const root = path.join(base, "repository");
   await mkdir(path.join(root, "packages/cli"), { recursive: true, mode: 0o700 });
   await Promise.all(
-    [".codex-plugin", ".claude-plugin", "skills", "native", "packages/cli/dist"].map((entry) =>
+    [
+      ".codex-plugin",
+      ".claude-plugin",
+      "assets",
+      "docs/assets",
+      "skills",
+      "native",
+      "packages/cli/dist"
+    ].map((entry) =>
       cp(path.join(repositoryRoot, entry), path.join(root, entry), { recursive: true })
     )
   );
@@ -221,6 +229,19 @@ describe("distribution candidate assembly", () => {
 
     expect(candidateVersions).toEqual(candidateVersions.map(() => rootManifest.version));
     expect(assembled.manifest.targets).toEqual(nativeTargets);
+    const candidateCodexManifest = JSON.parse(
+      await readFile(path.join(candidate, "plugin/.codex-plugin/plugin.json"), "utf8")
+    ) as { interface: { composerIcon: string; logo: string } };
+    expect(candidateCodexManifest.interface).toMatchObject({
+      composerIcon: "./assets/utsuri.jpg",
+      logo: "./assets/utsuri.jpg"
+    });
+    expect(
+      (await readFile(path.join(candidate, "plugin/assets/utsuri.jpg"))).equals(
+        await readFile(path.join(repositoryRoot, "docs/assets/utsuri.jpg"))
+      )
+    ).toBe(true);
+    expect(assembled.manifest.files["plugin/assets/utsuri.jpg"]).toBeDefined();
     expect(assembled.manifest.files["plugin/.claude-plugin/marketplace.json"]).toBeUndefined();
     expect(
       Object.keys(assembled.manifest.files).some((relative) =>

@@ -44,6 +44,7 @@ function fixtureRoot(): string {
     "packages/cli/package.json",
     ".agents/plugins/marketplace.json",
     ".claude-plugin/marketplace.json",
+    "docs/assets/utsuri.jpg",
     "docs/compatibility/plugin-runtime.json"
   ]) {
     copyFile(relativePath, root);

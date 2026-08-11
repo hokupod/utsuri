@@ -30,6 +30,8 @@ export const canonicalSkillFiles = Object.freeze([
 ]);
 
 const generatedInventoryFile = ".generated.json";
+const pluginIconFile = "assets/utsuri.jpg";
+const pluginIconManifestPath = `./${pluginIconFile}`;
 const semverPattern =
   /^(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)(?:-[0-9A-Za-z-]+(?:\.[0-9A-Za-z-]+)*)?(?:\+[0-9A-Za-z-]+(?:\.[0-9A-Za-z-]+)*)?$/;
 const bundledInvocation = 'node "${PLUGIN_ROOT}/skills/utsuri-review/scripts/utsuri.mjs"';
@@ -58,8 +60,10 @@ export function distributionPaths(root = repositoryRoot) {
     catalog: join(root, ".agents", "plugins", "marketplace.json"),
     claudeMarketplace: join(root, ".claude-plugin", "marketplace.json"),
     compatibility: join(root, "docs", "compatibility", "plugin-runtime.json"),
+    canonicalIcon: join(root, "docs", "assets", "utsuri.jpg"),
     canonicalSkill: join(root, "skills", "utsuri-review"),
     pluginRoot,
+    pluginIcon: join(pluginRoot, pluginIconFile),
     pluginSkill: join(pluginRoot, "skills", "utsuri-review"),
     codexManifest: join(pluginRoot, ".codex-plugin", "plugin.json"),
     codexMcp: join(pluginRoot, ".codex-plugin", "mcp.json"),
@@ -356,6 +360,12 @@ function validatePluginManifests(codex, claude, paths, failures) {
   if (codex?.mcpServers !== "./.codex-plugin/mcp.json") {
     failures.push("Codex Plugin manifest must reference its MCP config");
   }
+  if (
+    codex?.interface?.composerIcon !== pluginIconManifestPath ||
+    codex?.interface?.logo !== pluginIconManifestPath
+  ) {
+    failures.push("Codex Plugin manifest must reference the product illustration");
+  }
   validateContainedRelativePath(
     paths.pluginRoot,
     codex?.skills,
@@ -368,6 +378,20 @@ function validatePluginManifests(codex, claude, paths, failures) {
     codex?.mcpServers,
     paths.codexMcp,
     "Codex MCP path",
+    failures
+  );
+  validateContainedRelativePath(
+    paths.pluginRoot,
+    codex?.interface?.composerIcon,
+    paths.pluginIcon,
+    "Codex composer icon path",
+    failures
+  );
+  validateContainedRelativePath(
+    paths.pluginRoot,
+    codex?.interface?.logo,
+    paths.pluginIcon,
+    "Codex logo path",
     failures
   );
   validateContainedRelativePath(
@@ -488,10 +512,17 @@ function validateVersions(values, failures, options = {}) {
 
 function validateDistributionSafety(paths, failures, transactionArtifacts = new Set()) {
   const pluginEntries = listTreeFiles(paths.pluginRoot, failures, transactionArtifacts);
+  let canonicalIcon;
+  try {
+    canonicalIcon = readRegularFile(paths.canonicalIcon, "Canonical product illustration");
+  } catch (error) {
+    failures.push(`Canonical product illustration: ${errorMessage(error)}`);
+  }
   const expected = [
     ".claude-plugin/plugin.json",
     ".codex-plugin/mcp.json",
     ".codex-plugin/plugin.json",
+    pluginIconFile,
     ...canonicalSkillFiles.map((path) => `skills/utsuri-review/${path}`),
     `skills/utsuri-review/${generatedInventoryFile}`
   ].sort();
@@ -513,6 +544,12 @@ function validateDistributionSafety(paths, failures, transactionArtifacts = new 
     const bytes = readFileSync(absolutePath);
     if (bytes.length > 256 * 1024) {
       failures.push(`Git Plugin file is too large: ${relativePath}`);
+      continue;
+    }
+    if (relativePath === pluginIconFile) {
+      if (canonicalIcon && !bytes.equals(canonicalIcon)) {
+        failures.push("Git Plugin product illustration does not match the canonical image");
+      }
       continue;
     }
     if (bytes.includes(0)) {

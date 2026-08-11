@@ -24,6 +24,8 @@
       "Build an evidence-backed report for this diff.",
       "Compare these before and after URLs."
     ],
-    "brandColor": "#17634A"
+    "brandColor": "#17634A",
+    "composerIcon": "./assets/utsuri.jpg",
+    "logo": "./assets/utsuri.jpg"
   }
 }

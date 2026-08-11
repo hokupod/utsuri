@@ -231,6 +231,7 @@ const schemaNames = [
 
 await compare("README.md", "packages/cli/README.md");
 await compare("LICENSE", "packages/cli/LICENSE");
+await compare("docs/assets/utsuri.jpg", "assets/utsuri.jpg");
 
 for (const schemaName of schemaNames) {
   await compare(`schemas/${schemaName}`, `skills/utsuri-review/schemas/${schemaName}`);
@@ -242,6 +243,7 @@ await requireExactDirectories(".artifacts/native", [nativeTarget]);
 await requireExactDirectories("packages/cli/dist/native", [nativeTarget]);
 await requireExactDirectories("skills/utsuri-review/scripts/native", [nativeTarget]);
 errors.push(
+  ...(await validateExactFileInventory(path.join(root, "assets"), ["utsuri.jpg"])),
   ...(await validateExactFileInventory(path.join(root, "packages/cli/dist"), [
     "build-manifest.json",
     `native/${nativeTarget}/utsuri-fs-ops`,
@@ -453,6 +455,13 @@ for (const [index, content] of manifests.entries()) {
     if (manifest.license !== "AGPL-3.0-or-later") {
       errors.push(`manifest ${index + 1} has the wrong license`);
     }
+    if (
+      index === 0 &&
+      (manifest.interface?.composerIcon !== "./assets/utsuri.jpg" ||
+        manifest.interface?.logo !== "./assets/utsuri.jpg")
+    ) {
+      errors.push("Codex manifest does not reference the product illustration");
+    }
   } catch (error) {
     errors.push(`manifest ${index + 1} is not valid JSON: ${error.message}`);
   }
@@ -502,6 +511,8 @@ await verifyReadOnlyPluginWorkflow(".github/workflows/git-plugin-verification.ym
   "@anthropic-ai/claude-code-linux-x64@2.1.220",
   "node_modules/@anthropic-ai/claude-code-linux-x64/claude",
   'test "$(command -v claude)" = "${utsuri_host_bin}/claude"',
+  '"assets/**"',
+  '"docs/assets/utsuri.jpg"',
   '"skills/utsuri-review/**"',
   '"package.json"',
   '"packages/*/package.json"',

@@ -1084,10 +1084,12 @@ Design decisions:
 
 Utsuri has two deliberately isolated distribution surfaces:
 
-1. The **aggregate Plugin** under the root `.codex-plugin/`, `.claude-plugin/`, and `skills/` directories is a release artifact. It contains the compiled CLI, report UI, schemas, metadata, and architecture-matched native helper.
-2. The **Git Marketplace Plugin** under `plugins/utsuri/` is source-distributed. It contains only host manifests and a deterministic documentation-only Skill generated from the root canonical Skill. It must not contain compiled JavaScript, a native helper, report UI assets, schemas, SBOM files, absolute local paths, secrets, or any `ai/` path.
+1. The **aggregate Plugin** under the root `.codex-plugin/`, `.claude-plugin/`, `assets/`, and `skills/` directories is a release artifact. It contains the product illustration, compiled CLI, report UI, schemas, metadata, and architecture-matched native helper.
+2. The **Git Marketplace Plugin** under `plugins/utsuri/` is source-distributed. It contains only host manifests, the single bounded product illustration, and a deterministic documentation-only Skill generated from the root canonical Skill. It must not contain compiled JavaScript, a native helper, report UI assets, schemas, SBOM files, absolute local paths, secrets, or any `ai/` path.
 
 `.agents/plugins/marketplace.json` and `.claude-plugin/marketplace.json` both resolve the relative source `./plugins/utsuri`. The Git Plugin, root aggregate, and CLI share one complete SemVer, and both host MCP manifests execute native `npx` with that exact `@utsu-ri/cli` version; a floating tag, range, independently versioned Plugin, or ambient Utsuri executable is invalid. CLI publication and Plugin promotion remain separately authorized operations even though their source versions match.
+
+Both Codex manifests bind `interface.composerIcon` and `interface.logo` to `./assets/utsuri.jpg`. The aggregate and Git Marketplace copies must exactly match the canonical product illustration under `docs/assets/`. Claude manifests intentionally omit image metadata because the current Claude Plugin manifest schema has no icon or logo field.
 
 The public `utsuri mcp` command accepts no positional argument or option. The existing `utsuri review-mcp --run <relative-run>` command remains a fixed-run compatibility surface. Marketplace tools expose only their operation-specific bounded fields and an optional opaque `report_id`; they never accept a path, working directory, command, provider, model, destination, or raw session identity.
 

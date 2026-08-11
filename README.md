@@ -53,7 +53,7 @@ codex plugin marketplace add hokupod/utsuri
 codex plugin add utsuri@utsuri
 ```
 
-Installation enables the Plugin. In the Codex app, the Plugin UI is also the supported place to inspect or change its enabled state.
+Installation enables the Plugin. In the Codex app, the Plugin UI is also the supported place to inspect or change its enabled state. Codex uses the Utsuri product illustration as both the composer icon and Plugin logo.
 
 ### Claude Code
 
@@ -68,6 +68,8 @@ claude plugin marketplace add hokupod/utsuri
 ```bash
 claude plugin install utsuri@utsuri
 ```
+
+Claude Code's current Plugin manifest does not expose an icon or logo field, so Utsuri does not add unsupported image metadata there.
 
 Restart the host after an install or update when it asks you to do so. The Plugin starts the exact CLI through native `npx`; a global Utsuri installation is neither required nor used.
 
