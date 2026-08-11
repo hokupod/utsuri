@@ -287,6 +287,7 @@ export async function buildReleaseArtifacts() {
     "diff.schema.json",
     "evidence-index.schema.json",
     "feedback-batch.schema.json",
+    "mcp-run-registration.schema.json",
     "origin-session.schema.json",
     "report.schema.json",
     "review-answer.schema.json",

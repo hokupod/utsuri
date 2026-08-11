@@ -273,6 +273,7 @@
     "diff.schema.json": "be0188f12c5b4ed65957d9ac1401007f8e31912a0f21ed2af8e33ce274e9ebef",
     "evidence-index.schema.json": "2d907acba09f208673849354afc8cb5aa788b8b213658e04641b3ccdeafd7c4e",
     "feedback-batch.schema.json": "1da68f409506fd1a1f999785f666f15883e7c8d51a57b7996ba73b61eb3c24ef",
+    "mcp-run-registration.schema.json": "7bbf67677302463fd01ee157f13885340dbb624aeca4260be6aca1e8c2098320",
     "origin-session.schema.json": "39e49ff5cfa7fa033cca453048a1e8b0ae631ddc98ca10e9d1bcd8ecb9b33538",
     "report.schema.json": "8eb9f70ea1ae6897bf48891d67ab1245f6ef3a3a177bb212633a6546f3fb12dd",
     "review-answer.schema.json": "fd7765261d2c71c0cf9fcd604f0607beeff6d21d59402468cf2ff84a57b4c42b",

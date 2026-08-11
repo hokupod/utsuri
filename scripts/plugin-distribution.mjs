@@ -152,7 +152,8 @@ export function syncPluginSkill(root = repositoryRoot) {
   const expected = expectedPluginSkill(root, cliVersion);
   const parent = dirname(paths.pluginSkill);
   mkdirSync(parent, { recursive: true });
-  if (existsSync(paths.pluginSkill) && lstatSync(paths.pluginSkill).isSymbolicLink()) {
+  const existingSkill = lstatIfPresent(paths.pluginSkill);
+  if (existingSkill?.isSymbolicLink()) {
     throw new Error("Plugin Skill destination must not be a symlink");
   }
 
@@ -169,7 +170,7 @@ export function syncPluginSkill(root = repositoryRoot) {
       writeFileSync(destination, bytes, { flag: "wx", mode: 0o644 });
     }
     verifyPluginSkill(stage, expected);
-    if (existsSync(paths.pluginSkill)) {
+    if (existingSkill) {
       renameSync(paths.pluginSkill, backup);
       movedExisting = true;
     }
@@ -189,6 +190,15 @@ export function syncPluginSkill(root = repositoryRoot) {
     rmSync(stageRoot, { recursive: true, force: true });
   }
   return expected.inventory;
+}
+
+function lstatIfPresent(path) {
+  try {
+    return lstatSync(path);
+  } catch (error) {
+    if (error && typeof error === "object" && error.code === "ENOENT") return undefined;
+    throw error;
+  }
 }
 
 export function verifyPluginDistribution(options = {}) {

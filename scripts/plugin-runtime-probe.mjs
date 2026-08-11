@@ -363,6 +363,7 @@ async function verifyLocalCodexPlugin(paths) {
   );
   const observationBefore = observationCount(paths.observation);
   const enabledStatus = await runCodexAppServer(paths.workspace, paths.environment);
+  await waitForObservationCount(paths.observation, observationBefore + 1, 10_000);
   const enabledObservation = readLastObservation(paths.observation);
   if (
     !enabledObservation?.cwdIsExpected ||
@@ -383,6 +384,7 @@ async function verifyLocalCodexPlugin(paths) {
   if (disabled === original) throw new Error("LOCAL_E2E_CODEX_DISABLE_STATE_MISSING");
   writeFileSync(config, disabled, { encoding: "utf8", mode: 0o600 });
   const disabledStatus = await runCodexAppServer(paths.workspace, paths.environment);
+  await requireStableObservationCount(paths.observation, observationBefore + 1, 500);
   const afterDisableObservation = observationCount(paths.observation);
   const removed = runJson(
     "codex",
@@ -391,6 +393,7 @@ async function verifyLocalCodexPlugin(paths) {
     paths.environment
   );
   const removedStatus = await runCodexAppServer(paths.workspace, paths.environment);
+  await requireStableObservationCount(paths.observation, afterDisableObservation, 500);
   const afterRemoveObservation = observationCount(paths.observation);
 
   const contract = {
@@ -688,6 +691,38 @@ function readLocalObservations(path) {
     .map((line) => JSON.parse(line));
 }
 
+async function waitForObservationCount(path, expected, timeout) {
+  const deadline = Date.now() + timeout;
+  while (Date.now() < deadline) {
+    try {
+      const count = observationCount(path);
+      if (count === expected) return;
+      if (count > expected) {
+        throw new Error(`MCP observation count exceeded ${expected}`);
+      }
+    } catch (error) {
+      if (!(error instanceof SyntaxError)) throw error;
+    }
+    await new Promise((resolveWait) => setTimeout(resolveWait, 50));
+  }
+  throw new Error(`MCP observation count did not reach ${expected}`);
+}
+
+async function requireStableObservationCount(path, expected, gracePeriod) {
+  const deadline = Date.now() + gracePeriod;
+  while (Date.now() < deadline) {
+    try {
+      if (observationCount(path) !== expected) {
+        throw new Error(`MCP observation count changed from ${expected}`);
+      }
+    } catch (error) {
+      if (!(error instanceof SyntaxError)) throw error;
+    }
+    await new Promise((resolveWait) => setTimeout(resolveWait, 50));
+  }
+  await waitForObservationCount(path, expected, 1_000);
+}
+
 function assertBooleanContract(label, contract) {
   const failed = Object.entries(contract)
     .filter(([, value]) => value !== true)
@@ -983,6 +1018,7 @@ async function runCodexAppServer(cwd, environment, observation) {
   const waiters = new Map();
   let buffer = "";
   let stderr = "";
+  let protocolError;
   child.stdout.setEncoding("utf8");
   child.stderr.setEncoding("utf8");
   child.stderr.on("data", (chunk) => (stderr += chunk));
@@ -994,7 +1030,14 @@ async function runCodexAppServer(cwd, environment, observation) {
       const line = buffer.slice(0, newline).trim();
       buffer = buffer.slice(newline + 1);
       if (!line) continue;
-      const message = JSON.parse(line);
+      let message;
+      try {
+        message = JSON.parse(line);
+      } catch {
+        protocolError ??= new Error("Codex app-server emitted malformed JSON output");
+        for (const resolveResponse of waiters.values()) resolveResponse();
+        continue;
+      }
       if (message.id === undefined) continue;
       responses.set(message.id, message);
       waiters.get(message.id)?.();
@@ -1002,6 +1045,7 @@ async function runCodexAppServer(cwd, environment, observation) {
   });
   const send = (value) => child.stdin.write(`${JSON.stringify(value)}\n`);
   const response = async (id) => {
+    if (protocolError) throw protocolError;
     if (!responses.has(id)) {
       await withTimeout(
         new Promise((resolveResponse) => waiters.set(id, resolveResponse)),
@@ -1009,6 +1053,7 @@ async function runCodexAppServer(cwd, environment, observation) {
         `Codex app-server response timed out: ${stderr}`
       );
     }
+    if (protocolError) throw protocolError;
     const value = responses.get(id);
     if (value?.error) throw new Error(`Codex app-server error: ${JSON.stringify(value.error)}`);
     return value.result;
@@ -1026,6 +1071,7 @@ async function runCodexAppServer(cwd, environment, observation) {
     send({ id: 2, method: "mcpServerStatus/list", params: { detail: "full" } });
     const status = await response(2);
     if (observation) await waitForFile(observation, 10_000);
+    if (protocolError) throw protocolError;
     const server = status?.data?.find((entry) => entry.name === "utsuri");
     return { serverFound: Boolean(server), toolNames: Object.keys(server?.tools ?? {}).sort() };
   } finally {

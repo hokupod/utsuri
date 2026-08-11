@@ -71,6 +71,7 @@ describe("release layout security", () => {
       await readFile(path.join(repositoryRoot, ".artifacts/release/build-manifest.json"), "utf8")
     );
     expect(manifest.schemaVersion).toBe("1.1");
+    expect(manifest.schemaHashes["mcp-run-registration.schema.json"]).toMatch(/^[a-f0-9]{64}$/u);
     expect(manifest.dependencyBaselineSha256).toMatch(/^[a-f0-9]{64}$/u);
     expect(manifest.dependencyHash).toMatch(/^[a-f0-9]{64}$/u);
     expect(Object.keys(manifest.dependencyHashes).length).toBeGreaterThan(10);

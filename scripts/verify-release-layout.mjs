@@ -14,7 +14,11 @@ import {
   validateCliSourceManifest,
   validateExactFileInventory
 } from "./release-manifest-contract.mjs";
-import { fullShaActionErrors, publishedCliSmokeErrors } from "./workflow-contract.mjs";
+import {
+  fullShaActionErrors,
+  publishedCliSmokeErrors,
+  readOnlyPermissionErrors
+} from "./workflow-contract.mjs";
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const errors = [];
@@ -214,6 +218,7 @@ const schemaNames = [
   "diff.schema.json",
   "evidence-index.schema.json",
   "feedback-batch.schema.json",
+  "mcp-run-registration.schema.json",
   "origin-session.schema.json",
   "report.schema.json",
   "review-answer.schema.json",
@@ -460,7 +465,8 @@ if (documentationStateContent) {
     const expectedPublicationMetadata = {
       publisher: "hokupod",
       npmMaintainer: "hokupod-npm",
-      npmPublishing: "protected GitHub Actions trusted publishing after exact release approval",
+      npmPublishing:
+        "manual exact-tarball v0.2.0 bootstrap for first package creation, then protected GitHub Actions trusted publishing",
       spdxLicense: "AGPL-3.0-or-later"
     };
     const actualMetadata = state.publicationMetadata;
@@ -497,20 +503,11 @@ async function verifyReadOnlyPluginWorkflow(relativePath, requirements) {
   if (!content) return;
   const text = content.toString("utf8");
   errors.push(...fullShaActionErrors(relativePath, text));
-  if (!/^permissions:\s*\n(?:\s+[^\n]+\n)*?\s+contents:\s+read\s*$/mu.test(text)) {
-    errors.push(`${relativePath} must declare top-level contents: read`);
-  }
+  errors.push(...readOnlyPermissionErrors(relativePath, text));
   if (!text.includes("persist-credentials: false")) {
     errors.push(`${relativePath} must disable checkout credential persistence`);
   }
-  for (const forbidden of [
-    "contents: write",
-    "id-token: write",
-    "plugin-promote.mjs --write",
-    "git push",
-    "gh pr ",
-    "npm publish"
-  ]) {
+  for (const forbidden of ["plugin-promote.mjs --write", "git push", "gh pr ", "npm publish"]) {
     if (text.includes(forbidden)) {
       errors.push(`${relativePath} contains a forbidden mutation: ${forbidden}`);
     }

@@ -6,8 +6,8 @@
   "lastUpdated": "2026-08-11",
   "changeLogEntryId": "design-v2.8-git-marketplace-mcp",
   "currentHashes": {
-    "docs/design.md": "191ac9fea122949afd07f6ef8d52ab246f38e0091ebef002f2567d2ba5d4afa3",
-    "docs/release.md": "95b2bb385ba65604f07da5b4c0e05f46f5b1688818d65f73ec04f07ff18d9e24",
+    "docs/design.md": "ab9d51898f7c59e1edd8173bbd31299b67b7097a2e22f9044341b16fbcc95c44",
+    "docs/release.md": "8b5c7aa7f769210db602aa78ae31534967b8cad1ec30035862792ece3e31c615",
     "CONTRIBUTING.md": "aad5786183238a2559aab7e90b62f661e2029cf21e51972df54ae7980ee2fdd5",
     "README.md": "f89d1b3c643c1c5eec3ccccf5b87c6c5157cbd9ede5bb88c171e1b1fce507bfb",
     "README.ja.md": "856b828726630b8c2c29d554390d035961ff97bac333b1692c94aa8cbb9984c8",
@@ -25,6 +25,7 @@
     "readme:security-troubleshooting",
     "contributing",
     "release-guide:git-plugin",
+    "release-guide:first-publication-bootstrap",
     "release-version-synchronization",
     "readme:release-number-minimization"
   ],
@@ -42,7 +43,7 @@
   "publicationMetadata": {
     "publisher": "hokupod",
     "npmMaintainer": "hokupod-npm",
-    "npmPublishing": "protected GitHub Actions trusted publishing after exact release approval",
+    "npmPublishing": "manual exact-tarball v0.2.0 bootstrap for first package creation, then protected GitHub Actions trusted publishing",
     "spdxLicense": "AGPL-3.0-or-later"
   }
 }

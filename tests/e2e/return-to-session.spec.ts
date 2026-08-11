@@ -24,7 +24,7 @@ for (const [host, environment] of [
   test(`returns three itemized answers to the originating ${host} conversation`, async () => {
     const fixture = await createPhase6RunFixture(environment);
     try {
-      const runtime = await prepareFeedbackRuntime(fixture.root, "run", environment);
+      const runtime = await prepareFeedbackRuntime(fixture.root, "run", fixture.environment);
       let store = await loadReviewStore(fixture.run, fixture.report, "2026-08-08T00:00:00.000Z");
       const anchors = store.anchorCatalog
         .filter((anchor) => anchor.type === "hunk" || anchor.type === "line-range")

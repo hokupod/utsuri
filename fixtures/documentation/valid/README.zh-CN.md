@@ -61,7 +61,7 @@ Review the current change with Utsuri. Create a local evidence-backed report and
 
 ## 工作方式
 
-Collect、compare、finalize 并 review 有边界的本地证据。
+对范围受限的本地证据执行收集、比较、定稿和审查。
 
 <a id="understand-report"></a><!-- section:understand-report -->
 

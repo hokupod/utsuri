@@ -1,4 +1,4 @@
-import { cp, mkdtemp, mkdir, readFile, rm } from "node:fs/promises";
+import { cp, mkdtemp, mkdir, readFile, realpath, rm } from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
 import {
@@ -25,15 +25,20 @@ export interface Phase6RunFixture {
   run: string;
   reportDirectory: string;
   report: UtsuriReport;
+  environment: NodeJS.ProcessEnv;
   close(): Promise<void>;
 }
 
 export async function createPhase6RunFixture(
   environment: NodeJS.ProcessEnv = { CODEX_THREAD_ID: "codex-origin-session" }
 ): Promise<Phase6RunFixture> {
-  const root = await mkdtemp(path.join(os.tmpdir(), "utsuri-phase-6-e2e-"));
+  const root = await realpath(await mkdtemp(path.join(os.tmpdir(), "utsuri-phase-6-e2e-")));
   const run = path.join(root, "run");
   try {
+    const effectiveEnvironment = {
+      ...environment,
+      ...(environment.CLAUDE_CODE_SESSION_ID ? { CLAUDE_PROJECT_DIR: root } : {})
+    };
     await mkdir(run);
     const source = path.join(repositoryRoot, "fixtures/code-only-review/expected");
     for (const filename of [
@@ -48,7 +53,7 @@ export async function createPhase6RunFixture(
     await mkdir(path.join(run, "logs"));
     await cp(path.join(source, "logs/collect.ndjson"), path.join(run, "logs/collect.ndjson"));
     const initial = await createInitialReport(run);
-    const report = await bindReportToCurrentSession(root, initial, environment);
+    const report = await bindReportToCurrentSession(root, initial, effectiveEnvironment);
     const built = await buildReport(run, report, {
       toolVersion: "0.1.0",
       origin: report.origin
@@ -62,6 +67,7 @@ export async function createPhase6RunFixture(
       run,
       reportDirectory,
       report: publishedReport,
+      environment: effectiveEnvironment,
       async close() {
         await rm(root, { recursive: true, force: true });
       }

@@ -78,6 +78,36 @@ export function fullShaActionErrors(relativePath, text, { allowedLocalReferences
   return errors;
 }
 
+export function readOnlyPermissionErrors(relativePath, text) {
+  const parsed = parseWorkflow(relativePath, text);
+  if (!parsed.workflow) return parsed.errors;
+
+  const errors = [];
+  const topLevel = parsed.workflow.permissions;
+  if (!isRecord(topLevel) || topLevel.contents !== "read") {
+    errors.push(`${relativePath} must declare exact top-level contents: read permission`);
+  }
+  validateReadOnlyPermissions(relativePath, "top-level", topLevel, errors);
+
+  for (const [jobName, job] of Object.entries(parsed.workflow.jobs)) {
+    if (!isRecord(job) || !Object.hasOwn(job, "permissions")) continue;
+    validateReadOnlyPermissions(relativePath, `job ${jobName}`, job.permissions, errors);
+  }
+  return errors;
+}
+
+function validateReadOnlyPermissions(relativePath, location, permissions, errors) {
+  if (!isRecord(permissions)) {
+    errors.push(`${relativePath} ${location} permissions must be a mapping`);
+    return;
+  }
+  for (const [name, access] of Object.entries(permissions)) {
+    if (access !== "read" && access !== "none") {
+      errors.push(`${relativePath} ${location} ${name} permission is not read-only`);
+    }
+  }
+}
+
 export function publishedCliSmokeErrors(relativePath, text) {
   const parsed = parseWorkflow(relativePath, text);
   if (!parsed.workflow) return parsed.errors;
