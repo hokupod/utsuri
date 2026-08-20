@@ -71,12 +71,14 @@ test("keeps hierarchy, focus, and reflow in the visual evidence matrix", async (
   await mkdir(visualEvidence, { recursive: true });
 
   for (const scenario of matrix.scenarios) {
-    const report =
+    const report = structuredClone(
       scenario.state === "long-dense"
         ? denseReport(fixture.report)
         : scenario.state === "empty"
           ? empty
-          : fixture.report;
+          : fixture.report
+    );
+    report.language = scenario.locale === "ja-JP" ? "ja" : "en";
     const page = await visualPage(browser, scenario, {
       report,
       reportDelayMs: scenario.state === "loading" ? 1200 : undefined

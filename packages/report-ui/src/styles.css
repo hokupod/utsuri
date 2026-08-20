@@ -452,7 +452,8 @@ main {
 }
 
 .review-route h3 {
-  max-width: 28rem;
+  max-width: min(100%, 28rem);
+  overflow-wrap: anywhere;
   margin-top: 1.25rem;
   font-size: clamp(1.25rem, 2vw, 1.75rem);
   letter-spacing: -0.035em;
@@ -664,6 +665,7 @@ main {
 }
 
 .map-copy strong {
+  overflow-wrap: anywhere;
   font-size: 0.92rem;
   line-height: 1.3;
 }

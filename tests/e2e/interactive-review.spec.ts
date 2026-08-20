@@ -22,6 +22,8 @@ test("stores a three-item batch through the capability-bound interactive UI", as
       "utf8"
     );
     await page.goto(fixture.server.url);
+    await expect(page.getByRole("heading", { name: "Review brief" })).toBeVisible();
+    await page.getByRole("button", { name: "Start with highest attention" }).click();
     await expect(page.getByRole("heading", { name: "Human review" })).toBeVisible();
     expect(page.url()).not.toContain("token=");
 
