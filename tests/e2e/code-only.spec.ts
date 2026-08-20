@@ -1,7 +1,7 @@
 import { expect, test, type Browser, type Page, type Route, type TestInfo } from "@playwright/test";
 import { mkdir, readFile, writeFile } from "node:fs/promises";
 import path from "node:path";
-import { viewerDocument } from "../../packages/interactive-server/src";
+import { startStaticReportServer, viewerDocument } from "../../packages/interactive-server/src";
 import type { UtsuriReport } from "../../packages/report-model/src";
 
 const root = path.resolve(import.meta.dirname, "../..");
@@ -19,7 +19,7 @@ const contentTypes: Record<string, string> = {
   ".svg": "image/svg+xml"
 };
 
-async function serveReport(page: Page): Promise<void> {
+async function serveReport(page: Page, reportLanguage = report.language): Promise<void> {
   await page.route("http://utsuri.test/**", async (route: Route) => {
     const requestPath = new URL(route.request().url()).pathname;
     const relative = requestPath === "/" ? "index.html" : requestPath.slice(1);
@@ -31,7 +31,11 @@ async function serveReport(page: Page): Promise<void> {
         status: 200,
         contentType: contentTypes[path.extname(filename)] ?? "application/octet-stream",
         body:
-          relative === "index.html" ? viewerDocument(body.toString("utf8"), "interactive") : body
+          relative === "index.html"
+            ? viewerDocument(body.toString("utf8"), "interactive")
+            : relative === "report.json"
+              ? `${JSON.stringify({ ...report, language: reportLanguage })}\n`
+              : body
       });
     } catch {
       await route.fulfill({ status: 404, body: "Not found" });
@@ -45,6 +49,7 @@ async function newFixturePage(
   browser: Browser,
   options: {
     locale: string;
+    reportLanguage: string;
     colorScheme: "light" | "dark";
     width: number;
     deviceScaleFactor?: number;
@@ -57,9 +62,23 @@ async function newFixturePage(
     deviceScaleFactor: options.deviceScaleFactor ?? 1
   });
   const page = await context.newPage();
-  await serveReport(page);
+  await serveReport(page, options.reportLanguage);
   return { context, page };
 }
+
+test("loads the full code review from the default static server", async ({ page }) => {
+  const server = await startStaticReportServer(fixture);
+  try {
+    await page.goto(server.url);
+    await expect(page.getByRole("heading", { name: "Decision summary" })).toBeVisible();
+    await page.getByRole("link", { name: /src\/malicious\.ts/u }).click();
+    await expect(page.getByRole("heading", { name: "Agent interpretation" })).toBeVisible();
+    await expect(page.getByRole("heading", { name: "Code diff" })).toBeVisible();
+    await expect(page.locator(".hunk")).toHaveCount(report.changes[0]?.hunkRefs.length ?? 0);
+  } finally {
+    await server.close();
+  }
+});
 
 test("renders every hunk from structured data without executing diff text", async ({ page }) => {
   await serveReport(page);
@@ -118,15 +137,45 @@ test("preserves hierarchy across language, theme, viewport, and 200% zoom", asyn
   browser
 }, testInfo: TestInfo) => {
   const scenarios = [
-    { name: "english-light-1024", locale: "en-US", colorScheme: "light" as const, width: 1024 },
-    { name: "japanese-dark-1280", locale: "ja-JP", colorScheme: "dark" as const, width: 1280 },
-    { name: "english-light-1440", locale: "en-US", colorScheme: "light" as const, width: 1440 }
+    {
+      name: "english-light-1024",
+      locale: "en-US",
+      reportLanguage: "en",
+      colorScheme: "light" as const,
+      width: 1024
+    },
+    {
+      name: "japanese-dark-1280",
+      locale: "en-US",
+      reportLanguage: "ja",
+      colorScheme: "dark" as const,
+      width: 1280
+    },
+    {
+      name: "english-light-1440",
+      locale: "ja-JP",
+      reportLanguage: "en",
+      colorScheme: "light" as const,
+      width: 1440
+    }
   ];
   await mkdir(visualEvidence, { recursive: true });
   for (const scenario of scenarios) {
     const { context, page } = await newFixturePage(browser, scenario);
-    if (scenario.locale === "ja-JP") {
+    if (scenario.reportLanguage === "ja") {
       await expect(page.getByRole("heading", { name: "判断サマリー" })).toBeVisible();
+      expect(await page.evaluate(() => document.documentElement.lang)).toBe("ja");
+      await expect(page.getByText("確認が必要", { exact: true })).toBeVisible();
+      await expect(
+        page
+          .getByText(
+            "0件を検証済み、既知の利用件数は不明。ほかの利用箇所が存在する可能性があります",
+            {
+              exact: true
+            }
+          )
+          .first()
+      ).toBeVisible();
     }
     expect(
       await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth + 1),
@@ -145,6 +194,7 @@ test("preserves hierarchy across language, theme, viewport, and 200% zoom", asyn
 
   const { context, page } = await newFixturePage(browser, {
     locale: "en-US",
+    reportLanguage: "en",
     colorScheme: "light",
     width: 512,
     deviceScaleFactor: 2

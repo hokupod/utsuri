@@ -6,6 +6,7 @@
   "additionalProperties": false,
   "required": [
     "schemaVersion",
+    "language",
     "reportId",
     "status",
     "summary",
@@ -23,6 +24,12 @@
   ],
   "properties": {
     "schemaVersion": { "const": "1.0" },
+    "language": {
+      "type": "string",
+      "minLength": 2,
+      "maxLength": 35,
+      "pattern": "^[A-Za-z]{2,8}(?:-[A-Za-z0-9]{1,8})*$"
+    },
     "reportId": {
       "type": "string",
       "pattern": "^report[-:][A-Za-z0-9._:-]+$",

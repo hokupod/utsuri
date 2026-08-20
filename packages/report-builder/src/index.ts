@@ -117,11 +117,32 @@ function escapeHtml(value: string): string {
     .replaceAll("'", "&#39;");
 }
 
+function reportText(language: string, english: string, japanese: string): string {
+  return /^ja(?:-|$)/iu.test(language) ? japanese : english;
+}
+
+const generatedPreComparisonGaps: Readonly<Record<string, true>> = {
+  "Visual behavior was not captured.": true,
+  "Runtime behavior was not executed.": true,
+  "Captured evidence has not been compared or mapped to this change.": true,
+  "画面上の挙動は取得されていません。": true,
+  "実行時の挙動は検証されていません。": true,
+  "取得済みの根拠は、この変更との比較または対応付けが完了していません。": true
+};
+
 function indexHtml(report: UtsuriReport): string {
   const summary = escapeHtml(report.summary.statement);
   const status = escapeHtml(report.status);
+  const language = escapeHtml(report.language);
+  const skipLink = reportText(report.language, "Skip to review", "レビューへ移動");
+  const summaryHeading = reportText(report.language, "Review summary", "レビュー概要");
+  const servingHint = reportText(
+    report.language,
+    "Full review data is available from the local report server.",
+    "完全なレビューデータはローカルのレポートサーバーから表示できます。"
+  );
   return `<!doctype html>
-<html lang="en">
+<html lang="${language}">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
@@ -130,12 +151,12 @@ function indexHtml(report: UtsuriReport): string {
   <link rel="stylesheet" href="./assets/app.css">
 </head>
 <body>
-  <a class="skip-link" href="#main-content">Skip to review</a>
+  <a class="skip-link" href="#main-content">${skipLink}</a>
   <main id="main-content" data-static-fallback tabindex="-1">
     <p>Utsuri review · ${status}</p>
-    <h1>Review summary</h1>
+    <h1>${summaryHeading}</h1>
     <p>${summary}</p>
-    <p>Interactive data is available when this report is served locally.</p>
+    <p>${servingHint}</p>
   </main>
   <div data-utsuri-app></div>
   <script type="module" src="./assets/app.js"></script>
@@ -312,7 +333,11 @@ function inferredKind(paths: readonly string[]): UtsuriReport["changes"][number]
   return "unknown";
 }
 
-function createCandidateChanges(diff: GitDiffDocument, plan: ReviewPlan): UtsuriReport["changes"] {
+function createCandidateChanges(
+  diff: GitDiffDocument,
+  plan: ReviewPlan,
+  language: string
+): UtsuriReport["changes"] {
   const filesById = new Map(diff.files.map((file) => [file.id, file]));
   return plan.candidates.map((candidate) => {
     const paths = candidate.fileRefs
@@ -326,28 +351,77 @@ function createCandidateChanges(diff: GitDiffDocument, plan: ReviewPlan): Utsuri
       id: candidate.id,
       title: candidate.title,
       kind: inferredKind(paths),
-      summary: `${candidate.hunkRefs.length} hunk${candidate.hunkRefs.length === 1 ? "" : "s"} across ${paths.length} file${paths.length === 1 ? "" : "s"}.`,
+      summary: reportText(
+        language,
+        `${candidate.hunkRefs.length} hunk${candidate.hunkRefs.length === 1 ? "" : "s"} across ${paths.length} file${paths.length === 1 ? "" : "s"}.`,
+        `${candidate.hunkRefs.length}件のハンクを${paths.length}件のファイルで確認しました。`
+      ),
       intent: {
-        text: "Intent has not been declared.",
+        text: reportText(
+          language,
+          "Intent has not been declared.",
+          "変更意図は宣言されていません。"
+        ),
         source: "unknown",
         evidenceRefs: candidate.evidenceRefs,
-        missingEvidence: ["User request, specification, or commit rationale"]
+        missingEvidence: [
+          reportText(
+            language,
+            "User request, specification, or commit rationale",
+            "ユーザー要求、仕様、またはコミット理由"
+          )
+        ]
       },
-      implementation: `Git changes were collected for ${paths.join(", ")}.`,
+      implementation: reportText(
+        language,
+        `Git changes were collected for ${paths.join(", ")}.`,
+        `${paths.join("、")}のGit変更を収集しました。`
+      ),
       userImpact: [],
-      technicalImpact: paths.map((entry) => `Changed ${entry}`),
+      technicalImpact: paths.map((entry) =>
+        reportText(language, `Changed ${entry}`, `${entry}を変更`)
+      ),
       risk: {
         level: lowSignalOnly ? "info" : "low",
         reasons: lowSignalOnly
-          ? ["Only low-signal or generated evidence is present."]
-          : ["Runtime and visual effects have not been exercised."]
+          ? [
+              reportText(
+                language,
+                "Only low-signal or generated evidence is present.",
+                "低シグナルまたは生成済みの根拠だけが存在します。"
+              )
+            ]
+          : [
+              reportText(
+                language,
+                "Runtime and visual effects have not been exercised.",
+                "実行時および画面上の影響は検証されていません。"
+              )
+            ]
       },
       hunkRefs: candidate.hunkRefs,
       targetRefs: [],
       findingRefs: [],
       verification: {
-        verified: ["Git patch structure and cross-references were validated."],
-        gaps: ["Visual behavior was not captured.", "Runtime behavior was not executed."]
+        verified: [
+          reportText(
+            language,
+            "Git patch structure and cross-references were validated.",
+            "Gitパッチの構造と相互参照を検証しました。"
+          )
+        ],
+        gaps: [
+          reportText(
+            language,
+            "Visual behavior was not captured.",
+            "画面上の挙動は取得されていません。"
+          ),
+          reportText(
+            language,
+            "Runtime behavior was not executed.",
+            "実行時の挙動は検証されていません。"
+          )
+        ]
       }
     };
   });
@@ -1227,6 +1301,7 @@ function integratePhase3(
   discovery: DiscoveryManifest | null
 ): UtsuriReport {
   if (!capture || !comparison || !discovery) return source;
+  const language = source.language;
   const targets = reportCaptureTargets(capture, discovery, comparison);
   const comparisons = reportComparisons(comparison);
   const phase3Evidence = comparisonEvidence(source, comparison, discovery);
@@ -1277,21 +1352,42 @@ function integratePhase3(
         ? null
         : Math.max(0, discovery.coverage.knownUsages - discovery.coverage.verifiedUsages);
     const gaps = [
-      ...change.verification.gaps.filter(
-        (gap) =>
-          !new Set([
-            "Visual behavior was not captured.",
-            "Runtime behavior was not executed.",
-            "Captured evidence has not been compared or mapped to this change."
-          ]).has(gap)
-      ),
-      ...(targetRefs.length === 0 ? ["No visual target was mapped to this change."] : []),
-      ...(targetRefs.length > compared
-        ? [`${targetRefs.length - compared} mapped target comparison is incomplete.`]
+      ...change.verification.gaps.filter((gap) => generatedPreComparisonGaps[gap] !== true),
+      ...(targetRefs.length === 0
+        ? [
+            reportText(
+              language,
+              "No visual target was mapped to this change.",
+              "この変更に対応する画面ターゲットはありません。"
+            )
+          ]
         : []),
-      ...(knownGap && knownGap > 0 ? [`${knownGap} known usages were not verified.`] : []),
+      ...(targetRefs.length > compared
+        ? [
+            reportText(
+              language,
+              `${targetRefs.length - compared} mapped target comparison is incomplete.`,
+              `${targetRefs.length - compared}件の対応済みターゲット比較が未完了です。`
+            )
+          ]
+        : []),
+      ...(knownGap && knownGap > 0
+        ? [
+            reportText(
+              language,
+              `${knownGap} known usages were not verified.`,
+              `${knownGap}件の既知の利用箇所が未検証です。`
+            )
+          ]
+        : []),
       ...(discovery.coverage.unknownPossible
-        ? ["Additional unmapped usages may exist; coverage is not a percentage."]
+        ? [
+            reportText(
+              language,
+              "Additional unmapped usages may exist; coverage is not a percentage.",
+              "未対応の利用箇所がほかにも存在する可能性があり、カバレッジは割合ではありません。"
+            )
+          ]
         : [])
     ];
     return {
@@ -1303,7 +1399,13 @@ function integratePhase3(
         reasons: [
           ...change.risk.reasons,
           ...(severeNewFinding
-            ? [`New ${severeNewFinding.severity} ${severeNewFinding.category} finding.`]
+            ? [
+                reportText(
+                  language,
+                  `New ${severeNewFinding.severity} ${severeNewFinding.category} finding.`,
+                  `新しい${severeNewFinding.severity}レベルの${severeNewFinding.category}所見があります。`
+                )
+              ]
             : [])
         ]
       },
@@ -1312,7 +1414,13 @@ function integratePhase3(
           ...new Set([
             ...change.verification.verified,
             ...(compared > 0
-              ? [`${compared} mapped browser target${compared === 1 ? " was" : "s were"} compared.`]
+              ? [
+                  reportText(
+                    language,
+                    `${compared} mapped browser target${compared === 1 ? " was" : "s were"} compared.`,
+                    `${compared}件の対応済みブラウザターゲットを比較しました。`
+                  )
+                ]
               : [])
           ])
         ],
@@ -1351,14 +1459,34 @@ function integratePhase3(
             : "PASS";
   const statement =
     status === "INCOMPLETE"
-      ? "Browser comparison is incomplete; inspect failed targets before making a visual judgment."
+      ? reportText(
+          language,
+          "Browser comparison is incomplete; inspect failed targets before making a visual judgment.",
+          "ブラウザ比較は未完了です。画面上の判断を行う前に失敗したターゲットを確認してください。"
+        )
       : status === "UNCOVERED"
-        ? "Comparison completed, but at least one code change has no mapped visual target."
+        ? reportText(
+            language,
+            "Comparison completed, but at least one code change has no mapped visual target.",
+            "比較は完了しましたが、少なくとも1件のコード変更に対応する画面ターゲットがありません。"
+          )
         : status === "REGRESSION"
-          ? `Comparison found ${newFindings.length} new finding${newFindings.length === 1 ? "" : "s"}, including a likely regression.`
+          ? reportText(
+              language,
+              `Comparison found ${newFindings.length} new finding${newFindings.length === 1 ? "" : "s"}, including a likely regression.`,
+              `比較で${newFindings.length}件の新しい所見が見つかり、回帰の可能性が含まれています。`
+            )
           : status === "CHANGED"
-            ? "Measured visual or structural evidence changed without a regression being established by pixels alone."
-            : "Compared targets have no new measured difference; coverage remains visible below.";
+            ? reportText(
+                language,
+                "Measured visual or structural evidence changed without a regression being established by pixels alone.",
+                "計測した画面または構造の根拠に変化がありますが、ピクセル差分だけでは回帰と判断できません。"
+              )
+            : reportText(
+                language,
+                "Compared targets have no new measured difference; coverage remains visible below.",
+                "比較したターゲットに新しい計測差分はありません。カバレッジは以下で確認できます。"
+              );
   const incompleteReasons = [
     ...source.diagnostics.incompleteReasons.filter(
       (reason) =>
@@ -1409,9 +1537,10 @@ function createCodeOnlyReport(
   annotations: Annotations | null,
   capture: CaptureArtifact | null
 ): UtsuriReport {
+  const language = annotations?.language ?? "en";
   const sourceChanges = annotations?.changes.length
     ? (annotations.changes as UtsuriReport["changes"])
-    : createCandidateChanges(diff, plan);
+    : createCandidateChanges(diff, plan, language);
   const captureState = captureReportState(capture);
   const captureComplete =
     capture !== null &&
@@ -1424,27 +1553,47 @@ function createCodeOnlyReport(
       verified: [
         ...new Set([
           ...change.verification.verified,
-          ...(captureComplete ? ["Configured before/after browser evidence was captured."] : [])
+          ...(captureComplete
+            ? [
+                reportText(
+                  language,
+                  "Configured before/after browser evidence was captured.",
+                  "設定済みの変更前後のブラウザ根拠を取得しました。"
+                )
+              ]
+            : [])
         ])
       ],
       gaps: capture
         ? [
             ...new Set([
-              ...change.verification.gaps.filter(
-                (gap) =>
-                  gap !== "Visual behavior was not captured." &&
-                  gap !== "Runtime behavior was not executed."
-              ),
+              ...change.verification.gaps.filter((gap) => generatedPreComparisonGaps[gap] !== true),
               captureComplete
-                ? "Captured evidence has not been compared or mapped to this change."
-                : "Browser capture is incomplete."
+                ? reportText(
+                    language,
+                    "Captured evidence has not been compared or mapped to this change.",
+                    "取得済みの根拠は、この変更との比較または対応付けが完了していません。"
+                  )
+                : reportText(
+                    language,
+                    "Browser capture is incomplete.",
+                    "ブラウザキャプチャは未完了です。"
+                  )
             ])
           ]
         : [
             ...new Set([
               ...change.verification.gaps,
-              "Visual behavior was not captured.",
-              "Runtime behavior was not executed."
+              reportText(
+                language,
+                "Visual behavior was not captured.",
+                "画面上の挙動は取得されていません。"
+              ),
+              reportText(
+                language,
+                "Runtime behavior was not executed.",
+                "実行時の挙動は検証されていません。"
+              )
             ])
           ]
     }
@@ -1456,14 +1605,27 @@ function createCodeOnlyReport(
   const reportId = `report-${stableHash({ input, diff, evidenceIndex, plan, annotations, ...(capture ? { capture } : {}) }).slice(0, 16)}`;
   return {
     schemaVersion: "1.0",
+    language,
     reportId,
     status: capture && !captureComplete ? "INCOMPLETE" : "UNCOVERED",
     summary: {
       statement: capture
         ? captureComplete
-          ? "Code changes and browser evidence were collected. Comparison and target mapping remain unverified."
-          : "Code changes were collected, but browser evidence is incomplete."
-        : "Code changes were collected and grouped. Visual and runtime behavior remain unverified.",
+          ? reportText(
+              language,
+              "Code changes and browser evidence were collected. Comparison and target mapping remain unverified.",
+              "コード変更とブラウザ根拠を収集しました。比較とターゲット対応付けは未検証です。"
+            )
+          : reportText(
+              language,
+              "Code changes were collected, but browser evidence is incomplete.",
+              "コード変更を収集しましたが、ブラウザ根拠は未完了です。"
+            )
+        : reportText(
+            language,
+            "Code changes were collected and grouped. Visual and runtime behavior remain unverified.",
+            "コード変更を収集してグループ化しました。画面および実行時の挙動は未検証です。"
+          ),
       filesChanged: diff.summary.filesChanged,
       additions: diff.summary.additions,
       deletions: diff.summary.deletions
@@ -1611,23 +1773,41 @@ async function reconstructReportFromSourceSnapshot(
     );
   }
 
+  const language = annotations?.language ?? "en";
   const captureState = captureReportState(capture);
   const captureComplete =
     capture !== null &&
     captureState.targets.length > 0 &&
     captureState.failed === 0 &&
     captureState.blockedRequestCount === 0;
-  const reportId = `report-${stableHash({ input, ...(capture ? { capture } : {}) }).slice(0, 16)}`;
+  const reportId = `report-${stableHash({
+    input,
+    ...(annotations ? { language } : {}),
+    ...(capture ? { capture } : {})
+  }).slice(0, 16)}`;
   const report: UtsuriReport = {
     schemaVersion: "1.0",
+    language,
     reportId,
     status: capture ? (captureComplete ? "UNCOVERED" : "INCOMPLETE") : "SKIPPED",
     summary: {
       statement: capture
         ? captureComplete
-          ? "Browser evidence was captured without a code diff; comparison remains unverified."
-          : "Browser evidence is incomplete and no code diff was supplied."
-        : "No code diff was supplied; visual verification was skipped.",
+          ? reportText(
+              language,
+              "Browser evidence was captured without a code diff; comparison remains unverified.",
+              "コード差分なしでブラウザ根拠を取得しました。比較は未検証です。"
+            )
+          : reportText(
+              language,
+              "Browser evidence is incomplete and no code diff was supplied.",
+              "ブラウザ根拠は未完了で、コード差分も指定されていません。"
+            )
+        : reportText(
+            language,
+            "No code diff was supplied; visual verification was skipped.",
+            "コード差分が指定されていないため、画面検証をスキップしました。"
+          ),
       filesChanged: 0,
       additions: 0,
       deletions: 0

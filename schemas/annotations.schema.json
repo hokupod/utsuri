@@ -4,9 +4,15 @@
   "title": "Annotations",
   "type": "object",
   "additionalProperties": false,
-  "required": ["schemaVersion", "changes"],
+  "required": ["schemaVersion", "language", "changes"],
   "properties": {
     "schemaVersion": { "const": "1.0" },
+    "language": {
+      "type": "string",
+      "minLength": 2,
+      "maxLength": 35,
+      "pattern": "^[A-Za-z]{2,8}(?:-[A-Za-z0-9]{1,8})*$"
+    },
     "changes": { "type": "array", "items": { "$ref": "#/$defs/semanticChange" } }
   },
   "$defs": {

@@ -117,7 +117,7 @@ describe("serve integration", () => {
       const response = await fetch(server.url);
       expect(response.status).toBe(200);
       expect(await response.text()).toContain("Utsuri review");
-      expect(response.headers.get("content-security-policy")).toContain("connect-src 'none'");
+      expect(response.headers.get("content-security-policy")).toContain("connect-src 'self'");
 
       const traversal = await rawTcpRequest({
         host: server.host,

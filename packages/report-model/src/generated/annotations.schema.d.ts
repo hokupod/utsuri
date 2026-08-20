@@ -2,6 +2,7 @@
 
 export interface Annotations {
   schemaVersion: "1.0";
+  language: string;
   changes: SemanticChange[];
 }
 export interface SemanticChange {

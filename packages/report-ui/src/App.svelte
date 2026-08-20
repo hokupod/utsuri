@@ -133,6 +133,8 @@
       orphaned: "Orphaned",
       reviewUnavailable: "Review state unavailable",
       empty: "No semantic changes",
+      dataUnavailable: "Review data unavailable",
+      intentUnknown: "Intent unknown",
       loading: "Loading review data…"
     },
     ja: {
@@ -227,9 +229,13 @@
       orphaned: "参照先なし",
       reviewUnavailable: "レビュー状態を利用できません",
       empty: "意味単位の変更はありません",
+      dataUnavailable: "レビューデータを利用できません",
+      intentUnknown: "変更意図は不明です",
       loading: "レビューデータを読み込んでいます…"
     }
   } as const;
+
+  type UiCopy = (typeof copy)[keyof typeof copy];
 
   let report: UtsuriReport | null = null;
   let failure = "";
@@ -362,12 +368,12 @@
     return "no-issue";
   }
 
-  function judgmentLabel(value: HumanJudgment): string {
-    if (value === "reviewed") return t.reviewed;
-    if (value === "follow-up") return t.followUp;
-    if (value === "blocked") return t.blocked;
-    if (value === "stale") return t.stale;
-    return t.unreviewed;
+  function judgmentLabel(value: HumanJudgment, labels: UiCopy): string {
+    if (value === "reviewed") return labels.reviewed;
+    if (value === "follow-up") return labels.followUp;
+    if (value === "blocked") return labels.blocked;
+    if (value === "stale") return labels.stale;
+    return labels.unreviewed;
   }
 
   function judgment(store: ReviewStore | null, changeId: string): HumanJudgment {
@@ -797,10 +803,10 @@
     }
   }
 
-  function queueLabel(kind: QueueKind): string {
-    if (kind === "action-required") return t.action;
-    if (kind === "needs-confirmation") return t.confirm;
-    return t.clear;
+  function queueLabel(kind: QueueKind, labels: UiCopy): string {
+    if (kind === "action-required") return labels.action;
+    if (kind === "needs-confirmation") return labels.confirm;
+    return labels.clear;
   }
 
   function queueCount(kind: QueueKind): number {
@@ -883,8 +889,17 @@
     requestAnimationFrame(() => (syncingScroll = false));
   }
 
-  function coverageSummary(value: UtsuriReport): string {
+  function coverageSummary(value: UtsuriReport, currentLocale: keyof typeof copy): string {
     const known = value.coverage.knownUsages;
+    if (currentLocale === "ja") {
+      const base =
+        known === null
+          ? `${value.coverage.verifiedUsages}件を検証済み、既知の利用件数は不明`
+          : `既知の利用箇所${known}件中${value.coverage.verifiedUsages}件を検証済み`;
+      return value.coverage.unknownPossible
+        ? `${base}。ほかの利用箇所が存在する可能性があります`
+        : base;
+    }
     const base =
       known === null
         ? `${value.coverage.verifiedUsages} verified; known usage count unavailable`
@@ -1003,6 +1018,8 @@
             })
           : null;
       }
+      locale = /^ja(?:-|$)/iu.test(report.language) ? "ja" : "en";
+      document.documentElement.lang = report.language;
       if (manifest) {
         reviewSource = {
           base: manifest.source?.base ?? null,
@@ -1024,7 +1041,7 @@
       document.querySelector("[data-static-fallback]")?.remove();
       applyLocation();
     } catch (error) {
-      failure = `Interactive data unavailable: ${error instanceof Error ? error.message : String(error)}`;
+      failure = `${t.dataUnavailable}: ${error instanceof Error ? error.message : String(error)}`;
     }
   }
 
@@ -1127,7 +1144,7 @@
       <div class="report-state" data-status={report.status}>
         <span class="state-mark" aria-hidden="true"></span>
         <span>{report.status}</span>
-        <small>{coverageSummary(report)}</small>
+        <small>{coverageSummary(report, locale)}</small>
       </div>
       <p class="report-id">{report.reportId}</p>
     </header>
@@ -1146,7 +1163,7 @@
         {#each ["action-required", "needs-confirmation", "no-issue"] as kind (kind)}
           <section class="queue-section" data-queue={kind}>
             <h3>
-              <span>{queueLabel(kind as QueueKind)}</span>
+              <span>{queueLabel(kind as QueueKind, t)}</span>
               <span class="count">{queueCount(kind as QueueKind)}</span>
             </h3>
             <ol>
@@ -1247,7 +1264,7 @@
           <div>
             <p class="kicker">Coverage / structured</p>
             <h2 id="coverage-heading">{t.coverage}</h2>
-            <p>{coverageSummary(report)}</p>
+            <p>{coverageSummary(report, locale)}</p>
           </div>
           <dl>
             <div>
@@ -1313,7 +1330,7 @@
             </div>
             <div class="change-badges" aria-label="Change status">
               <span data-queue={queueKind(selectedChange)}
-                >{queueLabel(queueKind(selectedChange))}</span
+                >{queueLabel(queueKind(selectedChange), t)}</span
               >
               <span>{selectedChange.risk.level} risk</span>
               <span>{selectedChange.intent.source}</span>
@@ -1381,7 +1398,7 @@
                       )}
                   >
                     {#each ["unreviewed", "reviewed", "follow-up", "blocked"] as value (value)}
-                      <option {value}>{judgmentLabel(value as HumanJudgment)}</option>
+                      <option {value}>{judgmentLabel(value as HumanJudgment, t)}</option>
                     {/each}
                     {#if judgment(reviewStore, selectedChange.id) === "stale"}
                       <option value="stale">{t.stale}</option>
@@ -1426,7 +1443,7 @@
               </section>
               <section>
                 <h3>{t.why}</h3>
-                <p>{selectedChange.intent.text || "Intent unknown"}</p>
+                <p>{selectedChange.intent.text || t.intentUnknown}</p>
               </section>
               <section>
                 <h3>{t.userImpact}</h3>
@@ -1479,7 +1496,7 @@
                 <p class="kicker">Evidence / {selectedComparisons.length}</p>
                 <h3 id="measured-evidence-heading">{t.measured}</h3>
                 <h4 id="visual-evidence-heading" tabindex="-1">{t.visualEvidence}</h4>
-                <p>{coverageSummary(report)}</p>
+                <p>{coverageSummary(report, locale)}</p>
               </div>
             </div>
 

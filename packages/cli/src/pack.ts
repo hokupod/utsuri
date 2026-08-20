@@ -285,6 +285,12 @@ function cspHash(value: string): string {
 function singleFileDocument(loaded: LoadedReport): Buffer {
   const css = loaded.files.get("assets/app.css")!.toString("utf8");
   const javascript = loaded.files.get("assets/app.js")!.toString("utf8");
+  const language = loaded.report.language;
+  const japanese = /^ja(?:-|$)/iu.test(language);
+  const skipLink = japanese ? "レビューへ移動" : "Skip to review";
+  const loading = japanese
+    ? "埋め込み済みレビューデータを読み込んでいます…"
+    : "Loading embedded review data…";
   if (/<\/style/iu.test(css) || /<\/script/iu.test(javascript)) {
     throw new UtsuriError(
       "PACK_INLINE_BOUNDARY",
@@ -316,7 +322,7 @@ function singleFileDocument(loaded: LoadedReport): Buffer {
     `style-src 'sha256-${cspHash(css)}'`
   ].join("; ");
   return Buffer.from(`<!doctype html>
-<html lang="en">
+<html lang="${language}">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
@@ -325,10 +331,10 @@ function singleFileDocument(loaded: LoadedReport): Buffer {
   <style>${css}</style>
 </head>
 <body>
-  <a class="skip-link" href="#main-content">Skip to review</a>
+  <a class="skip-link" href="#main-content">${skipLink}</a>
   <main id="main-content" data-static-fallback tabindex="-1">
     <h1>Utsuri review</h1>
-    <p>Loading embedded review data…</p>
+    <p>${loading}</p>
   </main>
   <div data-utsuri-app></div>
   <script type="application/json" data-utsuri-report>${reportJson}</script>

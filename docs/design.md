@@ -1144,32 +1144,41 @@ sequenceDiagram
     participant CLI
     participant Browser
 
-    User->>Agent: Request a visual diff report
+    User->>Agent: Request an evidence-backed review
     Agent->>CLI: doctor --json
     CLI-->>Agent: environment capabilities
     Agent->>CLI: collect --base ... --head ...
-    CLI-->>Agent: input.json / review-plan.json
-    Agent->>Agent: semantic grouping and annotation
+    CLI-->>Agent: diff.json / evidence-index.json / review-plan.json
+    Agent->>Agent: choose report language and author annotations
     Agent->>CLI: capture --run ...
     CLI->>Browser: before / after capture
     Browser-->>CLI: screenshots / DOM / ARIA / logs
-    CLI-->>Agent: comparison.json
-    Agent->>Agent: revise annotation from evidence
+    Agent->>CLI: discover / compare
+    CLI-->>Agent: discovery.json / comparison.json
+    Agent->>Agent: revise annotations from measured evidence
     Agent->>CLI: finalize --annotations ...
-    CLI-->>Agent: report path / status
-    Agent-->>User: report location and important limitations
+    Agent->>CLI: validate --strict
+    CLI-->>Agent: validated report path / status
+    Agent->>CLI: serve in a persistent host process
+    CLI-->>Agent: live loopback URL
+    Agent->>Browser: open and verify report UI
+    Browser-->>Agent: report ID / first change / diff / interpretation loaded
+    Agent-->>User: live URL, explanation, coverage, failures, and gaps
 ```
 
 Phase 6 completes the review handoff after strict report validation:
 
-1. Open the immutable report directly or with loopback-only `serve`.
-2. Keep viewed progress, human judgment, and comments as independent state.
-3. Export a canonical review bundle before moving review state between runs.
-4. Import only after base/head and report validation; use `--reanchor` to classify changed anchors as `matched`, `stale`, or `orphaned`.
-5. Never activate a probable anchor automatically and never treat viewing as approval.
-6. Preview comments selected for Agent attention before storing a Feedback Batch.
-7. In the originating conversation only, claim the batch through the fixed-run Skill, CLI, or MCP service and write exactly one structured answer per item.
-8. Leave viewed, human judgment, and resolution unchanged when answers arrive.
+1. In a human conversation, start the appropriate loopback-only `serve` mode through the host's persistent-process facility and keep it alive after replying.
+2. Use interactive mode for an Origin Session-bound report and static read-only mode for an unbound report. Skip serving only for an explicitly requested artifact-only or CI workflow.
+3. Open the returned URL and verify the report ID, first change group, code diff, and Agent interpretation. A successful HTTP response or filesystem path alone is not sufficient.
+4. Return the live URL and a concise explanation in the selected report language together with verified coverage, findings, failures, and gaps.
+5. Keep viewed progress, human judgment, and comments as independent state.
+6. Export a canonical review bundle before moving review state between runs.
+7. Import only after base/head and report validation; use `--reanchor` to classify changed anchors as `matched`, `stale`, or `orphaned`.
+8. Never activate a probable anchor automatically and never treat viewing as approval.
+9. Preview comments selected for Agent attention before storing a Feedback Batch.
+10. In the originating conversation only, claim the batch through the fixed-run Skill, CLI, or MCP service and write exactly one structured answer per item.
+11. Leave viewed, human judgment, and resolution unchanged when answers arrive.
 
 The checkbox alone remains local metadata. It neither creates a Context Pack nor submits anything. Bound interactive runs use `return-to-session`; static or unbound runs use `export-only`. No current host qualifies for the optional direct bridge.
 
@@ -1348,22 +1357,22 @@ utsuri serve .artifacts/utsuri/run-001/report \
 In all modes:
 
 - Bind a random port on `127.0.0.1`.
-- Add security headers.
-- Reject directory traversal.
-- Open a browser only with an explicit option.
+- Add security headers and allow same-origin reads of the immutable `report.json`, `manifest.json`, and listed evidence assets.
+- Reject directory traversal, an untrusted Host header, non-GET/HEAD requests in static mode, and files outside the manifest inventory.
+- Open a browser only with the explicit `--open` option.
 - Persist immutable report assets and mutable review state at separate paths.
 
 With `--interactive`:
 
 - Generate a high-entropy capability token at every start.
 - Pass the token to the browser in the URL fragment and remove it from the address bar after JavaScript reads it.
-- Enable only a same-origin loopback API.
+- Enable only the fixed-report same-origin loopback API.
 - Fix report ID, Origin Session binding, and review-state directory at server startup.
 - Do not accept arbitrary session IDs, commands, or paths from browser APIs.
 - Stream review, Feedback Batch, and answer events over SSE.
 - Never start an Agent process from the Review Server.
 
-The Phase 6 implementation enables both static and capability-protected interactive modes. Static mode binds only a random loopback port, rejects an untrusted Host header and traversal, and opens a browser only with `--open`. Interactive mode additionally requires exact Host, same-origin Fetch Metadata, report ID, and bearer capability for every API call. Mutations require exact Origin and request shape. A read-only GET may omit Origin under same-origin Fetch Metadata; if Referer is present, its origin must match exactly. It exposes no arbitrary destination, path, cwd, command, provider, or model field.
+The implementation enables both static and capability-protected interactive modes. Static mode exposes only manifest-listed immutable files through GET and HEAD. Interactive mode additionally requires exact Host, same-origin Fetch Metadata, report ID, and bearer capability for every API call. Mutations require exact Origin and request shape. A read-only GET may omit Origin under same-origin Fetch Metadata; if Referer is present, its origin must match exactly. Neither mode exposes an arbitrary destination, path, cwd, command, provider, or model field. The Skill, not the CLI, owns persistent process startup, readiness verification, browser opening, and the live-URL handoff.
 
 ### 13.10 `validate`
 
@@ -1856,7 +1865,11 @@ The deterministic Phase 1 fallback uses `unknown`, explicitly requests missing r
 
 Do not blend these fields into one long paragraph.
 
-In a code-only report, Git structure is the only verified evidence. The report builder always adds `Visual behavior was not captured.` and `Runtime behavior was not executed.` to every change, even when an annotation omits them, and sets the overall status to `UNCOVERED`. An annotation cannot turn absent capture or runtime execution into `PASS`.
+In a code-only report, Git structure is the only verified evidence. The report builder always adds localized gaps stating that visual and runtime behavior were not exercised and sets the overall status to `UNCOVERED`. An annotation cannot turn absent capture or runtime execution into `PASS`.
+
+### 16.5 Report language
+
+Every annotations document and published report carries one validated BCP 47-style `language` tag. The Agent selects it in this order: an explicit user request, `report.language`, the current conversation language, then English. The Agent-authored explanation and final handoff use that language. The viewer treats the report language as authoritative for document metadata and supported UI chrome; browser language is only an initial loading fallback. Current built-in chrome and deterministic fallback copy support English and Japanese, while Agent-authored semantic fields may use any validated report language.
 
 ---
 
@@ -2630,6 +2643,22 @@ Disable shortcuts while the user is typing.
 
 JSON Schema is canonical in the implementation. The TypeScript below is explanatory.
 
+Annotations and reports carry the selected language at the top level:
+
+```ts
+interface Annotations {
+  schemaVersion: "1.0";
+  language: string;
+  changes: SemanticChange[];
+}
+
+interface UtsuriReport {
+  schemaVersion: "1.0";
+  language: string;
+  // Remaining fields are defined by the canonical report schema.
+}
+```
+
 ### 25.1 SemanticChange
 
 ```ts
@@ -2918,6 +2947,7 @@ The Agent may process a Feedback Batch in one turn, but it must return one `Revi
 ```json
 {
   "schemaVersion": "1.0",
+  "language": "en",
   "changes": [
     {
       "id": "change-001",
@@ -3021,7 +3051,7 @@ Content-Security-Policy:
   style-src 'self';
   img-src 'self' data: blob:;
   font-src 'self';
-  connect-src 'none';
+  connect-src 'self';
   media-src 'none';
   object-src 'none';
   frame-src 'self';
@@ -3030,11 +3060,7 @@ Content-Security-Policy:
   form-action 'none';
 ```
 
-That policy is for static mode. Only interactive mode replaces the connection directive for SSE and the same-origin API:
-
-```text
-connect-src 'self';
-```
+Both multi-file viewer modes need same-origin Fetch access to immutable report JSON and manifest assets. Static mode still accepts only GET and HEAD for the exact manifest inventory, while interactive APIs independently require the fixed report binding and capability boundary. A packed single-file report embeds its data and retains `connect-src 'none'`.
 
 Additional headers:
 
@@ -3045,7 +3071,7 @@ Cross-Origin-Resource-Policy: same-origin
 Cache-Control: no-store
 ```
 
-Phase 4 exposes these policies as shared viewer-security primitives. Static mode retains `connect-src 'none'`; interactive mode changes only that directive to same-origin. Interactive mutation requests must independently validate Origin, report ID, a capability token, and schema validity.
+Phase 4 exposes these policies as shared viewer-security primitives. Interactive mutation requests independently validate Origin, report ID, a capability token, Fetch Metadata, and schema validity; CSP is not used as an authorization boundary.
 
 ### 28.2 Data-injection protection
 

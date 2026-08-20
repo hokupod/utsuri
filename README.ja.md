@@ -82,22 +82,24 @@ Codex または Claude Code で repository を開き、Utsuri を有効にした
 <!-- sync-command:first-review-prompt -->
 
 ```text
-Review the current change with Utsuri. Create a local evidence-backed report and call out every incomplete or uncovered check.
+Review the current change with Utsuri. Create and validate an evidence-backed report, explain each change in my language, start the local report viewer, verify that the diff loads, and return its live URL with every incomplete or uncovered check.
 ```
 
 Utsuri は何もインストールせず、最初に利用可能な capability を確認します。ブラウザ証拠を依頼していない場合や利用できない場合は、code-only report を作成できます。ブラウザ証拠が必要なら、必要な before / after application は自分で起動し、信頼できる明示的な command だけを許可してください。
 
-最終応答にはローカルレポートの場所、確認済みカバレッジ、所見、失敗、未検証項目が示されます。レポートを開く、または serve する操作は別途明示的に実行します。
+人との会話では、Agent が選択された言語で根拠付きの解釈を作成し、レポートを厳密に検証して、適切な loopback viewer を永続プロセスとして起動します。さらにレポートと diff が読み込めることを確認し、live URL、確認済みカバレッジ、所見、失敗、未検証項目を返します。ファイルパスだけでは引き渡し完了ではありません。明示的に artifact-only または CI workflow を依頼した場合だけ serve を省略します。
 
 <a id="how-it-works"></a><!-- section:how-it-works -->
 
 ## 仕組み
 
 1. **Collect** — 指定された patch、worktree、range、merge base を境界付き run に読み込みます。
-2. **Capture** — 設定と許可がある場合だけ、分離した before / after のブラウザ証拠を記録します。
-3. **Discover and compare** — 変更コードを target に対応付け、pixel、DOM、ARIA、style、accessibility、runtime、network、overflow の証拠を比較します。
-4. **Finalize** — immutable で hash 検証済みのローカル `report/` を公開し、失敗や部分的な証拠も保持します。
-5. **Review and return feedback** — viewed state、人間の判断、comment を `report/` の外へ保存します。Agent 向け質問は、登録済みの元 project・Origin Session にだけ戻せます。
+2. **Interpret** — 現在の Agent が会話、diff、索引済みの根拠を使い、裏付けのない意図を作らずにすべての変更を説明します。
+3. **Capture** — 設定と許可がある場合だけ、分離した before / after のブラウザ証拠を記録します。
+4. **Discover and compare** — 変更コードを target に対応付け、pixel、DOM、ARIA、style、accessibility、runtime、network、overflow の証拠を比較します。
+5. **Finalize** — Agent が作成した annotations を含む immutable で hash 検証済みのローカル `report/` を公開し、失敗や部分的な証拠も保持します。
+6. **Serve and verify** — 適切な loopback viewer を起動したまま、report ID、最初の変更、code diff、Agent の解釈が読み込めることを確認し、live URL を返します。
+7. **Review and return feedback** — viewed state、人間の判断、comment を `report/` の外へ保存します。Agent 向け質問は、登録済みの元 project・Origin Session にだけ戻せます。
 
 [詳細設計](https://github.com/hokupod/utsuri/blob/main/docs/design.md)に data model と security boundary、[CLI contract](https://github.com/hokupod/utsuri/blob/main/skills/utsuri-review/references/cli-contract.md)に機械向け動作を記載しています。
 

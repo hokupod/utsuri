@@ -13,6 +13,7 @@ export type Origin = {
 
 export interface UtsuriReport {
   schemaVersion: "1.0";
+  language: string;
   reportId: string;
   status: "PASS" | "CHANGED" | "REGRESSION" | "INCOMPLETE" | "UNCOVERED" | "SKIPPED";
   summary: {

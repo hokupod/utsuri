@@ -327,6 +327,7 @@ describe("CLI", () => {
       path.join(root, "annotations.json"),
       `${JSON.stringify({
         schemaVersion: "1.0",
+        language: "ja",
         changes: [
           {
             id: candidate.id,
@@ -361,10 +362,12 @@ describe("CLI", () => {
 
     expect(result.exitCode).toBe(0);
     const report = JSON.parse(await readFile(path.join(run, "report/report.json"), "utf8")) as {
+      language: string;
       changes: Array<{ intent: { text: string } }>;
       unclassifiedHunkRefs: string[];
     };
     expect(report.changes[0]?.intent.text).toBe("Fixture intent");
+    expect(report.language).toBe("ja");
     expect(report.unclassifiedHunkRefs.length).toBeGreaterThanOrEqual(0);
   });
 

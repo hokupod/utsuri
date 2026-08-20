@@ -58,6 +58,7 @@ async function createAnnotatedReportRun() {
   const fallback = await createInitialReport(run);
   const annotations = {
     schemaVersion: "1.0" as const,
+    language: "ja",
     changes: [structuredClone(fallback.changes[0]!)]
   };
   annotations.changes[0]!.intent.text = "Entry annotation snapshot.";
@@ -117,6 +118,7 @@ describe("immutable report generation", () => {
     ) as typeof report;
 
     expect(published.changes[0]?.intent.text).toBe("Entry annotation snapshot.");
+    expect(published.language).toBe("ja");
   });
 
   test("rejects a stale report when comparison evidence lacks discovery", async () => {

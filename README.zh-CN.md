@@ -82,22 +82,24 @@ Claude Code 当前的 Plugin manifest 没有 icon 或 logo 字段，因此 Utsur
 <!-- sync-command:first-review-prompt -->
 
 ```text
-Review the current change with Utsuri. Create a local evidence-backed report and call out every incomplete or uncovered check.
+Review the current change with Utsuri. Create and validate an evidence-backed report, explain each change in my language, start the local report viewer, verify that the diff loads, and return its live URL with every incomplete or uncovered check.
 ```
 
 Utsuri 首先检查可用 capability，不会安装任何内容。未请求浏览器证据或浏览器不可用时，它可以生成 code-only report。如需浏览器证据，请自行启动所需的 before / after application，并且只批准你信任的明确命令。
 
-最终回复会提供本地报告位置、已确认覆盖范围、发现、失败和缺口。打开或 serve 报告仍是单独的显式操作。
+在人机对话中，Agent 会使用选定语言撰写有证据支持的解释，严格验证报告，以持久进程启动适当的 loopback viewer，并确认报告和 diff 能够加载。最终回复会提供 live URL、已确认覆盖范围、发现、失败和缺口。仅返回文件路径不算完成交付；只有明确要求 artifact-only 或 CI workflow 时才会跳过 serve。
 
 <a id="how-it-works"></a><!-- section:how-it-works -->
 
 ## 工作方式
 
 1. **Collect** — 将指定的 patch、worktree、range 或 merge base 读取到有边界的 run 中。
-2. **Capture** — 仅在已配置并授权时，分别记录隔离的 before / after 浏览器证据。
-3. **Discover and compare** — 将变更代码映射到 target，然后比较 pixel、DOM、ARIA、style、accessibility、runtime、network 和 overflow 证据。
-4. **Finalize** — 发布 immutable、经 hash 验证的本地 `report/`，并保留失败或部分证据。
-5. **Review and return feedback** — 在 `report/` 外保存 viewed state、人工判断和 comment。Agent 问题只能返回到已注册的原项目和 Origin Session。
+2. **Interpret** — 当前 Agent 使用会话、diff 和已索引证据解释每项变更，不臆造缺少依据的意图。
+3. **Capture** — 仅在已配置并授权时，分别记录隔离的 before / after 浏览器证据。
+4. **Discover and compare** — 将变更代码映射到 target，然后比较 pixel、DOM、ARIA、style、accessibility、runtime、network 和 overflow 证据。
+5. **Finalize** — 发布包含 Agent-authored annotations、immutable 且经过 hash 验证的本地 `report/`，并保留失败或部分证据。
+6. **Serve and verify** — 保持适当的 loopback viewer 运行，确认 report ID、第一项变更、code diff 和 Agent 解释可以加载，然后返回 live URL。
+7. **Review and return feedback** — 在 `report/` 外保存 viewed state、人工判断和 comment。Agent 问题只能返回到已注册的原项目和 Origin Session。
 
 [详细设计](https://github.com/hokupod/utsuri/blob/main/docs/design.md)定义 data model 和 security boundary；[CLI contract](https://github.com/hokupod/utsuri/blob/main/skills/utsuri-review/references/cli-contract.md)记录机器接口行为。
 

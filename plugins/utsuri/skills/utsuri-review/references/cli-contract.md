@@ -24,13 +24,15 @@ Use `--json` for a single JSON result and `--ndjson` only on commands that expli
 
 Do not discard an output path merely because a command reports a partial result. Strictly validate the preserved report and explain its gaps.
 
+Before `finalize`, choose the report language, read the collected diff/evidence/review plan, and author schema-valid annotations covering every candidate and hunk. The annotations top-level `language` field is copied into the report. Pass the artifact with `finalize --annotations <file>`; a normal human-conversation handoff must not silently omit it.
+
 `capture` requires `--run` and `--config`. `worktree` capture additionally requires `--allow-project-code`; configuration content cannot grant that process-execution consent by itself.
 
 `discover` requires the same `--run` and `--config`, writes a diff/capture-bound `discovery.json`, and reports structured known/verified/unknown/planned/succeeded/failed coverage. `compare` requires `--run`, verifies capture digests, and writes a capture-bound `comparison.json` plus content-addressed diff images. Run both before `finalize` when browser evidence is expected.
 
 `compare` returns exit code 4 when a target or evidence class is incomplete. Finalize the preserved result and report the exact gaps; do not retry deterministic malformed evidence or treat a pixel-only difference as a regression.
 
-`serve <report>` binds a random loopback port and does not open a browser without `--open`. Add `--interactive` only when the run has an Origin Session binding. Interactive mode passes a per-start capability in the URL fragment, removes it from browser history after capture, and exposes only fixed-run review state, feedback, event, and export endpoints.
+`serve <report>` binds a random loopback port, returns its URL, and stays alive until it receives a termination signal. Start it through the host's persistent-process facility in a human conversation. Static mode exposes only manifest-listed report assets through GET and HEAD; add `--interactive` only when the run has an Origin Session binding. Both modes permit same-origin reads needed by the multi-file viewer. Interactive mode additionally passes a per-start capability in the URL fragment, removes it from browser history after capture, and exposes only fixed-run review state, feedback, event, and export endpoints. Add `--open` when the user asked to open or view the report locally, then verify the report ID, first change, code diff, and Agent interpretation before replying.
 
 `pack <report> --output <directory>` validates the immutable report and writes deterministic `report.zip`, `report.json`, and `ci-summary.json`. A configured `failOn` match returns exit code 10 after preserving all artifacts. The command never uploads them.
 

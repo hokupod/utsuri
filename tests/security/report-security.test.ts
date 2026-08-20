@@ -22,9 +22,9 @@ import {
 } from "../../packages/interactive-server/src";
 
 describe("report security boundaries", () => {
-  test("separates static and interactive CSP without weakening other directives", () => {
-    expect(staticReportCsp).toContain("connect-src 'none'");
-    expect(interactiveReportCsp).toContain("connect-src 'self'");
+  test("allows same-origin report data without weakening viewer directives", () => {
+    expect(staticReportCsp).toContain("connect-src 'self'");
+    expect(interactiveReportCsp).toBe(staticReportCsp);
     for (const directive of [
       "default-src 'none'",
       "frame-ancestors 'none'",
@@ -32,16 +32,18 @@ describe("report security boundaries", () => {
       "form-action 'none'"
     ]) {
       expect(staticReportCsp).toContain(directive);
-      expect(interactiveReportCsp).toContain(directive);
     }
     expect(viewerSecurityHeaders("static")).toEqual({
       ...reportSecurityHeaders,
       "content-security-policy": staticReportCsp
     });
+    expect(viewerSecurityHeaders("interactive")).toEqual({
+      ...reportSecurityHeaders,
+      "content-security-policy": interactiveReportCsp
+    });
     const staticDocument = `<html><head><meta http-equiv="Content-Security-Policy" content="${staticReportCsp}"></head></html>`;
     expect(viewerDocument(staticDocument, "static")).toBe(staticDocument);
-    expect(viewerDocument(staticDocument, "interactive")).toContain(interactiveReportCsp);
-    expect(viewerDocument(staticDocument, "interactive")).not.toContain(staticReportCsp);
+    expect(viewerDocument(staticDocument, "interactive")).toBe(staticDocument);
     expect(() => viewerDocument("<html></html>", "interactive")).toThrow("exactly one");
     expect(interactiveReportCsp).not.toContain("'unsafe-eval'");
     expect(reportUiJavaScript).not.toContain("new Function");
