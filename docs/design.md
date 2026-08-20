@@ -6,15 +6,15 @@
 - **Plugin name**: `utsuri`
 - **Skill name**: `utsuri-review`
 - **CLI name**: `utsuri`
-- **Document version**: 2.9
+- **Document version**: 3.0
 - **Created**: 2026-08-06
-- **Last updated**: 2026-08-11
+- **Last updated**: 2026-08-21
 - **Language**: English (canonical)
 - **Targets**: Codex / Claude Code / local CLI / CI
 - **Implementation language**: TypeScript
 - **Development environment**: Bun
 - **Report UI**: a static application built with Svelte
-- **v2.9 changes**: removed self-referential documentation hashes, approval transcripts, exact heading manifests, and duplicated local/CI gates while retaining user-facing synchronization and release/security checks
+- **v3.0 changes**: made the verified live viewer the human-review completion path, added localized Agent-authored semantic briefs with complete hunk coverage, prioritized review routes by risk, added supported Plugin illustration surfaces, and prepared synchronized `v0.3.0` distribution
 
 ---
 
@@ -935,7 +935,7 @@ Development source lives under `packages/`. At release time, bundle it as one No
 - Assemble all four helper packages, the private-staged `@utsu-ri/cli`, and the shared Plugin into one distribution candidate. Its aggregate manifest binds every file hash and executable mode; a missing target, source mismatch, tamper, symlink, or normal-rename fallback rejects the candidate.
 - Carry helper proofs and Plugin files between workflow jobs as regular Actions-artifact entries rather than downloaded tarballs. Revalidate hashes before restoring only manifest-declared `0644` / `0755` modes, and create the promoted archive only after the exact restored tree passes all promotion gates.
 - Keep `.github/workflows/distribution-candidate.yml` manually dispatchable and callable without registry-write or OIDC permission. It must bind the five npm tarballs and deterministic Plugin archive in `release-assets.json` and `SHA256SUMS` after the four-platform candidate passes.
-- Run `.github/workflows/release.yml` only for an annotated `v<version>` tag at the exact `main` commit. Require current CHANGELOG and successful exact-main CI, public-history PII/secret scans, the protected `release` environment, OIDC trusted publishing without an npm token, exact registry integrity for recovery, native published-package smoke, and draft-first GitHub Release publication. All five package identities already exist at `0.1.0`; publish `0.2.0` only through this tag workflow. Public availability is recorded only after registry, Release, and live Plugin verification. Treat a missing package identity or trusted-publisher configuration as release drift and never fall back to a manual registry write.
+- Run `.github/workflows/release.yml` only for an annotated `v<version>` tag at the exact `main` commit. Require current CHANGELOG and successful exact-main CI, public-history PII/secret scans, the protected `release` environment, OIDC trusted publishing without an npm token, exact registry integrity for recovery, native published-package smoke, and draft-first GitHub Release publication. All five package identities already exist at `0.2.0`; publish `0.3.0` only through this tag workflow. Public availability is recorded only after registry, Release, and live Plugin verification. Treat a missing package identity or trusted-publisher configuration as release drift and never fall back to a manual registry write.
 - Before Plugin promotion, run native `npx` and `bunx` against the exact published SemVer in isolated caches before Safe-chain or dependency setup. Parse one strict JSON line, reject notices or fallback, use a failing ambient-command sentinel, and terminate the complete process group on timeout.
 - The product name `Utsuri`, CLI name `utsuri`, and Skill name `utsuri-review` remain fixed; changing the package identifier requires an explicit design change.
 
@@ -967,7 +967,7 @@ Development source lives under `packages/`. At release time, bundle it as one No
 ```json
 {
   "name": "utsuri",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "description": "Evidence-based visual change review for Codex and Claude Code",
   "skills": "./skills/"
 }
@@ -979,7 +979,7 @@ Development source lives under `packages/`. At release time, bundle it as one No
 {
   "name": "utsuri",
   "displayName": "Utsuri",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "description": "Evidence-based visual change review for Codex and Claude Code",
   "author": {
     "name": "hokupod",
@@ -3741,7 +3741,7 @@ The Phase 5 source checkout implements independent viewed/judgment/comment state
 
 The Phase 6 source checkout implements append-only review events and immutable-generation sidecars under `run/review/`; explicit Agent-attention selection; Feedback Batch preview and idempotent storage; bounded, redacted code/visual Context Packs; opaque host/session/project/report binding; fixed-run CLI and strict NDJSON MCP tools; one answer per original thread; normalized visual anchors and stale/orphaned re-anchoring; and a loopback interactive API protected by a per-start fragment capability, exact Host/Fetch Metadata/report checks, exact Origin on mutations, exact Referer validation when present on read-only GET, and strict request shapes. Static mode exports without claiming a session. Codex and Claude Code use `return-to-session`; the unsupported direct bridge creates no session and returns the same handoff fallback.
 
-The release-ready Phase 6 checkout maps this source to synchronized CLI and Plugin version `v0.2.0`. A manual read-only candidate builds all four helpers and exact public artifacts. The separate tag workflow requires exact `main` identity, normal pull-request review, public-history scanning, protected-environment approval, OIDC trusted publishing, immutable registry-integrity reconciliation, native `npx`/`bunx` proof, and draft-first GitHub Release assets. It never creates its own tag. Because all five package identities already exist publicly at `0.1.0`, the exact five `v0.2.0` package versions are published only by this protected tag workflow.
+The release-ready Phase 6 checkout maps this source to synchronized CLI and Plugin version `v0.3.0`. A manual read-only candidate builds all four helpers and exact public artifacts. The separate tag workflow requires exact `main` identity, normal pull-request review, public-history scanning, protected-environment approval, OIDC trusted publishing, immutable registry-integrity reconciliation, native `npx`/`bunx` proof, and draft-first GitHub Release assets. It never creates its own tag. Because all five package identities already exist publicly at `0.2.0`, the exact five `v0.3.0` package versions are published only by this protected tag workflow.
 
 Before persisted state, browser storage, or a review bundle is validated, Phase 5 pixel-coordinate visual anchors are recognized by their legacy fingerprint and migrated to the normalized catalog. A cross-report comment with no current anchor remains orphaned instead of being discarded.
 
@@ -3851,7 +3851,7 @@ The v1 source implementation maps every item below to an automated gate or an ex
 22. The English canonical design, release guide, and all three READMEs remain synchronized and reviewed in the pull request.
 23. Node 24, both required Bun versions, Safe-chain 1.5.14, both hosts, and the release-candidate layout pass their full gates.
 
-Phase 6 adds executable coverage for all §46.25 fixtures, the three-item return-to-session acceptance scenario on both hosts, explicit unsupported-bridge fallback, localhost API boundaries, and independent review-state semantics. The source is prepared for synchronized CLI and Plugin version `v0.2.0`; public availability still requires normal pull-request review, successful remote CI/candidate evidence, protected GitHub configuration, the existing package identities and trusted-publisher registrations, and separate authorization for the tag write and protected release-environment approval.
+Phase 6 adds executable coverage for all §46.25 fixtures, the three-item return-to-session acceptance scenario on both hosts, explicit unsupported-bridge fallback, localhost API boundaries, and independent review-state semantics. The source is prepared for synchronized CLI and Plugin version `v0.3.0`; public availability still requires normal pull-request review, successful remote CI/candidate evidence, protected GitHub configuration, the existing package identities and trusted-publisher registrations, and separate authorization for the tag write and protected release-environment approval.
 
 ---
 
@@ -3991,7 +3991,7 @@ Researched: 2026-08-06
 
 ## 46. Detailed interactive review and Origin Session feedback specification
 
-**v1 implementation status**: release-ready as synchronized CLI and Plugin version `v0.2.0` source through `return-to-session` and `export-only`. The optional direct bridge is deliberately disabled because no configured host meets the authenticated same-session API and response-correlation requirements. This status never permits a new Agent/session fallback and does not claim that npm or GitHub Release publication has occurred.
+**v1 implementation status**: release-ready as synchronized CLI and Plugin version `v0.3.0` source through `return-to-session` and `export-only`. The optional direct bridge is deliberately disabled because no configured host meets the authenticated same-session API and response-correlation requirements. This status never permits a new Agent/session fallback and does not claim that npm or GitHub Release publication has occurred.
 
 ### 46.1 Purpose
 
@@ -4800,7 +4800,7 @@ The implementation keeps the preview separate from storage, writes inbox/batch/c
 
 A feature outside this definition is accepted only when it makes review decisions faster, strengthens the relationship between a question and its evidence, increases evidence reliability, or improves security.
 
-The source prepared for synchronized CLI and Git Plugin version `0.2.0` satisfies this definition through local immutable reports, mutable review generations, and a same-project/same-session Marketplace MCP broker, with `return-to-session` as the host-neutral feedback path. CLI publication, Plugin promotion, Git push, tag creation, and release remain separately authorized operator actions; direct same-session submission and a shared remote review store remain optional future capabilities.
+The source prepared for synchronized CLI and Git Plugin version `0.3.0` satisfies this definition through local immutable reports, mutable review generations, and a same-project/same-session Marketplace MCP broker, with `return-to-session` as the host-neutral feedback path. CLI publication, Plugin promotion, Git push, tag creation, and release remain separately authorized operator actions; direct same-session submission and a shared remote review store remain optional future capabilities.
 
 ---
 
@@ -4808,6 +4808,7 @@ The source prepared for synchronized CLI and Git Plugin version `0.2.0` satisfie
 
 | Entry ID                                   | Version | Date       | Change                                                                                                                                                                                                                                                                                                                                                                                                                                                    |
 | ------------------------------------------ | ------: | ---------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| design-v3.0-agent-review-handoff           |     3.0 | 2026-08-21 | Made the persistent live viewer and rendered-diff check the human-review completion path, added localized schema-validated Agent overviews and complete per-hunk explanations, prioritized review routes by risk and confirmation state, added supported Plugin illustration surfaces, and prepared synchronized `v0.3.0` distribution.                                                                                                                   |
 | design-v2.9-proportional-verification      |     2.9 | 2026-08-11 | Removed parallel documentation state, document-byte hashes, approval transcripts, the exact heading manifest, duplicated documentation-test execution, redundant release-layout invocations, and the browser-disabled integration rerun while retaining focused multilingual documentation, runtime, release-artifact, and security verification.                                                                                                         |
 | design-v2.8-git-marketplace-mcp            |     2.8 | 2026-08-11 | Added the source-only Git Marketplace Plugin, deterministic canonical-Skill transform, synchronized Plugin and CLI SemVer with exact pin promotion, versioned bounded run registrations, canonical host-root resolution, parameterless same-project/same-session MCP selection, explicit zero/one/multiple behavior, current host compatibility probes, the user-first multilingual installation contract, and tag-only trusted publication for `v0.2.0`. |
 | design-v2.7-release-document-contract      |     2.7 | 2026-08-09 | Aligned the canonical CLI command inventory with the shipped help, introduced the now-retired exact-hash review record for release documentation, and made the manual `v0.1.0` first-publication exception plus its missing GitHub Actions OIDC provenance and retained non-secret audit evidence explicit.                                                                                                                                               |

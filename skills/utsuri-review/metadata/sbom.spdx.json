@@ -5,15 +5,15 @@
     "creators": ["Tool: Utsuri SBOM generator 1"]
   },
   "dataLicense": "CC0-1.0",
-  "documentNamespace": "https://github.com/hokupod/utsuri/sbom/0.2.0/de680198df088328333bfc628c92f876890fdd9ec6bc12d4f583607c843f1660",
-  "name": "utsuri-0.2.0",
+  "documentNamespace": "https://github.com/hokupod/utsuri/sbom/0.3.0/de680198df088328333bfc628c92f876890fdd9ec6bc12d4f583607c843f1660",
+  "name": "utsuri-0.3.0",
   "packages": [
     {
-      "SPDXID": "SPDXRef-Package-utsuri-workspace-0.2.0",
+      "SPDXID": "SPDXRef-Package-utsuri-workspace-0.3.0",
       "checksums": [
         {
           "algorithm": "SHA256",
-          "checksumValue": "ab75ded1651a86ef4d401a2663a0cf44caa13af91929172b8d7c06a1c719f7f5"
+          "checksumValue": "7830188d0171dc696c366d53e35f06e01e82c53cec0862171503522013b85c7e"
         }
       ],
       "downloadLocation": "NOASSERTION",
@@ -21,7 +21,7 @@
       "licenseConcluded": "AGPL-3.0-or-later",
       "licenseDeclared": "AGPL-3.0-or-later",
       "name": "utsuri-workspace",
-      "versionInfo": "0.2.0"
+      "versionInfo": "0.3.0"
     },
     {
       "SPDXID": "SPDXRef-Package-ajv-8.18.0",
@@ -242,7 +242,7 @@
   ],
   "relationships": [
     {
-      "relatedSpdxElement": "SPDXRef-Package-utsuri-workspace-0.2.0",
+      "relatedSpdxElement": "SPDXRef-Package-utsuri-workspace-0.3.0",
       "relationshipType": "DESCRIBES",
       "spdxElementId": "SPDXRef-DOCUMENT"
     },
@@ -279,42 +279,42 @@
     {
       "relatedSpdxElement": "SPDXRef-Package-ajv-8.18.0",
       "relationshipType": "DEPENDS_ON",
-      "spdxElementId": "SPDXRef-Package-utsuri-workspace-0.2.0"
+      "spdxElementId": "SPDXRef-Package-utsuri-workspace-0.3.0"
     },
     {
       "relatedSpdxElement": "SPDXRef-Package-ajv-formats-3.0.1",
       "relationshipType": "DEPENDS_ON",
-      "spdxElementId": "SPDXRef-Package-utsuri-workspace-0.2.0"
+      "spdxElementId": "SPDXRef-Package-utsuri-workspace-0.3.0"
     },
     {
       "relatedSpdxElement": "SPDXRef-Package-axe-core-4.10.3",
       "relationshipType": "DEPENDS_ON",
-      "spdxElementId": "SPDXRef-Package-utsuri-workspace-0.2.0"
+      "spdxElementId": "SPDXRef-Package-utsuri-workspace-0.3.0"
     },
     {
       "relatedSpdxElement": "SPDXRef-Package-fflate-0.8.2",
       "relationshipType": "DEPENDS_ON",
-      "spdxElementId": "SPDXRef-Package-utsuri-workspace-0.2.0"
+      "spdxElementId": "SPDXRef-Package-utsuri-workspace-0.3.0"
     },
     {
       "relatedSpdxElement": "SPDXRef-Package-pixelmatch-7.1.0",
       "relationshipType": "DEPENDS_ON",
-      "spdxElementId": "SPDXRef-Package-utsuri-workspace-0.2.0"
+      "spdxElementId": "SPDXRef-Package-utsuri-workspace-0.3.0"
     },
     {
       "relatedSpdxElement": "SPDXRef-Package-playwright-core-1.61.1",
       "relationshipType": "DEPENDS_ON",
-      "spdxElementId": "SPDXRef-Package-utsuri-workspace-0.2.0"
+      "spdxElementId": "SPDXRef-Package-utsuri-workspace-0.3.0"
     },
     {
       "relatedSpdxElement": "SPDXRef-Package-pngjs-7.0.0",
       "relationshipType": "DEPENDS_ON",
-      "spdxElementId": "SPDXRef-Package-utsuri-workspace-0.2.0"
+      "spdxElementId": "SPDXRef-Package-utsuri-workspace-0.3.0"
     },
     {
       "relatedSpdxElement": "SPDXRef-Package-yaml-2.8.3",
       "relationshipType": "DEPENDS_ON",
-      "spdxElementId": "SPDXRef-Package-utsuri-workspace-0.2.0"
+      "spdxElementId": "SPDXRef-Package-utsuri-workspace-0.3.0"
     }
   ],
   "spdxVersion": "SPDX-2.3"

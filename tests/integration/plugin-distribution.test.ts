@@ -69,9 +69,9 @@ describe("Git Marketplace Plugin distribution", () => {
     const result = verifyPluginDistribution({ root });
     expect(result).toMatchObject({
       pluginId: "utsuri@utsuri",
-      pluginVersion: "0.2.0",
+      pluginVersion: "0.3.0",
       packageName: "@utsu-ri/cli",
-      cliVersion: "0.2.0",
+      cliVersion: "0.3.0",
       sourcePath: "./plugins/utsuri"
     });
   });

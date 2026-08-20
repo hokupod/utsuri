@@ -170,37 +170,37 @@ describe("Plugin promotion", () => {
 
   test("dry-run accepts controlled version skew and writes zero bytes", async () => {
     const root = fixtureRoot();
-    setReleaseVersion(root, "0.2.1");
+    setReleaseVersion(root, "0.3.1");
     const before = treeDigest(root);
     const lines: string[] = [];
     const result = await runPluginPromotion(
-      { version: "0.2.1", write: false },
+      { version: "0.3.1", write: false },
       { root, verifyPublished: verifiedPublished, log: (line: string) => lines.push(line) }
     );
     expect(result.action).toBe("dry-run");
     expect(treeDigest(root)).toBe(before);
-    expect(lines.join("\n")).toContain("@utsu-ri/cli@0.2.1");
+    expect(lines.join("\n")).toContain("@utsu-ri/cli@0.3.1");
   });
 
   test("write atomically updates every synchronized Plugin version", async () => {
     const root = fixtureRoot();
-    setReleaseVersion(root, "0.2.1");
+    setReleaseVersion(root, "0.3.1");
     const result = await runPluginPromotion(
-      { version: "0.2.1", write: true },
+      { version: "0.3.1", write: true },
       { root, verifyPublished: verifiedPublished, log: () => undefined }
     );
     expect(result.action).toBe("updated");
     expect(verifyPluginDistribution({ root })).toMatchObject({
-      pluginVersion: "0.2.1",
-      cliVersion: "0.2.1"
+      pluginVersion: "0.3.1",
+      cliVersion: "0.3.1"
     });
     expect(transactionArtifacts(root)).toEqual([]);
   });
 
   test("scopes in-flight backup exclusion to the exact verified transaction", () => {
     const root = fixtureRoot();
-    setReleaseVersion(root, "0.2.1");
-    const updates = createPromotionUpdates({ version: "0.2.1" }, root);
+    setReleaseVersion(root, "0.3.1");
+    const updates = createPromotionUpdates({ version: "0.3.1" }, root);
     const written = writeUpdatesAtomically(updates);
     expect(() => verifyPluginDistribution({ root })).toThrow("Git Plugin inventory mismatch");
     expect(() =>
@@ -213,12 +213,12 @@ describe("Plugin promotion", () => {
 
   test("post-write verification failure restores every original byte", async () => {
     const root = fixtureRoot();
-    setReleaseVersion(root, "0.2.1");
+    setReleaseVersion(root, "0.3.1");
     const before = treeDigest(root);
     let verificationCalls = 0;
     await expect(
       runPluginPromotion(
-        { version: "0.2.1", write: true },
+        { version: "0.3.1", write: true },
         {
           root,
           verifyPublished: verifiedPublished,
@@ -237,8 +237,8 @@ describe("Plugin promotion", () => {
 
   test("preimage changes abort before overwriting the changed file", () => {
     const root = fixtureRoot();
-    setReleaseVersion(root, "0.2.1");
-    const updates = createPromotionUpdates({ version: "0.2.1" }, root);
+    setReleaseVersion(root, "0.3.1");
+    const updates = createPromotionUpdates({ version: "0.3.1" }, root);
     const target = updates.find((entry) => !entry.current.equals(entry.next));
     expect(target).toBeDefined();
     writeFileSync(target!.path, "operator change\n");
@@ -248,8 +248,8 @@ describe("Plugin promotion", () => {
 
   test("an edit after the preimage check is displaced, detected, and restored without overwrite", () => {
     const root = fixtureRoot();
-    setReleaseVersion(root, "0.2.1");
-    const updates = createPromotionUpdates({ version: "0.2.1" }, root);
+    setReleaseVersion(root, "0.3.1");
+    const updates = createPromotionUpdates({ version: "0.3.1" }, root);
     const target = updates.find((entry) => !entry.current.equals(entry.next));
     expect(target).toBeDefined();
     let edited = false;
@@ -275,9 +275,9 @@ describe("Plugin promotion", () => {
 
   test("a displacement durability failure restores the target and cleans staged artifacts", () => {
     const root = fixtureRoot();
-    setReleaseVersion(root, "0.2.1");
+    setReleaseVersion(root, "0.3.1");
     const before = treeDigest(root);
-    const updates = createPromotionUpdates({ version: "0.2.1" }, root);
+    const updates = createPromotionUpdates({ version: "0.3.1" }, root);
     let failed = false;
     expect(() =>
       writeUpdatesAtomically(updates, {
@@ -295,9 +295,9 @@ describe("Plugin promotion", () => {
 
   test("an install-next failure restores the displaced target without replacement", () => {
     const root = fixtureRoot();
-    setReleaseVersion(root, "0.2.1");
+    setReleaseVersion(root, "0.3.1");
     const before = treeDigest(root);
-    const updates = createPromotionUpdates({ version: "0.2.1" }, root);
+    const updates = createPromotionUpdates({ version: "0.3.1" }, root);
     let failed = false;
     expect(() =>
       writeUpdatesAtomically(updates, {
@@ -314,8 +314,8 @@ describe("Plugin promotion", () => {
 
   test("rollback preserves a target concurrently recreated before install-next", () => {
     const root = fixtureRoot();
-    setReleaseVersion(root, "0.2.1");
-    const updates = createPromotionUpdates({ version: "0.2.1" }, root);
+    setReleaseVersion(root, "0.3.1");
+    const updates = createPromotionUpdates({ version: "0.3.1" }, root);
     const target = updates.find((entry) => !entry.current.equals(entry.next));
     expect(target).toBeDefined();
     let failure = "";
@@ -345,14 +345,14 @@ describe("Plugin promotion", () => {
 
   test("rollback preserves an edit after its match check and retains the original backup", async () => {
     const root = fixtureRoot();
-    setReleaseVersion(root, "0.2.1");
+    setReleaseVersion(root, "0.3.1");
     let verificationCalls = 0;
     let conflictingEntry:
       { path: string; current: Buffer; next: Buffer; mode: number; backup: string } | undefined;
     let failure = "";
     try {
       await runPluginPromotion(
-        { version: "0.2.1", write: true },
+        { version: "0.3.1", write: true },
         {
           root,
           verifyPublished: verifiedPublished,

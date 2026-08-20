@@ -5,7 +5,7 @@
 Invoke the committed bundle with native Node 22 or newer:
 
 ```bash
-npx -y --package=@utsu-ri/cli@0.2.0 utsuri <command> [arguments]
+npx -y --package=@utsu-ri/cli@0.3.0 utsuri <command> [arguments]
 ```
 
 Use `--json` for a single JSON result and `--ndjson` only on commands that explicitly support event streams. Machine output is written to stdout; diagnostics are written to stderr.

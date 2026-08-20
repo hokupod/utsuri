@@ -5,9 +5,9 @@
     "claude": "2.1.220"
   },
   "distribution": {
-    "pluginVersion": "0.2.0",
-    "cliVersion": "0.2.0",
-    "mcpPackagePin": "@utsu-ri/cli@0.2.0"
+    "pluginVersion": "0.3.0",
+    "cliVersion": "0.3.0",
+    "mcpPackagePin": "@utsu-ri/cli@0.3.0"
   },
   "hosts": {
     "codex": {

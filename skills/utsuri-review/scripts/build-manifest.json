@@ -1,7 +1,7 @@
 {
   "schemaVersion": "1.1",
-  "toolVersion": "0.2.0",
-  "sourceHash": "c2985763b5bd16dbc4ebb55dc52b66cafb0ac879e9fc8db52e2aa597afa87f2d",
+  "toolVersion": "0.3.0",
+  "sourceHash": "dd9f7a16998f78011fe192a7aad36131833946d807121d4143825acf6a9563b6",
   "sourceHashes": {
     "packages/adapters/generic/src/index.ts": "0fb851c88f14187773d97373b9d848e831abb629bb4b1834c4393f29917c4169",
     "packages/adapters/playwright/src/index.ts": "7714950f8fbcc160493e649a13e2c96d2843530307150357c30b9155c42b6081",
@@ -23,12 +23,12 @@
     "packages/capture/src/runtime/container.ts": "d6f53ec8d03dcf2f9774436c533fc0cd6dd72c85fe7f1d60f4f3daf5f3c18452",
     "packages/capture/src/server-runtime.ts": "8b4055dad80efa008548c9efcd502f80ca29abcfae062c63fa3cf701a41a0472",
     "packages/cli/src/arguments.ts": "0ab06574a833531cb6084b555d11847d6deca4fd082fa3035c5e2a72a8870005",
-    "packages/cli/src/cli.ts": "94a61922650a3e2c9b0b5f4b55882524de8e8787dd5084269696f0eef2c6a7e8",
+    "packages/cli/src/cli.ts": "7cd4022fb99315fe221a8ebe73cf89ce8d934dcde985322723af5e9544f87430",
     "packages/cli/src/doctor.ts": "fdf26a40387b433878e257c3f857348e6bbe510e63b56a6a9623c1a5b6876287",
     "packages/cli/src/feedback.ts": "5c85a25385d488b8813edf10ab16f9a071128e67bd3c97aa792820ab54f68892",
     "packages/cli/src/init.ts": "5250d75ae8de6a7471bce58ff4f1b27b830cbf090bc55a8ec16c9125376cfb65",
     "packages/cli/src/main.ts": "d399e4b4a8a951cbb18fb6244ffa789dd3ed16cc49d6b7edb4f62078ab9a18fe",
-    "packages/cli/src/mcp.ts": "e37e4188db24534133e83c373c0539537735861cf4d7e0585ecaed881f10d782",
+    "packages/cli/src/mcp.ts": "e91ff3ad919cace034def51486eaa3d9f10089d88399e3fbfe8ce3334e59e0f6",
     "packages/cli/src/pack.ts": "d6963c6a5a1186b42abca311bd212cc5f4a560cc8284193e06f09b810d04c63b",
     "packages/cli/src/review.ts": "6dd667da53cd5efae84899e23d2381ab3a04193b3ca0590a3c39802e69187709",
     "packages/cli/src/serve.ts": "0a3a302b5b2630354464b3fc6c15ac838649879a820a3a4db0df09f033e4cf88",
@@ -58,7 +58,7 @@
     "packages/report-model/src/index.ts": "38ba6c90d0404cacc4d738adccbfd7daf0a2c5cfef40178842c776945db226f2",
     "packages/report-model/src/validator.ts": "c6944b0bb97942e2332634b0fded31f7bfadde2612e4531314202d5415332f25",
     "packages/review-inbox/src/index.ts": "f05a3f004952c5752b842eb0c3b5cae5abcf7ad9c38c3d628a4a18ac42745832",
-    "packages/review-mcp-server/src/index.ts": "560c00d3c5113b7a467735f3b0f1a8d062fbb18471ae75f5acf3350652f2674d",
+    "packages/review-mcp-server/src/index.ts": "47a058e2fb5fd8af47ac03938a7b97e8ac74061446c3fd3afbe5b939d2ea943c",
     "packages/review-mcp-server/src/run-registry.ts": "7bdb8aa633b7757bce50652ae8a64636b805622ab9b85de8e5a1c94d2a5809ca",
     "packages/review-state/src/anchors.ts": "5e1488281d5fc2ce64bda08649f8fd14b9993ad0d48b667a07d2e1587b314a42",
     "packages/review-state/src/canonical.ts": "844b47cee854771c920f55e24d25d1487551dd4edff80ce90b7914bb4b63c434",
@@ -66,7 +66,7 @@
     "packages/review-state/src/model.ts": "523b4f5ab2cc1ead45e272285b93835b29846b74ae1ae9458d5149c4550c2926",
     "packages/review-state/src/persistence.ts": "e825604b9cafac8d22137075e9846fea53d5ea924faaac2aeb6dfbe246f1520f",
     "packages/security/src/index.ts": "a161e28fc3cc3e62f75fed63d3ad8eca363af6f255f27197882c2b2398e2ca50",
-    "packages/security/src/native-helper.ts": "7940b4eece17827bb41cf39d60bda82bb9955e437c787836647c7a71dddef967",
+    "packages/security/src/native-helper.ts": "80421da92bdc6dc8939c2281fab4acd3dad4ac27e3385d1cadda2a2920443d5c",
     "packages/security/src/report.ts": "9ae014c99c36b548fe3b18a37ca3e284270d2155fdb313bc75617b95ffbe2533",
     "packages/session-binding/src/index.ts": "57221d67fcff2d6922287a1efbcef7074e7c1df847b09466a43e3310b075825b",
     "schemas/annotations.schema.json": "15de4590de967a253a598418c0577b5e9ae3edda8246ea2dcc51f308e233abd3",
@@ -287,5 +287,5 @@
     "app.css": "93aaf1a71c83cecfabdd28025401d2f68aa70ee24ca047cd22962b47c6815736",
     "app.js": "4874583e6dc717bf4d7fab0744b758627312f5b7397c1e4cb86463a13c9c891d"
   },
-  "bundleSha256": "75f028739e0b0afa51c56aff8a66f1b374eb75989d7319c07ba62eb30f0ebd30"
+  "bundleSha256": "81eea44055ba68924c58abacf143ee00a2b97c665509fc439eb793c0894bb751"
 }

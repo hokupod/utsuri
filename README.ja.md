@@ -25,7 +25,7 @@ Utsuri は Git の変更を、コード・ブラウザキャプチャ・構造�
 <!-- availability:git-marketplace-source-ready-cli-publication-pending -->
 <!-- support-contract:macos-linux-windows-unsupported -->
 
-ソースには、対応する公開済み `@utsu-ri/cli` release に完全固定された Git Plugin が含まれます。公開 Git からのインストールは、その CLI release の公開と Plugin ソースのマージが完了するまで利用できません。以下は検証済みの host command です。`latest`、version range、別 package へ置き換えないでください。
+ソースには、対応する `@utsu-ri/cli` release に完全固定された Git Plugin が含まれます。ソース版が検証済みの最新公開版より新しい場合、そのソースを公開 Git からインストールできるのは、対応する CLI が公開され、Plugin ソースが公開到達可能になった後です。以下は検証済みの host command です。`latest`、version range、別 package へ置き換えないでください。
 
 - [runtime compatibility record](https://github.com/hokupod/utsuri/blob/main/docs/compatibility/plugin-runtime.json) に記載された Codex または Claude Code release。
 - macOS または Linux、Node.js 22 以降、および MCP 初回起動に使う `npx`。

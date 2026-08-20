@@ -1,6 +1,6 @@
 {
   "name": "utsuri",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "description": "Evidence-backed code and visual change review for Codex and Claude Code",
   "author": {
     "name": "hokupod",
@@ -14,7 +14,7 @@
   "mcpServers": {
     "utsuri": {
       "command": "npx",
-      "args": ["-y", "--package=@utsu-ri/cli@0.2.0", "utsuri", "mcp"],
+      "args": ["-y", "--package=@utsu-ri/cli@0.3.0", "utsuri", "mcp"],
       "env": {
         "CODEX_THREAD_ID": ""
       }
