@@ -1,0 +1,12 @@
+{
+  "servers": {
+    "typescript-language-server": {
+      "command": "nix",
+      "args": ["develop", "--command", "typescript-language-server", "--stdio"]
+    },
+    "svelte": {
+      "command": "nix",
+      "args": ["develop", "--command", "svelteserver", "--stdio"]
+    }
+  }
+}
