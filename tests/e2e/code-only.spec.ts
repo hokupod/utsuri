@@ -19,7 +19,32 @@ const contentTypes: Record<string, string> = {
   ".svg": "image/svg+xml"
 };
 
-async function serveReport(page: Page, reportLanguage = report.language): Promise<void> {
+async function serveReport(
+  page: Page,
+  reportLanguage = report.language,
+  sourceReport: UtsuriReport = report
+): Promise<void> {
+  const overview = /^ja(?:-|$)/iu.test(reportLanguage)
+    ? "ナビゲーションの実装、テスト、スタイル、安全性を意味単位でまとめたレビューです。"
+    : "A semantic review of the navigation implementation, tests, styles, and safety boundary.";
+  const changes = sourceReport.changes.map((change) => ({
+    ...change,
+    hunkExplanations: change.hunkRefs.map((hunkRef) => {
+      const changedPath =
+        sourceReport.hunks.find((hunk) => hunk.id === hunkRef)?.path ?? "changed file";
+      return /^ja(?:-|$)/iu.test(reportLanguage)
+        ? {
+            hunkRef,
+            purpose: `${changedPath} の変更目的を差分単位で示します。`,
+            meaning: `この差分は ${changedPath} のレビュー対象となる変更を表します。`
+          }
+        : {
+            hunkRef,
+            purpose: `Explain the purpose of the change in ${changedPath}.`,
+            meaning: `This hunk is the reviewable change in ${changedPath}.`
+          };
+    })
+  }));
   await page.route("http://utsuri.test/**", async (route: Route) => {
     const requestPath = new URL(route.request().url()).pathname;
     const relative = requestPath === "/" ? "index.html" : requestPath.slice(1);
@@ -34,7 +59,12 @@ async function serveReport(page: Page, reportLanguage = report.language): Promis
           relative === "index.html"
             ? viewerDocument(body.toString("utf8"), "interactive")
             : relative === "report.json"
-              ? `${JSON.stringify({ ...report, language: reportLanguage })}\n`
+              ? `${JSON.stringify({
+                  ...sourceReport,
+                  language: reportLanguage,
+                  summary: { ...sourceReport.summary, overview },
+                  changes
+                })}\n`
               : body
       });
     } catch {
@@ -70,23 +100,60 @@ test("loads the full code review from the default static server", async ({ page 
   const server = await startStaticReportServer(fixture);
   try {
     await page.goto(server.url);
-    await expect(page.getByRole("heading", { name: "Decision summary" })).toBeVisible();
+    await expect(page.getByRole("heading", { name: "Review brief" })).toBeVisible();
+    await expect(page.getByRole("heading", { name: "Change map" })).toBeVisible();
+    await expect(page.locator(".focused-change")).toHaveCount(0);
     await page.getByRole("link", { name: /src\/malicious\.ts/u }).click();
     await expect(page.getByRole("heading", { name: "Agent interpretation" })).toBeVisible();
     await expect(page.getByRole("heading", { name: "Code diff" })).toBeVisible();
     await expect(page.locator(".hunk")).toHaveCount(report.changes[0]?.hunkRefs.length ?? 0);
+    await expect(page.locator(".hunk-explanation")).toHaveCount(0);
   } finally {
     await server.close();
   }
+});
+
+test("prioritizes medium risk ahead of lower-risk uncertainty", async ({ page }) => {
+  const priorityReport = structuredClone(report);
+  const lowUnknown = priorityReport.changes[0]!;
+  lowUnknown.risk.level = "low";
+  lowUnknown.intent.source = "unknown";
+  lowUnknown.verification.gaps = ["Runtime behavior was not executed."];
+  const mediumKnown = priorityReport.changes[1]!;
+  mediumKnown.risk.level = "medium";
+  mediumKnown.intent.source = "declared";
+  mediumKnown.verification.gaps = [];
+
+  await serveReport(page, "en", priorityReport);
+
+  const reviewRoute = page.locator(".review-route");
+  await expect(reviewRoute.getByRole("heading", { level: 3 })).toHaveText(mediumKnown.title);
+  await expect(reviewRoute.locator(".route-status")).toHaveText("Needs confirmation");
+  await expect(page.locator(".review-map li").first().locator("strong")).toHaveText(
+    mediumKnown.title
+  );
+  await expect(
+    page.locator('.queue-section[data-queue="needs-confirmation"] li').first().locator("strong")
+  ).toHaveText(mediumKnown.title);
+  await page.keyboard.press("j");
+  await expect(page.locator("article.focused-change h2")).toHaveText(mediumKnown.title);
 });
 
 test("renders every hunk from structured data without executing diff text", async ({ page }) => {
   await serveReport(page);
 
   await expect(page.getByRole("banner").getByText("UNCOVERED", { exact: true })).toBeVisible();
-  await expect(page.getByText("Visual verification has not run")).toBeVisible();
+  await expect(page.locator(".review-overview")).toContainText("semantic review");
   await page.getByRole("link", { name: /src\/malicious\.ts/u }).click();
+  await expect(page.getByText("Visual verification has not run")).toBeVisible();
   await expect(page.getByText(/<img src=x onerror=/u)).toBeVisible();
+  await expect(page.locator(".hunk-explanation")).toHaveCount(
+    report.changes[0]?.hunkRefs.length ?? 0
+  );
+  await expect(page.locator(".hunk-explanation").first()).toContainText("Purpose");
+  await expect(page.locator(".hunk-explanation").first()).toContainText(
+    "This hunk is the reviewable change"
+  );
   expect(
     await page.evaluate(() => (window as unknown as { __utsuriXss?: number }).__utsuriXss)
   ).toBeUndefined();
@@ -163,9 +230,11 @@ test("preserves hierarchy across language, theme, viewport, and 200% zoom", asyn
   for (const scenario of scenarios) {
     const { context, page } = await newFixturePage(browser, scenario);
     if (scenario.reportLanguage === "ja") {
-      await expect(page.getByRole("heading", { name: "判断サマリー" })).toBeVisible();
+      await expect(page.getByRole("heading", { name: "レビュー要旨" })).toBeVisible();
       expect(await page.evaluate(() => document.documentElement.lang)).toBe("ja");
-      await expect(page.getByText("確認が必要", { exact: true })).toBeVisible();
+      await expect(
+        page.getByLabel("レビュー経路").getByText("確認が必要", { exact: true })
+      ).toBeVisible();
       await expect(
         page
           .getByText(
@@ -176,6 +245,7 @@ test("preserves hierarchy across language, theme, viewport, and 200% zoom", asyn
           )
           .first()
       ).toBeVisible();
+      await expect(page.locator(".map-meta").first()).toContainText(/\d+ファイル/u);
     }
     expect(
       await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth + 1),
@@ -199,7 +269,7 @@ test("preserves hierarchy across language, theme, viewport, and 200% zoom", asyn
     width: 512,
     deviceScaleFactor: 2
   });
-  await expect(page.getByRole("heading", { name: "Decision summary" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Review brief" })).toBeVisible();
   expect(
     await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth + 1)
   ).toBe(true);

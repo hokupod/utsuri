@@ -94,11 +94,11 @@ Utsuri は何もインストールせず、最初に利用可能な capability �
 ## 仕組み
 
 1. **Collect** — 指定された patch、worktree、range、merge base を境界付き run に読み込みます。
-2. **Interpret** — 現在の Agent が会話、diff、索引済みの根拠を使い、裏付けのない意図を作らずにすべての変更を説明します。
+2. **Interpret** — 現在の Agent が会話、diff、索引済みの根拠を使い、因果関係のある複数ファイルの hunk を意味単位の変更へまとめます。各変更を説明し、すべての hunk に簡潔な「目的」と「この差分の意味」を付けます。裏付けのない意図は作りません。
 3. **Capture** — 設定と許可がある場合だけ、分離した before / after のブラウザ証拠を記録します。
 4. **Discover and compare** — 変更コードを target に対応付け、pixel、DOM、ARIA、style、accessibility、runtime、network、overflow の証拠を比較します。
 5. **Finalize** — Agent が作成した annotations を含む immutable で hash 検証済みのローカル `report/` を公開し、失敗や部分的な証拠も保持します。
-6. **Serve and verify** — 適切な loopback viewer を起動したまま、report ID、最初の変更、code diff、Agent の解釈が読み込めることを確認し、live URL を返します。
+6. **Serve and verify** — 適切な loopback viewer を起動したまま、レビュー要旨、最初の意味単位の変更、code diff、Agent の解釈が読み込めることを確認し、live URL を返します。
 7. **Review and return feedback** — viewed state、人間の判断、comment を `report/` の外へ保存します。Agent 向け質問は、登録済みの元 project・Origin Session にだけ戻せます。
 
 [詳細設計](https://github.com/hokupod/utsuri/blob/main/docs/design.md)に data model と security boundary、[CLI contract](https://github.com/hokupod/utsuri/blob/main/skills/utsuri-review/references/cli-contract.md)に機械向け動作を記載しています。
@@ -107,6 +107,8 @@ Utsuri は何もインストールせず、最初に利用可能な capability �
 
 ## レポートを理解する
 
+- **レビュー要旨** は Agent が作成した全体説明、決定的に算出した根拠の状態、優先順の意味単位変更マップをまとめます。1つの意味単位の変更が複数ファイルにまたがることがあり、file と hunk のリンクはレビュー境界ではなく根拠です。
+- **Hunk の説明** は、Agent が作成した「目的」と「この差分の意味」を、注釈付きコード hunk の直前に表示します。収集済み hunk を欠落または重複させた新しい annotations は拒否され、`unclassifiedHunkRefs` は annotations なしで生成する決定的 fallback レポートに限られます。このフィールドがない旧レポートも閲覧でき、その場合は説明パネルを表示しません。
 - **Finding** は証拠に基づく観察であり、それだけで regression を証明しません。
 - **`INCOMPLETE`** は必要な証拠の失敗、不正、上限超過、利用不能を示します。pass へ変換されません。
 - **`UNCOVERED`** は変更コードに検証済み target がない、またはカバレッジの分母が不明であることを示します。

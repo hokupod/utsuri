@@ -1,0 +1,32 @@
+{
+  "schemaVersion": "1.0",
+  "language": "en",
+  "overview": "One semantic change was collected.",
+  "changes": [
+    {
+      "id": "change:missing-hunk-explanations",
+      "title": "Missing hunk explanations",
+      "kind": "unknown",
+      "summary": "The change omits the required per-hunk explanation collection.",
+      "intent": {
+        "text": "Intent is unknown.",
+        "source": "unknown",
+        "evidenceRefs": []
+      },
+      "implementation": "No implementation details are available.",
+      "userImpact": [],
+      "technicalImpact": [],
+      "risk": {
+        "level": "info",
+        "reasons": []
+      },
+      "hunkRefs": [],
+      "targetRefs": [],
+      "findingRefs": [],
+      "verification": {
+        "verified": [],
+        "gaps": []
+      }
+    }
+  ]
+}

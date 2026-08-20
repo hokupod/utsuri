@@ -17,6 +17,7 @@ export interface UtsuriReport {
   reportId: string;
   status: "PASS" | "CHANGED" | "REGRESSION" | "INCOMPLETE" | "UNCOVERED" | "SKIPPED";
   summary: {
+    overview?: string;
     statement: string;
     filesChanged: number;
     additions: number;
@@ -121,12 +122,18 @@ export interface Change {
     reasons: string[];
   };
   hunkRefs: string[];
+  hunkExplanations?: HunkExplanation[];
   targetRefs: string[];
   findingRefs: string[];
   verification: {
     verified: string[];
     gaps: string[];
   };
+}
+export interface HunkExplanation {
+  hunkRef: string;
+  purpose: string;
+  meaning: string;
 }
 export interface Target {
   id: string;

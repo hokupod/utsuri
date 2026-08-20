@@ -1804,7 +1804,7 @@ The final target extends that baseline with these deterministic heuristics:
 8. commit boundaries; and
 9. vocabulary in the user request and symbol names.
 
-The Agent may merge or split candidates through a schema-validated annotation artifact but must never remove a hunk. Every hunk must occur exactly once in a candidate or in `unclassifiedHunkRefs`; missing and duplicate assignment are artifact errors.
+Review-plan candidates are deterministic evidence-navigation hints, not final review-unit boundaries. The Agent may merge causally related candidates or split unrelated hunks through a schema-validated annotation artifact, but it must never remove or duplicate a hunk. When annotations are supplied, every diff hunk must occur exactly once across annotated Semantic Changes; incomplete annotations are artifact errors. `unclassifiedHunkRefs` is reserved for deterministic fallback reports created without annotations. Phase 3 joins discovery targets and findings to final Semantic Changes by intersecting validated hunk references rather than comparing candidate and change IDs. Discovery validation proves that each candidate's hunk references are exactly the union derived from its review-plan change references.
 
 ### 15.5 Evidence index
 
@@ -2387,26 +2387,27 @@ Phase 3 extends the local **Diff Ledger** with measured visual, DOM, ARIA, style
 └───────────────┴──────────────────────────────────────────┘
 ```
 
-### 23.2 Overall summary
+### 23.2 Review brief
 
-Display:
+The initial main surface is a decision-oriented brief rather than an automatically selected file or diff. It combines:
 
-```text
-14 files changed
-+324 / -118
+1. an Agent-authored overview of the complete change set, required for newly authored annotations and optional only when reading older reports;
+2. a deterministic evidence posture derived from report status, coverage, diagnostics, and findings;
+3. a prioritized map of up to five Semantic Changes;
+4. one next-review route pointing to the highest-attention change; and
+5. deterministic file, line, change-group, and coverage metrics.
 
-4 semantic changes
-7 / 8 targets captured
-5 / 12 known usages verified
-2 uncovered UI changes
-1 new accessibility issue
-0 new page errors
-3 blocked external requests
-```
+The overview explains the outcome and purpose of the change set. Newly authored annotations require it; the report field remains optional only so immutable older reports stay readable. It must not claim verification, coverage, or absence of findings; those remain deterministic report fields. The change map uses existing Semantic Changes and hunk references rather than introducing a parallel theme artifact.
 
-The opening statement must aid a decision rather than merely repeat counts.
+The priority map and next-review route sort changes first by risk (`critical`, `high`, `medium`, `low`, then `info`) and then by confirmation state (`action-required`, `needs-confirmation`, then `no-issue`). `medium` risk always requires confirmation even when intent is known and no verification gap remains.
 
-> Mobile navigation behavior changed. There is one new accessibility issue and two uncaptured high-risk usage sites. Review change groups 1 and 3 first.
+A Semantic Change may contain related implementation, tests, documentation, styles, and generated outputs across several files. Files and hunks remain evidence-navigation units. They are not the default human decision boundary.
+
+Do not select or expand a focused change on initial load. The reviewer chooses the priority route, a change-map row, or a review-queue row before detailed evidence appears. Older reports without an Agent overview retain the deterministic evidence posture and change map.
+
+Example opening overview:
+
+> Mobile navigation behavior, tests, and responsive styling changed as one review unit. The evidence posture separately identifies one new accessibility issue and two uncaptured usage sites.
 
 ### 23.3 Review Queue
 
@@ -2434,6 +2435,7 @@ Risk
 Not verified
 Verified
 Evidence
+Code diff (per-hunk purpose / meaning, then structured patch)
 ```
 
 ### 23.5 Visual Evidence
@@ -2465,7 +2467,7 @@ Keep both rather than choosing one:
 
 ### 23.7 Code Diff
 
-Phase 3 implements semantic-group and unclassified-hunk access, side-by-side and unified views, structured line rendering, word emphasis, context expansion, hunk anchors, change/hunk URL fragments, and code-to-visual/finding links. Code content is inserted only as text nodes. The file tree, syntax highlighting, and whitespace toggle remain later-phase targets.
+Phase 3 implements semantic-group and unclassified-hunk access, side-by-side and unified views, structured line rendering, word emphasis, context expansion, hunk anchors, change/hunk URL fragments, and code-to-visual/finding links. Each annotated hunk's Agent-authored purpose and meaning appear directly before its structured patch. Older reports without hunk explanations omit that panel. Code content and explanation content are inserted only as text nodes. The file tree, syntax highlighting, and whitespace toggle remain later-phase targets.
 
 - by semantic group;
 - by file tree;
@@ -2622,7 +2624,7 @@ WCAG 2.2 AA.
 
 | Key       | Action                                     |
 | --------- | ------------------------------------------ |
-| `j` / `k` | Next / previous change                     |
+| `j` / `k` | Next / previous prioritized change         |
 | `n` / `p` | Next / previous finding                    |
 | `1`       | Side by side                               |
 | `2`       | Wipe                                       |
@@ -2631,6 +2633,7 @@ WCAG 2.2 AA.
 | `5`       | After only                                 |
 | `e`       | Move focus to visual evidence              |
 | `/`       | Search                                     |
+| `b`       | Return to the review brief                 |
 
 Viewed/reviewed/comment/Agent-feedback shortcuts are introduced with their Phase 5 surfaces rather than reserving inactive keys in Phase 3.
 | `?` | Shortcut help |
@@ -2649,12 +2652,21 @@ Annotations and reports carry the selected language at the top level:
 interface Annotations {
   schemaVersion: "1.0";
   language: string;
-  changes: SemanticChange[];
+  overview: string;
+  changes: AnnotationSemanticChange[];
+}
+
+interface AnnotationSemanticChange extends SemanticChange {
+  hunkExplanations: HunkExplanation[];
 }
 
 interface UtsuriReport {
   schemaVersion: "1.0";
   language: string;
+  summary: {
+    overview?: string;
+    // Deterministic statement and counts remain canonical schema fields.
+  };
   // Remaining fields are defined by the canonical report schema.
 }
 ```
@@ -2681,6 +2693,7 @@ interface SemanticChange {
     reasons: string[];
   };
   hunkRefs: string[];
+  hunkExplanations?: HunkExplanation[];
   targetRefs: string[];
   findingRefs: string[];
   verification: {
@@ -2688,7 +2701,15 @@ interface SemanticChange {
     gaps: string[];
   };
 }
+
+interface HunkExplanation {
+  hunkRef: string;
+  purpose: string;
+  meaning: string;
+}
 ```
+
+The annotations schema requires an `overview` and exactly one `HunkExplanation` for every `hunkRef` in each Semantic Change. Relational validation rejects duplicate, missing, and cross-change explanation references. Finalization additionally requires annotations to classify every collected diff hunk exactly once. The report field is optional only for compatibility with older immutable reports.
 
 ### 25.2 CaptureTarget
 

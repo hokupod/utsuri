@@ -2,11 +2,11 @@
   "schemaVersion": 1,
   "generator": "scripts/plugin-distribution.mjs",
   "cliPackagePin": "@utsu-ri/cli@0.2.0",
-  "canonicalSha256": "d9cfcfcfa6edd800586edae6a5480f7c1b56e1753ae26a13cd4c411ac5ab84ff",
+  "canonicalSha256": "85e165a82226489b5dcfb42a7749f5d7f21a6399c55194f072edc090cb32ba14",
   "files": {
     "SKILL.md": {
-      "sourceSha256": "02d49ebe246c9afa44041fb8f0a78e5850e9e390294b43cb20ff3f4098be8d72",
-      "generatedSha256": "601ba294b06fd7342b083360c9aa56a0070533b907be43b39ea88b98741bdf7d"
+      "sourceSha256": "dfa193569c947abfb4b9a81f3ae77511b904133aad8965af85f54306839aad3e",
+      "generatedSha256": "3944cc17801f3f07b19db408893502e168c2965e703c67a09d05431f9028ed0e"
     },
     "agents/openai.yaml": {
       "sourceSha256": "cec07fd1b327d962f7f26ac944a7c099804d646180e637497e89728bd3898841",
@@ -17,8 +17,8 @@
       "generatedSha256": "4d0916da1c3c182f2c80184fda9a37ab156cef175c12f6dceedcfb5a5e32f8e8"
     },
     "references/cli-contract.md": {
-      "sourceSha256": "701f2e4c9aeeb5098150f698e41695377075d0b66832d166643b03319f7d5319",
-      "generatedSha256": "bc89cc5666023edc5b6172d2357739f6dc05706b00a449a522bc9a54654dd9b9"
+      "sourceSha256": "c1ff0b52787323968f7bc6763cd7eaecb802f217db6578e61934624022ad169d",
+      "generatedSha256": "1f64a9c5657c5c1b326a5dbbad3e37b8ce1e5d78d9353eb417957c08a1558e85"
     },
     "references/distribution.md": {
       "sourceSha256": "5cb5ee799956aefd939800341f817d4c0e5361c4a50eae3ebc1e14da051f3099",

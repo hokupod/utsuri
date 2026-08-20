@@ -4,7 +4,7 @@
   "title": "Annotations",
   "type": "object",
   "additionalProperties": false,
-  "required": ["schemaVersion", "language", "changes"],
+  "required": ["schemaVersion", "language", "overview", "changes"],
   "properties": {
     "schemaVersion": { "const": "1.0" },
     "language": {
@@ -13,6 +13,7 @@
       "maxLength": 35,
       "pattern": "^[A-Za-z]{2,8}(?:-[A-Za-z0-9]{1,8})*$"
     },
+    "overview": { "type": "string", "minLength": 1, "maxLength": 2000 },
     "changes": { "type": "array", "items": { "$ref": "#/$defs/semanticChange" } }
   },
   "$defs": {
@@ -30,6 +31,7 @@
         "technicalImpact",
         "risk",
         "hunkRefs",
+        "hunkExplanations",
         "targetRefs",
         "findingRefs",
         "verification"
@@ -69,6 +71,10 @@
           }
         },
         "hunkRefs": { "type": "array", "items": { "type": "string" }, "uniqueItems": true },
+        "hunkExplanations": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/hunkExplanation" }
+        },
         "targetRefs": { "type": "array", "items": { "type": "string" }, "uniqueItems": true },
         "findingRefs": { "type": "array", "items": { "type": "string" }, "uniqueItems": true },
         "verification": {
@@ -80,6 +86,16 @@
             "gaps": { "type": "array", "items": { "type": "string" } }
           }
         }
+      }
+    },
+    "hunkExplanation": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["hunkRef", "purpose", "meaning"],
+      "properties": {
+        "hunkRef": { "type": "string", "pattern": "^hunk:" },
+        "purpose": { "type": "string", "minLength": 1, "maxLength": 160 },
+        "meaning": { "type": "string", "minLength": 1, "maxLength": 320 }
       }
     }
   }

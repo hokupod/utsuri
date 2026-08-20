@@ -131,11 +131,11 @@ const generatedPreComparisonGaps: Readonly<Record<string, true>> = {
 };
 
 function indexHtml(report: UtsuriReport): string {
-  const summary = escapeHtml(report.summary.statement);
+  const summary = escapeHtml(report.summary.overview ?? report.summary.statement);
   const status = escapeHtml(report.status);
   const language = escapeHtml(report.language);
   const skipLink = reportText(report.language, "Skip to review", "レビューへ移動");
-  const summaryHeading = reportText(report.language, "Review summary", "レビュー概要");
+  const summaryHeading = reportText(report.language, "Review brief", "レビュー要旨");
   const servingHint = reportText(
     report.language,
     "Full review data is available from the local report server.",
@@ -313,6 +313,23 @@ async function assertArtifactDigests(
 
 function assertReferenceResult(id: string, result: { ok: boolean; errors: string[] }): void {
   if (!result.ok) throw new UtsuriError(id, result.errors.join("; "), ExitCode.Artifact);
+}
+
+function assertAnnotationsCoverDiff(annotations: Annotations, diff: GitDiffDocument): void {
+  const expected = new Set(diff.hunks.map((hunk) => hunk.id));
+  const counts = new Map<string, number>();
+  for (const reference of annotations.changes.flatMap((change) => change.hunkRefs)) {
+    counts.set(reference, (counts.get(reference) ?? 0) + 1);
+  }
+  const missing = [...expected].filter((reference) => !counts.has(reference)).length;
+  const duplicate = [...counts.values()].filter((count) => count > 1).length;
+  const unknown = [...counts.keys()].filter((reference) => !expected.has(reference)).length;
+  if (missing === 0 && duplicate === 0 && unknown === 0) return;
+  throw new UtsuriError(
+    "ANNOTATIONS_HUNK_COVERAGE_INVALID",
+    `Annotations must classify every collected hunk exactly once (${missing} missing, ${duplicate} duplicate, ${unknown} unknown)`,
+    ExitCode.Artifact
+  );
 }
 
 function inferredKind(paths: readonly string[]): UtsuriReport["changes"][number]["kind"] {
@@ -931,7 +948,8 @@ function validateDiscoveryArtifact(
     return discoveryArtifactError("discovery.json has an invalid top-level structure");
   }
   const captureTargets = new Set(capture.targets.map((target) => target.id));
-  const changeIds = new Set(plan.candidates.map((candidate) => candidate.id));
+  const planCandidates = new Map(plan.candidates.map((candidate) => [candidate.id, candidate]));
+  const changeIds = new Set(planCandidates.keys());
   const hunkIds = new Set(diff.hunks.map((hunk) => hunk.id));
   const mappedChanges = new Set<string>();
   const candidateIds: string[] = [];
@@ -996,6 +1014,19 @@ function validateDiscoveryArtifact(
       if (typeof reference !== "string" || !hunkIds.has(reference)) {
         return discoveryArtifactError(`Discovery hunk reference is invalid: ${String(reference)}`);
       }
+    }
+    const expectedHunkRefs = [
+      ...new Set(
+        rawCandidate.changeRefs.flatMap(
+          (reference) => planCandidates.get(String(reference))?.hunkRefs ?? []
+        )
+      )
+    ].sort();
+    if (
+      new Set(rawCandidate.changeRefs).size !== rawCandidate.changeRefs.length ||
+      canonicalJson([...rawCandidate.hunkRefs].sort()) !== canonicalJson(expectedHunkRefs)
+    ) {
+      return discoveryArtifactError("Discovery candidate hunk provenance is inconsistent");
     }
   }
   if (
@@ -1325,8 +1356,9 @@ function integratePhase3(
   });
   const findingsById = new Map(findings.map((finding) => [finding.id, finding]));
   const changes = source.changes.map((change) => {
+    const changeHunks = new Set(change.hunkRefs);
     const candidates = discovery.candidates.filter((candidate) =>
-      candidate.changeRefs.includes(change.id)
+      candidate.hunkRefs.some((reference) => changeHunks.has(reference))
     );
     const targetRefs = [...new Set(candidates.flatMap((candidate) => candidate.targetRefs))].sort();
     const findingRefs = findings
@@ -1538,7 +1570,7 @@ function createCodeOnlyReport(
   capture: CaptureArtifact | null
 ): UtsuriReport {
   const language = annotations?.language ?? "en";
-  const sourceChanges = annotations?.changes.length
+  const sourceChanges = annotations
     ? (annotations.changes as UtsuriReport["changes"])
     : createCandidateChanges(diff, plan, language);
   const captureState = captureReportState(capture);
@@ -1609,6 +1641,7 @@ function createCodeOnlyReport(
     reportId,
     status: capture && !captureComplete ? "INCOMPLETE" : "UNCOVERED",
     summary: {
+      ...(annotations?.overview ? { overview: annotations.overview } : {}),
       statement: capture
         ? captureComplete
           ? reportText(
@@ -1738,6 +1771,7 @@ async function reconstructReportFromSourceSnapshot(
       "REVIEW_PLAN_INVALID",
       validateReviewPlanReferences(plan, diff, evidenceIndex)
     );
+    if (annotations) assertAnnotationsCoverDiff(annotations, diff);
     const discovery =
       discoveryValue === null || capture === null
         ? null

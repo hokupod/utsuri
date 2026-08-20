@@ -94,11 +94,11 @@ Utsuri 首先检查可用 capability，不会安装任何内容。未请求浏�
 ## 工作方式
 
 1. **Collect** — 将指定的 patch、worktree、range 或 merge base 读取到有边界的 run 中。
-2. **Interpret** — 当前 Agent 使用会话、diff 和已索引证据解释每项变更，不臆造缺少依据的意图。
+2. **Interpret** — 当前 Agent 使用会话、diff 和已索引证据，将跨文件且存在因果关系的 hunk 归并为语义变更，解释每项变更，并为每个 hunk 添加简明的“目的”和“该差分的含义”，不臆造缺少依据的意图。
 3. **Capture** — 仅在已配置并授权时，分别记录隔离的 before / after 浏览器证据。
 4. **Discover and compare** — 将变更代码映射到 target，然后比较 pixel、DOM、ARIA、style、accessibility、runtime、network 和 overflow 证据。
 5. **Finalize** — 发布包含 Agent-authored annotations、immutable 且经过 hash 验证的本地 `report/`，并保留失败或部分证据。
-6. **Serve and verify** — 保持适当的 loopback viewer 运行，确认 report ID、第一项变更、code diff 和 Agent 解释可以加载，然后返回 live URL。
+6. **Serve and verify** — 保持适当的 loopback viewer 运行，确认审查摘要、第一项语义变更、code diff 和 Agent 解释可以加载，然后返回 live URL。
 7. **Review and return feedback** — 在 `report/` 外保存 viewed state、人工判断和 comment。Agent 问题只能返回到已注册的原项目和 Origin Session。
 
 [详细设计](https://github.com/hokupod/utsuri/blob/main/docs/design.md)定义 data model 和 security boundary；[CLI contract](https://github.com/hokupod/utsuri/blob/main/skills/utsuri-review/references/cli-contract.md)记录机器接口行为。
@@ -107,6 +107,8 @@ Utsuri 首先检查可用 capability，不会安装任何内容。未请求浏�
 
 ## 理解报告
 
+- **审查摘要** 汇集 Agent 撰写的整体说明、确定性计算的证据状态，以及按优先级排列的语义变更地图。一项语义变更可以跨越多个文件；file 与 hunk 链接是证据，而不是审查边界。
+- **Hunk 说明** 会在每个已注释代码 hunk 前显示 Agent 撰写的“目的”和“该差分的含义”。遗漏或重复已收集 hunk 的新 annotations 会被拒绝；`unclassifiedHunkRefs` 仅用于未提供 annotations 时生成的确定性 fallback 报告。缺少这些字段的旧报告仍可查看，但不显示说明面板。
 - **Finding** 是基于证据的观察，并不能自动证明 regression。
 - **`INCOMPLETE`** 表示所需证据失败、格式错误、超过限制或不可用。它绝不会被改写为 pass。
 - **`UNCOVERED`** 表示变更代码没有已验证 target，或覆盖范围的分母未知。
