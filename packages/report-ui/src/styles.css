@@ -696,12 +696,10 @@ main {
 @keyframes brief-row-enter {
   from {
     transform: translateY(0.4rem);
-    opacity: 0;
   }
 
   to {
     transform: translateY(0);
-    opacity: 1;
   }
 }
 .file-inventory {

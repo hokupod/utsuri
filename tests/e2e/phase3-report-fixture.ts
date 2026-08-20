@@ -118,6 +118,11 @@ export async function servePhase3Report(
       await route.fulfill({ status: 404, body: "Not found" });
     }
   });
-  await page.goto(`${reportOrigin}/index.html`);
+  const firstChange = fixture.report.changes[0];
+  await page.goto(
+    firstChange
+      ? `${reportOrigin}/index.html#change=${encodeURIComponent(firstChange.id)}`
+      : `${reportOrigin}/index.html`
+  );
   return fixture;
 }
