@@ -503,7 +503,7 @@ async function verifyReadOnlyPluginWorkflow(relativePath, requirements) {
 }
 
 await verifyReadOnlyPluginWorkflow(".github/workflows/git-plugin-verification.yml", [
-  "node-version: 24.16.0",
+  "node-version: 24.19.0",
   "bun-version: 1.3.14",
   "releases/download/1.5.14/",
   "@openai/codex@0.146.0",
