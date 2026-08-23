@@ -17,7 +17,7 @@
   },
   "type": "module",
   "engines": {
-    "node": ">=22"
+    "node": "v26.7.0"
   },
   "bin": {
     "utsuri": "dist/utsuri.mjs"
