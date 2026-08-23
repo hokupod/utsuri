@@ -86,7 +86,7 @@
     "schemas/review-state.schema.json": "27f9f98344a2b94b75f84fef9bba73978bbacca1e102ed11e459d247fbed7552",
     "schemas/review-thread.schema.json": "6c5957f14b964dfaf1601ac45870b7f3fae013209dd4964aa3831dd753f06fc1"
   },
-  "dependencyBaselineSha256": "2ce86f9265ed71fbaf7cddeaa8aaa5129acc50a3cafc1dbcacf1843819835806",
+  "dependencyBaselineSha256": "bb75287fdb114361b574fa419384dab70fa5e6f77f8eb7345f06e0c0901fef15",
   "dependencyHash": "959e496cb72b37c393f30048276bfcdfcaaa74821bbb106d20a0331878eba888",
   "dependencyHashes": {
     "ajv-formats@3.0.1/dist/formats.js": "b61693a26869970a92cc1fe832c931ccd3afe8b6d66802b19c48306349e84880",
