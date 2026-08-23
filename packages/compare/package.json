@@ -8,7 +8,7 @@
     "@utsu-ri/capture": "workspace:*",
     "@utsu-ri/core": "workspace:*",
     "@utsu-ri/security": "workspace:*",
-    "pixelmatch": "7.1.0",
+    "pixelmatch": "7.2.0",
     "pngjs": "7.0.0"
   },
   "exports": {
