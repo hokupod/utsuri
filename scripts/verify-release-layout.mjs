@@ -282,11 +282,11 @@ try {
   ]);
   const expectedEsbuild = rootManifest.devDependencies?.esbuild;
   if (
-    expectedEsbuild !== "0.25.10" ||
+    expectedEsbuild !== "0.28.2" ||
     esbuildManifest.version !== expectedEsbuild ||
     !/^\d+\.\d+\.\d+$/u.test(expectedEsbuild)
   ) {
-    errors.push("independent bundle verification requires exact esbuild 0.25.10");
+    errors.push("independent bundle verification requires exact esbuild 0.28.2");
   } else {
     independentBuild = await buildCliBundle(root);
     const distributed = await readRegular("packages/cli/dist/utsuri.mjs");
@@ -503,7 +503,7 @@ async function verifyReadOnlyPluginWorkflow(relativePath, requirements) {
 }
 
 await verifyReadOnlyPluginWorkflow(".github/workflows/git-plugin-verification.yml", [
-  "node-version: 24.16.0",
+  "node-version: 24.19.0",
   "bun-version: 1.3.14",
   "releases/download/1.5.14/",
   "@openai/codex@0.146.0",

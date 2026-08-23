@@ -5,7 +5,7 @@
     "creators": ["Tool: Utsuri SBOM generator 1"]
   },
   "dataLicense": "CC0-1.0",
-  "documentNamespace": "https://github.com/hokupod/utsuri/sbom/0.3.0/1a615aa072e40e0f4da9ff1daed5bfa547beea6ee0c016a7a06933454736c4e9",
+  "documentNamespace": "https://github.com/hokupod/utsuri/sbom/0.3.0/1f1d230822ea3da4bb62a3a3c686aac7a2faef4fd2313d47b421752c6c16fb25",
   "name": "utsuri-0.3.0",
   "packages": [
     {
@@ -13,7 +13,7 @@
       "checksums": [
         {
           "algorithm": "SHA256",
-          "checksumValue": "68eb77a9633bf7ae340ea4d48fe2ebbc9f92b949f98d12bf79d01816de1f3953"
+          "checksumValue": "6b8cff03cb4266e31a2fa8868f72d94c8e7ac01d2493c68e7edda7a47162a1a8"
         }
       ],
       "downloadLocation": "NOASSERTION",
