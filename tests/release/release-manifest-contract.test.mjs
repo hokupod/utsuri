@@ -526,6 +526,10 @@ describe("toolchain and CI contract", () => {
   test("keeps Renovate Bun updates complete without hosted post-upgrade scripts", async () => {
     const config = JSON.parse(await readFile(path.join(repositoryRoot, "renovate.json"), "utf8"));
     assert.equal(config.postUpgradeTasks, undefined);
+    assert.ok(config.extends.includes(":preserveSemverRanges"));
+    assert.equal(config.rangeStrategy, undefined);
+    const engineRule = config.packageRules.find((rule) => rule.matchDepTypes?.includes("engines"));
+    assert.equal(engineRule?.enabled, false);
     const bunManager = config.customManagers.find(
       (manager) =>
         manager.depNameTemplate === "oven-sh/bun" &&
@@ -533,6 +537,8 @@ describe("toolchain and CI contract", () => {
     );
     assert.ok(bunManager, "Renovate must update the canonical primary Bun policy");
     assert.equal(bunManager.datasourceTemplate, "github-releases");
+    assert.ok(bunManager.managerFilePatterns.includes("/^\\.github/workflows/ci\\.yml$/"));
+    assert.ok(bunManager.matchStrings.some((pattern) => pattern.includes("bun: \\[")));
 
     const bunRule = config.packageRules.find((rule) => rule.groupName === "Bun toolchain");
     assert.ok(bunRule, "Renovate must keep primary Bun pins in one PR");
