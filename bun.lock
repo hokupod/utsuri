@@ -8,7 +8,7 @@
         "ajv": "8.18.0",
         "ajv-formats": "3.0.1",
         "axe-core": "4.10.3",
-        "fflate": "0.8.2",
+        "fflate": "0.8.3",
         "pixelmatch": "7.1.0",
         "playwright-core": "1.61.1",
         "pngjs": "7.0.0",
@@ -73,7 +73,7 @@
     },
     "packages/cli": {
       "name": "@utsu-ri/cli",
-      "version": "0.2.0",
+      "version": "0.3.0",
       "bin": {
         "utsuri": "dist/utsuri.mjs",
       },
@@ -92,7 +92,7 @@
         "@utsu-ri/review-state": "workspace:*",
         "@utsu-ri/security": "workspace:*",
         "@utsu-ri/session-binding": "workspace:*",
-        "fflate": "0.8.2",
+        "fflate": "0.8.3",
         "yaml": "2.8.3",
       },
     },
@@ -573,7 +573,7 @@
 
     "fdir": ["fdir@6.5.0", "", { "peerDependencies": { "picomatch": "^3 || ^4" }, "optionalPeers": ["picomatch"] }, "sha512-tIbYtZbucOs0BRGqPJkshJUYdL+SDH7dVM8gjy+ERp3WAUjLEFJE+02kanyHtwjWOnwrKYBiwAmM0p4kLJAnXg=="],
 
-    "fflate": ["fflate@0.8.2", "", {}, "sha512-cPJU47OaAoCbg0pBvzsgpTPhmhqI5eJjh/JIu8tPj5q+T7iLvW/JAYUqmE7KOB4R1ZyEhzBaIQpQpardBF5z8A=="],
+    "fflate": ["fflate@0.8.3", "", {}, "sha512-tbZNuJrLwGUp3zshBtdy4W+ORxZuIh8a5ilyIEQDC5rY1f3U20JMry0Ll3WBzU58EZKsEuJFXhb5gwv8CsPvgA=="],
 
     "file-entry-cache": ["file-entry-cache@8.0.0", "", { "dependencies": { "flat-cache": "^4.0.0" } }, "sha512-XXTUwCvisa5oacNGRP9SfNtYBNAMi+RPwBFmblZEF7N7swHYQS6/Zfk7SRwx4D5j3CH211YNRco1DEMNVfZCnQ=="],
 
