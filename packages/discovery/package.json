@@ -13,7 +13,7 @@
     "@utsu-ri/core": "workspace:*",
     "@utsu-ri/report-model": "workspace:*",
     "@utsu-ri/security": "workspace:*",
-    "yaml": "2.8.3"
+    "yaml": "2.9.0"
   },
   "exports": {
     ".": "./src/index.ts"
