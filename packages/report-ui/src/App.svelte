@@ -1074,8 +1074,9 @@
       const embeddedReport = document.querySelector<HTMLScriptElement>("[data-utsuri-report]");
       const embeddedManifest = document.querySelector<HTMLScriptElement>("[data-utsuri-manifest]");
       let manifest: { source?: { base?: string | null; head?: string | null } } | null = null;
+      let loadedReport: UtsuriReport;
       if (embeddedReport?.textContent) {
-        report = JSON.parse(embeddedReport.textContent) as UtsuriReport;
+        loadedReport = JSON.parse(embeddedReport.textContent) as UtsuriReport;
         manifest = embeddedManifest?.textContent
           ? (JSON.parse(embeddedManifest.textContent) as {
               source?: { base?: string | null; head?: string | null };
@@ -1087,13 +1088,15 @@
           fetch("./manifest.json", { credentials: "omit" })
         ]);
         if (!response.ok) throw new Error(`HTTP ${response.status}`);
-        report = (await response.json()) as UtsuriReport;
+        loadedReport = (await response.json()) as UtsuriReport;
         manifest = manifestResponse.ok
           ? ((await manifestResponse.json()) as {
               source?: { base?: string | null; head?: string | null };
             })
           : null;
       }
+      report = loadedReport;
+      document.querySelector("[data-static-fallback]")?.remove();
       locale = /^ja(?:-|$)/iu.test(report.language) ? "ja" : "en";
       document.documentElement.lang = report.language;
       if (manifest) {
@@ -1113,7 +1116,6 @@
       } catch (error) {
         reviewFailure = error instanceof Error ? error.message : String(error);
       }
-      document.querySelector("[data-static-fallback]")?.remove();
       applyLocation();
     } catch (error) {
       failure = `${t.dataUnavailable}: ${error instanceof Error ? error.message : String(error)}`;
