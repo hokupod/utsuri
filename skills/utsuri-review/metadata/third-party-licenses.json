@@ -1,10 +1,10 @@
 {
   "schemaVersion": "1.1",
-  "dependencyBaselineSha256": "c97e2e60205f99e8e20e08cfed3fac552c9e5810dbbb79847e8b27664e54ee3a",
-  "lockfileSha256": "de680198df088328333bfc628c92f876890fdd9ec6bc12d4f583607c843f1660",
+  "dependencyBaselineSha256": "b5ef07948b87da99e853a17250c15df21327e52c0f2ae6f6f800cbdbcf1be08e",
+  "lockfileSha256": "e7082beec0ec4e599cb35de3ec44bcf6e9c4e97c720ff911c146802568a92a25",
   "packages": [
     {
-      "checksum": "SHA256:7830188d0171dc696c366d53e35f06e01e82c53cec0862171503522013b85c7e",
+      "checksum": "SHA256:3810132696a92bc9dcb851628627b9145fdc5e2c43f98c48775d37feb5799ece",
       "license": "AGPL-3.0-or-later",
       "name": "utsuri-workspace",
       "packageVerificationCode": null,
@@ -46,11 +46,11 @@
       "version": "3.1.5"
     },
     {
-      "checksum": "SHA512:70f254e3b39a02809b834a41bf3b20a533e19a1a88e5e26387f248bbcb4f8f9abe4fb88bbd6fc901852a984eca381e11d59c8487305a210a50a5aadd045e73f0",
+      "checksum": "SHA512:b5b64db89acbc06529df3b2106d772e16f8e47166e221f1ae629722044030b9ad8d5fdd4db424caf2d0b977581cd4e7c1192ac12e2455e16f9830bfc0ac3ef80",
       "license": "MIT",
       "name": "fflate",
-      "packageVerificationCode": "f0f54033c9dec196ee06e164d6da37f613956d5f",
-      "version": "0.8.2"
+      "packageVerificationCode": "4b139fac54a9fc5959b61d187c3c6a21f06bcf57",
+      "version": "0.8.3"
     },
     {
       "checksum": "SHA512:34cf3f3fd9f75e35e12199f594b86415a0024ce5114178d6855e0103f4673aff31be0aadaa9017f483b89914314b1d51968e2dab37aa6f4b0e96bb9a3b2dddba",
