@@ -222204,12 +222204,14 @@ import { createHash as createHash9 } from "node:crypto";
 import { mkdir as mkdir8, realpath as realpath14, writeFile as writeFile9 } from "node:fs/promises";
 import path24 from "node:path";
 
-// node_modules/.bun/fflate@0.8.2/node_modules/fflate/esm/index.mjs
+// node_modules/.bun/fflate@0.8.3/node_modules/fflate/esm/index.mjs
 import { createRequire as createRequire2 } from "module";
 var require2 = createRequire2("/");
+var _a;
 var Worker3;
+var isMarkedAsUntransferable;
 try {
-  Worker3 = require2("worker_threads").Worker;
+  _a = require2("worker_threads"), Worker3 = _a.Worker, isMarkedAsUntransferable = _a.isMarkedAsUntransferable;
 } catch (e) {
 }
 var u8 = Uint8Array;
@@ -222389,6 +222391,7 @@ var ec = [
   "stream finished",
   "no stream handler",
   ,
+  // determined by compression function
   "no callback",
   "invalid UTF-8 data",
   "extra field too long",
@@ -222766,7 +222769,7 @@ var fltn = function(d, p, t, o) {
     var val = d[k], n = p + k, op = o;
     if (Array.isArray(val))
       op = mrg(o, val[1]), val = val[0];
-    if (val instanceof u8)
+    if (ArrayBuffer.isView(val))
       t[n] = [val, op];
     else {
       t[n += "/"] = [new u8(0), op];
