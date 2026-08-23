@@ -24,6 +24,14 @@ Install the exact lockfile through the repository wrapper:
 node scripts/safe-chain.mjs bun install --frozen-lockfile
 ```
 
+Install the repository hooks once per clone:
+
+```bash
+nix develop --command lefthook install
+```
+
+The hook launcher re-enters the pinned Nix shell and fails closed instead of using ambient developer tools. `pre-commit` scans the staged diff for secrets and checks formatting and lint for existing staged paths; it never fixes or re-stages files. `pre-push` scans each outgoing commit range for secrets before running the complete local gate once, and conditionally verifies Git Plugin distribution inputs. A newly created remote ref has no remote base, so its reachable history is scanned. Browser, runtime-matrix, release, and public-history checks remain CI or focused-workflow responsibilities. `--no-verify` is an explicit local bypass and does not satisfy the required handoff verification.
+
 Do not add Safe-chain to `PATH`, configure an executable override, run a lifecycle install, download a browser, pull a container image, or upload an artifact from Utsuri runtime code. Native JSON and NDJSON protocol probes intentionally run outside Safe-chain so wrapper output cannot contaminate stdout.
 
 ## Source-checkout CLI workflow

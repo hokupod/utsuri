@@ -23,6 +23,7 @@
           packages = [
             pkgs.bun
             pkgs.gitleaks
+            pkgs.lefthook
             pkgs.nodejs_24
             pkgs.svelte-language-server
             pkgs.typescript-language-server
