@@ -110,7 +110,7 @@ export function validateCliManifest(manifest, expectedVersion) {
 
 export function validateCliSourceManifest(manifest, expectedVersion) {
   const errors = [];
-  const externalPins = { fflate: "0.8.2", yaml: "2.8.3" };
+  const externalPins = { fflate: "0.8.3", yaml: "2.8.3" };
   if (manifest.name !== "@utsu-ri/cli") errors.push("CLI source package has the wrong name");
   if (manifest.version !== expectedVersion) errors.push("CLI source package has the wrong version");
   if (manifest.private !== true) errors.push("CLI source package must be private");
