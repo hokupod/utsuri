@@ -10,7 +10,7 @@
     "@utsu-ri/core": "workspace:*",
     "@utsu-ri/report-model": "workspace:*",
     "@utsu-ri/security": "workspace:*",
-    "axe-core": "4.10.3",
+    "axe-core": "4.13.0",
     "playwright-core": "1.61.1",
     "yaml": "2.8.3"
   }
