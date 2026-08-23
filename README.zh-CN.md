@@ -129,6 +129,7 @@ Utsuri 首先检查可用 capability，不会安装任何内容。未请求浏�
 - MCP tool 只能处理为 canonical 当前 project 和同一 Origin Session 注册的 schema-valid report。跨 project、跨 host、跨 session、stale 或 swapped registration 都会 fail closed。
 - Raw host session value 只用于 equality check 和 opaque hash，不会被 persist、log、diagnose 或通过 tool 返回。
 - Marketplace broker 只接受 `CODEX_THREAD_ID`，或 `CLAUDE_CODE_SESSION_ID` + `CLAUDE_PROJECT_DIR` host contract。Fixed-run 的 `finalize`、`feedback` 与 `review-mcp` 继续兼容 `UTSURI_CODEX_SESSION_ID` 和 `CLAUDE_SESSION_ID`，但 legacy/new 值冲突时会拒绝。即使从 child directory 启动，Claude Plugin finalize 也始终绑定 canonical host project root。
+- Release artifact 包含 production dependency graph 的确定性 SPDX 与 license inventory。其 identity 来自 lockfile 的精确 integrity value 和已安装 package 字节；无关的 development-only lock 变更不会改变发布的 inventory。
 
 Claude Code 可能向 MCP subprocess 传递其他 ambient variable。Utsuri 不会把它们用作 identity，也不会暴露它们。若你的 Claude Code installation 支持，`CLAUDE_CODE_SUBPROCESS_ENV_SCRUB=1` 可作为可选 host hardening；Plugin 无法强制 host 范围的 environment scrubbing。
 

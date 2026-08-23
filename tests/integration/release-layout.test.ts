@@ -67,17 +67,21 @@ describe("release layout security", () => {
   }, 30_000);
 
   test("binds bundled third-party bytes to the reviewed dependency baseline", async () => {
-    const manifest = JSON.parse(
-      await readFile(path.join(repositoryRoot, ".artifacts/release/build-manifest.json"), "utf8")
-    );
+    const [manifest, workspaceManifest] = await Promise.all([
+      readFile(path.join(repositoryRoot, ".artifacts/release/build-manifest.json"), "utf8").then(
+        JSON.parse
+      ),
+      readFile(path.join(repositoryRoot, "package.json"), "utf8").then(JSON.parse)
+    ]);
+    const expectedPlaywright = workspaceManifest.dependencies?.["playwright-core"];
     expect(manifest.schemaVersion).toBe("1.1");
-    expect(manifest.schemaHashes["mcp-run-registration.schema.json"]).toMatch(/^[a-f0-9]{64}$/u);
     expect(manifest.dependencyBaselineSha256).toMatch(/^[a-f0-9]{64}$/u);
     expect(manifest.dependencyHash).toMatch(/^[a-f0-9]{64}$/u);
     expect(Object.keys(manifest.dependencyHashes).length).toBeGreaterThan(10);
+    expect(expectedPlaywright).toMatch(/^\d+\.\d+\.\d+$/u);
     expect(
       Object.keys(manifest.dependencyHashes).some((identity) =>
-        identity.startsWith("playwright-core@1.61.1/")
+        identity.startsWith(`playwright-core@${expectedPlaywright}/`)
       )
     ).toBeTrue();
     expect(

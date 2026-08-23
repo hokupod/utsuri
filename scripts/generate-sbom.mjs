@@ -8,6 +8,8 @@ import { parse } from "yaml";
 
 export const repositoryRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const dependencyBaselineName = "scripts/release-dependency-baseline.json";
+export const dependencyBaselineMismatchMessage =
+  "Reviewed release dependency baseline does not match installed production packages or bundled inputs. Run `node scripts/safe-chain.mjs bun install --frozen-lockfile`, then `node scripts/safe-chain.mjs bun run deps:refresh`, and review every generated supply-chain diff.";
 
 function sha256(value) {
   return createHash("sha256").update(value).digest("hex");
@@ -109,12 +111,24 @@ async function packageVerificationCode(packageDirectory) {
 async function productionGraph(root, lockIntegrities) {
   const rootManifestPath = path.join(root, "package.json");
   const rootManifest = await readManifest(rootManifestPath);
+  const dependencies = Object.fromEntries(
+    Object.entries(rootManifest.value.dependencies ?? {}).sort(([left], [right]) =>
+      left.localeCompare(right)
+    )
+  );
   const rootPackage = {
     name: rootManifest.value.name,
     version: rootManifest.value.version,
     license: declaredLicense(rootManifest.value),
-    manifestHash: sha256(rootManifest.bytes),
-    dependencies: Object.keys(rootManifest.value.dependencies ?? {}).sort(),
+    manifestHash: sha256(
+      JSON.stringify({
+        name: rootManifest.value.name,
+        version: rootManifest.value.version,
+        license: declaredLicense(rootManifest.value),
+        dependencies
+      })
+    ),
+    dependencies: Object.keys(dependencies),
     path: rootManifestPath
   };
   const packages = new Map();
@@ -168,10 +182,23 @@ async function productionGraph(root, lockIntegrities) {
         };
       })
   );
+  const sortedRelationships = [...relationships].sort();
+  const productionDependencySha256 = sha256(
+    JSON.stringify({
+      rootManifestSha256: rootPackage.manifestHash,
+      packages: verifiedPackages.map((entry) => ({
+        id: entry.id,
+        lockChecksum: entry.lockChecksum,
+        packageVerificationCode: entry.packageVerificationCode
+      })),
+      relationships: sortedRelationships
+    })
+  );
   return {
     rootPackage,
     packages: verifiedPackages,
-    relationships: [...relationships].sort()
+    productionDependencySha256,
+    relationships: sortedRelationships
   };
 }
 
@@ -187,7 +214,6 @@ function creationTimestamp() {
 
 export async function buildSupplyChainDocuments(root = repositoryRoot, options = {}) {
   const lockBytes = await readFile(path.join(root, "bun.lock"));
-  const lockfileHash = sha256(lockBytes);
   const graph = await productionGraph(root, lockedPackageIntegrities(lockBytes));
   const packageVerificationCodes = Object.fromEntries(
     graph.packages.map((entry) => [`${entry.name}@${entry.version}`, entry.packageVerificationCode])
@@ -197,13 +223,11 @@ export async function buildSupplyChainDocuments(root = repositoryRoot, options =
     const baselineBytes = await readFile(path.join(root, dependencyBaselineName));
     const baseline = JSON.parse(baselineBytes.toString("utf8"));
     if (
-      baseline.schemaVersion !== "1.0" ||
-      baseline.lockfileSha256 !== lockfileHash ||
+      baseline.schemaVersion !== "1.1" ||
+      baseline.productionDependencySha256 !== graph.productionDependencySha256 ||
       JSON.stringify(baseline.packageVerificationCodes) !== JSON.stringify(packageVerificationCodes)
     ) {
-      throw new Error(
-        "Installed production dependencies do not match scripts/release-dependency-baseline.json"
-      );
+      throw new Error(dependencyBaselineMismatchMessage);
     }
     dependencyBaselineSha256 = sha256(baselineBytes);
   }
@@ -255,16 +279,16 @@ export async function buildSupplyChainDocuments(root = repositoryRoot, options =
       creators: ["Tool: Utsuri SBOM generator 1"]
     },
     dataLicense: "CC0-1.0",
-    documentNamespace: `https://github.com/hokupod/utsuri/sbom/${graph.rootPackage.version}/${lockfileHash}`,
+    documentNamespace: `https://github.com/hokupod/utsuri/sbom/${graph.rootPackage.version}/${graph.productionDependencySha256}`,
     name: `utsuri-${graph.rootPackage.version}`,
     packages,
     relationships,
     spdxVersion: "SPDX-2.3"
   };
   const licenses = {
-    schemaVersion: "1.1",
+    schemaVersion: "1.2",
     dependencyBaselineSha256,
-    lockfileSha256: lockfileHash,
+    productionDependencySha256: graph.productionDependencySha256,
     packages: packages.map((entry) => ({
       checksum: `${entry.checksums[0].algorithm}:${entry.checksums[0].checksumValue}`,
       license: entry.licenseDeclared,
@@ -276,7 +300,11 @@ export async function buildSupplyChainDocuments(root = repositoryRoot, options =
   return {
     sbom,
     licenses,
-    provenance: { dependencyBaselineSha256, lockfileHash, packageVerificationCodes }
+    provenance: {
+      dependencyBaselineSha256,
+      packageVerificationCodes,
+      productionDependencySha256: graph.productionDependencySha256
+    }
   };
 }
 

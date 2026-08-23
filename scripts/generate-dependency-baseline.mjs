@@ -12,8 +12,8 @@ export async function generateDependencyBaseline(root = repositoryRoot) {
     buildSupplyChainDocuments(root, { verifyDependencyBaseline: false })
   ]);
   const baseline = {
-    schemaVersion: "1.0",
-    lockfileSha256: supplyChain.provenance.lockfileHash,
+    schemaVersion: "1.1",
+    productionDependencySha256: supplyChain.provenance.productionDependencySha256,
     bundledInputHash: bundle.dependencyHash,
     packageVerificationCodes: supplyChain.provenance.packageVerificationCodes
   };

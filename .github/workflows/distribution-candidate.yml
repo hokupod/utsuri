@@ -124,12 +124,11 @@ jobs:
           node scripts/safe-chain.mjs setup-ci
           node scripts/safe-chain.mjs npm safe-chain-verify
           node scripts/safe-chain.mjs bun safe-chain-verify
-      - name: Install and build from the exact lockfile
+      - name: Install and check the exact lockfile
         env:
           UTSURI_BROWSER_TESTS: disabled
         run: |
           bun install --frozen-lockfile
-          bun run build
           bun run check
           bun run verify:sbom
       - name: Download every platform result

@@ -67,8 +67,6 @@ jobs:
           node scripts/safe-chain.mjs bun safe-chain-verify
       - name: Install locked dependencies
         run: bun install --frozen-lockfile
-      - name: Build release inputs
-        run: bun run build
       - name: Run full static gate
         env:
           UTSURI_BROWSER_TESTS: disabled
@@ -141,7 +139,6 @@ jobs:
         run: |
           nix develop --command node scripts/dev-env-check.mjs --json
           nix develop --command node scripts/safe-chain.mjs bun install --frozen-lockfile
-          nix develop --command node scripts/safe-chain.mjs bun run build
           nix develop --command node scripts/safe-chain.mjs bun run check
           nix develop --command node scripts/safe-chain.mjs bun run validate:fixtures
       - name: Reject generated or lockfile drift

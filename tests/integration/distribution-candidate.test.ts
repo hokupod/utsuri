@@ -111,7 +111,7 @@ async function repositoryFixtureRoot(base: string, version: string): Promise<str
     )
   );
   await Promise.all(
-    ["README.md", "LICENSE"].map((entry) =>
+    ["README.md", "LICENSE", "toolchain-policy.json"].map((entry) =>
       cp(path.join(repositoryRoot, entry), path.join(root, entry))
     )
   );

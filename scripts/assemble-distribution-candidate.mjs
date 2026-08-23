@@ -228,10 +228,15 @@ function pluginManifestEntries(manifest) {
 }
 
 export async function verifyDistributionCandidate(candidate, root = repositoryRoot) {
-  const manifest = JSON.parse(
-    await readFile(path.join(candidate, "candidate-manifest.json"), "utf8")
-  );
+  const [manifest, toolchainPolicy] = await Promise.all([
+    readFile(path.join(candidate, "candidate-manifest.json"), "utf8").then(JSON.parse),
+    readFile(path.join(root, "toolchain-policy.json"), "utf8").then(JSON.parse)
+  ]);
   const { rootManifest, sourceBytes } = await assertCandidateManifestIdentity(manifest, root);
+  const expectedNodeEngine = toolchainPolicy.node?.packageEngine;
+  if (rootManifest.engines?.node !== expectedNodeEngine) {
+    throw new Error("Workspace package Node engine does not match toolchain policy");
+  }
   const inventoryErrors = await validateExactFileInventory(candidate, [
     ...Object.keys(manifest.files),
     "candidate-manifest.json"
@@ -294,7 +299,7 @@ export async function verifyDistributionCandidate(candidate, root = repositoryRo
   const cliPackage = JSON.parse(
     await readFile(path.join(candidate, "packages/cli/package.json"), "utf8")
   );
-  const cliErrors = validateCliManifest(cliPackage, rootManifest.version);
+  const cliErrors = validateCliManifest(cliPackage, rootManifest.version, expectedNodeEngine);
   if (cliErrors.length > 0) throw new Error(cliErrors.join("; "));
 
   const pluginBundle = await readFile(

@@ -13,6 +13,7 @@
 
 - Run `node scripts/safe-chain.mjs bun run check` before handing off a change.
 - Keep JSON Schema canonical and regenerate TypeScript declarations with `schemas:generate`.
+- After a production dependency or release-output-affecting tool change, run `node scripts/safe-chain.mjs bun run deps:refresh` and review every generated baseline, SBOM, license, build, and fixture diff. Development-only updates may omit refresh only when `check` leaves all release artifacts unchanged.
 - Update `docs/design.md` and all three README files in the same change when a public contract, command, version, security warning, or feature status changes.
 - Keep `report/` immutable. Store mutable review state under `run/review/`.
 
@@ -24,4 +25,5 @@
 
 - Keep verification proportional to an observed failure boundary. Do not add document-byte hashes, approval transcripts, or parallel state files; Git history and pull-request review are the documentation record.
 - Do not run the same test or verifier more than once in a required local or CI path unless each invocation exercises a distinct runtime or artifact.
+- `check` owns its release-input build; do not run `build` immediately before `check` in the same required path.
 - Before adding a gate, identify the unique failure it catches and prefer extending the smallest existing check.

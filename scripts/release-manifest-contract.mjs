@@ -48,7 +48,7 @@ function hasExactStringEntries(value, expected) {
   return JSON.stringify(actualEntries) === JSON.stringify(expectedEntries);
 }
 
-export function validateCliManifest(manifest, expectedVersion) {
+export function validateCliManifest(manifest, expectedVersion, expectedNodeEngine) {
   const errors = [];
 
   if (JSON.stringify(Object.keys(manifest).sort()) !== JSON.stringify(expectedManifestKeys)) {
@@ -81,7 +81,7 @@ export function validateCliManifest(manifest, expectedVersion) {
   if (!hasExactStringEntries(manifest.publishConfig, { access: "public" })) {
     errors.push("CLI package must use public access");
   }
-  if (!hasExactStringEntries(manifest.engines, { node: ">=22" })) {
+  if (!hasExactStringEntries(manifest.engines, { node: expectedNodeEngine })) {
     errors.push("CLI package has the wrong Node engine");
   }
   if (manifest.type !== "module") errors.push("CLI package has the wrong module type");
@@ -108,14 +108,30 @@ export function validateCliManifest(manifest, expectedVersion) {
   return errors;
 }
 
-export function validateCliSourceManifest(manifest, expectedVersion) {
+export function validateCliSourceManifest(
+  manifest,
+  expectedVersion,
+  expectedNodeEngine,
+  workspaceDependencies
+) {
   const errors = [];
-  const externalPins = { fflate: "0.8.3", yaml: "2.8.3" };
+  const externalNames = ["fflate", "yaml"];
+  const externalPins = Object.fromEntries(
+    externalNames.map((name) => [name, workspaceDependencies?.[name]])
+  );
+  for (const [name, version] of Object.entries(externalPins)) {
+    if (!isCompleteSemver(version)) {
+      errors.push(`Workspace external dependency is not exactly pinned: ${name}`);
+    }
+  }
   if (manifest.name !== "@utsu-ri/cli") errors.push("CLI source package has the wrong name");
   if (manifest.version !== expectedVersion) errors.push("CLI source package has the wrong version");
   if (manifest.private !== true) errors.push("CLI source package must be private");
   if (manifest.license !== "AGPL-3.0-or-later") {
     errors.push("CLI source package has the wrong license");
+  }
+  if (!hasExactStringEntries(manifest.engines, { node: expectedNodeEngine })) {
+    errors.push("CLI source package has the wrong Node engine");
   }
   if (Object.hasOwn(manifest, "scripts")) errors.push("CLI source package must not define scripts");
   const dependencies = manifest.dependencies;

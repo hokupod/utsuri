@@ -79,6 +79,18 @@ Run the full local gate before handoff:
 node scripts/safe-chain.mjs bun run check
 ```
 
+The full gate builds its release inputs itself. Do not run `build` immediately before `check` in the same required local or CI path.
+
+After an intentional dependency or lockfile change, install the reviewed lockfile as above. Development-only updates may proceed directly to the full gate when they leave the production dependency graph and every release artifact unchanged. CI rebuilds the release inputs and rejects generated drift, so this is an observed result rather than a dependency-name allowlist.
+
+For a production dependency or a compiler, bundler, schema generator, or other tool expected to change released bytes, use the single generation path before the full gate:
+
+```bash
+node scripts/safe-chain.mjs bun run deps:refresh
+```
+
+This regenerates schemas, the production-scoped reviewed dependency baseline, bundled release inputs, SBOM and license inventories, build manifests, and shared fixture assets before validating the fixtures. It never installs dependencies or downloads external artifacts. Review every generated supply-chain and fixture diff; regeneration is not approval of changed third-party bytes.
+
 Public contract, distribution, or documentation changes also require the focused gates they affect:
 
 ```bash

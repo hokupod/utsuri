@@ -282,11 +282,14 @@ try {
   ]);
   const expectedEsbuild = rootManifest.devDependencies?.esbuild;
   if (
-    expectedEsbuild !== "0.28.2" ||
     esbuildManifest.version !== expectedEsbuild ||
-    !/^\d+\.\d+\.\d+$/u.test(expectedEsbuild)
+    !/^\d+\.\d+\.\d+$/u.test(expectedEsbuild ?? "")
   ) {
-    errors.push("independent bundle verification requires exact esbuild 0.28.2");
+    errors.push(
+      `independent bundle verification requires the exact package.json esbuild pin: ${
+        expectedEsbuild ?? "<missing>"
+      }`
+    );
   } else {
     independentBuild = await buildCliBundle(root);
     const distributed = await readRegular("packages/cli/dist/utsuri.mjs");
@@ -421,11 +424,12 @@ if (buildManifestContent) {
 }
 
 const rootManifestContent = await readRegular("package.json");
+let rootManifest;
 let expectedVersion;
 if (rootManifestContent) {
   try {
-    const manifest = JSON.parse(rootManifestContent.toString("utf8"));
-    expectedVersion = manifest.version;
+    rootManifest = JSON.parse(rootManifestContent.toString("utf8"));
+    expectedVersion = rootManifest.version;
     if (typeof expectedVersion !== "string") errors.push("root package has no version");
   } catch (error) {
     errors.push(`package.json is not valid JSON: ${error.message}`);
@@ -468,10 +472,23 @@ for (const [index, content] of manifests.entries()) {
 }
 
 const toolchainPolicyContent = await readRegular("toolchain-policy.json");
+let toolchainPolicy;
 if (toolchainPolicyContent) {
   try {
-    const policy = JSON.parse(toolchainPolicyContent.toString("utf8"));
-    const expectedText = `Safe-chain ${policy.safeChain?.version}`;
+    toolchainPolicy = JSON.parse(toolchainPolicyContent.toString("utf8"));
+    const expectedNodeEngine = toolchainPolicy.node?.packageEngine;
+    if (typeof expectedNodeEngine !== "string") {
+      errors.push("toolchain policy has no public Node package engine");
+    } else if (rootManifest?.engines?.node !== expectedNodeEngine) {
+      errors.push("root package Node engine does not match toolchain policy");
+    }
+    if (!Number.isInteger(toolchainPolicy.node?.developmentMajor)) {
+      errors.push("toolchain policy has no development Node major");
+    }
+    if (typeof toolchainPolicy.bun?.ciPrimary !== "string") {
+      errors.push("toolchain policy has no primary CI Bun version");
+    }
+    const expectedText = `Safe-chain ${toolchainPolicy.safeChain?.version}`;
     const content = await readRegular("CONTRIBUTING.md");
     if (content && !content.toString("utf8").includes(expectedText)) {
       errors.push("CONTRIBUTING.md does not match the Safe-chain policy version");
@@ -502,10 +519,16 @@ async function verifyReadOnlyPluginWorkflow(relativePath, requirements) {
   }
 }
 
+const pluginWorkflowPolicyRequirements = toolchainPolicy
+  ? [
+      `node-version: ${toolchainPolicy.node?.developmentMajor}`,
+      `bun-version: ${toolchainPolicy.bun?.ciPrimary}`
+    ]
+  : [];
 await verifyReadOnlyPluginWorkflow(".github/workflows/git-plugin-verification.yml", [
-  "node-version: 24.19.0",
-  "bun-version: 1.3.14",
-  "releases/download/1.5.14/",
+  ...pluginWorkflowPolicyRequirements,
+  "safeChain.version",
+  "releases/download/${utsuri_safe_chain_version}/",
   "@openai/codex@0.146.0",
   "@anthropic-ai/claude-code@2.1.220",
   "@anthropic-ai/claude-code-linux-x64@2.1.220",
@@ -563,7 +586,14 @@ const cliManifestContent = await readRegular("packages/cli/package.json");
 if (cliManifestContent) {
   try {
     const manifest = JSON.parse(cliManifestContent.toString("utf8"));
-    errors.push(...validateCliSourceManifest(manifest, expectedVersion));
+    errors.push(
+      ...validateCliSourceManifest(
+        manifest,
+        expectedVersion,
+        toolchainPolicy?.node?.packageEngine,
+        rootManifest?.dependencies
+      )
+    );
   } catch (error) {
     errors.push(`packages/cli/package.json is not valid JSON: ${error.message}`);
   }

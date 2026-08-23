@@ -41,6 +41,7 @@
     "plugin:runtime:verify": "node scripts/plugin-runtime-probe.mjs --local-e2e",
     "plugin:promote": "node scripts/plugin-promote.mjs",
     "supply-chain:baseline": "node scripts/generate-dependency-baseline.mjs",
+    "deps:refresh": "node scripts/generate-schemas.mjs && node scripts/generate-dependency-baseline.mjs && node scripts/build.mjs && node scripts/refresh-report-fixture-assets.mjs && node scripts/validate-fixtures.mjs",
     "eval:skills": "node scripts/eval-skills.mjs"
   },
   "dependencies": {

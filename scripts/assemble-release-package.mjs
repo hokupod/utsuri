@@ -89,13 +89,23 @@ function taggedReadme(source, version) {
 }
 
 export async function assembleCliPackage(output, root = repositoryRoot) {
-  const [rootManifest, sourceManifest, readme, license] = await Promise.all([
+  const [rootManifest, sourceManifest, toolchainPolicy, readme, license] = await Promise.all([
     readRegular(path.join(root, "package.json")).then(JSON.parse),
     readRegular(path.join(root, "packages/cli/package.json")).then(JSON.parse),
+    readRegular(path.join(root, "toolchain-policy.json")).then(JSON.parse),
     readRegular(path.join(root, "README.md")).then((value) => value.toString("utf8")),
     readRegular(path.join(root, "LICENSE"))
   ]);
-  const sourceErrors = validateCliSourceManifest(sourceManifest, rootManifest.version);
+  const expectedNodeEngine = toolchainPolicy.node?.packageEngine;
+  if (rootManifest.engines?.node !== expectedNodeEngine) {
+    throw new Error("Workspace package Node engine does not match toolchain policy");
+  }
+  const sourceErrors = validateCliSourceManifest(
+    sourceManifest,
+    rootManifest.version,
+    expectedNodeEngine,
+    rootManifest.dependencies
+  );
   if (sourceErrors.length > 0) throw new Error(sourceErrors.join("; "));
   const staging = await preparePrivateDirectory(output);
   const manifest = {
@@ -111,14 +121,14 @@ export async function assembleCliPackage(output, root = repositoryRoot) {
     homepage: `https://github.com/hokupod/utsuri/tree/v${rootManifest.version}#readme`,
     bugs: { url: "https://github.com/hokupod/utsuri/issues" },
     type: "module",
-    engines: { node: ">=22" },
+    engines: { node: expectedNodeEngine },
     bin: { utsuri: "dist/utsuri.mjs" },
     files: ["dist", "README.md", "LICENSE"],
     publishConfig: { access: "public" },
     dependencies: {},
     optionalDependencies: expectedNativeOptionalDependencies(rootManifest.version)
   };
-  const manifestErrors = validateCliManifest(manifest, rootManifest.version);
+  const manifestErrors = validateCliManifest(manifest, rootManifest.version, expectedNodeEngine);
   if (manifestErrors.length > 0) throw new Error(manifestErrors.join("; "));
   const sourceDist = path.join(root, "packages/cli/dist");
   const stagedFiles = [

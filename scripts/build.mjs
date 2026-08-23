@@ -6,7 +6,7 @@ import path from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
 import { build as esbuild } from "esbuild";
 import { build as viteBuild } from "vite";
-import { generateSbom } from "./generate-sbom.mjs";
+import { dependencyBaselineMismatchMessage, generateSbom } from "./generate-sbom.mjs";
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const uiOutput = path.join(root, "skills/utsuri-review/assets/report-ui");
@@ -157,15 +157,12 @@ async function verifiedDependencyBaseline(repositoryRoot, dependencyHash) {
   const filename = path.join(repositoryRoot, dependencyBaselineName);
   const bytes = await readFile(filename);
   const baseline = JSON.parse(bytes.toString("utf8"));
-  const lockfileSha256 = sha256(await readFile(path.join(repositoryRoot, "bun.lock")));
   if (
-    baseline.schemaVersion !== "1.0" ||
-    baseline.lockfileSha256 !== lockfileSha256 ||
+    baseline.schemaVersion !== "1.1" ||
+    !/^[a-f0-9]{64}$/u.test(baseline.productionDependencySha256 ?? "") ||
     baseline.bundledInputHash !== dependencyHash
   ) {
-    throw new Error(
-      "Installed bundled dependencies do not match scripts/release-dependency-baseline.json"
-    );
+    throw new Error(dependencyBaselineMismatchMessage);
   }
   return sha256(bytes);
 }

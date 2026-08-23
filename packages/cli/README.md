@@ -129,6 +129,7 @@ The report preserves source identity, evidence hashes, and review gaps so anothe
 - MCP tools can use only schema-valid reports registered for the canonical current project and the same Origin Session. Cross-project, cross-host, cross-session, stale, or swapped registrations fail closed.
 - Raw host session values are used only for equality checking and opaque hashing. They are not persisted, logged, diagnosed, or returned by tools.
 - The Marketplace broker accepts only `CODEX_THREAD_ID` or the `CLAUDE_CODE_SESSION_ID` + `CLAUDE_PROJECT_DIR` host contract. Fixed-run `finalize`, `feedback`, and `review-mcp` also retain `UTSURI_CODEX_SESSION_ID` and `CLAUDE_SESSION_ID` compatibility; conflicting legacy/new values are rejected. Claude Plugin finalization always binds to the canonical host project root, including when launched from a child directory.
+- Release artifacts include deterministic SPDX and license inventories for the production dependency graph. Its identity uses exact lockfile integrity values and installed package bytes; unrelated development-only lock changes do not alter the published inventory.
 
 Claude Code may pass other ambient variables to MCP subprocesses. Utsuri does not use them as identity or expose them. `CLAUDE_CODE_SUBPROCESS_ENV_SCRUB=1` is optional host hardening when supported by your Claude Code installation; the Plugin cannot enforce host-wide environment scrubbing.
 

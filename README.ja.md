@@ -129,6 +129,7 @@ Utsuri は何もインストールせず、最初に利用可能な capability �
 - MCP tool が扱えるのは canonical な現在の project と同じ Origin Session に登録された schema-valid report だけです。別 project、別 host、別 session、stale または swapped registration は fail closed します。
 - Raw host session value は equality check と opaque hash にだけ使用し、persist、log、diagnostic、tool return には含めません。
 - Marketplace broker が受け付ける host contract は `CODEX_THREAD_ID`、または `CLAUDE_CODE_SESSION_ID` + `CLAUDE_PROJECT_DIR` だけです。Fixed-run の `finalize`、`feedback`、`review-mcp` は `UTSURI_CODEX_SESSION_ID` と `CLAUDE_SESSION_ID` の互換性も維持しますが、legacy/new の値が競合する場合は拒否します。Claude Plugin の finalize は child directory から起動しても canonical な host project root に binding します。
+- Release artifact には production dependency graph の決定的な SPDX と license inventory を含めます。その identity は lockfile の正確な integrity value と install 済み package の byte から算出し、無関係な development-only lock 変更では published inventory を変更しません。
 
 Claude Code は別の ambient variable を MCP subprocess に渡す場合があります。Utsuri はそれらを identity に使わず、外部にも出しません。`CLAUDE_CODE_SUBPROCESS_ENV_SCRUB=1` は Claude Code installation が対応する場合の任意の host hardening です。Plugin から host 全体の environment scrubbing を強制することはできません。
 

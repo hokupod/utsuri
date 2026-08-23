@@ -2,6 +2,7 @@
   "schemaVersion": 1,
   "node": {
     "developmentMajor": 24,
+    "packageEngine": ">=22",
     "bundleCompatibilityMajors": [22, 24]
   },
   "bun": {

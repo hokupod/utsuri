@@ -13,6 +13,11 @@ import {
   validateNativeHelperManifest
 } from "./release-manifest-contract.mjs";
 
+const repositoryRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
+const toolchainPolicy = JSON.parse(
+  await readFile(path.join(repositoryRoot, "toolchain-policy.json"), "utf8")
+);
+
 function option(name) {
   const index = process.argv.indexOf(name);
   return index === -1 ? undefined : process.argv[index + 1];
@@ -78,7 +83,7 @@ export async function verifyInstalledCli({ installRoot, target, version }) {
   }
 
   const cliManifest = JSON.parse(await readFile(path.join(cliRoot, "package.json"), "utf8"));
-  const cliErrors = validateCliManifest(cliManifest, version);
+  const cliErrors = validateCliManifest(cliManifest, version, toolchainPolicy.node?.packageEngine);
   if (cliErrors.length > 0) throw new Error(cliErrors.join("; "));
   const cliInventoryErrors = await validateExactFileInventory(cliRoot, [
     "LICENSE",

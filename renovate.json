@@ -12,6 +12,22 @@
       "matchStrings": ["\"version\": \"(?<currentValue>[0-9]+\\.[0-9]+\\.[0-9]+)\""],
       "depNameTemplate": "@aikidosec/safe-chain",
       "datasourceTemplate": "npm"
+    },
+    {
+      "customType": "regex",
+      "description": "Primary Bun version shared by packageManager, CI, and toolchain policy",
+      "managerFilePatterns": ["/^toolchain-policy\\.json$/"],
+      "matchStrings": ["\"ciPrimary\": \"(?<currentValue>[0-9]+\\.[0-9]+\\.[0-9]+)\""],
+      "depNameTemplate": "oven-sh/bun",
+      "datasourceTemplate": "github-releases",
+      "extractVersionTemplate": "^bun-v(?<version>[0-9]+\\.[0-9]+\\.[0-9]+)$"
+    }
+  ],
+  "packageRules": [
+    {
+      "description": "Keep the primary Bun runtime and type definitions in one tested update",
+      "groupName": "Bun toolchain",
+      "matchPackageNames": ["bun", "oven-sh/bun", "@types/bun"]
     }
   ]
 }

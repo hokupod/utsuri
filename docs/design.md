@@ -926,8 +926,10 @@ Development source lives under `packages/`. At release time, bundle it as one No
 - Include no symlinks in release artifacts.
 - Publish the bundled CLI through `@utsu-ri/cli` as `bin.utsuri`.
 - Keep internal `@utsu-ri/*` workspace packages private implementation boundaries. They must not appear as registry runtime dependencies in the published CLI manifest; JavaScript runtime dependencies are bundled into the CLI.
-- Generate deterministic SPDX 2.3 and third-party-license inventories from exact lockfile SHA-512 checksums and installed-package verification codes. Copy identical documents into CLI and Skill artifacts.
-- Bind every actual third-party esbuild input to an explicitly regenerated, reviewed dependency baseline. Build-manifest 1.1 records those byte hashes alongside the single ESM bundle, source inputs, schemas, and report UI assets; reject baseline drift, external runtime imports, symlinks, placeholders, former identifiers, source-only absolute paths, and hash drift.
+- Generate deterministic SPDX 2.3 and third-party-license inventories from the installed production dependency graph, exact lockfile SHA-512 integrity values, and installed-package verification codes. License-inventory schema 1.2 exposes `productionDependencySha256`; unrelated development-only manifest and lock entries do not change the published inventory. Copy identical documents into CLI and Skill artifacts. Derive bundled external package versions and the esbuild rebuild version from the canonical workspace manifests rather than repeating release numbers in verifier source.
+- Keep the public Node package engine, development major, and supported bundle majors canonical in `toolchain-policy.json`. Root, source CLI, staged CLI, installed CLI, and read-only Plugin CI must match that policy; workflow checks may mirror the policy value but must not introduce an independent patch pin. Keep Renovate's primary Bun update grouped across package-manager, CI, type-definition, and toolchain-policy pins.
+- Bind the installed production graph and every actual third-party esbuild input to an explicitly regenerated, reviewed dependency baseline. The baseline hashes the production graph rather than the entire lockfile: a development-only Renovate update passes only when the full gate proves that released bytes and metadata are unchanged. `deps:refresh` is the single installation-free path for schema declarations, dependency baseline, bundle, SPDX and license inventories, build manifests, shared fixture assets, and fixture validation. Mend-hosted Renovate cannot run repository post-upgrade scripts, so release-affecting updates remain an explicit human-reviewed generation step.
+- Build-manifest 1.1 records dependency byte hashes alongside the single ESM bundle, source inputs, schemas, and report UI assets. The full `check` owns one release-input build so a clean checkout is self-contained; required workflows must not build immediately before it. Reject production-baseline drift, generated release drift, external runtime imports, symlinks, placeholders, former identifiers, source-only absolute paths, and hash drift.
 - Assemble the npm package from a newly created private staging directory. Validate the exact recursive tarball inventory, executable bits, package manifest, and absence of install lifecycle scripts before publication.
 - Install and execute the exact generated tarball in an isolated directory under supported Node versions. Do not substitute the workspace package or an ambient CLI.
 - Package README links must resolve against the exact `v<version>` release tag rather than `main` or paths absent from the tarball.
@@ -3108,25 +3110,25 @@ Phase 4 exposes these policies as shared viewer-security primitives. Interactive
 
 ## 29. Runtime threat model
 
-| Threat              | Example                                              | Control                                                                    |
-| ------------------- | ---------------------------------------------------- | -------------------------------------------------------------------------- |
-| Report XSS          | A diff contains `</script>`                          | Escaping, separate JSON, CSP, no inline script                             |
-| HTML preview escape | An iframe interferes with its parent                 | Empty sandbox, no same-origin, no script                                   |
-| Secret exfiltration | Server code sends an AWS credential                  | Environment allowlist, no-network container                                |
-| Postinstall attack  | Arbitrary execution during dependency installation   | No automatic installation                                                  |
-| Shell injection     | A configuration command includes `;`                 | Argument arrays, shell false                                               |
-| Path traversal      | `../../` writes outside output                       | Canonical-path check                                                       |
-| Symlink escape      | A swapped parent redirects a read to a secret        | Root descriptor plus component-wise `openat` / `O_NOFOLLOW`                |
-| Browser mutation    | Capture calls a destructive API                      | Block non-GET, disposable context                                          |
-| PII leakage         | Screenshot contains personal data                    | Masking, redaction, privacy scan                                           |
-| Denial of service   | Extremely large image, diff, or browser allocation   | Schema/byte/pixel/time limits and container browser cgroup                 |
-| Hostile remote page | Popup, download, or navigation                       | Popup/download block, origin allowlist                                     |
-| Active SVG content  | Script or `foreignObject`                            | Rasterize, no direct embedding                                             |
-| Report tampering    | Asset replacement                                    | SHA-256 manifest                                                           |
-| Publication race    | A concurrent process creates or swaps `report/`      | Protected ancestors, inode checks, atomic no-replace rename                |
-| Archive escape      | Duplicate, traversal, symlink, or special entry      | Canonical inventory and bounded regular-file extraction                    |
-| Container weakening | Network, mutable identity, host decoy, or memory DoS | Fixed engine arguments, authenticated ID-bound proxy, cgroup               |
-| Supply-chain drift  | Bundle, schema, UI, or dependency substitution       | Reviewed dependency-byte baseline, independent rebuild, exact release scan |
+| Threat              | Example                                              | Control                                                                          |
+| ------------------- | ---------------------------------------------------- | -------------------------------------------------------------------------------- |
+| Report XSS          | A diff contains `</script>`                          | Escaping, separate JSON, CSP, no inline script                                   |
+| HTML preview escape | An iframe interferes with its parent                 | Empty sandbox, no same-origin, no script                                         |
+| Secret exfiltration | Server code sends an AWS credential                  | Environment allowlist, no-network container                                      |
+| Postinstall attack  | Arbitrary execution during dependency installation   | No automatic installation                                                        |
+| Shell injection     | A configuration command includes `;`                 | Argument arrays, shell false                                                     |
+| Path traversal      | `../../` writes outside output                       | Canonical-path check                                                             |
+| Symlink escape      | A swapped parent redirects a read to a secret        | Root descriptor plus component-wise `openat` / `O_NOFOLLOW`                      |
+| Browser mutation    | Capture calls a destructive API                      | Block non-GET, disposable context                                                |
+| PII leakage         | Screenshot contains personal data                    | Masking, redaction, privacy scan                                                 |
+| Denial of service   | Extremely large image, diff, or browser allocation   | Schema/byte/pixel/time limits and container browser cgroup                       |
+| Hostile remote page | Popup, download, or navigation                       | Popup/download block, origin allowlist                                           |
+| Active SVG content  | Script or `foreignObject`                            | Rasterize, no direct embedding                                                   |
+| Report tampering    | Asset replacement                                    | SHA-256 manifest                                                                 |
+| Publication race    | A concurrent process creates or swaps `report/`      | Protected ancestors, inode checks, atomic no-replace rename                      |
+| Archive escape      | Duplicate, traversal, symlink, or special entry      | Canonical inventory and bounded regular-file extraction                          |
+| Container weakening | Network, mutable identity, host decoy, or memory DoS | Fixed engine arguments, authenticated ID-bound proxy, cgroup                     |
+| Supply-chain drift  | Bundle, schema, UI, or dependency substitution       | Reviewed production dependency baseline, independent rebuild, exact release scan |
 
 ### 29.1 Trust levels
 
@@ -3793,7 +3795,7 @@ Before persisted state, browser storage, or a review bundle is validated, Phase 
 - Each release asset is bound by an exact manifest and checksum. Partial npm publication is recoverable only when every pre-existing registry version has the same SHA-512 integrity, and an existing or incomplete GitHub Release never bypasses asset verification.
 - CI policy failure preserves `report.zip`, `report.json`, and `ci-summary.json` and returns exit code `10`; the CLI itself never uploads them.
 - Review export/import preserves viewed progress, human judgment, comments, event history, and explicit stale/orphaned classifications without modifying immutable report assets.
-- The single ESM bundle has no external JavaScript runtime import, embeds the pinned Playwright runtime metadata required by capture, passes an unrelated-project real-browser smoke test, and has deterministic build-manifest, SPDX, and license documents that match the source, lockfile, schemas, and report UI assets.
+- The single ESM bundle has no external JavaScript runtime import, embeds the pinned Playwright runtime metadata required by capture, passes an unrelated-project real-browser smoke test, and has deterministic build-manifest, SPDX, and license documents that match the source, production lock inventory, schemas, and report UI assets.
 
 ### 41.2 Should
 

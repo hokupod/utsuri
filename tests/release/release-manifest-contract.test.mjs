@@ -13,6 +13,7 @@ import {
   validateExactFileInventory,
   validateNativeHelperManifest
 } from "../../scripts/release-manifest-contract.mjs";
+import { dependencyBaselineMismatchMessage } from "../../scripts/generate-sbom.mjs";
 import {
   fullShaActionErrors,
   publishedCliSmokeErrors,
@@ -34,7 +35,7 @@ const validManifest = {
   homepage: "https://github.com/hokupod/utsuri/tree/v0.1.0#readme",
   bugs: { url: "https://github.com/hokupod/utsuri/issues" },
   type: "module",
-  engines: { node: ">=22" },
+  engines: { node: ">=20" },
   bin: { utsuri: "dist/utsuri.mjs" },
   files: ["dist", "README.md", "LICENSE"],
   publishConfig: { access: "public" },
@@ -42,20 +43,27 @@ const validManifest = {
   optionalDependencies: expectedNativeOptionalDependencies("0.1.0")
 };
 
+const expectedNodeEngine = validManifest.engines.node;
+
 describe("CLI release manifest contract", () => {
   test("accepts the exact public metadata and package allowlist", () => {
-    assert.deepEqual(validateCliManifest(validManifest, "0.1.0"), []);
+    assert.deepEqual(validateCliManifest(validManifest, "0.1.0", expectedNodeEngine), []);
   });
 
   test("rejects missing and extra package files", () => {
     assert.match(
-      validateCliManifest({ ...validManifest, files: ["dist", "README.md"] }, "0.1.0").join("\n"),
+      validateCliManifest(
+        { ...validManifest, files: ["dist", "README.md"] },
+        "0.1.0",
+        expectedNodeEngine
+      ).join("\n"),
       /must exactly match/u
     );
     assert.match(
       validateCliManifest(
         { ...validManifest, files: [...validManifest.files, "src"] },
-        "0.1.0"
+        "0.1.0",
+        expectedNodeEngine
       ).join("\n"),
       /must exactly match/u
     );
@@ -65,14 +73,16 @@ describe("CLI release manifest contract", () => {
     assert.match(
       validateCliManifest(
         { ...validManifest, scripts: { postinstall: "node install.mjs" } },
-        "0.1.0"
+        "0.1.0",
+        expectedNodeEngine
       ).join("\n"),
       /exact allowlist/u
     );
     assert.match(
       validateCliManifest(
         { ...validManifest, bin: { ...validManifest.bin, hidden: "dist/hidden.mjs" } },
-        "0.1.0"
+        "0.1.0",
+        expectedNodeEngine
       ).join("\n"),
       /wrong executable/u
     );
@@ -82,7 +92,8 @@ describe("CLI release manifest contract", () => {
     assert.match(
       validateCliManifest(
         { ...validManifest, dependencies: { ...validManifest.dependencies, unknown: "1.0.0" } },
-        "0.1.0"
+        "0.1.0",
+        expectedNodeEngine
       ).join("\n"),
       /wrong dependencies/u
     );
@@ -97,7 +108,7 @@ describe("CLI release manifest contract", () => {
       },
       dependencies: Object.fromEntries(Object.entries(validManifest.dependencies).reverse())
     };
-    assert.deepEqual(validateCliManifest(reorderedManifest, "0.1.0"), []);
+    assert.deepEqual(validateCliManifest(reorderedManifest, "0.1.0", expectedNodeEngine), []);
   });
 
   for (const [label, mutate, expected] of [
@@ -116,7 +127,10 @@ describe("CLI release manifest contract", () => {
     ["bugs URL", (value) => ({ ...value, bugs: { url: "https://example.test" } }), /bugs URL/u]
   ]) {
     test(`rejects the wrong ${label}`, () => {
-      assert.match(validateCliManifest(mutate(validManifest), "0.1.0").join("\n"), expected);
+      assert.match(
+        validateCliManifest(mutate(validManifest), "0.1.0", expectedNodeEngine).join("\n"),
+        expected
+      );
     });
   }
 });
@@ -464,11 +478,12 @@ describe("cross-job distribution transport", () => {
   });
 });
 
-describe("Safe-chain CI contract", () => {
+describe("toolchain and CI contract", () => {
   test("pins the exact Safe-chain release assets and digests", async () => {
-    const policy = JSON.parse(
-      await readFile(path.join(repositoryRoot, "toolchain-policy.json"), "utf8")
-    );
+    const [policy, pluginWorkflow] = await Promise.all([
+      readFile(path.join(repositoryRoot, "toolchain-policy.json"), "utf8").then(JSON.parse),
+      readFile(path.join(repositoryRoot, ".github/workflows/git-plugin-verification.yml"), "utf8")
+    ]);
     assert.deepEqual(policy.safeChain.assets, {
       "darwin-arm64": "safe-chain-macos-arm64",
       "darwin-x64": "safe-chain-macos-x64",
@@ -481,13 +496,96 @@ describe("Safe-chain CI contract", () => {
       "linux-arm64": "ae5b758820a2bf317ee843c6c4d032be04907c7d7a7579be3373372504108f94",
       "linux-x64": "565d62360c7d17e1508e76c88319b6b58940bce5495071dca133f51eb30768cf"
     });
+    assert.match(pluginWorkflow, /safeChain\.version/u);
+    assert.match(pluginWorkflow, /releases\/download\/\$\{utsuri_safe_chain_version\}\//u);
+    assert.equal(pluginWorkflow.includes(`releases/download/${policy.safeChain.version}/`), false);
   });
 
-  test("builds generated release inputs before clean-check tests", async () => {
-    const [ciWorkflow, candidateWorkflow] = await Promise.all([
-      readFile(path.join(repositoryRoot, ".github/workflows/ci.yml"), "utf8"),
-      readFile(path.join(repositoryRoot, ".github/workflows/distribution-candidate.yml"), "utf8")
+  test("uses one Node policy for package support and Plugin CI", async () => {
+    const [policy, rootManifest, cliManifest, pluginWorkflow] = await Promise.all([
+      readFile(path.join(repositoryRoot, "toolchain-policy.json"), "utf8").then(JSON.parse),
+      readFile(path.join(repositoryRoot, "package.json"), "utf8").then(JSON.parse),
+      readFile(path.join(repositoryRoot, "packages/cli/package.json"), "utf8").then(JSON.parse),
+      readFile(path.join(repositoryRoot, ".github/workflows/git-plugin-verification.yml"), "utf8")
     ]);
+    const minimum = Number(/^>=(\d+)$/u.exec(policy.node.packageEngine)?.[1]);
+    assert.equal(minimum, Math.min(...policy.node.bundleCompatibilityMajors));
+    assert.ok(policy.node.bundleCompatibilityMajors.includes(policy.node.developmentMajor));
+    assert.equal(rootManifest.engines.node, policy.node.packageEngine);
+    assert.equal(cliManifest.engines.node, policy.node.packageEngine);
+    assert.match(
+      pluginWorkflow,
+      new RegExp(`node-version: ${policy.node.developmentMajor}\\n`, "u")
+    );
+    assert.doesNotMatch(
+      pluginWorkflow,
+      new RegExp(`node-version: ${policy.node.developmentMajor}\\.`, "u")
+    );
+  });
+
+  test("keeps Renovate Bun updates complete without hosted post-upgrade scripts", async () => {
+    const config = JSON.parse(await readFile(path.join(repositoryRoot, "renovate.json"), "utf8"));
+    assert.equal(config.postUpgradeTasks, undefined);
+    const bunManager = config.customManagers.find(
+      (manager) =>
+        manager.depNameTemplate === "oven-sh/bun" &&
+        manager.matchStrings.some((pattern) => pattern.includes('"ciPrimary"'))
+    );
+    assert.ok(bunManager, "Renovate must update the canonical primary Bun policy");
+    assert.equal(bunManager.datasourceTemplate, "github-releases");
+
+    const bunRule = config.packageRules.find((rule) => rule.groupName === "Bun toolchain");
+    assert.ok(bunRule, "Renovate must keep primary Bun pins in one PR");
+    for (const dependency of ["bun", "oven-sh/bun", "@types/bun"]) {
+      assert.ok(bunRule.matchPackageNames.includes(dependency));
+    }
+  });
+
+  test("uses one explicit installation-free dependency artifact refresh path", async () => {
+    const manifest = JSON.parse(await readFile(path.join(repositoryRoot, "package.json"), "utf8"));
+    const refresh = manifest.scripts?.["deps:refresh"];
+    assert.equal(typeof refresh, "string");
+    let previous = -1;
+    for (const step of [
+      "generate-schemas.mjs",
+      "generate-dependency-baseline.mjs",
+      "build.mjs",
+      "refresh-report-fixture-assets.mjs",
+      "validate-fixtures.mjs"
+    ]) {
+      const current = refresh.indexOf(step);
+      assert.ok(current > previous, `deps:refresh must run ${step} in order`);
+      previous = current;
+    }
+    assert.doesNotMatch(refresh, /\b(?:bun|npm) install\b|curl|wget/u);
+  });
+
+  test("reports one actionable remediation for dependency baseline drift", () => {
+    const installIndex = dependencyBaselineMismatchMessage.indexOf(
+      "node scripts/safe-chain.mjs bun install --frozen-lockfile"
+    );
+    const refreshIndex = dependencyBaselineMismatchMessage.indexOf(
+      "node scripts/safe-chain.mjs bun run deps:refresh"
+    );
+    assert.ok(installIndex >= 0);
+    assert.ok(refreshIndex > installIndex);
+    assert.match(dependencyBaselineMismatchMessage, /review every generated supply-chain diff/u);
+  });
+
+  test("makes the full check own release builds without duplicate workflow work", async () => {
+    const [ciWorkflow, candidateWorkflow, checkScript] = await Promise.all([
+      readFile(path.join(repositoryRoot, ".github/workflows/ci.yml"), "utf8"),
+      readFile(path.join(repositoryRoot, ".github/workflows/distribution-candidate.yml"), "utf8"),
+      readFile(path.join(repositoryRoot, "scripts/check.mjs"), "utf8")
+    ]);
+    const buildIndex = checkScript.indexOf('"build"');
+    const testIndex = checkScript.indexOf('"test"');
+    assert.ok(buildIndex >= 0, "full check must build release inputs");
+    assert.ok(testIndex >= 0, "full check must run tests");
+    assert.ok(buildIndex < testIndex, "full check must build before tests");
+    assert.equal((checkScript.match(/"build"/gu) ?? []).length, 1);
+    assert.doesNotMatch(checkScript, /"native:build"/u);
+
     const bunMatrix = ciWorkflow.slice(
       ciWorkflow.indexOf("  bun-matrix:"),
       ciWorkflow.indexOf("  nix-compatibility:")
@@ -496,19 +594,21 @@ describe("Safe-chain CI contract", () => {
       ciWorkflow.indexOf("  nix-compatibility:"),
       ciWorkflow.indexOf("  browser-e2e:")
     );
-    const browserE2e = ciWorkflow.slice(ciWorkflow.indexOf("  browser-e2e:"));
-    for (const [name, workflow, testCommand] of [
-      ["Bun matrix", bunMatrix, "bun run check"],
-      ["Nix compatibility", nixCompatibility, "bun run check"],
-      ["browser E2E", browserE2e, "tests/cli/installed-bundle.test.ts"],
-      ["distribution candidate", candidateWorkflow, "bun run check"]
+    for (const [name, workflow] of [
+      ["Bun matrix", bunMatrix],
+      ["Nix compatibility", nixCompatibility],
+      ["distribution candidate", candidateWorkflow]
     ]) {
-      const buildIndex = workflow.indexOf("bun run build");
-      const testIndex = workflow.indexOf(testCommand);
-      assert.ok(buildIndex >= 0, `${name} must build generated release inputs`);
-      assert.ok(testIndex >= 0, `${name} must run ${testCommand}`);
-      assert.ok(buildIndex < testIndex, `${name} must build before ${testCommand}`);
+      assert.match(workflow, /bun run check/u, `${name} must run the full check`);
+      assert.doesNotMatch(workflow, /bun run build/u, `${name} must not duplicate its build`);
     }
+
+    const browserE2e = ciWorkflow.slice(ciWorkflow.indexOf("  browser-e2e:"));
+    const browserBuildIndex = browserE2e.indexOf("bun run build");
+    const browserTestIndex = browserE2e.indexOf("tests/cli/installed-bundle.test.ts");
+    assert.ok(browserBuildIndex >= 0, "browser E2E must build its installed bundle");
+    assert.ok(browserTestIndex >= 0, "browser E2E must run its installed-bundle test");
+    assert.ok(browserBuildIndex < browserTestIndex, "browser E2E must build before its test");
   });
 
   test("builds native inputs before the Git Plugin focused tests", async () => {
@@ -655,29 +755,37 @@ describe("Safe-chain CI contract", () => {
       candidateWorkflow.indexOf("  aggregate:"),
       candidateWorkflow.indexOf("  isolated-install:")
     );
-    const installAndBuildStep = candidateAggregate.match(
-      /^ {6}- name: Install and build from the exact lockfile\n(?: {8,}.*\n?)*/mu
+    const installAndCheckStep = candidateAggregate.match(
+      /^ {6}- name: Install and check the exact lockfile\n(?: {8,}.*\n?)*/mu
     );
-    assert.ok(installAndBuildStep);
-    assert.match(installAndBuildStep[0], /env:\n\s+UTSURI_BROWSER_TESTS: disabled/u);
-    assert.match(installAndBuildStep[0], /run: \|\n(?:\s+.*\n)*?\s+bun run check/u);
+    assert.ok(installAndCheckStep);
+    assert.match(installAndCheckStep[0], /env:\n\s+UTSURI_BROWSER_TESTS: disabled/u);
+    assert.match(installAndCheckStep[0], /run: \|\n(?:\s+.*\n)*?\s+bun run check/u);
   });
 });
 
 describe("source and native package contracts", () => {
-  test("keeps the workspace CLI private while pinning bundled external inputs", () => {
+  test("keeps the workspace CLI private while pinning configured external inputs", () => {
+    const sourceNodeEngine = ">=20";
+    const workspaceDependencies = {
+      fflate: "9.8.7",
+      yaml: "6.5.4"
+    };
     const sourceManifest = {
       name: "@utsu-ri/cli",
       version: "0.1.0",
       private: true,
       license: "AGPL-3.0-or-later",
+      engines: { node: sourceNodeEngine },
       dependencies: {
         "@utsu-ri/core": "workspace:*",
-        fflate: "0.8.3",
-        yaml: "2.8.3"
+        ...workspaceDependencies
       }
     };
-    assert.deepEqual(validateCliSourceManifest(sourceManifest, "0.1.0"), []);
+    assert.deepEqual(
+      validateCliSourceManifest(sourceManifest, "0.1.0", sourceNodeEngine, workspaceDependencies),
+      []
+    );
     assert.match(
       validateCliSourceManifest(
         {
@@ -685,7 +793,9 @@ describe("source and native package contracts", () => {
           private: false,
           dependencies: { ...sourceManifest.dependencies, fflate: "latest" }
         },
-        "0.1.0"
+        "0.1.0",
+        sourceNodeEngine,
+        workspaceDependencies
       ).join("\n"),
       /must be private|not pinned/u
     );
