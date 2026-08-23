@@ -1,14 +1,14 @@
 {
   "schemaVersion": "1.0",
-  "lockfileSha256": "aba8c3ba57be50e8a0ffbeb83907adcc3d7be922c550e1b4201c72eb111bc557",
-  "bundledInputHash": "597d8867ab9712efda0d971040c5841996fe059b15bef239b2a6f84303b3223c",
+  "lockfileSha256": "1a615aa072e40e0f4da9ff1daed5bfa547beea6ee0c016a7a06933454736c4e9",
+  "bundledInputHash": "959e496cb72b37c393f30048276bfcdfcaaa74821bbb106d20a0331878eba888",
   "packageVerificationCodes": {
     "ajv@8.18.0": "f52a0e510d4a7f0ed20bf33cecb6bb95e5e23278",
     "ajv-formats@3.0.1": "10c29707282bc159f1c8261e00681eef880cd4d6",
     "axe-core@4.10.3": "040a8a755840d9df8acbf1730a3fb4e34483a8d9",
     "fast-deep-equal@3.1.3": "765fba27abdad11c0d38d6211c8b642157af946b",
     "fast-uri@3.1.5": "25c40a2e0a03d80c7158ba2bba2ad1fb5473a87f",
-    "fflate@0.8.2": "f0f54033c9dec196ee06e164d6da37f613956d5f",
+    "fflate@0.8.3": "4b139fac54a9fc5959b61d187c3c6a21f06bcf57",
     "json-schema-traverse@1.0.0": "fa754101884a041b574c6107d37d5479c44e156d",
     "pixelmatch@7.1.0": "7ff702b22bee9ab27a9de21ed8db2a2a28b2eb2a",
     "playwright-core@1.61.1": "fb137e0cd71afd1a5fdde351d87619852d31a649",

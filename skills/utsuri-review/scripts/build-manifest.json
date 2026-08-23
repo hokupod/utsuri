@@ -86,8 +86,8 @@
     "schemas/review-state.schema.json": "27f9f98344a2b94b75f84fef9bba73978bbacca1e102ed11e459d247fbed7552",
     "schemas/review-thread.schema.json": "6c5957f14b964dfaf1601ac45870b7f3fae013209dd4964aa3831dd753f06fc1"
   },
-  "dependencyBaselineSha256": "c53fa44f8c82a99cbdd4f21d9c3a55fb46e7e067356c9402e89af7dc0742b856",
-  "dependencyHash": "597d8867ab9712efda0d971040c5841996fe059b15bef239b2a6f84303b3223c",
+  "dependencyBaselineSha256": "357a0aa6b26f000eeeede369659483fd8e2f55235e7311b219e3c3543c409520",
+  "dependencyHash": "959e496cb72b37c393f30048276bfcdfcaaa74821bbb106d20a0331878eba888",
   "dependencyHashes": {
     "ajv-formats@3.0.1/dist/formats.js": "b61693a26869970a92cc1fe832c931ccd3afe8b6d66802b19c48306349e84880",
     "ajv-formats@3.0.1/dist/index.js": "3f3014150293846086d11058bb8bf43e669e354a98b37adcf10281454d5e753b",
@@ -160,7 +160,7 @@
     "fast-uri@3.1.5/index.js": "79945eb0b513058251bd1c3b518b86c5c549bb73b8c37c77d717133d66277a97",
     "fast-uri@3.1.5/lib/schemes.js": "0f9497f8e43c9b002d79c8a916709daa4ae8a6462735b1b5dc6ad587a28a5064",
     "fast-uri@3.1.5/lib/utils.js": "3394986f9670b821493943faafe5d83ccc15109aba908f1b5dd017e27b0d0ea7",
-    "fflate@0.8.2/esm/index.mjs": "b71c2efc7bbd3379c883bc59223c53f5ddb47a6db4f01adb19675b213bed0e9c",
+    "fflate@0.8.3/esm/index.mjs": "8d75534a30a0580608e1271c13d70943ed4cd3589fddff7b1197748036a5116e",
     "json-schema-traverse@1.0.0/index.js": "024191b747afac01b28ff11d744e9f82720bbad5f716163ba5c962eb62aa2350",
     "pixelmatch@7.1.0/index.js": "972e5a5387dde3b6d85ab77337d59ebafca988bf220145caa4b27dc742134dc5",
     "playwright-core@1.61.1/browsers.json": "ee39bc924bc3d1bd895626c2910f1292d109bbfeeb5abd113acb45e1951cc942",
@@ -287,5 +287,5 @@
     "app.css": "26db3b18b936af3b1cf306bbc984db50d7144d1706712bcad400e5e3af3d485a",
     "app.js": "145b7df6cb0617ce6eab58a40a7f0dd0c3450941f8fd04bc2255ba0cf2eb39ce"
   },
-  "bundleSha256": "1908b93bda7f59a81e195547e492b3cad0e7d7d853b2747f493c478dcca3c05b"
+  "bundleSha256": "7e6bba4b67fda8a88c51a8b376e5a2021e08860fbff5f6eabb628fd827c76c33"
 }
