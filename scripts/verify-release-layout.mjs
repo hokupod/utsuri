@@ -282,11 +282,11 @@ try {
   ]);
   const expectedEsbuild = rootManifest.devDependencies?.esbuild;
   if (
-    expectedEsbuild !== "0.25.10" ||
+    expectedEsbuild !== "0.28.2" ||
     esbuildManifest.version !== expectedEsbuild ||
     !/^\d+\.\d+\.\d+$/u.test(expectedEsbuild)
   ) {
-    errors.push("independent bundle verification requires exact esbuild 0.25.10");
+    errors.push("independent bundle verification requires exact esbuild 0.28.2");
   } else {
     independentBuild = await buildCliBundle(root);
     const distributed = await readRegular("packages/cli/dist/utsuri.mjs");

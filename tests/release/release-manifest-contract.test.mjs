@@ -673,7 +673,7 @@ describe("source and native package contracts", () => {
       license: "AGPL-3.0-or-later",
       dependencies: {
         "@utsu-ri/core": "workspace:*",
-        fflate: "0.8.2",
+        fflate: "0.8.3",
         yaml: "2.8.3"
       }
     };
