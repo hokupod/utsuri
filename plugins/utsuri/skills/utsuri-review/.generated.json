@@ -1,12 +1,12 @@
 {
   "schemaVersion": 1,
   "generator": "scripts/plugin-distribution.mjs",
-  "cliPackagePin": "@utsu-ri/cli@0.2.0",
-  "canonicalSha256": "84bf4229adc6b616dd7dbb83513d5c4485a556a491eb0a6b11c1873641a509c0",
+  "cliPackagePin": "@utsu-ri/cli@0.3.0",
+  "canonicalSha256": "85e165a82226489b5dcfb42a7749f5d7f21a6399c55194f072edc090cb32ba14",
   "files": {
     "SKILL.md": {
-      "sourceSha256": "9b37b613822ac62e59725f9c81a5e992edc25fb79675abde9d6db018db26216f",
-      "generatedSha256": "dedfd75fa8070a7a4b4a09a5a0cbfe6a6e3343a09900f731f94ac348a8e2bf8d"
+      "sourceSha256": "dfa193569c947abfb4b9a81f3ae77511b904133aad8965af85f54306839aad3e",
+      "generatedSha256": "0a87d506da1dd070586e8bdebc69206c075fd03ec5e206ef44673a4c4b387a6f"
     },
     "agents/openai.yaml": {
       "sourceSha256": "cec07fd1b327d962f7f26ac944a7c099804d646180e637497e89728bd3898841",
@@ -14,11 +14,11 @@
     },
     "references/capture-modes.md": {
       "sourceSha256": "1f2ade08185b0ecd20162d49da15e9370b9e9c77213ab3d6a373ce5192d7cdca",
-      "generatedSha256": "4d0916da1c3c182f2c80184fda9a37ab156cef175c12f6dceedcfb5a5e32f8e8"
+      "generatedSha256": "82784a2693bed71e35d25f43626b7551775f46aa456e742340011f846356ada0"
     },
     "references/cli-contract.md": {
-      "sourceSha256": "140bbbc08f9d02a610e9bce26fc24ca3e48ddcf1c8b115c7f495e035a4ee8440",
-      "generatedSha256": "6dac172692e6310fe9025ca1d8570a57a6169f7422428a91a579480dd86d5d33"
+      "sourceSha256": "c1ff0b52787323968f7bc6763cd7eaecb802f217db6578e61934624022ad169d",
+      "generatedSha256": "60da1017fc3249cbcca4bdac2799aa33e6659ea92706be035f24bcfc2638250e"
     },
     "references/distribution.md": {
       "sourceSha256": "5cb5ee799956aefd939800341f817d4c0e5361c4a50eae3ebc1e14da051f3099",
@@ -30,15 +30,15 @@
     },
     "references/feedback.md": {
       "sourceSha256": "2eac33f41d27d9a8f9d59bb3c41b0ec5a48c01d65664922043ff4ecf4ae656df",
-      "generatedSha256": "5f14019fda3ce560c56fd53c09afa089068a5e7d532404c98b03800e4d28a675"
+      "generatedSha256": "1039bd71a7d15d28d27547a6d590c535947e2997afa405bcab8c2752d3e284a1"
     },
     "references/review-state.md": {
       "sourceSha256": "802687df68bea76e7b7f70229fe80c3906df5892a3aa6c83345b935842ec2a70",
-      "generatedSha256": "41f5985a3718b0d781eed52ca0e6f2ca5177300c5e1d54613757559ae4390bbb"
+      "generatedSha256": "8979b1992e56e9867ea2b5bc77638da04db7c112bc7e2dbc17be21fdd74bc66f"
     },
     "references/security.md": {
-      "sourceSha256": "faa7c25f771ea40f671acf5fd3a4414d2e595604139797deb7c9a3daa1a6edd5",
-      "generatedSha256": "faa7c25f771ea40f671acf5fd3a4414d2e595604139797deb7c9a3daa1a6edd5"
+      "sourceSha256": "b336bfd4c65da9dc4a077a80f7b13fe177651d2705060f742808271bbbab06ad",
+      "generatedSha256": "b336bfd4c65da9dc4a077a80f7b13fe177651d2705060f742808271bbbab06ad"
     }
   }
 }

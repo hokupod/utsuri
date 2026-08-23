@@ -34,6 +34,19 @@
   type QueueKind = "action-required" | "needs-confirmation" | "no-issue";
   type VisualMode = "side-by-side" | "wipe" | "blink" | "pixel-diff" | "after-only";
   type DiffRow = { kind: "line"; line: DiffLine; index: number } | { kind: "fold"; count: number };
+
+  const riskPriority: Record<Change["risk"]["level"], number> = {
+    critical: 0,
+    high: 1,
+    medium: 2,
+    low: 3,
+    info: 4
+  };
+  const kindPriority: Record<QueueKind, number> = {
+    "action-required": 0,
+    "needs-confirmation": 1,
+    "no-issue": 2
+  };
   interface InteractiveRequestOptions {
     method?: "GET" | "POST";
     body?: string;
@@ -48,7 +61,11 @@
       confirm: "Needs confirmation",
       clear: "No issue found",
       unclassified: "Unclassified hunks",
-      summary: "Decision summary",
+      summary: "Review brief",
+      reviewMap: "Change map",
+      reviewerRoute: "Reviewer route",
+      evidencePosture: "Evidence posture",
+      startReview: "Start with highest attention",
       files: "Files",
       additions: "Additions",
       deletions: "Deletions",
@@ -71,6 +88,8 @@
       moreEvidence: "More evidence",
       measured: "Measured evidence",
       interpretation: "Agent interpretation",
+      hunkPurpose: "Purpose",
+      hunkMeaning: "Meaning",
       visualEvidence: "Visual comparison",
       sideBySide: "Side by side",
       wipe: "Wipe",
@@ -133,6 +152,8 @@
       orphaned: "Orphaned",
       reviewUnavailable: "Review state unavailable",
       empty: "No semantic changes",
+      dataUnavailable: "Review data unavailable",
+      intentUnknown: "Intent unknown",
       loading: "Loading review data…"
     },
     ja: {
@@ -142,7 +163,11 @@
       confirm: "確認が必要",
       clear: "問題なし",
       unclassified: "未分類のハンク",
-      summary: "判断サマリー",
+      summary: "レビュー要旨",
+      reviewMap: "変更の全体像",
+      reviewerRoute: "レビュー経路",
+      evidencePosture: "根拠の状態",
+      startReview: "要確認から見る",
       files: "ファイル",
       additions: "追加",
       deletions: "削除",
@@ -165,6 +190,8 @@
       moreEvidence: "その他の根拠",
       measured: "計測された根拠",
       interpretation: "Agent の解釈",
+      hunkPurpose: "目的",
+      hunkMeaning: "この差分の意味",
       visualEvidence: "画面比較",
       sideBySide: "左右比較",
       wipe: "ワイプ",
@@ -227,9 +254,13 @@
       orphaned: "参照先なし",
       reviewUnavailable: "レビュー状態を利用できません",
       empty: "意味単位の変更はありません",
+      dataUnavailable: "レビューデータを利用できません",
+      intentUnknown: "変更意図は不明です",
       loading: "レビューデータを読み込んでいます…"
     }
   } as const;
+
+  type UiCopy = (typeof copy)[keyof typeof copy];
 
   let report: UtsuriReport | null = null;
   let failure = "";
@@ -256,11 +287,14 @@
   let selectedChange: Change | undefined;
   let selectedHunks: Hunk[] = [];
   let selectedEvidence: UtsuriReport["evidence"] = [];
+  let prioritizedChanges: Change[] = [];
   let filteredChanges: Change[] = [];
+  let briefChanges: Change[] = [];
   let selectedComparisons: Comparison[] = [];
   let activeComparison: Comparison | undefined;
   let activeImage: ImageComparison | undefined;
   let selectedFindings: Finding[] = [];
+  let reviewStart: Change | undefined;
   let reviewStore: ReviewStore | null = null;
   let reviewSource: ReviewSourceIdentity = { base: null, head: null };
   let reviewFailure = "";
@@ -297,11 +331,14 @@
             evidence.hunkRefs.some((reference) => selectedChange?.hunkRefs.includes(reference))
         )
       : [];
-  $: filteredChanges = report
-    ? report.changes.filter((change) =>
-        `${change.title} ${change.summary}`.toLocaleLowerCase().includes(query.toLocaleLowerCase())
-      )
+  $: prioritizedChanges = report
+    ? [...report.changes].sort((left, right) => queuePriority(left) - queuePriority(right))
     : [];
+  $: filteredChanges = prioritizedChanges.filter((change) =>
+    `${change.title} ${change.summary}`.toLocaleLowerCase().includes(query.toLocaleLowerCase())
+  );
+  $: briefChanges = prioritizedChanges.slice(0, 5);
+  $: reviewStart = briefChanges[0];
   $: selectedComparisons =
     selectedChange && report
       ? report.comparisons.filter((comparison) =>
@@ -356,18 +393,45 @@
 
   function queueKind(change: Change): QueueKind {
     if (change.risk.level === "critical" || change.risk.level === "high") return "action-required";
-    if (change.verification.gaps.length > 0 || change.intent.source === "unknown") {
+    if (
+      change.risk.level === "medium" ||
+      change.verification.gaps.length > 0 ||
+      change.intent.source === "unknown"
+    ) {
       return "needs-confirmation";
     }
     return "no-issue";
   }
 
-  function judgmentLabel(value: HumanJudgment): string {
-    if (value === "reviewed") return t.reviewed;
-    if (value === "follow-up") return t.followUp;
-    if (value === "blocked") return t.blocked;
-    if (value === "stale") return t.stale;
-    return t.unreviewed;
+  function queuePriority(change: Change): number {
+    return riskPriority[change.risk.level] * 3 + kindPriority[queueKind(change)];
+  }
+
+  function changeFileCount(change: Change): number {
+    if (!report) return 0;
+    return new Set(
+      change.hunkRefs
+        .map((reference) => report?.hunks.find((hunk) => hunk.id === reference)?.path)
+        .filter((value): value is string => value !== undefined)
+    ).size;
+  }
+
+  function fileCountLabel(count: number, language: string): string {
+    if (/^ja(?:-|$)/iu.test(language)) return `${count}ファイル`;
+    return `${count} file${count === 1 ? "" : "s"}`;
+  }
+
+  function remainingChangeLabel(count: number, language: string): string {
+    if (/^ja(?:-|$)/iu.test(language)) return `ほか${count}件の対応`;
+    return `${count} more change group${count === 1 ? "" : "s"}`;
+  }
+
+  function judgmentLabel(value: HumanJudgment, labels: UiCopy): string {
+    if (value === "reviewed") return labels.reviewed;
+    if (value === "follow-up") return labels.followUp;
+    if (value === "blocked") return labels.blocked;
+    if (value === "stale") return labels.stale;
+    return labels.unreviewed;
   }
 
   function judgment(store: ReviewStore | null, changeId: string): HumanJudgment {
@@ -797,10 +861,10 @@
     }
   }
 
-  function queueLabel(kind: QueueKind): string {
-    if (kind === "action-required") return t.action;
-    if (kind === "needs-confirmation") return t.confirm;
-    return t.clear;
+  function queueLabel(kind: QueueKind, labels: UiCopy): string {
+    if (kind === "action-required") return labels.action;
+    if (kind === "needs-confirmation") return labels.confirm;
+    return labels.clear;
   }
 
   function queueCount(kind: QueueKind): number {
@@ -827,6 +891,13 @@
     blinkRunning = false;
     updateHash("change", change.id);
     void focusElement(domId("change", change.id));
+  }
+
+  function showBrief(): void {
+    selectedChangeId = "";
+    activeHunkId = "";
+    history.pushState(null, "", "#summary");
+    void focusElement("summary-heading");
   }
 
   function openHunk(hunkId: string): void {
@@ -883,8 +954,17 @@
     requestAnimationFrame(() => (syncingScroll = false));
   }
 
-  function coverageSummary(value: UtsuriReport): string {
+  function coverageSummary(value: UtsuriReport, currentLocale: keyof typeof copy): string {
     const known = value.coverage.knownUsages;
+    if (currentLocale === "ja") {
+      const base =
+        known === null
+          ? `${value.coverage.verifiedUsages}件を検証済み、既知の利用件数は不明`
+          : `既知の利用箇所${known}件中${value.coverage.verifiedUsages}件を検証済み`;
+      return value.coverage.unknownPossible
+        ? `${base}。ほかの利用箇所が存在する可能性があります`
+        : base;
+    }
     const base =
       known === null
         ? `${value.coverage.verifiedUsages} verified; known usage count unavailable`
@@ -903,6 +983,11 @@
     ) {
       return;
     }
+    if (event.key === "b") {
+      event.preventDefault();
+      showBrief();
+      return;
+    }
     if (event.key === "/") {
       event.preventDefault();
       searchInput?.focus();
@@ -913,12 +998,16 @@
     else if (event.key === "3") setVisualMode("pixel-diff");
     else if (event.key === "4") setVisualMode("blink");
     else if (event.key === "5") setVisualMode("after-only");
-    else if ((event.key === "j" || event.key === "k") && report?.changes.length) {
-      const index = report.changes.findIndex((change) => change.id === selectedChangeId);
+    else if ((event.key === "j" || event.key === "k") && prioritizedChanges.length) {
+      const index = prioritizedChanges.findIndex((change) => change.id === selectedChangeId);
       const delta = event.key === "j" ? 1 : -1;
-      selectChange(
-        report.changes[(index + delta + report.changes.length) % report.changes.length]!
-      );
+      const nextIndex =
+        index === -1
+          ? event.key === "j"
+            ? 0
+            : prioritizedChanges.length - 1
+          : (index + delta + prioritizedChanges.length) % prioritizedChanges.length;
+      selectChange(prioritizedChanges[nextIndex]!);
     } else if ((event.key === "n" || event.key === "p") && selectedFindings.length) {
       const delta = event.key === "n" ? 1 : -1;
       activeFindingIndex =
@@ -953,14 +1042,16 @@
     if (!report) return;
     const match = location.hash.match(/^#(change|hunk)=(.+)$/u);
     if (!match) {
-      selectedChangeId ||= report.changes[0]?.id ?? "";
+      selectedChangeId = "";
+      activeHunkId = "";
       return;
     }
     let reference = "";
     try {
       reference = decodeURIComponent(match[2] ?? "");
     } catch {
-      selectedChangeId ||= report.changes[0]?.id ?? "";
+      selectedChangeId = "";
+      activeHunkId = "";
       return;
     }
     if (match[1] === "change" && report.changes.some((change) => change.id === reference)) {
@@ -1003,6 +1094,8 @@
             })
           : null;
       }
+      locale = /^ja(?:-|$)/iu.test(report.language) ? "ja" : "en";
+      document.documentElement.lang = report.language;
       if (manifest) {
         reviewSource = {
           base: manifest.source?.base ?? null,
@@ -1020,11 +1113,10 @@
       } catch (error) {
         reviewFailure = error instanceof Error ? error.message : String(error);
       }
-      selectedChangeId = report.changes[0]?.id ?? "";
       document.querySelector("[data-static-fallback]")?.remove();
       applyLocation();
     } catch (error) {
-      failure = `Interactive data unavailable: ${error instanceof Error ? error.message : String(error)}`;
+      failure = `${t.dataUnavailable}: ${error instanceof Error ? error.message : String(error)}`;
     }
   }
 
@@ -1120,14 +1212,22 @@
 {#if report}
   <div class="report-shell">
     <header class="report-header">
-      <a class="wordmark" href="#summary-heading" aria-label="Utsuri review summary">
+      <a
+        class="wordmark"
+        href="#summary"
+        aria-label="Utsuri review summary"
+        onclick={(event) => {
+          event.preventDefault();
+          showBrief();
+        }}
+      >
         <span aria-hidden="true">UT</span>
         <strong>Utsuri</strong>
       </a>
       <div class="report-state" data-status={report.status}>
         <span class="state-mark" aria-hidden="true"></span>
         <span>{report.status}</span>
-        <small>{coverageSummary(report)}</small>
+        <small>{coverageSummary(report, locale)}</small>
       </div>
       <p class="report-id">{report.reportId}</p>
     </header>
@@ -1146,7 +1246,7 @@
         {#each ["action-required", "needs-confirmation", "no-issue"] as kind (kind)}
           <section class="queue-section" data-queue={kind}>
             <h3>
-              <span>{queueLabel(kind as QueueKind)}</span>
+              <span>{queueLabel(kind as QueueKind, t)}</span>
               <span class="count">{queueCount(kind as QueueKind)}</span>
             </h3>
             <ol>
@@ -1216,11 +1316,33 @@
 
     <main id="main-content">
       <section aria-labelledby="summary-heading" class="decision-summary">
-        <div>
-          <p class="kicker">Overview / {report.status}</p>
-          <h1 id="summary-heading">{t.summary}</h1>
-          <p class="decision-statement">{report.summary.statement}</p>
+        <div class="brief-lead">
+          <p class="kicker">Brief / {report.status}</p>
+          <h1 id="summary-heading" tabindex="-1">{t.summary}</h1>
+          {#if report.summary.overview}
+            <p class="review-overview">{report.summary.overview}</p>
+          {/if}
+          <div class="evidence-posture" data-status={report.status}>
+            <p class="kicker">{t.evidencePosture}</p>
+            <p class="decision-statement">{report.summary.statement}</p>
+          </div>
         </div>
+        <aside class="review-route" aria-labelledby="review-route-heading">
+          <p class="kicker">Next / 01</p>
+          <h2 id="review-route-heading">{t.reviewerRoute}</h2>
+          {#if reviewStart}
+            <p class="route-status" data-queue={queueKind(reviewStart)}>
+              {queueLabel(queueKind(reviewStart), t)}
+            </p>
+            <h3>{reviewStart.title}</h3>
+            <p>{reviewStart.summary}</p>
+            <button type="button" onclick={() => selectChange(reviewStart, false)}>
+              {t.startReview} <span aria-hidden="true">→</span>
+            </button>
+          {:else}
+            <p>{t.empty}</p>
+          {/if}
+        </aside>
         <dl class="metrics">
           <div>
             <dt>{t.files}</dt>
@@ -1243,11 +1365,48 @@
             <dd>{report.files.filter((file) => file.lowSignal).length}</dd>
           </div>
         </dl>
+        {#if briefChanges.length > 0}
+          <section class="review-map" aria-labelledby="review-map-heading">
+            <header>
+              <div>
+                <p class="kicker">Map / semantic</p>
+                <h2 id="review-map-heading">{t.reviewMap}</h2>
+              </div>
+              <p>{report.changes.length} {t.changes.toLocaleLowerCase()}</p>
+            </header>
+            <ol>
+              {#each briefChanges as change, index (change.id)}
+                <li data-queue={queueKind(change)}>
+                  <button type="button" onclick={() => selectChange(change, false)}>
+                    <span class="map-index">{String(index + 1).padStart(2, "0")}</span>
+                    <span class="map-copy">
+                      <strong>{change.title}</strong>
+                      <span>{change.summary}</span>
+                    </span>
+                    <span class="map-meta">
+                      {queueLabel(queueKind(change), t)}
+                      <span aria-hidden="true">·</span>
+                      {fileCountLabel(changeFileCount(change), report.language)}
+                    </span>
+                  </button>
+                </li>
+              {/each}
+              {#if report.changes.length > briefChanges.length}
+                <li class="map-remainder">
+                  {remainingChangeLabel(
+                    report.changes.length - briefChanges.length,
+                    report.language
+                  )}
+                </li>
+              {/if}
+            </ol>
+          </section>
+        {/if}
         <section class="coverage-overview" aria-labelledby="coverage-heading">
           <div>
             <p class="kicker">Coverage / structured</p>
             <h2 id="coverage-heading">{t.coverage}</h2>
-            <p>{coverageSummary(report)}</p>
+            <p>{coverageSummary(report, locale)}</p>
           </div>
           <dl>
             <div>
@@ -1313,7 +1472,7 @@
             </div>
             <div class="change-badges" aria-label="Change status">
               <span data-queue={queueKind(selectedChange)}
-                >{queueLabel(queueKind(selectedChange))}</span
+                >{queueLabel(queueKind(selectedChange), t)}</span
               >
               <span>{selectedChange.risk.level} risk</span>
               <span>{selectedChange.intent.source}</span>
@@ -1381,7 +1540,7 @@
                       )}
                   >
                     {#each ["unreviewed", "reviewed", "follow-up", "blocked"] as value (value)}
-                      <option {value}>{judgmentLabel(value as HumanJudgment)}</option>
+                      <option {value}>{judgmentLabel(value as HumanJudgment, t)}</option>
                     {/each}
                     {#if judgment(reviewStore, selectedChange.id) === "stale"}
                       <option value="stale">{t.stale}</option>
@@ -1426,7 +1585,7 @@
               </section>
               <section>
                 <h3>{t.why}</h3>
-                <p>{selectedChange.intent.text || "Intent unknown"}</p>
+                <p>{selectedChange.intent.text || t.intentUnknown}</p>
               </section>
               <section>
                 <h3>{t.userImpact}</h3>
@@ -1479,7 +1638,7 @@
                 <p class="kicker">Evidence / {selectedComparisons.length}</p>
                 <h3 id="measured-evidence-heading">{t.measured}</h3>
                 <h4 id="visual-evidence-heading" tabindex="-1">{t.visualEvidence}</h4>
-                <p>{coverageSummary(report)}</p>
+                <p>{coverageSummary(report, locale)}</p>
               </div>
             </div>
 
@@ -1903,6 +2062,9 @@
             </div>
 
             {#each selectedHunks as hunk (hunk.id)}
+              {@const explanation = selectedChange.hunkExplanations?.find(
+                ({ hunkRef }) => hunkRef === hunk.id
+              )}
               <section
                 class:active-hunk={activeHunkId === hunk.id}
                 class="hunk"
@@ -1947,6 +2109,18 @@
                     >
                   </div>
                 </header>
+                {#if explanation}
+                  <dl class="hunk-explanation" aria-label={t.interpretation}>
+                    <div>
+                      <dt>{t.hunkPurpose}</dt>
+                      <dd>{explanation.purpose}</dd>
+                    </div>
+                    <div>
+                      <dt>{t.hunkMeaning}</dt>
+                      <dd>{explanation.meaning}</dd>
+                    </div>
+                  </dl>
+                {/if}
                 <div
                   class:split-diff={diffMode === "split"}
                   class="diff-table"
@@ -2220,7 +2394,7 @@
             </section>
           </section>
         {/if}
-      {:else}
+      {:else if report.changes.length === 0}
         <section class="focused-change empty-focus"><h2>{t.empty}</h2></section>
       {/if}
     </main>

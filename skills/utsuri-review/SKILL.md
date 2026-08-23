@@ -25,15 +25,18 @@ Do not invoke Utsuri for a one-line explanation, a repository with no reviewable
 
 1. Run `doctor --json` and resolve blocking diagnostics without mutating the project.
 2. Collect the requested Git input into a new run directory.
-3. Validate any agent-authored annotations before finalizing.
-4. Capture only when the user requested visual evidence and the configuration explicitly authorizes the required runtime.
-5. Run `discover` to preserve mapped targets, unmapped changes, and structured coverage, then run `compare` to classify measured visual, structural, accessibility, runtime, network, and overflow evidence.
-6. Finalize and strictly validate the report. Preserve exit code 4 evidence as `INCOMPLETE`; never infer a pass from missing comparison data.
-7. Present the report path, verified coverage, failures, and gaps.
-8. Keep viewed progress, human judgment, and comments separate. Use `review export` before moving mutable state and `review import --reanchor` only when stale/orphaned classifications have been inspected.
-9. Use static `serve` only when a loopback viewer is useful, or `pack` when the user needs deterministic local CI artifacts. Do not upload them.
-10. When comments explicitly request Agent attention, preview the Feedback Batch first. In the originating conversation only, use `feedback list`, `feedback get`, and `feedback answer` to return exactly one structured answer per item. Never start another Agent or guess a session.
-11. When the Plugin MCP is available, call its bounded tools without a path argument. If more than one report is eligible, use only the reviewer-selected opaque `report_id`; never select the newest report silently.
+3. Choose one report language in this order: an explicit user request, `report.language` in configuration, the current conversation language, then English. Use that language for annotations and the final handoff.
+4. Read `diff.json`, `evidence-index.json`, and `review-plan.json`, then author a schema-valid `annotations.json` in the run directory. Treat review-plan candidates as evidence-navigation hints, not review-unit boundaries. Group the candidates and hunks that implement one behavior or contract into one semantic change, including causally linked source, tests, documentation, and generated outputs; split a candidate only when its hunks have unrelated intent. Cover every hunk exactly once, add a concise top-level `overview` of the change set, and add exactly one `hunkExplanations` entry for every change `hunkRef`. Each entry states the hunk's concise `purpose` and `meaning`; use explicit unknown wording rather than unsupported inference. Treat intent stated in the conversation as `declared`, distinguish supported and weak inference, and use `unknown` rather than inventing intent. Persist only concise interpretations, never raw session input.
+5. Capture only when the user requested visual evidence and the configuration explicitly authorizes the required runtime.
+6. Run `discover` to preserve mapped targets, unmapped changes, and structured coverage, then run `compare` to classify measured visual, structural, accessibility, runtime, network, and overflow evidence.
+7. Revise the annotations from the measured evidence. Never describe an image without inspecting it, convert a missing check into a pass, or overwrite CLI measurements.
+8. Finalize with `--annotations` and strictly validate the report. Preserve exit code 4 evidence as `INCOMPLETE`. If annotation validation fails, correct it once; only then may finalization continue without annotations, and the missing interpretation must be reported explicitly.
+9. In a human conversation, report generation is not complete until the viewer is usable. Start `serve` with the host's supported persistent-process facility and keep it alive after replying. Use `--interactive` for an Origin Session-bound report and static mode for an unbound read-only report; add `--open` when the user asked to open or view it locally. The built-in viewer is not an inferred project command.
+10. Before replying, open the returned loopback URL and verify the report ID, first change group, code diff, and Agent interpretation load. An HTTP response or filesystem path alone is insufficient. Skip serving only when the user explicitly requests an artifact-only or CI workflow; use `pack` for a deterministic package.
+11. Reply in the selected report language with the live URL, report ID, concise change explanation, verified coverage, findings, failures, and gaps. A report path alone is not a completed handoff.
+12. Keep viewed progress, human judgment, and comments separate. Use `review export` before moving mutable state and `review import --reanchor` only when stale/orphaned classifications have been inspected.
+13. When comments explicitly request Agent attention, preview the Feedback Batch first. In the originating conversation only, use `feedback list`, `feedback get`, and `feedback answer` to return exactly one structured answer per item. Never start another Agent or guess a session.
+14. When the Plugin MCP is available, call its bounded tools without a path argument. If more than one report is eligible, use only the reviewer-selected opaque `report_id`; never select the newest report silently.
 
 Invoke the bundled CLI with:
 

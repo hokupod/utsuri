@@ -2,6 +2,8 @@
 
 export interface Annotations {
   schemaVersion: "1.0";
+  language: string;
+  overview: string;
   changes: SemanticChange[];
 }
 export interface SemanticChange {
@@ -23,10 +25,16 @@ export interface SemanticChange {
     reasons: string[];
   };
   hunkRefs: string[];
+  hunkExplanations: HunkExplanation[];
   targetRefs: string[];
   findingRefs: string[];
   verification: {
     verified: string[];
     gaps: string[];
   };
+}
+export interface HunkExplanation {
+  hunkRef: string;
+  purpose: string;
+  meaning: string;
 }

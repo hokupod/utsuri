@@ -22,10 +22,10 @@ Utsuri 将 Git 变更转换为本地审查，把代码、浏览器截图、结�
 
 ## 可用性与要求
 
-<!-- availability:git-marketplace-source-ready-cli-publication-pending -->
+<!-- availability:git-marketplace-cli-and-plugin-public -->
 <!-- support-contract:macos-linux-windows-unsupported -->
 
-源码包含一个 Git Plugin，并精确固定到对应的已发布 `@utsu-ri/cli` release。在该 CLI release 发布且 Plugin 源码合并之前，无法从公开 Git 安装。以下是经过验证的 host 命令形式；请勿替换为 `latest`、版本范围或其他包。
+当前公开 Git 源码包含经过验证的 Git Plugin，且其精确固定的 `@utsu-ri/cli` release 已发布。以下命令会安装该公开源码；Plugin 只执行与其匹配的完整 SemVer。请勿替换为 `latest`、版本范围或其他 package。
 
 - [runtime compatibility record](https://github.com/hokupod/utsuri/blob/main/docs/compatibility/plugin-runtime.json) 中列出的 Codex 或 Claude Code release。
 - macOS 或 Linux、Node.js 22 或更高版本，以及首次启动 MCP 所需的 `npx`。
@@ -82,22 +82,24 @@ Claude Code 当前的 Plugin manifest 没有 icon 或 logo 字段，因此 Utsur
 <!-- sync-command:first-review-prompt -->
 
 ```text
-Review the current change with Utsuri. Create a local evidence-backed report and call out every incomplete or uncovered check.
+Review the current change with Utsuri. Create and validate an evidence-backed report, explain each change in my language, start the local report viewer, verify that the diff loads, and return its live URL with every incomplete or uncovered check.
 ```
 
 Utsuri 首先检查可用 capability，不会安装任何内容。未请求浏览器证据或浏览器不可用时，它可以生成 code-only report。如需浏览器证据，请自行启动所需的 before / after application，并且只批准你信任的明确命令。
 
-最终回复会提供本地报告位置、已确认覆盖范围、发现、失败和缺口。打开或 serve 报告仍是单独的显式操作。
+在人机对话中，Agent 会使用选定语言撰写有证据支持的解释，严格验证报告，以持久进程启动适当的 loopback viewer，并确认报告和 diff 能够加载。最终回复会提供 live URL、已确认覆盖范围、发现、失败和缺口。仅返回文件路径不算完成交付；只有明确要求 artifact-only 或 CI workflow 时才会跳过 serve。
 
 <a id="how-it-works"></a><!-- section:how-it-works -->
 
 ## 工作方式
 
 1. **Collect** — 将指定的 patch、worktree、range 或 merge base 读取到有边界的 run 中。
-2. **Capture** — 仅在已配置并授权时，分别记录隔离的 before / after 浏览器证据。
-3. **Discover and compare** — 将变更代码映射到 target，然后比较 pixel、DOM、ARIA、style、accessibility、runtime、network 和 overflow 证据。
-4. **Finalize** — 发布 immutable、经 hash 验证的本地 `report/`，并保留失败或部分证据。
-5. **Review and return feedback** — 在 `report/` 外保存 viewed state、人工判断和 comment。Agent 问题只能返回到已注册的原项目和 Origin Session。
+2. **Interpret** — 当前 Agent 使用会话、diff 和已索引证据，将跨文件且存在因果关系的 hunk 归并为语义变更，解释每项变更，并为每个 hunk 添加简明的“目的”和“该差分的含义”，不臆造缺少依据的意图。
+3. **Capture** — 仅在已配置并授权时，分别记录隔离的 before / after 浏览器证据。
+4. **Discover and compare** — 将变更代码映射到 target，然后比较 pixel、DOM、ARIA、style、accessibility、runtime、network 和 overflow 证据。
+5. **Finalize** — 发布包含 Agent-authored annotations、immutable 且经过 hash 验证的本地 `report/`，并保留失败或部分证据。
+6. **Serve and verify** — 保持适当的 loopback viewer 运行，确认审查摘要、第一项语义变更、code diff 和 Agent 解释可以加载，然后返回 live URL。
+7. **Review and return feedback** — 在 `report/` 外保存 viewed state、人工判断和 comment。Agent 问题只能返回到已注册的原项目和 Origin Session。
 
 [详细设计](https://github.com/hokupod/utsuri/blob/main/docs/design.md)定义 data model 和 security boundary；[CLI contract](https://github.com/hokupod/utsuri/blob/main/skills/utsuri-review/references/cli-contract.md)记录机器接口行为。
 
@@ -105,6 +107,8 @@ Utsuri 首先检查可用 capability，不会安装任何内容。未请求浏�
 
 ## 理解报告
 
+- **审查摘要** 汇集 Agent 撰写的整体说明、确定性计算的证据状态，以及按优先级排列的语义变更地图。一项语义变更可以跨越多个文件；file 与 hunk 链接是证据，而不是审查边界。
+- **Hunk 说明** 会在每个已注释代码 hunk 前显示 Agent 撰写的“目的”和“该差分的含义”。遗漏或重复已收集 hunk 的新 annotations 会被拒绝；`unclassifiedHunkRefs` 仅用于未提供 annotations 时生成的确定性 fallback 报告。缺少这些字段的旧报告仍可查看，但不显示说明面板。
 - **Finding** 是基于证据的观察，并不能自动证明 regression。
 - **`INCOMPLETE`** 表示所需证据失败、格式错误、超过限制或不可用。它绝不会被改写为 pass。
 - **`UNCOVERED`** 表示变更代码没有已验证 target，或覆盖范围的分母未知。

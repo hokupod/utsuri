@@ -22,10 +22,10 @@ Use it when a code or UI change needs a durable report, a clear list of review g
 
 ## Availability and requirements
 
-<!-- availability:git-marketplace-source-ready-cli-publication-pending -->
+<!-- availability:git-marketplace-cli-and-plugin-public -->
 <!-- support-contract:macos-linux-windows-unsupported -->
 
-The source contains a Git Plugin that exact-pins the matching published `@utsu-ri/cli` release. Public Git installation remains gated until that CLI release is published and the Plugin source is merged. The commands below are verified host command shapes; do not substitute `latest`, a range, or another package.
+The current public Git source contains a verified Git Plugin whose exact `@utsu-ri/cli` release is published. The commands below install that public source; the Plugin executes only its matching complete SemVer. Do not substitute `latest`, a range, or another package.
 
 - A Codex or Claude Code release listed in the [runtime compatibility record](https://github.com/hokupod/utsuri/blob/main/docs/compatibility/plugin-runtime.json).
 - macOS or Linux, Node.js 22 or later, and `npx` for first MCP startup.
@@ -82,22 +82,24 @@ Open the repository in Codex or Claude Code, start a new session with Utsuri ena
 <!-- sync-command:first-review-prompt -->
 
 ```text
-Review the current change with Utsuri. Create a local evidence-backed report and call out every incomplete or uncovered check.
+Review the current change with Utsuri. Create and validate an evidence-backed report, explain each change in my language, start the local report viewer, verify that the diff loads, and return its live URL with every incomplete or uncovered check.
 ```
 
 Utsuri first checks available capabilities without installing anything. It can produce a code-only report when browser evidence was not requested or is unavailable. For browser evidence, start any required before/after application yourself and approve only explicit commands you trust.
 
-The final response gives you the local report location, confirmed coverage, findings, failures, and gaps. Opening or serving the report remains a separate explicit action.
+In a human conversation, the Agent authors the evidence-backed interpretation in your selected language, strictly validates the report, starts the appropriate persistent loopback viewer, verifies that the report and diff load, and returns the live URL with confirmed coverage, findings, failures, and gaps. A filesystem path alone is not a completed handoff. Serving is skipped only for an explicitly requested artifact-only or CI workflow.
 
 <a id="how-it-works"></a><!-- section:how-it-works -->
 
 ## How it works
 
 1. **Collect** — reads the requested patch, worktree, range, or merge base into a bounded run.
-2. **Capture** — records separately isolated before/after browser evidence only when configured and authorized.
-3. **Discover and compare** — maps changed code to targets, then compares pixels, DOM, ARIA, styles, accessibility, runtime, network, and overflow evidence.
-4. **Finalize** — publishes an immutable, hash-validated local `report/`; failed or partial evidence is preserved.
-5. **Review and return feedback** — stores viewed state, human judgment, and comments outside `report/`. Agent questions can return only to the registered originating project and session.
+2. **Interpret** — the current Agent uses the conversation, diff, and indexed evidence to group causally related hunks across files into semantic changes, explains each change, and adds a concise purpose and meaning for every hunk without inventing unsupported intent.
+3. **Capture** — records separately isolated before/after browser evidence only when configured and authorized.
+4. **Discover and compare** — maps changed code to targets, then compares pixels, DOM, ARIA, styles, accessibility, runtime, network, and overflow evidence.
+5. **Finalize** — publishes an immutable, hash-validated local `report/` with the Agent-authored annotations; failed or partial evidence is preserved.
+6. **Serve and verify** — keeps the appropriate loopback viewer alive, confirms that the review brief, first semantic change, code diff, and Agent interpretation load, then returns the live URL.
+7. **Review and return feedback** — stores viewed state, human judgment, and comments outside `report/`. Agent questions can return only to the registered originating project and session.
 
 [The detailed design](https://github.com/hokupod/utsuri/blob/main/docs/design.md) defines the data model and security boundaries. [The CLI contract](https://github.com/hokupod/utsuri/blob/main/skills/utsuri-review/references/cli-contract.md) documents machine-facing behavior.
 
@@ -105,6 +107,8 @@ The final response gives you the local report location, confirmed coverage, find
 
 ## Understand the report
 
+- **Review brief** combines the Agent-authored overview, deterministic evidence posture, and a prioritized map of semantic changes. One semantic change may span several files; file and hunk links are evidence, not review boundaries.
+- **Hunk explanations** put the Agent-authored purpose and meaning immediately before each annotated code hunk. New annotations that omit or duplicate a collected hunk are rejected; `unclassifiedHunkRefs` is reserved for deterministic fallback reports created without annotations. Older reports without these fields remain viewable and omit the panel.
 - **Findings** are evidence-backed observations, not automatic proof of a regression.
 - **`INCOMPLETE`** means required evidence failed, was malformed, exceeded a limit, or was unavailable. It is never converted to pass.
 - **`UNCOVERED`** means changed code has no verified target or the coverage denominator is unknown.

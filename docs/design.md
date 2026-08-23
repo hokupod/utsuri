@@ -6,15 +6,15 @@
 - **Plugin name**: `utsuri`
 - **Skill name**: `utsuri-review`
 - **CLI name**: `utsuri`
-- **Document version**: 2.9
+- **Document version**: 3.1
 - **Created**: 2026-08-06
-- **Last updated**: 2026-08-11
+- **Last updated**: 2026-08-21
 - **Language**: English (canonical)
 - **Targets**: Codex / Claude Code / local CLI / CI
 - **Implementation language**: TypeScript
 - **Development environment**: Bun
 - **Report UI**: a static application built with Svelte
-- **v2.9 changes**: removed self-referential documentation hashes, approval transcripts, exact heading manifests, and duplicated local/CI gates while retaining user-facing synchronization and release/security checks
+- **v3.1 changes**: recorded the protected `v0.3.0` npm and GitHub Release publication, verified the promoted Plugin payload, and confirmed public Git Marketplace install, MCP discovery, disable, and removal on Codex and Claude Code
 
 ---
 
@@ -935,7 +935,7 @@ Development source lives under `packages/`. At release time, bundle it as one No
 - Assemble all four helper packages, the private-staged `@utsu-ri/cli`, and the shared Plugin into one distribution candidate. Its aggregate manifest binds every file hash and executable mode; a missing target, source mismatch, tamper, symlink, or normal-rename fallback rejects the candidate.
 - Carry helper proofs and Plugin files between workflow jobs as regular Actions-artifact entries rather than downloaded tarballs. Revalidate hashes before restoring only manifest-declared `0644` / `0755` modes, and create the promoted archive only after the exact restored tree passes all promotion gates.
 - Keep `.github/workflows/distribution-candidate.yml` manually dispatchable and callable without registry-write or OIDC permission. It must bind the five npm tarballs and deterministic Plugin archive in `release-assets.json` and `SHA256SUMS` after the four-platform candidate passes.
-- Run `.github/workflows/release.yml` only for an annotated `v<version>` tag at the exact `main` commit. Require current CHANGELOG and successful exact-main CI, public-history PII/secret scans, the protected `release` environment, OIDC trusted publishing without an npm token, exact registry integrity for recovery, native published-package smoke, and draft-first GitHub Release publication. All five package identities already exist at `0.1.0`; publish `0.2.0` only through this tag workflow. Public availability is recorded only after registry, Release, and live Plugin verification. Treat a missing package identity or trusted-publisher configuration as release drift and never fall back to a manual registry write.
+- Run `.github/workflows/release.yml` only for an annotated `v<version>` tag at the exact `main` commit. Require current CHANGELOG and successful exact-main CI, public-history PII/secret scans, the protected `release` environment, OIDC trusted publishing without an npm token, exact registry integrity for recovery, native published-package smoke, and draft-first GitHub Release publication. All five `0.3.0` package versions and GitHub Release `v0.3.0` were published through this workflow on 2026-08-21 and verified against registry integrity, Release assets, and native package smoke. Public availability is recorded only after registry, Release, promoted-Plugin, and live Git Plugin verification. Treat a missing package identity or trusted-publisher configuration as release drift and never fall back to a manual registry write.
 - Before Plugin promotion, run native `npx` and `bunx` against the exact published SemVer in isolated caches before Safe-chain or dependency setup. Parse one strict JSON line, reject notices or fallback, use a failing ambient-command sentinel, and terminate the complete process group on timeout.
 - The product name `Utsuri`, CLI name `utsuri`, and Skill name `utsuri-review` remain fixed; changing the package identifier requires an explicit design change.
 
@@ -967,7 +967,7 @@ Development source lives under `packages/`. At release time, bundle it as one No
 ```json
 {
   "name": "utsuri",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "description": "Evidence-based visual change review for Codex and Claude Code",
   "skills": "./skills/"
 }
@@ -979,7 +979,7 @@ Development source lives under `packages/`. At release time, bundle it as one No
 {
   "name": "utsuri",
   "displayName": "Utsuri",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "description": "Evidence-based visual change review for Codex and Claude Code",
   "author": {
     "name": "hokupod",
@@ -1144,32 +1144,41 @@ sequenceDiagram
     participant CLI
     participant Browser
 
-    User->>Agent: Request a visual diff report
+    User->>Agent: Request an evidence-backed review
     Agent->>CLI: doctor --json
     CLI-->>Agent: environment capabilities
     Agent->>CLI: collect --base ... --head ...
-    CLI-->>Agent: input.json / review-plan.json
-    Agent->>Agent: semantic grouping and annotation
+    CLI-->>Agent: diff.json / evidence-index.json / review-plan.json
+    Agent->>Agent: choose report language and author annotations
     Agent->>CLI: capture --run ...
     CLI->>Browser: before / after capture
     Browser-->>CLI: screenshots / DOM / ARIA / logs
-    CLI-->>Agent: comparison.json
-    Agent->>Agent: revise annotation from evidence
+    Agent->>CLI: discover / compare
+    CLI-->>Agent: discovery.json / comparison.json
+    Agent->>Agent: revise annotations from measured evidence
     Agent->>CLI: finalize --annotations ...
-    CLI-->>Agent: report path / status
-    Agent-->>User: report location and important limitations
+    Agent->>CLI: validate --strict
+    CLI-->>Agent: validated report path / status
+    Agent->>CLI: serve in a persistent host process
+    CLI-->>Agent: live loopback URL
+    Agent->>Browser: open and verify report UI
+    Browser-->>Agent: report ID / first change / diff / interpretation loaded
+    Agent-->>User: live URL, explanation, coverage, failures, and gaps
 ```
 
 Phase 6 completes the review handoff after strict report validation:
 
-1. Open the immutable report directly or with loopback-only `serve`.
-2. Keep viewed progress, human judgment, and comments as independent state.
-3. Export a canonical review bundle before moving review state between runs.
-4. Import only after base/head and report validation; use `--reanchor` to classify changed anchors as `matched`, `stale`, or `orphaned`.
-5. Never activate a probable anchor automatically and never treat viewing as approval.
-6. Preview comments selected for Agent attention before storing a Feedback Batch.
-7. In the originating conversation only, claim the batch through the fixed-run Skill, CLI, or MCP service and write exactly one structured answer per item.
-8. Leave viewed, human judgment, and resolution unchanged when answers arrive.
+1. In a human conversation, start the appropriate loopback-only `serve` mode through the host's persistent-process facility and keep it alive after replying.
+2. Use interactive mode for an Origin Session-bound report and static read-only mode for an unbound report. Skip serving only for an explicitly requested artifact-only or CI workflow.
+3. Open the returned URL and verify the report ID, first change group, code diff, and Agent interpretation. A successful HTTP response or filesystem path alone is not sufficient.
+4. Return the live URL and a concise explanation in the selected report language together with verified coverage, findings, failures, and gaps.
+5. Keep viewed progress, human judgment, and comments as independent state.
+6. Export a canonical review bundle before moving review state between runs.
+7. Import only after base/head and report validation; use `--reanchor` to classify changed anchors as `matched`, `stale`, or `orphaned`.
+8. Never activate a probable anchor automatically and never treat viewing as approval.
+9. Preview comments selected for Agent attention before storing a Feedback Batch.
+10. In the originating conversation only, claim the batch through the fixed-run Skill, CLI, or MCP service and write exactly one structured answer per item.
+11. Leave viewed, human judgment, and resolution unchanged when answers arrive.
 
 The checkbox alone remains local metadata. It neither creates a Context Pack nor submits anything. Bound interactive runs use `return-to-session`; static or unbound runs use `export-only`. No current host qualifies for the optional direct bridge.
 
@@ -1348,22 +1357,22 @@ utsuri serve .artifacts/utsuri/run-001/report \
 In all modes:
 
 - Bind a random port on `127.0.0.1`.
-- Add security headers.
-- Reject directory traversal.
-- Open a browser only with an explicit option.
+- Add security headers and allow same-origin reads of the immutable `report.json`, `manifest.json`, and listed evidence assets.
+- Reject directory traversal, an untrusted Host header, non-GET/HEAD requests in static mode, and files outside the manifest inventory.
+- Open a browser only with the explicit `--open` option.
 - Persist immutable report assets and mutable review state at separate paths.
 
 With `--interactive`:
 
 - Generate a high-entropy capability token at every start.
 - Pass the token to the browser in the URL fragment and remove it from the address bar after JavaScript reads it.
-- Enable only a same-origin loopback API.
+- Enable only the fixed-report same-origin loopback API.
 - Fix report ID, Origin Session binding, and review-state directory at server startup.
 - Do not accept arbitrary session IDs, commands, or paths from browser APIs.
 - Stream review, Feedback Batch, and answer events over SSE.
 - Never start an Agent process from the Review Server.
 
-The Phase 6 implementation enables both static and capability-protected interactive modes. Static mode binds only a random loopback port, rejects an untrusted Host header and traversal, and opens a browser only with `--open`. Interactive mode additionally requires exact Host, same-origin Fetch Metadata, report ID, and bearer capability for every API call. Mutations require exact Origin and request shape. A read-only GET may omit Origin under same-origin Fetch Metadata; if Referer is present, its origin must match exactly. It exposes no arbitrary destination, path, cwd, command, provider, or model field.
+The implementation enables both static and capability-protected interactive modes. Static mode exposes only manifest-listed immutable files through GET and HEAD. Interactive mode additionally requires exact Host, same-origin Fetch Metadata, report ID, and bearer capability for every API call. Mutations require exact Origin and request shape. A read-only GET may omit Origin under same-origin Fetch Metadata; if Referer is present, its origin must match exactly. Neither mode exposes an arbitrary destination, path, cwd, command, provider, or model field. The Skill, not the CLI, owns persistent process startup, readiness verification, browser opening, and the live-URL handoff.
 
 ### 13.10 `validate`
 
@@ -1795,7 +1804,7 @@ The final target extends that baseline with these deterministic heuristics:
 8. commit boundaries; and
 9. vocabulary in the user request and symbol names.
 
-The Agent may merge or split candidates through a schema-validated annotation artifact but must never remove a hunk. Every hunk must occur exactly once in a candidate or in `unclassifiedHunkRefs`; missing and duplicate assignment are artifact errors.
+Review-plan candidates are deterministic evidence-navigation hints, not final review-unit boundaries. The Agent may merge causally related candidates or split unrelated hunks through a schema-validated annotation artifact, but it must never remove or duplicate a hunk. When annotations are supplied, every diff hunk must occur exactly once across annotated Semantic Changes; incomplete annotations are artifact errors. `unclassifiedHunkRefs` is reserved for deterministic fallback reports created without annotations. Phase 3 joins discovery targets and findings to final Semantic Changes by intersecting validated hunk references rather than comparing candidate and change IDs. Discovery validation proves that each candidate's hunk references are exactly the union derived from its review-plan change references.
 
 ### 15.5 Evidence index
 
@@ -1856,7 +1865,11 @@ The deterministic Phase 1 fallback uses `unknown`, explicitly requests missing r
 
 Do not blend these fields into one long paragraph.
 
-In a code-only report, Git structure is the only verified evidence. The report builder always adds `Visual behavior was not captured.` and `Runtime behavior was not executed.` to every change, even when an annotation omits them, and sets the overall status to `UNCOVERED`. An annotation cannot turn absent capture or runtime execution into `PASS`.
+In a code-only report, Git structure is the only verified evidence. The report builder always adds localized gaps stating that visual and runtime behavior were not exercised and sets the overall status to `UNCOVERED`. An annotation cannot turn absent capture or runtime execution into `PASS`.
+
+### 16.5 Report language
+
+Every annotations document and published report carries one validated BCP 47-style `language` tag. The Agent selects it in this order: an explicit user request, `report.language`, the current conversation language, then English. The Agent-authored explanation and final handoff use that language. The viewer treats the report language as authoritative for document metadata and supported UI chrome; browser language is only an initial loading fallback. Current built-in chrome and deterministic fallback copy support English and Japanese, while Agent-authored semantic fields may use any validated report language.
 
 ---
 
@@ -2374,26 +2387,27 @@ Phase 3 extends the local **Diff Ledger** with measured visual, DOM, ARIA, style
 └───────────────┴──────────────────────────────────────────┘
 ```
 
-### 23.2 Overall summary
+### 23.2 Review brief
 
-Display:
+The initial main surface is a decision-oriented brief rather than an automatically selected file or diff. It combines:
 
-```text
-14 files changed
-+324 / -118
+1. an Agent-authored overview of the complete change set, required for newly authored annotations and optional only when reading older reports;
+2. a deterministic evidence posture derived from report status, coverage, diagnostics, and findings;
+3. a prioritized map of up to five Semantic Changes;
+4. one next-review route pointing to the highest-attention change; and
+5. deterministic file, line, change-group, and coverage metrics.
 
-4 semantic changes
-7 / 8 targets captured
-5 / 12 known usages verified
-2 uncovered UI changes
-1 new accessibility issue
-0 new page errors
-3 blocked external requests
-```
+The overview explains the outcome and purpose of the change set. Newly authored annotations require it; the report field remains optional only so immutable older reports stay readable. It must not claim verification, coverage, or absence of findings; those remain deterministic report fields. The change map uses existing Semantic Changes and hunk references rather than introducing a parallel theme artifact.
 
-The opening statement must aid a decision rather than merely repeat counts.
+The priority map and next-review route sort changes first by risk (`critical`, `high`, `medium`, `low`, then `info`) and then by confirmation state (`action-required`, `needs-confirmation`, then `no-issue`). `medium` risk always requires confirmation even when intent is known and no verification gap remains.
 
-> Mobile navigation behavior changed. There is one new accessibility issue and two uncaptured high-risk usage sites. Review change groups 1 and 3 first.
+A Semantic Change may contain related implementation, tests, documentation, styles, and generated outputs across several files. Files and hunks remain evidence-navigation units. They are not the default human decision boundary.
+
+Do not select or expand a focused change on initial load. The reviewer chooses the priority route, a change-map row, or a review-queue row before detailed evidence appears. Older reports without an Agent overview retain the deterministic evidence posture and change map.
+
+Example opening overview:
+
+> Mobile navigation behavior, tests, and responsive styling changed as one review unit. The evidence posture separately identifies one new accessibility issue and two uncaptured usage sites.
 
 ### 23.3 Review Queue
 
@@ -2421,6 +2435,7 @@ Risk
 Not verified
 Verified
 Evidence
+Code diff (per-hunk purpose / meaning, then structured patch)
 ```
 
 ### 23.5 Visual Evidence
@@ -2452,7 +2467,7 @@ Keep both rather than choosing one:
 
 ### 23.7 Code Diff
 
-Phase 3 implements semantic-group and unclassified-hunk access, side-by-side and unified views, structured line rendering, word emphasis, context expansion, hunk anchors, change/hunk URL fragments, and code-to-visual/finding links. Code content is inserted only as text nodes. The file tree, syntax highlighting, and whitespace toggle remain later-phase targets.
+Phase 3 implements semantic-group and unclassified-hunk access, side-by-side and unified views, structured line rendering, word emphasis, context expansion, hunk anchors, change/hunk URL fragments, and code-to-visual/finding links. Each annotated hunk's Agent-authored purpose and meaning appear directly before its structured patch. Older reports without hunk explanations omit that panel. Code content and explanation content are inserted only as text nodes. The file tree, syntax highlighting, and whitespace toggle remain later-phase targets.
 
 - by semantic group;
 - by file tree;
@@ -2609,7 +2624,7 @@ WCAG 2.2 AA.
 
 | Key       | Action                                     |
 | --------- | ------------------------------------------ |
-| `j` / `k` | Next / previous change                     |
+| `j` / `k` | Next / previous prioritized change         |
 | `n` / `p` | Next / previous finding                    |
 | `1`       | Side by side                               |
 | `2`       | Wipe                                       |
@@ -2618,6 +2633,7 @@ WCAG 2.2 AA.
 | `5`       | After only                                 |
 | `e`       | Move focus to visual evidence              |
 | `/`       | Search                                     |
+| `b`       | Return to the review brief                 |
 
 Viewed/reviewed/comment/Agent-feedback shortcuts are introduced with their Phase 5 surfaces rather than reserving inactive keys in Phase 3.
 | `?` | Shortcut help |
@@ -2629,6 +2645,31 @@ Disable shortcuts while the user is typing.
 ## 25. Data model
 
 JSON Schema is canonical in the implementation. The TypeScript below is explanatory.
+
+Annotations and reports carry the selected language at the top level:
+
+```ts
+interface Annotations {
+  schemaVersion: "1.0";
+  language: string;
+  overview: string;
+  changes: AnnotationSemanticChange[];
+}
+
+interface AnnotationSemanticChange extends SemanticChange {
+  hunkExplanations: HunkExplanation[];
+}
+
+interface UtsuriReport {
+  schemaVersion: "1.0";
+  language: string;
+  summary: {
+    overview?: string;
+    // Deterministic statement and counts remain canonical schema fields.
+  };
+  // Remaining fields are defined by the canonical report schema.
+}
+```
 
 ### 25.1 SemanticChange
 
@@ -2652,6 +2693,7 @@ interface SemanticChange {
     reasons: string[];
   };
   hunkRefs: string[];
+  hunkExplanations?: HunkExplanation[];
   targetRefs: string[];
   findingRefs: string[];
   verification: {
@@ -2659,7 +2701,15 @@ interface SemanticChange {
     gaps: string[];
   };
 }
+
+interface HunkExplanation {
+  hunkRef: string;
+  purpose: string;
+  meaning: string;
+}
 ```
+
+The annotations schema requires an `overview` and exactly one `HunkExplanation` for every `hunkRef` in each Semantic Change. Relational validation rejects duplicate, missing, and cross-change explanation references. Finalization additionally requires annotations to classify every collected diff hunk exactly once. The report field is optional only for compatibility with older immutable reports.
 
 ### 25.2 CaptureTarget
 
@@ -2918,6 +2968,7 @@ The Agent may process a Feedback Batch in one turn, but it must return one `Revi
 ```json
 {
   "schemaVersion": "1.0",
+  "language": "en",
   "changes": [
     {
       "id": "change-001",
@@ -3021,7 +3072,7 @@ Content-Security-Policy:
   style-src 'self';
   img-src 'self' data: blob:;
   font-src 'self';
-  connect-src 'none';
+  connect-src 'self';
   media-src 'none';
   object-src 'none';
   frame-src 'self';
@@ -3030,11 +3081,7 @@ Content-Security-Policy:
   form-action 'none';
 ```
 
-That policy is for static mode. Only interactive mode replaces the connection directive for SSE and the same-origin API:
-
-```text
-connect-src 'self';
-```
+Both multi-file viewer modes need same-origin Fetch access to immutable report JSON and manifest assets. Static mode still accepts only GET and HEAD for the exact manifest inventory, while interactive APIs independently require the fixed report binding and capability boundary. A packed single-file report embeds its data and retains `connect-src 'none'`.
 
 Additional headers:
 
@@ -3045,7 +3092,7 @@ Cross-Origin-Resource-Policy: same-origin
 Cache-Control: no-store
 ```
 
-Phase 4 exposes these policies as shared viewer-security primitives. Static mode retains `connect-src 'none'`; interactive mode changes only that directive to same-origin. Interactive mutation requests must independently validate Origin, report ID, a capability token, and schema validity.
+Phase 4 exposes these policies as shared viewer-security primitives. Interactive mutation requests independently validate Origin, report ID, a capability token, Fetch Metadata, and schema validity; CSP is not used as an authorization boundary.
 
 ### 28.2 Data-injection protection
 
@@ -3694,7 +3741,7 @@ The Phase 5 source checkout implements independent viewed/judgment/comment state
 
 The Phase 6 source checkout implements append-only review events and immutable-generation sidecars under `run/review/`; explicit Agent-attention selection; Feedback Batch preview and idempotent storage; bounded, redacted code/visual Context Packs; opaque host/session/project/report binding; fixed-run CLI and strict NDJSON MCP tools; one answer per original thread; normalized visual anchors and stale/orphaned re-anchoring; and a loopback interactive API protected by a per-start fragment capability, exact Host/Fetch Metadata/report checks, exact Origin on mutations, exact Referer validation when present on read-only GET, and strict request shapes. Static mode exports without claiming a session. Codex and Claude Code use `return-to-session`; the unsupported direct bridge creates no session and returns the same handoff fallback.
 
-The release-ready Phase 6 checkout maps this source to synchronized CLI and Plugin version `v0.2.0`. A manual read-only candidate builds all four helpers and exact public artifacts. The separate tag workflow requires exact `main` identity, normal pull-request review, public-history scanning, protected-environment approval, OIDC trusted publishing, immutable registry-integrity reconciliation, native `npx`/`bunx` proof, and draft-first GitHub Release assets. It never creates its own tag. Because all five package identities already exist publicly at `0.1.0`, the exact five `v0.2.0` package versions are published only by this protected tag workflow.
+The Phase 6 `v0.3.0` release was published by the protected annotated-tag workflow on 2026-08-21 after exact-`main` identity, normal pull-request review, public-history scanning, protected-environment approval, OIDC trusted publishing, immutable registry-integrity reconciliation, native `npx` / `bunx` proof, and draft-first GitHub Release verification. A separate promotion run verified the exact public CLI and emitted a Plugin payload matching the Release asset. Isolated public Git Marketplace installs then verified install, MCP discovery, disable, and removal on Codex and Claude Code. Every later version still requires the same separate source, publication, promotion, and live-install authorizations.
 
 Before persisted state, browser storage, or a review bundle is validated, Phase 5 pixel-coordinate visual anchors are recognized by their legacy fingerprint and migrated to the normalized catalog. A cross-report comment with no current anchor remains orphaned instead of being discarded.
 
@@ -3804,7 +3851,7 @@ The v1 source implementation maps every item below to an automated gate or an ex
 22. The English canonical design, release guide, and all three READMEs remain synchronized and reviewed in the pull request.
 23. Node 24, both required Bun versions, Safe-chain 1.5.14, both hosts, and the release-candidate layout pass their full gates.
 
-Phase 6 adds executable coverage for all §46.25 fixtures, the three-item return-to-session acceptance scenario on both hosts, explicit unsupported-bridge fallback, localhost API boundaries, and independent review-state semantics. The source is prepared for synchronized CLI and Plugin version `v0.2.0`; public availability still requires normal pull-request review, successful remote CI/candidate evidence, protected GitHub configuration, the existing package identities and trusted-publisher registrations, and separate authorization for the tag write and protected release-environment approval.
+Phase 6 adds executable coverage for all §46.25 fixtures, the three-item return-to-session acceptance scenario on both hosts, explicit unsupported-bridge fallback, localhost API boundaries, and independent review-state semantics. The synchronized `v0.3.0` release satisfied the remaining public gates on 2026-08-21: normal pull-request review, successful remote CI and multi-platform candidate evidence, protected GitHub configuration, OIDC registry publication, verified GitHub Release assets, promoted-Plugin verification, and isolated public Git installs on both hosts. Each later release requires the same separate authorizations and evidence.
 
 ---
 
@@ -3944,7 +3991,7 @@ Researched: 2026-08-06
 
 ## 46. Detailed interactive review and Origin Session feedback specification
 
-**v1 implementation status**: release-ready as synchronized CLI and Plugin version `v0.2.0` source through `return-to-session` and `export-only`. The optional direct bridge is deliberately disabled because no configured host meets the authenticated same-session API and response-correlation requirements. This status never permits a new Agent/session fallback and does not claim that npm or GitHub Release publication has occurred.
+**v1 implementation status**: publicly available as synchronized CLI and Plugin version `v0.3.0` through `return-to-session` and `export-only`. The optional direct bridge is deliberately disabled because no configured host meets the authenticated same-session API and response-correlation requirements. Publication evidence covers the protected npm and GitHub release, promoted Plugin payload, and live public Git Plugin verification; it does not authorize any later release operation or a new Agent/session fallback.
 
 ### 46.1 Purpose
 
@@ -4753,7 +4800,7 @@ The implementation keeps the preview separate from storage, writes inbox/batch/c
 
 A feature outside this definition is accepted only when it makes review decisions faster, strengthens the relationship between a question and its evidence, increases evidence reliability, or improves security.
 
-The source prepared for synchronized CLI and Git Plugin version `0.2.0` satisfies this definition through local immutable reports, mutable review generations, and a same-project/same-session Marketplace MCP broker, with `return-to-session` as the host-neutral feedback path. CLI publication, Plugin promotion, Git push, tag creation, and release remain separately authorized operator actions; direct same-session submission and a shared remote review store remain optional future capabilities.
+The synchronized public CLI and Git Plugin version `0.3.0` satisfies this definition through local immutable reports, mutable review generations, and a same-project/same-session Marketplace MCP broker, with `return-to-session` as the host-neutral feedback path. The `v0.3.0` tag publication, Plugin promotion, and public Git smoke were separately authorized and verified; every later version requires new authorization. Direct same-session submission and a shared remote review store remain optional future capabilities.
 
 ---
 
@@ -4761,6 +4808,8 @@ The source prepared for synchronized CLI and Git Plugin version `0.2.0` satisfie
 
 | Entry ID                                   | Version | Date       | Change                                                                                                                                                                                                                                                                                                                                                                                                                                                    |
 | ------------------------------------------ | ------: | ---------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| design-v3.1-public-release-status          |     3.1 | 2026-08-21 | Recorded protected publication of all five `v0.3.0` npm packages and the verified GitHub Release, matched the promoted Plugin payload to the Release asset, and confirmed public Git Marketplace install, MCP discovery, disable, and removal on the recorded minimum Codex and Claude Code releases.                                                                                                                                                     |
+| design-v3.0-agent-review-handoff           |     3.0 | 2026-08-21 | Made the persistent live viewer and rendered-diff check the human-review completion path, added localized schema-validated Agent overviews and complete per-hunk explanations, prioritized review routes by risk and confirmation state, added supported Plugin illustration surfaces, and prepared synchronized `v0.3.0` distribution.                                                                                                                   |
 | design-v2.9-proportional-verification      |     2.9 | 2026-08-11 | Removed parallel documentation state, document-byte hashes, approval transcripts, the exact heading manifest, duplicated documentation-test execution, redundant release-layout invocations, and the browser-disabled integration rerun while retaining focused multilingual documentation, runtime, release-artifact, and security verification.                                                                                                         |
 | design-v2.8-git-marketplace-mcp            |     2.8 | 2026-08-11 | Added the source-only Git Marketplace Plugin, deterministic canonical-Skill transform, synchronized Plugin and CLI SemVer with exact pin promotion, versioned bounded run registrations, canonical host-root resolution, parameterless same-project/same-session MCP selection, explicit zero/one/multiple behavior, current host compatibility probes, the user-first multilingual installation contract, and tag-only trusted publication for `v0.2.0`. |
 | design-v2.7-release-document-contract      |     2.7 | 2026-08-09 | Aligned the canonical CLI command inventory with the shipped help, introduced the now-retired exact-hash review record for release documentation, and made the manual `v0.1.0` first-publication exception plus its missing GitHub Actions OIDC provenance and retained non-secret audit evidence explicit.                                                                                                                                               |

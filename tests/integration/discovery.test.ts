@@ -4,7 +4,7 @@ import { tmpdir } from "node:os";
 import path from "node:path";
 import { captureRun, normalizeCaptureConfig } from "../../packages/capture/src";
 import { compareRun } from "../../packages/compare/src";
-import { createEvidenceIndex, createReviewPlan, sha256 } from "../../packages/core/src";
+import { createEvidenceIndex, createReviewPlan, sha256, stableHash } from "../../packages/core/src";
 import { discoverRun } from "../../packages/discovery/src";
 import { parseGitPatch } from "../../packages/git-collector/src/patch";
 import type { UtsuriConfig } from "../../packages/report-model/src";
@@ -128,6 +128,50 @@ describe("visual target discovery", () => {
       expect(report.findings).toContainEqual(
         expect.objectContaining({ category: "a11y", state: "incomplete" })
       );
+      const semanticChange = {
+        ...structuredClone(report.changes[0]!),
+        id: "change:agent-authored-palette",
+        title: "Agent-authored palette change",
+        hunkRefs: report.hunks.map((hunk) => hunk.id),
+        hunkExplanations: report.hunks.map((hunk) => ({
+          hunkRef: hunk.id,
+          purpose: `Explain why ${hunk.path} changed.`,
+          meaning: `Describe the observable meaning of ${hunk.path}.`
+        })),
+        targetRefs: [],
+        findingRefs: []
+      };
+      const annotated = await createInitialReport(run, {
+        schemaVersion: "1.0",
+        language: "en",
+        overview: "The Agent grouped the collected palette changes into one review unit.",
+        changes: [semanticChange]
+      });
+      expect(annotated.changes[0]?.id).toBe(semanticChange.id);
+      expect(annotated.changes[0]?.targetRefs).toEqual([report.targets[0]!.id]);
+      expect(annotated.changes[0]?.findingRefs).toEqual(
+        report.findings.map((finding) => finding.id).sort()
+      );
+
+      const discoveryPath = path.join(run, "discovery.json");
+      const discoveryText = await readFile(discoveryPath, "utf8");
+      const invalidDiscovery = JSON.parse(discoveryText) as {
+        discoveryHash: string;
+        candidates: Array<{ hunkRefs: string[] }>;
+      };
+      invalidDiscovery.candidates[0]!.hunkRefs = [];
+      const discoveryBase = structuredClone(invalidDiscovery) as Record<string, unknown>;
+      delete discoveryBase.discoveryHash;
+      invalidDiscovery.discoveryHash = stableHash(discoveryBase);
+      await writeFile(discoveryPath, `${JSON.stringify(invalidDiscovery, null, 2)}\n`);
+      try {
+        await expect(createInitialReport(run)).rejects.toMatchObject({
+          diagnosticId: "DISCOVERY_ARTIFACT_INVALID",
+          message: "Discovery candidate hunk provenance is inconsistent"
+        });
+      } finally {
+        await writeFile(discoveryPath, discoveryText);
+      }
       const staleReport = structuredClone(report);
       staleReport.status = "PASS";
       staleReport.summary.statement = "No findings remain.";

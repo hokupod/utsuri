@@ -7,6 +7,29 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.3.0] - 2026-08-21
+
+### Added
+
+- Add schema-validated Agent-authored review overviews, semantic changes, and
+  per-hunk explanations, with deterministic fallback when annotations are
+  unavailable.
+- Add localized English and Japanese report copy selected from report metadata
+  or the browser locale.
+- Add the Utsuri product illustration to supported Codex Plugin surfaces.
+
+### Changed
+
+- Make a persistent loopback viewer, rendered diff check, and live URL the
+  default completion path for human review sessions.
+- Prioritize the review brief, change map, reviewer route, and keyboard
+  navigation by risk first and confirmation state second.
+
+### Security
+
+- Reject annotations that omit or duplicate collected hunks, and preserve
+  incomplete evidence instead of presenting unsupported Agent interpretation.
+
 ## [0.2.0] - 2026-08-11
 
 ### Added

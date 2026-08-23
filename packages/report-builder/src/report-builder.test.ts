@@ -56,11 +56,22 @@ async function createAnnotatedReportRun() {
     )
   );
   const fallback = await createInitialReport(run);
+  const semanticChange = structuredClone(fallback.changes[0]!);
+  semanticChange.title = "Navigation hardening";
+  semanticChange.hunkRefs = fallback.hunks.map((hunk) => hunk.id);
+  semanticChange.hunkExplanations = fallback.hunks.map((hunk) => ({
+    hunkRef: hunk.id,
+    purpose: `Explain why ${hunk.path} changed.`,
+    meaning: `Describe the observable meaning of ${hunk.path}.`
+  }));
+  semanticChange.intent.evidenceRefs = fallback.evidence.map((entry) => entry.id);
+  semanticChange.intent.text = "Entry annotation snapshot.";
   const annotations = {
     schemaVersion: "1.0" as const,
-    changes: [structuredClone(fallback.changes[0]!)]
+    language: "ja",
+    overview: "ナビゲーションの実装、テスト、スタイル、安全性を一つの対応として更新しました。",
+    changes: [semanticChange]
   };
-  annotations.changes[0]!.intent.text = "Entry annotation snapshot.";
   const report = await createInitialReport(run, annotations);
   return { run, report, annotations };
 }
@@ -111,12 +122,31 @@ describe("immutable report generation", () => {
 
     const building = buildReport(run, report, { annotations });
     annotations.changes[0]!.intent.text = "Mutated after buildReport returned its promise.";
+    annotations.changes[0]!.hunkExplanations![0]!.meaning =
+      "Mutated after buildReport returned its promise.";
     const { reportDirectory } = await building;
     const published = JSON.parse(
       await readFile(path.join(reportDirectory, "report.json"), "utf8")
     ) as typeof report;
 
     expect(published.changes[0]?.intent.text).toBe("Entry annotation snapshot.");
+    expect(published.language).toBe("ja");
+    expect(published.summary.overview).toBe(annotations.overview);
+    expect(published.changes[0]?.hunkExplanations?.[0]?.meaning).toBe(
+      `Describe the observable meaning of ${published.hunks[0]?.path}.`
+    );
+    expect(published.changes[0]?.hunkExplanations?.map(({ hunkRef }) => hunkRef)).toEqual(
+      published.changes[0]?.hunkRefs
+    );
+    expect(published.changes).toHaveLength(1);
+    expect(published.unclassifiedHunkRefs).toEqual([]);
+    expect(
+      new Set(
+        published.changes[0]?.hunkRefs.map(
+          (reference) => published.hunks.find((hunk) => hunk.id === reference)?.path
+        )
+      ).size
+    ).toBeGreaterThan(1);
   });
 
   test("rejects a stale report when comparison evidence lacks discovery", async () => {
@@ -125,6 +155,35 @@ describe("immutable report generation", () => {
 
     await expect(buildReport(run, report)).rejects.toMatchObject({
       diagnosticId: "PHASE3_ARTIFACT_MISSING"
+    });
+  });
+  test("rejects duplicate per-hunk explanations", async () => {
+    const { run, annotations } = await createAnnotatedReportRun();
+    annotations.changes[0]!.hunkExplanations!.push({
+      ...annotations.changes[0]!.hunkExplanations![0]!,
+      purpose: "Duplicate explanation."
+    });
+
+    await expect(createInitialReport(run, annotations)).rejects.toMatchObject({
+      diagnosticId: "REPORT_REFERENCE_INVALID",
+      message: expect.stringContaining("hunkExplanations contains duplicate")
+    });
+  });
+
+  test("rejects annotations that omit collected hunks, including empty annotations", async () => {
+    const { run, annotations } = await createAnnotatedReportRun();
+    const partial = structuredClone(annotations);
+    partial.changes[0]!.hunkRefs.pop();
+    partial.changes[0]!.hunkExplanations!.pop();
+
+    await expect(createInitialReport(run, partial)).rejects.toMatchObject({
+      diagnosticId: "ANNOTATIONS_HUNK_COVERAGE_INVALID",
+      message: expect.stringContaining("1 missing")
+    });
+    await expect(
+      createInitialReport(run, { ...structuredClone(annotations), changes: [] })
+    ).rejects.toMatchObject({
+      diagnosticId: "ANNOTATIONS_HUNK_COVERAGE_INVALID"
     });
   });
 

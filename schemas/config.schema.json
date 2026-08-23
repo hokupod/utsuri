@@ -250,7 +250,12 @@
       "required": ["outputDirectory", "singleFile", "includeAbsolutePaths"],
       "properties": {
         "outputDirectory": { "type": "string", "minLength": 1 },
-        "language": { "type": "string", "minLength": 2 },
+        "language": {
+          "type": "string",
+          "minLength": 2,
+          "maxLength": 35,
+          "pattern": "^[A-Za-z]{2,8}(?:-[A-Za-z0-9]{1,8})*$"
+        },
         "theme": { "enum": ["system", "light", "dark"] },
         "singleFile": { "type": "boolean" },
         "singleFileMaxBytes": {

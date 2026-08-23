@@ -6,6 +6,7 @@
   "additionalProperties": false,
   "required": [
     "schemaVersion",
+    "language",
     "reportId",
     "status",
     "summary",
@@ -23,6 +24,12 @@
   ],
   "properties": {
     "schemaVersion": { "const": "1.0" },
+    "language": {
+      "type": "string",
+      "minLength": 2,
+      "maxLength": 35,
+      "pattern": "^[A-Za-z]{2,8}(?:-[A-Za-z0-9]{1,8})*$"
+    },
     "reportId": {
       "type": "string",
       "pattern": "^report[-:][A-Za-z0-9._:-]+$",
@@ -34,6 +41,7 @@
       "additionalProperties": false,
       "required": ["statement", "filesChanged", "additions", "deletions"],
       "properties": {
+        "overview": { "type": "string", "minLength": 1, "maxLength": 2000 },
         "statement": { "type": "string" },
         "filesChanged": { "type": "integer", "minimum": 0 },
         "additions": { "type": "integer", "minimum": 0 },
@@ -271,6 +279,10 @@
           }
         },
         "hunkRefs": { "type": "array", "items": { "type": "string" }, "uniqueItems": true },
+        "hunkExplanations": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/hunkExplanation" }
+        },
         "targetRefs": { "type": "array", "items": { "type": "string" }, "uniqueItems": true },
         "findingRefs": { "type": "array", "items": { "type": "string" }, "uniqueItems": true },
         "verification": {
@@ -282,6 +294,16 @@
             "gaps": { "type": "array", "items": { "type": "string" } }
           }
         }
+      }
+    },
+    "hunkExplanation": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["hunkRef", "purpose", "meaning"],
+      "properties": {
+        "hunkRef": { "type": "string", "pattern": "^hunk:" },
+        "purpose": { "type": "string", "minLength": 1, "maxLength": 160 },
+        "meaning": { "type": "string", "minLength": 1, "maxLength": 320 }
       }
     },
     "captureResult": {

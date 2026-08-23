@@ -1,0 +1,52 @@
+min_version: "2.1.5"
+assert_lefthook_installed: true
+no_auto_install: true
+glob_matcher: doublestar
+
+lefthook: nix develop --command lefthook
+
+pre-commit:
+  parallel: true
+  jobs:
+    - name: staged secrets
+      run: >-
+        gitleaks git --staged
+        --config .gitleaks.toml
+        --redact
+        --no-banner
+        --no-color
+
+    - name: staged formatting
+      glob: "**/*.{js,mjs,cjs,ts,mts,cts,svelte,css,scss,json,jsonc,yaml,yml,md,html}"
+      run: >-
+        node scripts/safe-chain.mjs bun prettier
+        --check -- {staged_files}
+
+    - name: staged lint
+      glob: "**/*.{js,mjs,cjs,ts,mts,cts,svelte}"
+      run: >-
+        node scripts/safe-chain.mjs bun eslint
+        --max-warnings 0 -- {staged_files}
+
+pre-push:
+  jobs:
+    - name: outgoing secrets
+      run: node scripts/scan-push-secrets.mjs
+      use_stdin: true
+
+    - name: full local gate
+      run: node scripts/safe-chain.mjs bun run check
+
+    - name: plugin distribution
+      glob:
+        - "skills/utsuri-review/**"
+        - "plugins/utsuri/**"
+        - ".agents/plugins/marketplace.json"
+        - ".claude-plugin/marketplace.json"
+        - "packages/cli/package.json"
+        - "package.json"
+        - "docs/compatibility/plugin-runtime.json"
+        - "docs/assets/utsuri.jpg"
+        - "scripts/plugin-distribution.mjs"
+        - "scripts/verify-plugin.mjs"
+      run: node scripts/safe-chain.mjs bun run plugin:verify

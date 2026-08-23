@@ -75,7 +75,7 @@ describe("CLI", () => {
       ok: true,
       command: "version",
       package: "@utsu-ri/cli",
-      version: "0.2.0",
+      version: "0.3.0",
       protocolVersion: "1.1"
     });
   });
@@ -317,32 +317,42 @@ describe("CLI", () => {
     expect(errorId(result)).toBe("ARTIFACT_JSON_INVALID");
   });
 
-  test("preserves validated annotations and leaves omitted hunks unclassified", async () => {
+  test("preserves complete validated annotations", async () => {
     const { root, run } = await createCollectedRun();
     const plan = JSON.parse(await readFile(path.join(run, "review-plan.json"), "utf8")) as {
       candidates: Array<{ id: string; title: string; hunkRefs: string[]; evidenceRefs: string[] }>;
     };
-    const candidate = plan.candidates[0]!;
+    const hunkRefs = [...new Set(plan.candidates.flatMap((candidate) => candidate.hunkRefs))];
+    const evidenceRefs = [
+      ...new Set(plan.candidates.flatMap((candidate) => candidate.evidenceRefs))
+    ];
     await writeFile(
       path.join(root, "annotations.json"),
       `${JSON.stringify({
         schemaVersion: "1.0",
+        language: "ja",
+        overview: "収集した変更を意味単位で説明します。",
         changes: [
           {
-            id: candidate.id,
-            title: candidate.title,
+            id: "change:fixture-review",
+            title: "Collected fixture review",
             kind: "unknown",
             summary: "Reviews one collected change group.",
             intent: {
               text: "Fixture intent",
               source: "declared",
-              evidenceRefs: candidate.evidenceRefs
+              evidenceRefs
             },
             implementation: "Uses the collected hunks.",
             userImpact: ["Requires review."],
             technicalImpact: ["Changes fixture files."],
             risk: { level: "low", reasons: ["Runtime was not executed."] },
-            hunkRefs: candidate.hunkRefs,
+            hunkRefs,
+            hunkExplanations: hunkRefs.map((hunkRef) => ({
+              hunkRef,
+              purpose: "収集した変更の目的を説明します。",
+              meaning: "この差分がレビュー対象に与える意味を説明します。"
+            })),
             targetRefs: [],
             findingRefs: [],
             verification: {
@@ -361,11 +371,14 @@ describe("CLI", () => {
 
     expect(result.exitCode).toBe(0);
     const report = JSON.parse(await readFile(path.join(run, "report/report.json"), "utf8")) as {
-      changes: Array<{ intent: { text: string } }>;
+      language: string;
+      changes: Array<{ intent: { text: string }; hunkExplanations: unknown[] }>;
       unclassifiedHunkRefs: string[];
     };
     expect(report.changes[0]?.intent.text).toBe("Fixture intent");
-    expect(report.unclassifiedHunkRefs.length).toBeGreaterThanOrEqual(0);
+    expect(report.changes[0]?.hunkExplanations).toHaveLength(hunkRefs.length);
+    expect(report.language).toBe("ja");
+    expect(report.unclassifiedHunkRefs).toEqual([]);
   });
 
   test("returns artifact exit code for malformed diff JSON", async () => {

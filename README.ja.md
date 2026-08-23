@@ -22,10 +22,10 @@ Utsuri は Git の変更を、コード・ブラウザキャプチャ・構造�
 
 ## 提供状況と要件
 
-<!-- availability:git-marketplace-source-ready-cli-publication-pending -->
+<!-- availability:git-marketplace-cli-and-plugin-public -->
 <!-- support-contract:macos-linux-windows-unsupported -->
 
-ソースには、対応する公開済み `@utsu-ri/cli` release に完全固定された Git Plugin が含まれます。公開 Git からのインストールは、その CLI release の公開と Plugin ソースのマージが完了するまで利用できません。以下は検証済みの host command です。`latest`、version range、別 package へ置き換えないでください。
+現在の公開 Git ソースには、対応する `@utsu-ri/cli` release が公開済みで、その完全な SemVer に固定された検証済み Git Plugin が含まれます。以下のコマンドはその公開ソースをインストールし、Plugin は対応する完全な SemVer だけを実行します。`latest`、version range、別 package へ置き換えないでください。
 
 - [runtime compatibility record](https://github.com/hokupod/utsuri/blob/main/docs/compatibility/plugin-runtime.json) に記載された Codex または Claude Code release。
 - macOS または Linux、Node.js 22 以降、および MCP 初回起動に使う `npx`。
@@ -82,22 +82,24 @@ Codex または Claude Code で repository を開き、Utsuri を有効にした
 <!-- sync-command:first-review-prompt -->
 
 ```text
-Review the current change with Utsuri. Create a local evidence-backed report and call out every incomplete or uncovered check.
+Review the current change with Utsuri. Create and validate an evidence-backed report, explain each change in my language, start the local report viewer, verify that the diff loads, and return its live URL with every incomplete or uncovered check.
 ```
 
 Utsuri は何もインストールせず、最初に利用可能な capability を確認します。ブラウザ証拠を依頼していない場合や利用できない場合は、code-only report を作成できます。ブラウザ証拠が必要なら、必要な before / after application は自分で起動し、信頼できる明示的な command だけを許可してください。
 
-最終応答にはローカルレポートの場所、確認済みカバレッジ、所見、失敗、未検証項目が示されます。レポートを開く、または serve する操作は別途明示的に実行します。
+人との会話では、Agent が選択された言語で根拠付きの解釈を作成し、レポートを厳密に検証して、適切な loopback viewer を永続プロセスとして起動します。さらにレポートと diff が読み込めることを確認し、live URL、確認済みカバレッジ、所見、失敗、未検証項目を返します。ファイルパスだけでは引き渡し完了ではありません。明示的に artifact-only または CI workflow を依頼した場合だけ serve を省略します。
 
 <a id="how-it-works"></a><!-- section:how-it-works -->
 
 ## 仕組み
 
 1. **Collect** — 指定された patch、worktree、range、merge base を境界付き run に読み込みます。
-2. **Capture** — 設定と許可がある場合だけ、分離した before / after のブラウザ証拠を記録します。
-3. **Discover and compare** — 変更コードを target に対応付け、pixel、DOM、ARIA、style、accessibility、runtime、network、overflow の証拠を比較します。
-4. **Finalize** — immutable で hash 検証済みのローカル `report/` を公開し、失敗や部分的な証拠も保持します。
-5. **Review and return feedback** — viewed state、人間の判断、comment を `report/` の外へ保存します。Agent 向け質問は、登録済みの元 project・Origin Session にだけ戻せます。
+2. **Interpret** — 現在の Agent が会話、diff、索引済みの根拠を使い、因果関係のある複数ファイルの hunk を意味単位の変更へまとめます。各変更を説明し、すべての hunk に簡潔な「目的」と「この差分の意味」を付けます。裏付けのない意図は作りません。
+3. **Capture** — 設定と許可がある場合だけ、分離した before / after のブラウザ証拠を記録します。
+4. **Discover and compare** — 変更コードを target に対応付け、pixel、DOM、ARIA、style、accessibility、runtime、network、overflow の証拠を比較します。
+5. **Finalize** — Agent が作成した annotations を含む immutable で hash 検証済みのローカル `report/` を公開し、失敗や部分的な証拠も保持します。
+6. **Serve and verify** — 適切な loopback viewer を起動したまま、レビュー要旨、最初の意味単位の変更、code diff、Agent の解釈が読み込めることを確認し、live URL を返します。
+7. **Review and return feedback** — viewed state、人間の判断、comment を `report/` の外へ保存します。Agent 向け質問は、登録済みの元 project・Origin Session にだけ戻せます。
 
 [詳細設計](https://github.com/hokupod/utsuri/blob/main/docs/design.md)に data model と security boundary、[CLI contract](https://github.com/hokupod/utsuri/blob/main/skills/utsuri-review/references/cli-contract.md)に機械向け動作を記載しています。
 
@@ -105,6 +107,8 @@ Utsuri は何もインストールせず、最初に利用可能な capability �
 
 ## レポートを理解する
 
+- **レビュー要旨** は Agent が作成した全体説明、決定的に算出した根拠の状態、優先順の意味単位変更マップをまとめます。1つの意味単位の変更が複数ファイルにまたがることがあり、file と hunk のリンクはレビュー境界ではなく根拠です。
+- **Hunk の説明** は、Agent が作成した「目的」と「この差分の意味」を、注釈付きコード hunk の直前に表示します。収集済み hunk を欠落または重複させた新しい annotations は拒否され、`unclassifiedHunkRefs` は annotations なしで生成する決定的 fallback レポートに限られます。このフィールドがない旧レポートも閲覧でき、その場合は説明パネルを表示しません。
 - **Finding** は証拠に基づく観察であり、それだけで regression を証明しません。
 - **`INCOMPLETE`** は必要な証拠の失敗、不正、上限超過、利用不能を示します。pass へ変換されません。
 - **`UNCOVERED`** は変更コードに検証済み target がない、またはカバレッジの分母が不明であることを示します。

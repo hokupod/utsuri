@@ -5,9 +5,47 @@
     "claude": "2.1.220"
   },
   "distribution": {
-    "pluginVersion": "0.2.0",
-    "cliVersion": "0.2.0",
-    "mcpPackagePin": "@utsu-ri/cli@0.2.0"
+    "pluginVersion": "0.3.0",
+    "cliVersion": "0.3.0",
+    "mcpPackagePin": "@utsu-ri/cli@0.3.0"
+  },
+  "publicGitVerification": {
+    "verifiedAt": "2026-08-21",
+    "source": "hokupod/utsuri",
+    "sourceCommit": "5d45115c9a66b792e4507ad2f2446fc23e031910",
+    "pluginVersion": "0.3.0",
+    "cliPackage": "@utsu-ri/cli@0.3.0",
+    "hosts": {
+      "codex": {
+        "version": "0.146.0",
+        "contract": {
+          "sourceCommitVerified": true,
+          "packagePinned": true,
+          "marketplaceListed": true,
+          "installed": true,
+          "enabled": true,
+          "mcpDiscovered": true,
+          "toolsListed": true,
+          "disabledStopsMcp": true,
+          "removed": true,
+          "removedStopsMcp": true
+        }
+      },
+      "claude": {
+        "version": "2.1.220",
+        "contract": {
+          "sourceCommitVerified": true,
+          "packagePinned": true,
+          "marketplaceListed": true,
+          "installed": true,
+          "enabled": true,
+          "mcpDiscovered": true,
+          "mcpConnected": true,
+          "disabled": true,
+          "removed": true
+        }
+      }
+    }
   },
   "hosts": {
     "codex": {

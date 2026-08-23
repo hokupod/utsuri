@@ -3,7 +3,7 @@ import { PNG } from "pngjs";
 const staticCspDirectives = [
   "default-src 'none'",
   "base-uri 'none'",
-  "connect-src 'none'",
+  "connect-src 'self'",
   "font-src 'self'",
   "form-action 'none'",
   "frame-ancestors 'none'",
@@ -16,9 +16,7 @@ const staticCspDirectives = [
 ] as const;
 
 export const staticReportCsp = staticCspDirectives.join("; ");
-export const interactiveReportCsp = staticCspDirectives
-  .map((directive) => (directive === "connect-src 'none'" ? "connect-src 'self'" : directive))
-  .join("; ");
+export const interactiveReportCsp = staticReportCsp;
 
 export const staticFragmentCsp = [
   "default-src 'none'",

@@ -308,6 +308,22 @@ export function validateReportReferences(report: UtsuriReport): ArtifactValidati
       if (previous) errors.push(`${ref} is assigned to both ${previous} and ${change.id}`);
       assigned.set(ref, change.id);
     }
+    if (change.hunkExplanations) {
+      const explanationRefs = change.hunkExplanations.map((explanation) => explanation.hunkRef);
+      const explained = new Set(explanationRefs);
+      const changeHunks = new Set(change.hunkRefs);
+      unique(`${change.id}.hunkExplanations`, explanationRefs);
+      for (const ref of explanationRefs) {
+        if (!changeHunks.has(ref)) {
+          errors.push(`${change.id}.hunkExplanations references hunk outside the change ${ref}`);
+        }
+      }
+      for (const ref of change.hunkRefs) {
+        if (!explained.has(ref)) {
+          errors.push(`${change.id}.hunkExplanations is missing ${ref}`);
+        }
+      }
+    }
     for (const ref of change.targetRefs) {
       if (!targetIds.has(ref)) errors.push(`${change.id} references missing target ${ref}`);
     }
