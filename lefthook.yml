@@ -20,7 +20,7 @@ pre-commit:
       glob: "**/*.{js,mjs,cjs,ts,mts,cts,svelte,css,scss,json,jsonc,yaml,yml,md,html}"
       run: >-
         node scripts/safe-chain.mjs bun prettier
-        --check {staged_files}
+        --check -- {staged_files}
 
     - name: staged lint
       glob: "**/*.{js,mjs,cjs,ts,mts,cts,svelte}"
