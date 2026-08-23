@@ -1,7 +1,7 @@
 {
   "schemaVersion": "1.1",
   "toolVersion": "0.2.0",
-  "sourceHash": "6acebe5922d7f2e718eaf999578a56664a579886b57691cf0c154a67f8524ad0",
+  "sourceHash": "d6be8c8afa28a164f4fee18eb30c4930774059392f7f73c9b7394c319e924c7e",
   "sourceHashes": {
     "packages/adapters/generic/src/index.ts": "0fb851c88f14187773d97373b9d848e831abb629bb4b1834c4393f29917c4169",
     "packages/adapters/playwright/src/index.ts": "7714950f8fbcc160493e649a13e2c96d2843530307150357c30b9155c42b6081",
@@ -51,7 +51,7 @@
     "packages/git-collector/src/index.ts": "c8686ef8faa57f1fa17a105a57f7306ff8372de171f9469ae6e22aa1b278f86d",
     "packages/git-collector/src/patch.ts": "2ad71151ca382bc5be3b9396e60aeb36394151e5ae5670687414f967fa893e96",
     "packages/interactive-server/src/index.ts": "66bac04d327797d4d57a594f7032b87f0a32dd8ccd3c1ed1647bcf1b6a87b5b1",
-    "packages/report-builder/src/generated-ui-assets.ts": "7e0bc643e805e3d1e3af0438fd21e7bc6d8cba9e6fb93bedc9b54f9cc1d75fcf",
+    "packages/report-builder/src/generated-ui-assets.ts": "3005249c23d3064bc2799daddfaae09006a1bd6b293d0245e68d07d8a6662961",
     "packages/report-builder/src/index.ts": "9b3822c279dd29cbbf5fbda74f294d00f93ad0d7cc432ed06506a7eaae7fcc17",
     "packages/report-builder/src/native-publish.ts": "1476a27dfbb7172caf656b996b7aa71ca8c7ec3ddf1d85ee0028d11a3029f222",
     "packages/report-builder/src/schema-assets.ts": "ef080b08889e19f291d92f260fc4f731b1505552c5f3481734de9c6414d0c23a",
@@ -86,7 +86,7 @@
     "schemas/review-state.schema.json": "27f9f98344a2b94b75f84fef9bba73978bbacca1e102ed11e459d247fbed7552",
     "schemas/review-thread.schema.json": "6c5957f14b964dfaf1601ac45870b7f3fae013209dd4964aa3831dd753f06fc1"
   },
-  "dependencyBaselineSha256": "c97e2e60205f99e8e20e08cfed3fac552c9e5810dbbb79847e8b27664e54ee3a",
+  "dependencyBaselineSha256": "c53fa44f8c82a99cbdd4f21d9c3a55fb46e7e067356c9402e89af7dc0742b856",
   "dependencyHash": "597d8867ab9712efda0d971040c5841996fe059b15bef239b2a6f84303b3223c",
   "dependencyHashes": {
     "ajv-formats@3.0.1/dist/formats.js": "b61693a26869970a92cc1fe832c931ccd3afe8b6d66802b19c48306349e84880",
@@ -285,7 +285,7 @@
   },
   "uiAssetHashes": {
     "app.css": "24367977f02573eef337192857d07e9cc3d237d7870a9607cd7c7d1ae9b71c92",
-    "app.js": "68aeb0d987d16e181dba7570570bf3a0409b09464401f6c11d0dde881e33f9bc"
+    "app.js": "1d2d1f6bfab731460d04eecf18d81661b3757f1c41a95435d60ca1d1762e0be2"
   },
-  "bundleSha256": "4181c72ff425175ac297220c665daf1dc35e5927f46150dd9ea79bf7bdac767d"
+  "bundleSha256": "69771d5b0f7639a1030a902ef71f9c4ba7581f51b1a3c4c3ff3499e26f2d9fe1"
 }
