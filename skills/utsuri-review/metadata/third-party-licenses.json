@@ -1,10 +1,10 @@
 {
   "schemaVersion": "1.2",
-  "dependencyBaselineSha256": "3c66d9faf4284961cd06a4e982aa02d71ca61d0cc7c5b1c843e4722164802162",
-  "productionDependencySha256": "98450825163815dce7320493db56b50854b60fdf296fd3ffea3891d860d4f30b",
+  "dependencyBaselineSha256": "43e1a212b2c40b88beeb3ade74454a1ec689d62c9445e35df7e825e3b01c3b80",
+  "productionDependencySha256": "fe0f9af50ea1f955ab91aee181fb45166a353f39966fc31a60abda17a4398682",
   "packages": [
     {
-      "checksum": "SHA256:fa68dd6bbf2aac02e1c429238a50956e3d6eebff66f9492bda76914f3051da57",
+      "checksum": "SHA256:057505c7320bfa54ea6756c831096226e9d0a868e7edd9217354f3b908e4039d",
       "license": "AGPL-3.0-or-later",
       "name": "utsuri-workspace",
       "packageVerificationCode": null,
@@ -25,11 +25,11 @@
       "version": "3.0.1"
     },
     {
-      "checksum": "SHA512:5e6edba515e70d25f6604d9815f064d859c5d1ea7ab661bbc4f87c88779ef0c21cae0abbeb636471ef39e9d62d2582e4b88a1866f19f4ecfcf6d986275e4dc12",
+      "checksum": "SHA512:5331adf3383b372f1d8db60c871976cee11ebd56bbaf68098d86392f0af5c4cefe5d4da777a0a421615355c0886c03fadef4b3ef535a572cae4a4f651ca732d0",
       "license": "MPL-2.0",
       "name": "axe-core",
-      "packageVerificationCode": "040a8a755840d9df8acbf1730a3fb4e34483a8d9",
-      "version": "4.10.3"
+      "packageVerificationCode": "36bcbcd4afb1c01fc929c1190917902b5ea470c3",
+      "version": "4.13.0"
     },
     {
       "checksum": "SHA512:7f7a90f68432f63d808417bf1fd542f75c0b98a042094fe00ce9ca340606e61b303bb04b2a3d3d1dce4760dcfd70623efb19690c22200da8ad56cd3701347ce1",
