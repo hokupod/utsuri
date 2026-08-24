@@ -5,7 +5,7 @@
     "creators": ["Tool: Utsuri SBOM generator 1"]
   },
   "dataLicense": "CC0-1.0",
-  "documentNamespace": "https://github.com/hokupod/utsuri/sbom/0.3.0/91a9531c5dedcf6b560733a902e4cf9ba5e5bcf02b9e6f09b5e8836e8bfc1dc9",
+  "documentNamespace": "https://github.com/hokupod/utsuri/sbom/0.3.0/be3419bf7a289af42d91950fe60e8be1cba44d8704ba7b5b4f2f03f4d4cb8aaa",
   "name": "utsuri-0.3.0",
   "packages": [
     {
@@ -13,7 +13,7 @@
       "checksums": [
         {
           "algorithm": "SHA256",
-          "checksumValue": "59e4eacf005d49364ed99eabd820ddac905671030f4af346066bc924f58c71db"
+          "checksumValue": "f019f13f23339efd75b899cbeaf7d9b1486e53ae5bcba7651b93330a11d69e8e"
         }
       ],
       "downloadLocation": "NOASSERTION",
@@ -222,11 +222,11 @@
       "versionInfo": "2.0.2"
     },
     {
-      "SPDXID": "SPDXRef-Package-yaml-2.8.3",
+      "SPDXID": "SPDXRef-Package-yaml-2.9.0",
       "checksums": [
         {
           "algorithm": "SHA512",
-          "checksumValue": "02f6da08b38ed8eb70fe55b96e687d77f58475c0c5750a766766541f7a57f54da2872518d27bcbbfb27a4eb5a8c2495118f61b07f22e20c7d88316823e0e41a6"
+          "checksumValue": "d80be1357de66fccdde99cbb20d4ed4a9975175e475ba5a7aa3d2cad696428b729625fe03083098b2b86ab629e236605c543e376507edcb735d2c78c2ed2f870"
         }
       ],
       "downloadLocation": "NOASSERTION",
@@ -235,9 +235,9 @@
       "licenseDeclared": "ISC",
       "name": "yaml",
       "packageVerificationCode": {
-        "packageVerificationCodeValue": "cac05147c9e81f47be97e4fe2653e8e19042720a"
+        "packageVerificationCodeValue": "fcfd078bdf9ed3fc444a466bb1488ae9c87ab7fa"
       },
-      "versionInfo": "2.8.3"
+      "versionInfo": "2.9.0"
     }
   ],
   "relationships": [
@@ -312,7 +312,7 @@
       "spdxElementId": "SPDXRef-Package-utsuri-workspace-0.3.0"
     },
     {
-      "relatedSpdxElement": "SPDXRef-Package-yaml-2.8.3",
+      "relatedSpdxElement": "SPDXRef-Package-yaml-2.9.0",
       "relationshipType": "DEPENDS_ON",
       "spdxElementId": "SPDXRef-Package-utsuri-workspace-0.3.0"
     }

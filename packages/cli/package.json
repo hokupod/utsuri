@@ -46,6 +46,6 @@
     "@utsu-ri/security": "workspace:*",
     "@utsu-ri/session-binding": "workspace:*",
     "fflate": "0.8.3",
-    "yaml": "2.8.3"
+    "yaml": "2.9.0"
   }
 }
