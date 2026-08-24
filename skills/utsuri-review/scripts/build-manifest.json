@@ -86,8 +86,8 @@
     "schemas/review-state.schema.json": "27f9f98344a2b94b75f84fef9bba73978bbacca1e102ed11e459d247fbed7552",
     "schemas/review-thread.schema.json": "6c5957f14b964dfaf1601ac45870b7f3fae013209dd4964aa3831dd753f06fc1"
   },
-  "dependencyBaselineSha256": "1276c68541fdc5175f54496c8b021ea1b01555da5d3b9a8cd08d4c1d42878b98",
-  "dependencyHash": "ff9ba1fe2d39463b9a67e95dcd64b994f014660700f1bbfc5630971274d0243e",
+  "dependencyBaselineSha256": "7220e04f8a5fea9f3c492e4f8ae0d55102592ce10d743833b9675a70cafdc20d",
+  "dependencyHash": "6eef8a22afa4385ae65aa0608b171b407c0398c61f3409918323279daaf883d3",
   "dependencyHashes": {
     "ajv-formats@3.0.1/dist/formats.js": "b61693a26869970a92cc1fe832c931ccd3afe8b6d66802b19c48306349e84880",
     "ajv-formats@3.0.1/dist/index.js": "3f3014150293846086d11058bb8bf43e669e354a98b37adcf10281454d5e753b",
@@ -163,13 +163,13 @@
     "fflate@0.8.3/esm/index.mjs": "8d75534a30a0580608e1271c13d70943ed4cd3589fddff7b1197748036a5116e",
     "json-schema-traverse@1.0.0/index.js": "024191b747afac01b28ff11d744e9f82720bbad5f716163ba5c962eb62aa2350",
     "pixelmatch@7.2.0/index.js": "52c6026c4916a07548d4ce55090ec4ed918d353e15095406dabc3a8a5135d788",
-    "playwright-core@1.61.1/browsers.json": "ee39bc924bc3d1bd895626c2910f1292d109bbfeeb5abd113acb45e1951cc942",
-    "playwright-core@1.61.1/index.js": "a58fb2cec4293e7dcf73c58a179898a4f3986666451a19da4e731fa3af63265b",
-    "playwright-core@1.61.1/index.mjs": "3d36e2132d3c8b62397d23f0bb4177336aaee503203ae2a2c90fbeb5bf3317dd",
-    "playwright-core@1.61.1/lib/bootstrap.js": "97ffe165e8e45f1b51a713b3f380d383e4e183727135fe9a5e045ec62e9310ab",
-    "playwright-core@1.61.1/lib/coreBundle.js": "6be5c2ea035554e9b184b1dbc7aa5e7f1fb428dd1b5c202022858dcfae9bee27",
-    "playwright-core@1.61.1/lib/utilsBundle.js": "1295945f0054d2504c9b751945b15aa3c672530ad5a340f3f9636e5e238f304a",
-    "playwright-core@1.61.1/package.json": "759e376f995bf39edd4810d699b99469bab1d7428b6fbc78d41912f367df7ba9",
+    "playwright-core@1.62.1/browsers.json": "f306eed529599b1eaf2f8a85db9de2b23e1a3fe36c2b66434b7c9434fb627a99",
+    "playwright-core@1.62.1/index.js": "a58fb2cec4293e7dcf73c58a179898a4f3986666451a19da4e731fa3af63265b",
+    "playwright-core@1.62.1/index.mjs": "3d36e2132d3c8b62397d23f0bb4177336aaee503203ae2a2c90fbeb5bf3317dd",
+    "playwright-core@1.62.1/lib/bootstrap.js": "4637f4dbfef9cfc01baeb5f5d2cb63fa0901522c96915ea2227290558d27123e",
+    "playwright-core@1.62.1/lib/coreBundle.js": "9393fa79e1c67c74edc26b610d65a4f7ed73d345a762465cc88340a33a2454ac",
+    "playwright-core@1.62.1/lib/utilsBundle.js": "580f571bf063e2256b51b3946a035bc452fc0e22808d5547b198baea39923a32",
+    "playwright-core@1.62.1/package.json": "07c47543631fef9508760365dee9fbe958c562093ec8d122543949ed231f233f",
     "pngjs@7.0.0/lib/bitmapper.js": "3f2f720e3a2b4e41cdc03e9f58bb1794bec26dcd1b22568e41ce0b84ab20aeb5",
     "pngjs@7.0.0/lib/bitpacker.js": "3f7bfabcbc82bedd0cc8551bc210b44dc1fb179fa2ce3b8b1d39fa307d8af204",
     "pngjs@7.0.0/lib/chunkstream.js": "43c5507901554a29c5a29e555aaeb3c3987b84fb3aa8c681c1b30794a477aa85",
@@ -287,5 +287,5 @@
     "app.css": "26db3b18b936af3b1cf306bbc984db50d7144d1706712bcad400e5e3af3d485a",
     "app.js": "0a54377c7bb4d89d7211965163dd6206889ba1136a828ddeef8bd22c8c796627"
   },
-  "bundleSha256": "accc39486cd8287fb7c8ba7856686881aa0143206c30bd2a9347f644b4420071"
+  "bundleSha256": "8bbe39e1ac015737a88ded9c152241547141fc56f2ae3a0983e79453cd4dd2fe"
 }

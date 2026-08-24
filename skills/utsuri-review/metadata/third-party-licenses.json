@@ -1,10 +1,10 @@
 {
   "schemaVersion": "1.2",
-  "dependencyBaselineSha256": "1276c68541fdc5175f54496c8b021ea1b01555da5d3b9a8cd08d4c1d42878b98",
-  "productionDependencySha256": "be3419bf7a289af42d91950fe60e8be1cba44d8704ba7b5b4f2f03f4d4cb8aaa",
+  "dependencyBaselineSha256": "7220e04f8a5fea9f3c492e4f8ae0d55102592ce10d743833b9675a70cafdc20d",
+  "productionDependencySha256": "53426170c8f8e4e3f652b47db3bea79603ba98da2da55999edd67b4b85210daf",
   "packages": [
     {
-      "checksum": "SHA256:f019f13f23339efd75b899cbeaf7d9b1486e53ae5bcba7651b93330a11d69e8e",
+      "checksum": "SHA256:c71f8be24b22df3bb2374cfd65e24463300104d9f1d6bb91748d2d332d34c8de",
       "license": "AGPL-3.0-or-later",
       "name": "utsuri-workspace",
       "packageVerificationCode": null,
@@ -67,11 +67,11 @@
       "version": "7.2.0"
     },
     {
-      "checksum": "SHA512:87b425b7a9b8444a76e6abc876f6c3b55983e0ba955dfa51c61391bfd2f48f3113334e69e1fb8f27774acae4974310d26d79e64bbf470208bde7cf65192a4b92",
+      "checksum": "SHA512:c0f612c0404963d187ada2125eacaab71d276b42e93b75c45fb8cd0e19ed6dec7bb73512ee42e766c3a516bb85241e078bfae10cc8d71aa1dec0367af2761957",
       "license": "Apache-2.0",
       "name": "playwright-core",
-      "packageVerificationCode": "fb137e0cd71afd1a5fdde351d87619852d31a649",
-      "version": "1.61.1"
+      "packageVerificationCode": "a4392c6aad4eae4da35f6eabacac77e17e24e7b8",
+      "version": "1.62.1"
     },
     {
       "checksum": "SHA512:2ca5aa589461b2dc98a3da46be0a2bfe2be4db0f787928c4dd1195bb32c696bdcd983f1b7fb45c606cded6635d10744fe9344feab32e0c7939b78e219d3472a3",
