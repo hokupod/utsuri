@@ -8,6 +8,7 @@ import { parse } from "yaml";
 const repositoryRoot = path.resolve(import.meta.dirname, "../..");
 const config = parse(readFileSync(path.join(repositoryRoot, "lefthook.yml"), "utf8"));
 const prettierCli = path.join(repositoryRoot, "node_modules/prettier/bin/prettier.cjs");
+const eslintCli = path.join(repositoryRoot, "node_modules/eslint/bin/eslint.js");
 
 function stagedFormattingArguments(file) {
   const job = config["pre-commit"]?.jobs?.find(
@@ -25,6 +26,20 @@ function stagedFormattingArguments(file) {
   return tokens.slice(prettier + 1);
 }
 
+function stagedLintArguments(file) {
+  const job = config["pre-commit"]?.jobs?.find((candidate) => candidate.name === "staged lint");
+  assert.ok(job, "staged lint job is required");
+
+  const tokens = job.run.trim().split(/\s+/u);
+  const eslint = tokens.indexOf("eslint");
+  assert.notEqual(eslint, -1, "staged lint must invoke ESLint");
+  const placeholder = tokens.indexOf("{staged_files}");
+  assert.notEqual(placeholder, -1, "staged lint must consume staged files");
+  tokens.splice(placeholder, 1, file);
+
+  return tokens.slice(eslint + 1);
+}
+
 test("staged formatting treats option-like paths as file operands", () => {
   const optionLikePath = "--config=utsuri-option-injection-probe.mjs";
   const arguments_ = stagedFormattingArguments(optionLikePath);
@@ -39,4 +54,19 @@ test("staged formatting treats option-like paths as file operands", () => {
   assert.notEqual(result.status, 0, "the deliberately missing probe file must not pass formatting");
   assert.match(output, /No files matching the pattern/u);
   assert.match(output, /--config=utsuri-option-injection-probe\.mjs/u);
+});
+
+test("staged lint silently skips intentionally generated files", () => {
+  const generatedFile = "skills/utsuri-review/assets/report-ui/app.js";
+  const arguments_ = stagedLintArguments(generatedFile);
+  const result = spawnSync(process.execPath, [eslintCli, ...arguments_], {
+    cwd: repositoryRoot,
+    encoding: "utf8",
+    shell: false
+  });
+  const output = `${result.stdout}${result.stderr}`;
+
+  assert.equal(result.error, undefined, output);
+  assert.equal(result.status, 0, output);
+  assert.doesNotMatch(output, /File ignored/u);
 });
