@@ -25,7 +25,7 @@ function createRuntimeBundleStubs(additionalDependencyInputs) {
     name: "utsuri-runtime-bundle-stubs",
     setup(build) {
       build.onResolve(
-        { filter: /^(?:bufferutil|electron\/index\.js|fsevents|utf-8-validate)$/ },
+        { filter: /^(?:bufferutil|electron\/index\.js|fsevents|kerberos|utf-8-validate)$/ },
         (args) => ({
           path: args.path,
           namespace: "utsuri-optional"
@@ -37,7 +37,13 @@ function createRuntimeBundleStubs(additionalDependencyInputs) {
       }));
       build.onLoad({ filter: /.*/, namespace: "utsuri-optional" }, (args) => {
         if (
-          new Set(["bufferutil", "electron/index.js", "fsevents", "utf-8-validate"]).has(args.path)
+          new Set([
+            "bufferutil",
+            "electron/index.js",
+            "fsevents",
+            "kerberos",
+            "utf-8-validate"
+          ]).has(args.path)
         ) {
           return { contents: 'throw new Error("Optional Playwright integration is not bundled");' };
         }
@@ -55,22 +61,23 @@ function createRuntimeBundleStubs(additionalDependencyInputs) {
       build.onLoad({ filter: /playwright-core\/lib\/coreBundle\.js$/ }, async (args) => {
         const source = await readFile(args.path, "utf8");
         const dynamicVite = "new Function('return import(\"vite\")')";
-        const packageInitialization = `packageRoot = import_path8.default.join(__dirname, "..");
-    packageJSON = require(import_path8.default.join(packageRoot, "package.json"));
-    binPath = import_path8.default.join(packageRoot, "bin");`;
-        const browserRegistryInitialization =
-          'registry = new Registry(require(import_path19.default.join(packageRoot, "browsers.json")));';
+        const packageInitialization = source.match(
+          /packageRoot = (import_path\d+\.default)\.join\(__dirname, "\.\."\);\r?\n {4}packageJSON = require\(\1\.join\(packageRoot, "package\.json"\)\);\r?\n {4}binPath = \1\.join\(packageRoot, "bin"\);/u
+        )?.[0];
+        const browserRegistryInitialization = source.match(
+          /registry = new Registry\(require\(import_path\d+\.default\.join\(packageRoot, "browsers\.json"\)\)\);/u
+        )?.[0];
         if (!source.includes(dynamicVite)) {
           throw new Error(
             "Playwright core bundle no longer contains the expected optional Vite hook"
           );
         }
-        if (!source.includes(packageInitialization)) {
+        if (!packageInitialization) {
           throw new Error(
             "Playwright core bundle no longer contains the expected package initialization"
           );
         }
-        if (!source.includes(browserRegistryInitialization)) {
+        if (!browserRegistryInitialization) {
           throw new Error(
             "Playwright core bundle no longer contains the expected browser registry initialization"
           );
