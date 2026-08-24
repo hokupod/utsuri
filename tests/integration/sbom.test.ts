@@ -93,7 +93,7 @@ describe("deterministic supply-chain metadata", () => {
       expect(devOnlyUpdate).toEqual(current);
 
       const productionLock = updatedLock.replace(
-        /("yaml": \[[^\n]*"sha512-)([A-Za-z])/u,
+        /("yaml": \[[^\n]*"sha512-)([A-Za-z0-9+/])/u,
         (_match, prefix, first) => `${prefix}${first === "A" ? "B" : "A"}`
       );
       expect(productionLock).not.toBe(updatedLock);
