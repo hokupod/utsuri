@@ -14,6 +14,21 @@ const scopes = {
 const excludedDirectories = new Set(["a11y", "e2e", "node_modules"]);
 const testFilePattern = /\.(?:test|spec)\.(?:[cm]?[jt]s|tsx)$/u;
 
+function isolatedTestEnvironment() {
+  const result = spawnSync("git", ["rev-parse", "--local-env-vars"], {
+    cwd: repositoryRoot,
+    encoding: "utf8",
+    shell: false
+  });
+  if (result.error) throw result.error;
+  if (result.status !== 0) {
+    throw new Error(result.stderr.trim() || "Could not enumerate Git-local environment variables");
+  }
+  const environment = { ...process.env };
+  for (const variable of result.stdout.split(/\s+/u).filter(Boolean)) delete environment[variable];
+  return environment;
+}
+
 async function collectTestFiles(relativeDirectory) {
   const directory = path.join(repositoryRoot, relativeDirectory);
   const entries = await readdir(directory, { withFileTypes: true });
@@ -44,9 +59,12 @@ if (files.length === 0) {
   process.exit(2);
 }
 
+const testEnvironment = isolatedTestEnvironment();
+
 for (const file of files) {
   const result = spawnSync("bun", ["test", "--parallel=1", "--max-concurrency=1", file], {
     cwd: repositoryRoot,
+    env: testEnvironment,
     shell: false,
     stdio: "inherit"
   });
