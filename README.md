@@ -22,10 +22,10 @@ Use it when a code or UI change needs a durable report, a clear list of review g
 
 ## Availability and requirements
 
-<!-- availability:git-marketplace-source-ready-cli-publication-pending -->
+<!-- availability:git-marketplace-cli-and-plugin-public -->
 <!-- support-contract:macos-linux-windows-unsupported -->
 
-The source contains a Git Plugin that exact-pins its matching `@utsu-ri/cli` release. When the source version is newer than the latest verified public release, Git installation of that source remains gated until the exact CLI is published and the Plugin source is publicly reachable. The commands below are verified host command shapes; do not substitute `latest`, a range, or another package.
+The current public Git source contains a verified Git Plugin whose exact `@utsu-ri/cli` release is published. The commands below install that public source; the Plugin executes only its matching complete SemVer. Do not substitute `latest`, a range, or another package.
 
 - A Codex or Claude Code release listed in the [runtime compatibility record](https://github.com/hokupod/utsuri/blob/main/docs/compatibility/plugin-runtime.json).
 - macOS or Linux, Node.js 22 or later, and `npx` for first MCP startup.
