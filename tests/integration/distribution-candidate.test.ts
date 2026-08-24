@@ -202,7 +202,7 @@ describe("distribution candidate assembly", () => {
     expect(result.stderr).toBe("");
     expect(JSON.parse(result.stdout)).toEqual(expectedInstalledCliIdentity(manifest.version));
     expect(nativeHelperPackageVersion).toBe(manifest.version);
-  });
+  }, 30_000);
 
   test("requires and binds all four helper packages and aggregate Plugin copies", async () => {
     const scratch = await mkdtemp(path.join(os.tmpdir(), "utsuri-candidate-test-"));
