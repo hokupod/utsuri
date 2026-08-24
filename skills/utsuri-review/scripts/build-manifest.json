@@ -86,8 +86,8 @@
     "schemas/review-state.schema.json": "27f9f98344a2b94b75f84fef9bba73978bbacca1e102ed11e459d247fbed7552",
     "schemas/review-thread.schema.json": "6c5957f14b964dfaf1601ac45870b7f3fae013209dd4964aa3831dd753f06fc1"
   },
-  "dependencyBaselineSha256": "3c66d9faf4284961cd06a4e982aa02d71ca61d0cc7c5b1c843e4722164802162",
-  "dependencyHash": "6a719dd304b74cb1f1e0fb88fee5ad6b0a3c35a04f08cb2c0ec90d95475a735b",
+  "dependencyBaselineSha256": "43e1a212b2c40b88beeb3ade74454a1ec689d62c9445e35df7e825e3b01c3b80",
+  "dependencyHash": "2a8701673277a282ab290b0aa1fcf75241126330a774a0167e16d730545f3a34",
   "dependencyHashes": {
     "ajv-formats@3.0.1/dist/formats.js": "b61693a26869970a92cc1fe832c931ccd3afe8b6d66802b19c48306349e84880",
     "ajv-formats@3.0.1/dist/index.js": "3f3014150293846086d11058bb8bf43e669e354a98b37adcf10281454d5e753b",
@@ -155,7 +155,7 @@
     "ajv@8.20.0/dist/vocabularies/validation/pattern.js": "86e84206bfc6a66ef18bf1fe43fbc56ebe7f7f4d57841197b6d044c529e0c195",
     "ajv@8.20.0/dist/vocabularies/validation/required.js": "b953bc18d94274bd73374dd5b4282d7a21159cec8c0e7a357e1eaf3f326b9054",
     "ajv@8.20.0/dist/vocabularies/validation/uniqueItems.js": "666d1a2aa25c0dfe3cf41312d0f9d40e9f99eb2c19be7469134ad89005aadd52",
-    "axe-core@4.10.3/axe.js": "beeadb8d4043458482a8432dd227af926d1baf378ffbcd63888e91ec0ca8535d",
+    "axe-core@4.13.0/axe.js": "138a93a4ce7b7c6c08ed84144e45dcd8cc36d2d4ff8ed673619faf0406906d88",
     "fast-deep-equal@3.1.3/index.js": "eb469e206280321a3878f2335ec98aa2104a155079d8ed83a23029098dccd215",
     "fast-uri@3.1.5/index.js": "79945eb0b513058251bd1c3b518b86c5c549bb73b8c37c77d717133d66277a97",
     "fast-uri@3.1.5/lib/schemes.js": "0f9497f8e43c9b002d79c8a916709daa4ae8a6462735b1b5dc6ad587a28a5064",
@@ -287,5 +287,5 @@
     "app.css": "26db3b18b936af3b1cf306bbc984db50d7144d1706712bcad400e5e3af3d485a",
     "app.js": "0a54377c7bb4d89d7211965163dd6206889ba1136a828ddeef8bd22c8c796627"
   },
-  "bundleSha256": "9b9519aa9132a28262910cdbe1846d1ec8e9b97edb7c67de0e8c1955f7da7285"
+  "bundleSha256": "a2790f7db3003e6b3018a4896df71c1688661b9cd695fcaeaa6b726211d87ea7"
 }

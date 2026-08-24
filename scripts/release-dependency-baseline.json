@@ -1,11 +1,11 @@
 {
   "schemaVersion": "1.1",
-  "productionDependencySha256": "98450825163815dce7320493db56b50854b60fdf296fd3ffea3891d860d4f30b",
-  "bundledInputHash": "6a719dd304b74cb1f1e0fb88fee5ad6b0a3c35a04f08cb2c0ec90d95475a735b",
+  "productionDependencySha256": "fe0f9af50ea1f955ab91aee181fb45166a353f39966fc31a60abda17a4398682",
+  "bundledInputHash": "2a8701673277a282ab290b0aa1fcf75241126330a774a0167e16d730545f3a34",
   "packageVerificationCodes": {
     "ajv@8.20.0": "b3f66fdcb0928b7cc72eb9387473318b0620daf0",
     "ajv-formats@3.0.1": "10c29707282bc159f1c8261e00681eef880cd4d6",
-    "axe-core@4.10.3": "040a8a755840d9df8acbf1730a3fb4e34483a8d9",
+    "axe-core@4.13.0": "36bcbcd4afb1c01fc929c1190917902b5ea470c3",
     "fast-deep-equal@3.1.3": "765fba27abdad11c0d38d6211c8b642157af946b",
     "fast-uri@3.1.5": "25c40a2e0a03d80c7158ba2bba2ad1fb5473a87f",
     "fflate@0.8.3": "4b139fac54a9fc5959b61d187c3c6a21f06bcf57",
