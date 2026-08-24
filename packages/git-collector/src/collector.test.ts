@@ -19,7 +19,10 @@ afterEach(async () => {
 });
 
 function git(root: string, ...args: string[]): string {
-  return execFileSync("git", args, { cwd: root, encoding: "utf8" }).trim();
+  return execFileSync("git", ["-c", "core.hooksPath=/dev/null", ...args], {
+    cwd: root,
+    encoding: "utf8"
+  }).trim();
 }
 
 async function repository() {
