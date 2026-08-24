@@ -70,10 +70,16 @@ describe("deterministic supply-chain metadata", () => {
         readFile(path.join(repositoryRoot, "bun.lock"), "utf8")
       ]);
       const manifest = JSON.parse(manifestText);
-      manifest.devDependencies.globals = "16.5.1";
+      const currentGlobals = manifest.devDependencies.globals;
+      if (typeof currentGlobals !== "string") throw new Error("expected globals dev dependency");
+      const updatedGlobals = currentGlobals.replace(/\d+$/u, (patch: string) =>
+        String(Number(patch) + 1)
+      );
+      if (updatedGlobals === currentGlobals) throw new Error("expected a numeric globals version");
+      manifest.devDependencies.globals = updatedGlobals;
       const updatedLock = lockText
-        .replace('"globals": "16.5.0"', '"globals": "16.5.1"')
-        .replace('"globals@16.5.0"', '"globals@16.5.1"');
+        .replace(`"globals": "${currentGlobals}"`, `"globals": "${updatedGlobals}"`)
+        .replace(`"globals@${currentGlobals}"`, `"globals@${updatedGlobals}"`);
       expect(updatedLock).not.toBe(lockText);
       await Promise.all([
         writeFile(
