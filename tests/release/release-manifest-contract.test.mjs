@@ -265,10 +265,21 @@ describe("cross-job distribution transport", () => {
       "    steps:",
       "      - name: Install and verify Safe-chain trust anchor"
     ].join("\n");
-    assert.deepEqual(publishedCliSmokeErrors("release.yml", workflow), []);
+    const smokeErrors = (candidate) =>
+      publishedCliSmokeErrors("release.yml", candidate, {
+        nodeVersion: 24,
+        bunVersion: "1.3.14"
+      });
+    assert.deepEqual(smokeErrors(workflow), []);
     assert.match(
-      publishedCliSmokeErrors(
-        "release.yml",
+      publishedCliSmokeErrors("release.yml", workflow, {
+        nodeVersion: 24,
+        bunVersion: "1.4.0"
+      }).join("\n"),
+      /wrong setup action or inputs/u
+    );
+    assert.match(
+      smokeErrors(
         workflow.replace(
           "      - run: node scripts/verify-published-cli.mjs --version-from-package",
           [
@@ -281,8 +292,7 @@ describe("cross-job distribution transport", () => {
       /unapproved command/u
     );
     assert.match(
-      publishedCliSmokeErrors(
-        "release.yml",
+      smokeErrors(
         workflow.replace(
           "      - run: node scripts/verify-published-cli.mjs --version-from-package",
           [
@@ -296,15 +306,13 @@ describe("cross-job distribution transport", () => {
       /unapproved keys: env/u
     );
     assert.match(
-      publishedCliSmokeErrors(
-        "release.yml",
+      smokeErrors(
         workflow.replace("          node-version: 24", "          node-version: 23")
       ).join("\n"),
       /wrong setup action or inputs/u
     );
     assert.match(
-      publishedCliSmokeErrors(
-        "release.yml",
+      smokeErrors(
         workflow.replace(
           "    runs-on: ubuntu-24.04",
           "    runs-on: ubuntu-24.04\n    env: { NODE_OPTIONS: --require ./scripts/inject.cjs }"
@@ -524,10 +532,16 @@ describe("toolchain and CI contract", () => {
   });
 
   test("keeps Renovate toolchain updates complete without hosted post-upgrade scripts", async () => {
-    const config = JSON.parse(await readFile(path.join(repositoryRoot, "renovate.json"), "utf8"));
+    const [config, policy, manifest] = await Promise.all(
+      ["renovate.json", "toolchain-policy.json", "package.json"].map((filename) =>
+        readFile(path.join(repositoryRoot, filename), "utf8").then(JSON.parse)
+      )
+    );
     assert.equal(config.postUpgradeTasks, undefined);
     assert.ok(config.extends.includes(":preserveSemverRanges"));
     assert.equal(config.rangeStrategy, undefined);
+    assert.equal(manifest.packageManager, `bun@${policy.bun.ciPrimary}`);
+    assert.equal(manifest.devDependencies["@types/bun"], policy.bun.ciPrimary);
     const engineRule = config.packageRules.find((rule) => rule.matchDepTypes?.includes("engines"));
     assert.equal(engineRule?.enabled, false);
     const bunManager = config.customManagers.find(
@@ -538,6 +552,8 @@ describe("toolchain and CI contract", () => {
     assert.ok(bunManager, "Renovate must update the canonical primary Bun policy");
     assert.equal(bunManager.datasourceTemplate, "github-releases");
     assert.ok(bunManager.managerFilePatterns.includes("/^\\.github/workflows/ci\\.yml$/"));
+    assert.ok(bunManager.managerFilePatterns.includes("/^package\\.json$/"));
+    assert.ok(bunManager.matchStrings.some((pattern) => pattern.includes('"packageManager"')));
     assert.ok(bunManager.matchStrings.some((pattern) => pattern.includes("bun: \\[")));
 
     const bunRule = config.packageRules.find((rule) => rule.groupName === "Bun toolchain");
@@ -704,13 +720,17 @@ describe("toolchain and CI contract", () => {
   });
 
   test("disables setup-bun caching for public release jobs", async () => {
-    const workflow = await readFile(
-      path.join(repositoryRoot, ".github/workflows/release.yml"),
-      "utf8"
-    );
+    const [workflow, policy] = await Promise.all([
+      readFile(path.join(repositoryRoot, ".github/workflows/release.yml"), "utf8"),
+      readFile(path.join(repositoryRoot, "toolchain-policy.json"), "utf8").then(JSON.parse)
+    ]);
+    const bunVersion = policy.bun.ciPrimary.replaceAll(".", "\\.");
     const uncachedSetups =
       workflow.match(
-        /uses: oven-sh\/setup-bun@[a-f0-9]{40}[^\n]*\n\s+with:\n\s+bun-version: 1\.3\.14\n\s+no-cache: true/gu
+        new RegExp(
+          `uses: oven-sh/setup-bun@[a-f0-9]{40}[^\\n]*\\n\\s+with:\\n\\s+bun-version: ${bunVersion}\\n\\s+no-cache: true`,
+          "gu"
+        )
       ) ?? [];
     const allSetups = workflow.match(/uses: oven-sh\/setup-bun@/gu) ?? [];
     assert.ok(allSetups.length >= 2);

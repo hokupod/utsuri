@@ -7,7 +7,7 @@
   },
   "bun": {
     "flake": "1.3.13",
-    "ciPrimary": "1.3.14"
+    "ciPrimary": "1.4.0"
   },
   "safeChain": {
     "version": "1.5.14",

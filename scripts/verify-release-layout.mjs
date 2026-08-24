@@ -566,7 +566,12 @@ if (releaseWorkflowContent) {
       allowedLocalReferences: ["./.github/workflows/distribution-candidate.yml"]
     })
   );
-  errors.push(...publishedCliSmokeErrors(".github/workflows/release.yml", releaseWorkflow));
+  errors.push(
+    ...publishedCliSmokeErrors(".github/workflows/release.yml", releaseWorkflow, {
+      nodeVersion: toolchainPolicy?.node?.developmentMajor,
+      bunVersion: toolchainPolicy?.bun?.ciPrimary
+    })
+  );
   if (releaseWorkflow.includes("plugin-promote.mjs")) {
     errors.push("Release workflow must not automatically promote the Git Plugin");
   }

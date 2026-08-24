@@ -108,11 +108,20 @@ function validateReadOnlyPermissions(relativePath, location, permissions, errors
   }
 }
 
-export function publishedCliSmokeErrors(relativePath, text) {
+export function publishedCliSmokeErrors(relativePath, text, toolchain) {
   const parsed = parseWorkflow(relativePath, text);
   if (!parsed.workflow) return parsed.errors;
 
   const errors = [];
+  const nodeVersion = toolchain?.nodeVersion;
+  const bunVersion = toolchain?.bunVersion;
+  if (
+    !Number.isInteger(nodeVersion) ||
+    typeof bunVersion !== "string" ||
+    !/^\d+\.\d+\.\d+$/u.test(bunVersion)
+  ) {
+    return [`${relativePath} published-smoke toolchain versions are invalid`];
+  }
   for (const key of ["env", "defaults"]) {
     if (Object.hasOwn(parsed.workflow, key)) {
       errors.push(`${relativePath} must not define top-level ${key}`);
@@ -141,11 +150,11 @@ export function publishedCliSmokeErrors(relativePath, text) {
     },
     {
       action: "actions/setup-node",
-      with: { "node-version": 24, "package-manager-cache": false }
+      with: { "node-version": nodeVersion, "package-manager-cache": false }
     },
     {
       action: "oven-sh/setup-bun",
-      with: { "bun-version": "1.3.14", "no-cache": true }
+      with: { "bun-version": bunVersion, "no-cache": true }
     }
   ];
   let actionIndex = 0;
