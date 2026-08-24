@@ -216447,13 +216447,14 @@ async function loadCaptureConfig(cwd, configPath) {
 import { lstat as lstat5, mkdir as mkdir3, readFile as readFile3, realpath as realpath6, rename as rename2, unlink, writeFile as writeFile4 } from "node:fs/promises";
 import path13 from "node:path";
 
-// node_modules/.bun/pixelmatch@7.1.0/node_modules/pixelmatch/index.js
+// node_modules/.bun/pixelmatch@7.2.0/node_modules/pixelmatch/index.js
 function pixelmatch(img1, img2, output, width, height, options2 = {}) {
   const {
     threshold = 0.1,
     alpha = 0.1,
     aaColor = [255, 255, 0],
     diffColor = [255, 0, 0],
+    checkerboard = true,
     includeAA,
     diffColorAlt,
     diffMask
@@ -216461,8 +216462,8 @@ function pixelmatch(img1, img2, output, width, height, options2 = {}) {
   if (!isPixelData(img1) || !isPixelData(img2) || output && !isPixelData(output))
     throw new Error("Image data: Uint8Array, Uint8ClampedArray or Buffer expected.");
   if (img1.length !== img2.length || output && output.length !== img1.length)
-    throw new Error("Image sizes do not match.");
-  if (img1.length !== width * height * 4) throw new Error("Image data size does not match width/height.");
+    throw new Error(`Image sizes do not match. Image 1 size: ${img1.length}, image 2 size: ${img2.length}`);
+  if (img1.length !== width * height * 4) throw new Error(`Image data size does not match width/height. Expecting ${width * height * 4}. Got ${img1.length}`);
   const len = width * height;
   const a32 = new Uint32Array(img1.buffer, img1.byteOffset, len);
   const b32 = new Uint32Array(img2.buffer, img2.byteOffset, len);
@@ -216475,7 +216476,7 @@ function pixelmatch(img1, img2, output, width, height, options2 = {}) {
   }
   if (identical) {
     if (output && !diffMask) {
-      for (let i2 = 0; i2 < len; i2++) drawGrayPixel(img1, 4 * i2, alpha, output);
+      for (let i2 = 0, pos = 0; i2 < len; i2++, pos += 4) drawGrayPixel(img1, pos, alpha, output);
     }
     return 0;
   }
@@ -216484,28 +216485,26 @@ function pixelmatch(img1, img2, output, width, height, options2 = {}) {
   const [diffR, diffG, diffB] = diffColor;
   const [altR, altG, altB] = diffColorAlt || diffColor;
   let diff2 = 0;
-  for (let y = 0; y < height; y++) {
-    for (let x2 = 0; x2 < width; x2++) {
-      const i2 = y * width + x2;
-      const pos = i2 * 4;
-      const delta = a32[i2] === b32[i2] ? 0 : colorDelta(img1, img2, pos, pos, false);
-      if (Math.abs(delta) > maxDelta) {
-        const isAA = antialiased(img1, x2, y, width, height, a32, b32) || antialiased(img2, x2, y, width, height, b32, a32);
-        if (!includeAA && isAA) {
-          if (output && !diffMask) drawPixel2(output, pos, aaR, aaG, aaB);
-        } else {
-          if (output) {
-            if (delta < 0) {
-              drawPixel2(output, pos, altR, altG, altB);
-            } else {
-              drawPixel2(output, pos, diffR, diffG, diffB);
-            }
+  for (let i2 = 0, pos = 0; i2 < len; i2++, pos += 4) {
+    const delta = a32[i2] === b32[i2] ? 0 : colorDelta(img1, img2, pos, pos, checkerboard);
+    if (Math.abs(delta) > maxDelta) {
+      const x2 = i2 % width;
+      const y = i2 / width | 0;
+      const isExcludedAA = !includeAA && (antialiased(img1, x2, y, width, height, a32, b32, checkerboard) || antialiased(img2, x2, y, width, height, b32, a32, checkerboard));
+      if (isExcludedAA) {
+        if (output && !diffMask) drawPixel2(output, pos, aaR, aaG, aaB);
+      } else {
+        if (output) {
+          if (delta < 0) {
+            drawPixel2(output, pos, altR, altG, altB);
+          } else {
+            drawPixel2(output, pos, diffR, diffG, diffB);
           }
-          diff2++;
         }
-      } else if (output && !diffMask) {
-        drawGrayPixel(img1, pos, alpha, output);
+        diff2++;
       }
+    } else if (output && !diffMask) {
+      drawGrayPixel(img1, pos, alpha, output);
     }
   }
   return diff2;
@@ -216513,12 +216512,16 @@ function pixelmatch(img1, img2, output, width, height, options2 = {}) {
 function isPixelData(arr) {
   return ArrayBuffer.isView(arr) && arr.BYTES_PER_ELEMENT === 1;
 }
-function antialiased(img, x1, y1, width, height, a32, b32) {
+function antialiased(img, x1, y1, width, height, a32, b32, checkerboard) {
   const x0 = Math.max(x1 - 1, 0);
   const y0 = Math.max(y1 - 1, 0);
   const x2 = Math.min(x1 + 1, width - 1);
   const y2 = Math.min(y1 + 1, height - 1);
-  const pos = y1 * width + x1;
+  const pos4 = (y1 * width + x1) * 4;
+  const cr = img[pos4];
+  const cg = img[pos4 + 1];
+  const cb = img[pos4 + 2];
+  const ca = img[pos4 + 3];
   let zeroes = x1 === x0 || x1 === x2 || y1 === y0 || y1 === y2 ? 1 : 0;
   let min = 0;
   let max = 0;
@@ -216529,7 +216532,7 @@ function antialiased(img, x1, y1, width, height, a32, b32) {
   for (let x3 = x0; x3 <= x2; x3++) {
     for (let y = y0; y <= y2; y++) {
       if (x3 === x1 && y === y1) continue;
-      const delta = colorDelta(img, img, pos * 4, (y * width + x3) * 4, true);
+      const delta = brightnessDelta(img, pos4, (y * width + x3) * 4, cr, cg, cb, ca, checkerboard);
       if (delta === 0) {
         zeroes++;
         if (zeroes > 2) return false;
@@ -216563,7 +216566,7 @@ function hasManySiblings(img, x1, y1, width, height) {
   }
   return false;
 }
-function colorDelta(img1, img2, k, m, yOnly) {
+function colorDelta(img1, img2, k, m, checkerboard) {
   const r1 = img1[k];
   const g1 = img1[k + 1];
   const b1 = img1[k + 2];
@@ -216576,24 +216579,48 @@ function colorDelta(img1, img2, k, m, yOnly) {
   let dg = g1 - g2;
   let db = b1 - b2;
   const da = a1 - a2;
-  if (!dr && !dg && !db && !da) return 0;
   if (a1 < 255 || a2 < 255) {
-    const rb = 48 + 159 * (k % 2);
-    const gb = 48 + 159 * ((k / 1.618033988749895 | 0) % 2);
-    const bb = 48 + 159 * ((k / 2.618033988749895 | 0) % 2);
+    let rb = 255, gb = 255, bb = 255;
+    if (checkerboard) {
+      rb = 48 + 159 * (k % 2);
+      gb = 48 + 159 * ((k / 1.618033988749895 | 0) % 2);
+      bb = 48 + 159 * ((k / 2.618033988749895 | 0) % 2);
+    }
     dr = (r1 * a1 - r2 * a2 - rb * da) / 255;
     dg = (g1 * a1 - g2 * a2 - gb * da) / 255;
     db = (b1 * a1 - b2 * a2 - bb * da) / 255;
   }
   const y = dr * 0.29889531 + dg * 0.58662247 + db * 0.11448223;
-  if (yOnly) return y;
   const i2 = dr * 0.59597799 - dg * 0.2741761 - db * 0.32180189;
   const q = dr * 0.21147017 - dg * 0.52261711 + db * 0.31114694;
   const delta = 0.5053 * y * y + 0.299 * i2 * i2 + 0.1957 * q * q;
   return y > 0 ? -delta : delta;
 }
+function brightnessDelta(img, k, m, r1, g1, b1, a1, checkerboard) {
+  const r2 = img[m];
+  const g2 = img[m + 1];
+  const b2 = img[m + 2];
+  const a2 = img[m + 3];
+  let dr = r1 - r2;
+  let dg = g1 - g2;
+  let db = b1 - b2;
+  const da = a1 - a2;
+  if (!dr && !dg && !db && !da) return 0;
+  if (a1 < 255 || a2 < 255) {
+    let rb = 255, gb = 255, bb = 255;
+    if (checkerboard) {
+      rb = 48 + 159 * (k % 2);
+      gb = 48 + 159 * ((k / 1.618033988749895 | 0) % 2);
+      bb = 48 + 159 * ((k / 2.618033988749895 | 0) % 2);
+    }
+    dr = (r1 * a1 - r2 * a2 - rb * da) / 255;
+    dg = (g1 * a1 - g2 * a2 - gb * da) / 255;
+    db = (b1 * a1 - b2 * a2 - bb * da) / 255;
+  }
+  return dr * 0.29889531 + dg * 0.58662247 + db * 0.11448223;
+}
 function drawPixel2(output, pos, r, g, b) {
-  output[pos + 0] = r;
+  output[pos] = r;
   output[pos + 1] = g;
   output[pos + 2] = b;
   output[pos + 3] = 255;
