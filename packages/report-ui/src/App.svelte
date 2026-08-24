@@ -2265,8 +2265,7 @@
                     rows="4"
                     maxlength="16384"
                     required
-                    disabled={reviewBusy}
-                  ></textarea>
+                    disabled={reviewBusy}></textarea>
                 </label>
                 <label class="agent-attention-control">
                   <input
