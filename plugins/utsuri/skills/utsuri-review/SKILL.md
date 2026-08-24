@@ -41,7 +41,7 @@ Do not invoke Utsuri for a one-line explanation, a repository with no reviewable
 Invoke the bundled CLI with:
 
 ```bash
-npx -y --package=@utsu-ri/cli@0.3.0 utsuri <command> [arguments]
+npx -y --package=@utsu-ri/cli@0.3.1 utsuri <command> [arguments]
 ```
 
 Read [CLI contract](references/cli-contract.md) before interpreting output, [review state](references/review-state.md) before importing or re-anchoring comments, [feedback](references/feedback.md) before consuming a Feedback Batch, [distribution](references/distribution.md) before packaging a candidate, [capture modes](references/capture-modes.md) before configuring browser evidence, [security rules](references/security.md) before capture or serving, and [failure continuation](references/failure-continuation.md) when any stage is incomplete.

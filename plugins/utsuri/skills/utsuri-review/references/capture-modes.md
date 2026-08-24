@@ -22,7 +22,7 @@
 `worktree` requires separate repository-contained `cwd` values and explicit argv arrays for both sides. It starts project code only when the user invokes:
 
 ```bash
-npx -y --package=@utsu-ri/cli@0.3.0 utsuri capture \
+npx -y --package=@utsu-ri/cli@0.3.1 utsuri capture \
   --run <run> \
   --config <config> \
   --allow-project-code \
