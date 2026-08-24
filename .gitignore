@@ -3,6 +3,7 @@
 .direnv/
 dist/
 node_modules/
+.svelte-check/
 playwright-report/
 test-results/
 result

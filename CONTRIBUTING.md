@@ -24,6 +24,8 @@ Install the exact lockfile through the repository wrapper:
 node scripts/safe-chain.mjs bun install --frozen-lockfile
 ```
 
+The TypeScript toolchain intentionally keeps its CLI and API consumers on separate package identities: `tsc` comes from TypeScript 7 through `@typescript/native`, while the exact `typescript` 6.0.3 package remains available to `typescript-eslint` and repository scripts that import the compiler API. The TypeScript 6 comparison invokes `node_modules/typescript/bin/tsc` directly because Bun 1.3.13 does not correctly install the nested `@typescript/typescript6` alias. `svelte-check` uses `--tsgo` and writes disposable `.svelte-check/` work files, which are ignored. Do not replace the exact TypeScript 6 package with the compatibility alias until the pinned Bun release includes the nested npm-alias fix.
+
 Install the repository hooks once per clone:
 
 ```bash

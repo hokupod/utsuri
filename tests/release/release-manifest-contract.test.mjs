@@ -19,6 +19,7 @@ import {
   publishedCliSmokeErrors,
   readOnlyPermissionErrors
 } from "../../scripts/workflow-contract.mjs";
+import { parse as parseYaml } from "yaml";
 
 const repositoryRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../..");
 
@@ -575,6 +576,129 @@ describe("toolchain and CI contract", () => {
         rule.matchPackageNames?.includes("@types/node") && rule.matchUpdateTypes?.includes("major")
     );
     assert.equal(nodeTypesRule?.enabled, false);
+  });
+
+  test("keeps TypeScript 7 CLI separate from TypeScript 6 API consumers", async () => {
+    const [manifest, ignoreText, lockText, svelteCheckPackage] = await Promise.all([
+      readFile(path.join(repositoryRoot, "package.json"), "utf8").then(JSON.parse),
+      readFile(path.join(repositoryRoot, ".gitignore"), "utf8"),
+      readFile(path.join(repositoryRoot, "bun.lock"), "utf8"),
+      readFile(path.join(repositoryRoot, "node_modules/svelte-check/package.json"), "utf8").then(
+        JSON.parse
+      )
+    ]);
+    const nativeAlias = manifest.devDependencies?.["@typescript/native"];
+    const nativeMatch = /^npm:typescript@(\d+\.\d+\.\d+)$/u.exec(nativeAlias ?? "");
+    assert.ok(nativeMatch, "@typescript/native must be an exact npm:typescript alias");
+    const nativeVersion = nativeMatch[1];
+    const apiVersion = manifest.devDependencies?.typescript;
+    assert.match(apiVersion ?? "", /^\d+\.\d+\.\d+$/u, "typescript must be a plain exact version");
+    assert.equal(isCompleteSemver(nativeVersion), true);
+    assert.equal(isCompleteSemver(apiVersion), true);
+    assert.equal(nativeVersion, "7.0.2");
+    assert.equal(nativeVersion.split(".")[0], "7");
+    assert.equal(apiVersion, "6.0.3");
+    assert.equal(apiVersion.split(".")[0], "6");
+    assert.equal(svelteCheckPackage.name, "svelte-check");
+    assert.equal(svelteCheckPackage.version, manifest.devDependencies?.["svelte-check"]);
+    assert.equal(
+      manifest.scripts.typecheck,
+      "tsc --noEmit && svelte-check --tsgo --tsconfig ./tsconfig.json"
+    );
+    assert.equal(
+      manifest.scripts.lint,
+      "eslint . --max-warnings 0 --ignore-pattern '.svelte-check/**'"
+    );
+    const runCompilerVersion = (relativeCompilerPath) => {
+      const compilerPath = path.join(repositoryRoot, relativeCompilerPath);
+      const result = spawnSync(process.execPath, [compilerPath, "--version"], {
+        cwd: repositoryRoot,
+        encoding: "utf8"
+      });
+      assert.equal(
+        result.error,
+        undefined,
+        `${relativeCompilerPath} could not be executed: ${result.error?.message ?? "unknown error"}`
+      );
+      assert.equal(
+        result.status,
+        0,
+        `${relativeCompilerPath} exited ${result.status}: ${result.stderr?.trim() ?? ""}`
+      );
+      return result.stdout?.trim() ?? "";
+    };
+    const compilerMajor = (version, relativeCompilerPath) => {
+      const match = /^Version (\d+)\.\d+\.\d+$/u.exec(version);
+      assert.ok(match, `${relativeCompilerPath} returned an invalid version: ${version}`);
+      return Number(match[1]);
+    };
+    assert.equal(
+      compilerMajor(runCompilerVersion("node_modules/.bin/tsc"), "node_modules/.bin/tsc"),
+      7
+    );
+    assert.equal(
+      compilerMajor(
+        runCompilerVersion("node_modules/typescript/bin/tsc"),
+        "node_modules/typescript/bin/tsc"
+      ),
+      6
+    );
+    const svelteCheckHelp = path.join(repositoryRoot, "node_modules/.bin/svelte-check");
+    const svelteCheckResult = spawnSync(process.execPath, [svelteCheckHelp, "--tsgo", "--help"], {
+      cwd: repositoryRoot,
+      encoding: "utf8"
+    });
+    assert.equal(
+      svelteCheckResult.error,
+      undefined,
+      `svelte-check could not be executed: ${svelteCheckResult.error?.message ?? "unknown error"}`
+    );
+    assert.equal(
+      svelteCheckResult.status,
+      0,
+      `svelte-check --tsgo --help exited ${svelteCheckResult.status}: ${svelteCheckResult.stderr?.trim() ?? ""}`
+    );
+    assert.match(`${svelteCheckResult.stdout}\n${svelteCheckResult.stderr}`, /--tsgo/u);
+    const ignoredEntries = ignoreText
+      .split(/\r?\n/u)
+      .map((line) => line.trim())
+      .filter((line) => line === ".svelte-check/");
+    assert.equal(ignoredEntries.length, 1, ".svelte-check/ must be ignored exactly once");
+
+    const lock = parseYaml(lockText);
+    const rootDevDependencies = lock.workspaces?.[""]?.devDependencies;
+    assert.equal(rootDevDependencies?.["@typescript/native"], `npm:typescript@${nativeVersion}`);
+    assert.equal(rootDevDependencies?.typescript, apiVersion);
+    const packageEntries = Object.values(lock.packages ?? {}).filter(
+      (entry) => Array.isArray(entry) && typeof entry[0] === "string"
+    );
+    const nativeEntry = packageEntries.find((entry) => entry[0] === `typescript@${nativeVersion}`);
+    const apiEntry = packageEntries.find((entry) => entry[0] === `typescript@${apiVersion}`);
+    const apiRootEntry = lock.packages?.typescript;
+    assert.ok(nativeEntry, `bun.lock must resolve typescript@${nativeVersion}`);
+    assert.ok(apiEntry, `bun.lock must resolve typescript@${apiVersion}`);
+    assert.equal(apiRootEntry?.[0], `typescript@${apiVersion}`);
+    const compilerIdentities = new Set(
+      packageEntries
+        .map((entry) => entry[0])
+        .filter((identity) => /^typescript@\d+\.\d+\.\d+$/u.test(identity))
+    );
+    assert.deepEqual(
+      [...compilerIdentities].sort(),
+      [`typescript@${apiVersion}`, `typescript@${nativeVersion}`].sort(),
+      "bun.lock must contain exactly the two intended compiler implementations"
+    );
+    assert.deepEqual(nativeEntry[2]?.bin, { tsc: "bin/tsc" });
+    assert.deepEqual(apiEntry[2]?.bin, { tsc: "bin/tsc", tsserver: "bin/tsserver" });
+    const optionalDependencies = nativeEntry[2]?.optionalDependencies;
+    for (const packageName of [
+      "@typescript/typescript-darwin-arm64",
+      "@typescript/typescript-darwin-x64",
+      "@typescript/typescript-linux-arm64",
+      "@typescript/typescript-linux-x64"
+    ]) {
+      assert.equal(optionalDependencies?.[packageName], nativeVersion, packageName);
+    }
   });
 
   test("uses one explicit installation-free dependency artifact refresh path", async () => {
