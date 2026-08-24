@@ -1,7 +1,7 @@
 # Utsuri release and distribution guide
 
-- **Current status**: CLI and Git Plugin `0.3.0` source prepared
-- **Public availability**: verified `0.2.0` remains available; exact `0.3.0` publication and Plugin verification pending
+- **Current status**: CLI and Git Plugin `0.3.1` source prepared
+- **Public availability**: verified `0.3.0` remains available; exact `0.3.1` publication and Plugin verification pending
 - **Version source**: root `package.json`
 - **Publisher**: `hokupod`
 - **npm maintainer**: `hokupod-npm`
@@ -13,7 +13,7 @@
 
 `.github/workflows/release.yml` runs only after an operator pushes an annotated `v*` tag. It requires the tag to match the root and CLI versions and to point to the exact `origin/main` commit. Registry writes are confined to its protected `release` environment and use GitHub OIDC trusted publishing without an npm token.
 
-The workflow never creates or pushes a tag. All five package identities already exist publicly at `0.2.0`; release `0.3.0` therefore uses only the protected tag workflow. Tag creation and release-environment approval remain separate operator actions. A missing package identity or trusted-publisher configuration is release drift: stop and restore the protected configuration instead of falling back to a manual publish.
+The workflow never creates or pushes a tag. All five package identities already exist publicly at `0.3.0`; release `0.3.1` therefore uses only the protected tag workflow. Tag creation and release-environment approval remain separate operator actions. A missing package identity or trusted-publisher configuration is release drift: stop and restore the protected configuration instead of falling back to a manual publish.
 
 ## Two distribution surfaces and authorization
 
@@ -24,7 +24,7 @@ The aggregate Plugin and Git Marketplace Plugin are independent outputs:
 
 CLI release and Git Plugin promotion are always separate operations and approvals. One complete SemVer identifies both surfaces, so the authorized version-change transaction updates the CLI version, Plugin version, and exact Plugin pin together. Promotion preflight may observe only one controlled skew: synchronized root/CLI package manifests at the target while every old Plugin version and MCP pin still matches. The normal verifier rejects that transient state, and promotion must end with complete synchronization. No source change authorizes npm publication, Plugin promotion, a Git commit, push, pull request, merge, tag, GitHub Release, or live Git installation test.
 
-The current source decision is one synchronized CLI/root aggregate/Git Plugin version: `0.3.0`. Both Codex and Claude MCP manifests must pin exactly `@utsu-ri/cli@0.3.0`. Complete SemVer is mandatory; `latest`, tags, ranges, and workspace specifiers fail verification.
+The current source decision is one synchronized CLI/root aggregate/Git Plugin version: `0.3.1`. Both Codex and Claude MCP manifests must pin exactly `@utsu-ri/cli@0.3.1`. Complete SemVer is mandatory; `latest`, tags, ranges, and workspace specifiers fail verification.
 
 ## Package identities
 
@@ -108,8 +108,8 @@ Required repository configuration mirrors Kyoso:
 1. Merge the verified release-ready commit to `main` and require successful `main` CI.
 2. Confirm that all five package identities still exist and that each trusted publisher allows `npm publish` only from owner `hokupod`, repository `utsuri`, workflow `release.yml`, and environment `release`.
 3. Run the manual Distribution Candidate workflow on the exact `main` commit. Verify the exact run SHA and successful four-platform candidate before tagging.
-4. Confirm that none of the five `0.3.0` versions already exists. If one exists, reconcile its registry integrity against the approved candidate before continuing.
-5. Create annotated tag `v0.3.0` at the still-current exact `main` commit and push only that tag.
+4. Confirm that none of the five `0.3.1` versions already exists. If one exists, reconcile its registry integrity against the approved candidate before continuing.
+5. Create annotated tag `v0.3.1` at the still-current exact `main` commit and push only that tag.
 6. Approve the protected `release` environment. The workflow publishes the four helpers before the CLI, verifies every registry integrity, runs native `npx` and `bunx` smoke, and creates the immutable GitHub Release.
 7. Verify the published tag, five package integrities, provenance, release assets, and live Plugin installation before declaring availability.
 
@@ -135,14 +135,14 @@ Commit, push, pull request, and merge remain further separate approvals. Only af
 
 No post-publication smoke may filter wrapper output to make invalid JSON appear valid.
 
-## Remaining synchronized `0.3.0` release gates
+## Remaining synchronized `0.3.1` release gates
 
 Local source verification cannot establish these external or human gates:
 
 - normal pull-request review of the changed release and user documentation;
 - successful `main` CI and a manual four-platform Distribution Candidate run on the exact release commit;
 - the protected GitHub Environment and `v*` tag ruleset described above;
-- explicit authorization and successful publication of exact CLI/native-helper `0.3.0` artifacts;
+- explicit authorization and successful publication of exact CLI/native-helper `0.3.1` artifacts;
 - native registry JSON and MCP NDJSON verification of the exact published bytes;
 - a separately authorized Plugin promotion write and reviewed source change;
 - a separately authorized Git push / pull request / merge; and

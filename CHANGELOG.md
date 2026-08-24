@@ -7,6 +7,36 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.3.1] - 2026-08-24
+
+### Changed
+
+- Update the bundled AJV, axe-core, fflate, pixelmatch, Playwright, and YAML
+  runtimes and regenerate deterministic CLI, report UI, SBOM, and license
+  assets.
+- Validate the release toolchain against Bun 1.4.0 while retaining Nix-pinned
+  Bun 1.3.13 coverage.
+- Derive SBOM and license-inventory identity from the installed production
+  dependency graph. License-inventory schema 1.2 replaces `lockfileSha256`
+  with `productionDependencySha256`.
+
+### Fixed
+
+- Keep Playwright 1.62.1 fully bundled without external runtime imports and
+  accept its generated import aliases during release verification.
+- Isolate temporary Git repositories from inherited hook state, permit
+  generated files through pre-commit, and give offline candidate package
+  installation a bounded CI timeout.
+- Refresh release baselines and generated artifacts as one dependency-update
+  transaction.
+
+### Security
+
+- Add Nix-pinned pre-commit and pre-push hooks with staged-path validation,
+  outgoing secret scans, the complete local gate, and Plugin verification.
+- Bind every bundled third-party module and installed production package to
+  reviewed dependency baselines and byte hashes.
+
 ## [0.3.0] - 2026-08-21
 
 ### Added

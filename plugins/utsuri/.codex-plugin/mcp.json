@@ -1,7 +1,7 @@
 {
   "utsuri": {
     "command": "npx",
-    "args": ["-y", "--package=@utsu-ri/cli@0.3.0", "utsuri", "mcp"],
+    "args": ["-y", "--package=@utsu-ri/cli@0.3.1", "utsuri", "mcp"],
     "env_vars": ["CODEX_THREAD_ID"]
   }
 }

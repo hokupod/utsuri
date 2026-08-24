@@ -75,7 +75,7 @@ describe("CLI", () => {
       ok: true,
       command: "version",
       package: "@utsu-ri/cli",
-      version: "0.3.0",
+      version: "0.3.1",
       protocolVersion: "1.1"
     });
   });

@@ -6,15 +6,15 @@
 - **Plugin name**: `utsuri`
 - **Skill name**: `utsuri-review`
 - **CLI name**: `utsuri`
-- **Document version**: 3.1
+- **Document version**: 3.2
 - **Created**: 2026-08-06
-- **Last updated**: 2026-08-21
+- **Last updated**: 2026-08-24
 - **Language**: English (canonical)
 - **Targets**: Codex / Claude Code / local CLI / CI
 - **Implementation language**: TypeScript
 - **Development environment**: Bun
 - **Report UI**: a static application built with Svelte
-- **v3.1 changes**: recorded the protected `v0.3.0` npm and GitHub Release publication, verified the promoted Plugin payload, and confirmed public Git Marketplace install, MCP discovery, disable, and removal on Codex and Claude Code
+- **v3.2 changes**: prepared the synchronized `v0.3.1` maintenance release with production-scoped dependency provenance, complete Bun and Renovate toolchain policy, Nix-pinned Git hooks, and refreshed bundled validation, capture, accessibility, and comparison runtimes
 
 ---
 
@@ -937,7 +937,7 @@ Development source lives under `packages/`. At release time, bundle it as one No
 - Assemble all four helper packages, the private-staged `@utsu-ri/cli`, and the shared Plugin into one distribution candidate. Its aggregate manifest binds every file hash and executable mode; a missing target, source mismatch, tamper, symlink, or normal-rename fallback rejects the candidate.
 - Carry helper proofs and Plugin files between workflow jobs as regular Actions-artifact entries rather than downloaded tarballs. Revalidate hashes before restoring only manifest-declared `0644` / `0755` modes, and create the promoted archive only after the exact restored tree passes all promotion gates.
 - Keep `.github/workflows/distribution-candidate.yml` manually dispatchable and callable without registry-write or OIDC permission. It must bind the five npm tarballs and deterministic Plugin archive in `release-assets.json` and `SHA256SUMS` after the four-platform candidate passes.
-- Run `.github/workflows/release.yml` only for an annotated `v<version>` tag at the exact `main` commit. Require current CHANGELOG and successful exact-main CI, public-history PII/secret scans, the protected `release` environment, OIDC trusted publishing without an npm token, exact registry integrity for recovery, native published-package smoke, and draft-first GitHub Release publication. All five `0.3.0` package versions and GitHub Release `v0.3.0` were published through this workflow on 2026-08-21 and verified against registry integrity, Release assets, and native package smoke. Public availability is recorded only after registry, Release, promoted-Plugin, and live Git Plugin verification. Treat a missing package identity or trusted-publisher configuration as release drift and never fall back to a manual registry write.
+- Run `.github/workflows/release.yml` only for an annotated `v<version>` tag at the exact `main` commit. Require current CHANGELOG and successful exact-main CI, public-history PII/secret scans, the protected `release` environment, OIDC trusted publishing without an npm token, exact registry integrity for recovery, native published-package smoke, and draft-first GitHub Release publication. All five `0.3.0` package versions and GitHub Release `v0.3.0` were published through this workflow on 2026-08-21 and verified against registry integrity, Release assets, and native package smoke. The synchronized `v0.3.1` source remains pending until the same registry, Release, promoted-Plugin, and live Git Plugin verification completes. Treat a missing package identity or trusted-publisher configuration as release drift and never fall back to a manual registry write.
 - Before Plugin promotion, run native `npx` and `bunx` against the exact published SemVer in isolated caches before Safe-chain or dependency setup. Parse one strict JSON line, reject notices or fallback, use a failing ambient-command sentinel, and terminate the complete process group on timeout.
 - The product name `Utsuri`, CLI name `utsuri`, and Skill name `utsuri-review` remain fixed; changing the package identifier requires an explicit design change.
 
@@ -969,7 +969,7 @@ Development source lives under `packages/`. At release time, bundle it as one No
 ```json
 {
   "name": "utsuri",
-  "version": "0.3.0",
+  "version": "0.3.1",
   "description": "Evidence-based visual change review for Codex and Claude Code",
   "skills": "./skills/"
 }
@@ -981,7 +981,7 @@ Development source lives under `packages/`. At release time, bundle it as one No
 {
   "name": "utsuri",
   "displayName": "Utsuri",
-  "version": "0.3.0",
+  "version": "0.3.1",
   "description": "Evidence-based visual change review for Codex and Claude Code",
   "author": {
     "name": "hokupod",
@@ -3993,7 +3993,7 @@ Researched: 2026-08-06
 
 ## 46. Detailed interactive review and Origin Session feedback specification
 
-**v1 implementation status**: publicly available as synchronized CLI and Plugin version `v0.3.0` through `return-to-session` and `export-only`. The optional direct bridge is deliberately disabled because no configured host meets the authenticated same-session API and response-correlation requirements. Publication evidence covers the protected npm and GitHub release, promoted Plugin payload, and live public Git Plugin verification; it does not authorize any later release operation or a new Agent/session fallback.
+**v1 implementation status**: release-ready as synchronized CLI and Plugin version `v0.3.1` source through `return-to-session` and `export-only`. The verified public release remains `v0.3.0`; `v0.3.1` publication, Plugin promotion, and live Git verification require their separate authorizations. The optional direct bridge is deliberately disabled because no configured host meets the authenticated same-session API and response-correlation requirements. This status never permits a new Agent/session fallback.
 
 ### 46.1 Purpose
 
@@ -4802,7 +4802,7 @@ The implementation keeps the preview separate from storage, writes inbox/batch/c
 
 A feature outside this definition is accepted only when it makes review decisions faster, strengthens the relationship between a question and its evidence, increases evidence reliability, or improves security.
 
-The synchronized public CLI and Git Plugin version `0.3.0` satisfies this definition through local immutable reports, mutable review generations, and a same-project/same-session Marketplace MCP broker, with `return-to-session` as the host-neutral feedback path. The `v0.3.0` tag publication, Plugin promotion, and public Git smoke were separately authorized and verified; every later version requires new authorization. Direct same-session submission and a shared remote review store remain optional future capabilities.
+The synchronized CLI and Git Plugin version `0.3.1` source satisfies this definition through local immutable reports, mutable review generations, and a same-project/same-session Marketplace MCP broker, with `return-to-session` as the host-neutral feedback path. The verified public release remains `v0.3.0`; `v0.3.1` tag publication, Plugin promotion, and public Git smoke require separate authorization and verification. Direct same-session submission and a shared remote review store remain optional future capabilities.
 
 ---
 
@@ -4810,6 +4810,7 @@ The synchronized public CLI and Git Plugin version `0.3.0` satisfies this defini
 
 | Entry ID                                   | Version | Date       | Change                                                                                                                                                                                                                                                                                                                                                                                                                                                    |
 | ------------------------------------------ | ------: | ---------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| design-v3.2-v0.3.1-maintenance-release     |     3.2 | 2026-08-24 | Prepared synchronized `v0.3.1` source with production-scoped dependency and license identity, refreshed bundled validation, accessibility, comparison, capture, archive, and YAML runtimes, complete Bun/Renovate toolchain policy, and Nix-pinned Git hooks with staged and outgoing secret checks.                                                                                                                                                      |
 | design-v3.1-public-release-status          |     3.1 | 2026-08-21 | Recorded protected publication of all five `v0.3.0` npm packages and the verified GitHub Release, matched the promoted Plugin payload to the Release asset, and confirmed public Git Marketplace install, MCP discovery, disable, and removal on the recorded minimum Codex and Claude Code releases.                                                                                                                                                     |
 | design-v3.0-agent-review-handoff           |     3.0 | 2026-08-21 | Made the persistent live viewer and rendered-diff check the human-review completion path, added localized schema-validated Agent overviews and complete per-hunk explanations, prioritized review routes by risk and confirmation state, added supported Plugin illustration surfaces, and prepared synchronized `v0.3.0` distribution.                                                                                                                   |
 | design-v2.9-proportional-verification      |     2.9 | 2026-08-11 | Removed parallel documentation state, document-byte hashes, approval transcripts, the exact heading manifest, duplicated documentation-test execution, redundant release-layout invocations, and the browser-disabled integration rerun while retaining focused multilingual documentation, runtime, release-artifact, and security verification.                                                                                                         |

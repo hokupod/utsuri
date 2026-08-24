@@ -17,7 +17,7 @@
 Export before moving state:
 
 ```bash
-npx -y --package=@utsu-ri/cli@0.3.0 utsuri review export \
+npx -y --package=@utsu-ri/cli@0.3.1 utsuri review export \
   --run .artifacts/utsuri/run-001 \
   --output .artifacts/utsuri/review-bundle.json \
   --json
@@ -26,7 +26,7 @@ npx -y --package=@utsu-ri/cli@0.3.0 utsuri review export \
 Import only after validating the target report and source identity. Re-anchoring another report always requires a separate explicit opt-in. Use `--reanchor` when moving to a changed run:
 
 ```bash
-npx -y --package=@utsu-ri/cli@0.3.0 utsuri review import \
+npx -y --package=@utsu-ri/cli@0.3.1 utsuri review import \
   --run .artifacts/utsuri/run-002 \
   --input .artifacts/utsuri/review-bundle.json \
   --reanchor \
