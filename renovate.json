@@ -32,6 +32,17 @@
       "matchPackageNames": ["bun", "oven-sh/bun", "@types/bun"]
     },
     {
+      "description": "Keep Vite and its Svelte plugin in one peer-compatible update",
+      "groupName": "Svelte Vite toolchain",
+      "matchPackageNames": ["@sveltejs/vite-plugin-svelte", "vite"]
+    },
+    {
+      "description": "Node declaration majors change only with compatibility policy",
+      "enabled": false,
+      "matchPackageNames": ["@types/node"],
+      "matchUpdateTypes": ["major"]
+    },
+    {
       "description": "Node support ranges are changed only with compatibility policy",
       "enabled": false,
       "matchDepTypes": ["engines"]

@@ -523,7 +523,7 @@ describe("toolchain and CI contract", () => {
     );
   });
 
-  test("keeps Renovate Bun updates complete without hosted post-upgrade scripts", async () => {
+  test("keeps Renovate toolchain updates complete without hosted post-upgrade scripts", async () => {
     const config = JSON.parse(await readFile(path.join(repositoryRoot, "renovate.json"), "utf8"));
     assert.equal(config.postUpgradeTasks, undefined);
     assert.ok(config.extends.includes(":preserveSemverRanges"));
@@ -545,6 +545,20 @@ describe("toolchain and CI contract", () => {
     for (const dependency of ["bun", "oven-sh/bun", "@types/bun"]) {
       assert.ok(bunRule.matchPackageNames.includes(dependency));
     }
+
+    const svelteViteRule = config.packageRules.find(
+      (rule) => rule.groupName === "Svelte Vite toolchain"
+    );
+    assert.ok(svelteViteRule, "Renovate must keep Vite and its Svelte plugin in one PR");
+    for (const dependency of ["@sveltejs/vite-plugin-svelte", "vite"]) {
+      assert.ok(svelteViteRule.matchPackageNames.includes(dependency));
+    }
+
+    const nodeTypesRule = config.packageRules.find(
+      (rule) =>
+        rule.matchPackageNames?.includes("@types/node") && rule.matchUpdateTypes?.includes("major")
+    );
+    assert.equal(nodeTypesRule?.enabled, false);
   });
 
   test("uses one explicit installation-free dependency artifact refresh path", async () => {
