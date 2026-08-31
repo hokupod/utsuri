@@ -14,7 +14,7 @@
 1. List ready batches for the fixed run:
 
    ```bash
-   npx -y --package=@utsu-ri/cli@0.3.1 utsuri feedback list \
+   npx -y --package=@utsu-ri/cli@0.3.2 utsuri feedback list \
      --run .artifacts/utsuri/run-001 \
      --status ready \
      --json
@@ -26,7 +26,7 @@
 5. Write the answer array to a local file and submit it:
 
    ```bash
-   npx -y --package=@utsu-ri/cli@0.3.1 utsuri feedback answer \
+   npx -y --package=@utsu-ri/cli@0.3.2 utsuri feedback answer \
      --run .artifacts/utsuri/run-001 \
      --batch fb_example \
      --input .artifacts/utsuri/answers.json \

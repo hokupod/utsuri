@@ -511,7 +511,7 @@ function writeLocalNpxShim(path, cli, observation) {
   const source = `#!/usr/bin/env node
 const { appendFileSync } = require("node:fs");
 const { spawn } = require("node:child_process");
-const expected = ["-y", "--package=@utsu-ri/cli@0.3.1", "utsuri", "mcp"];
+const expected = ["-y", "--package=@utsu-ri/cli@0.3.2", "utsuri", "mcp"];
 if (JSON.stringify(process.argv.slice(2)) !== JSON.stringify(expected)) process.exit(64);
 appendFileSync(${JSON.stringify(observation)}, JSON.stringify({
   kind: "launch",

@@ -5,9 +5,9 @@
     "claude": "2.1.220"
   },
   "distribution": {
-    "pluginVersion": "0.3.1",
-    "cliVersion": "0.3.1",
-    "mcpPackagePin": "@utsu-ri/cli@0.3.1"
+    "pluginVersion": "0.3.2",
+    "cliVersion": "0.3.2",
+    "mcpPackagePin": "@utsu-ri/cli@0.3.2"
   },
   "publicGitVerification": {
     "verifiedAt": "2026-08-24",

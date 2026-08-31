@@ -1,6 +1,6 @@
 {
   "name": "@utsu-ri/cli",
-  "version": "0.3.1",
+  "version": "0.3.2",
   "private": true,
   "description": "Evidence-backed visual change review for Codex and Claude Code",
   "license": "AGPL-3.0-or-later",

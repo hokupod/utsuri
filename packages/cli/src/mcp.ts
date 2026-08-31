@@ -122,7 +122,7 @@ function sameRegistration(left: McpRunRegistration, right: McpRunRegistration): 
 export class PluginBrokerMcpService implements ReviewMcpTransportService {
   readonly toolDefinitions = brokerMcpToolDefinitions;
   readonly structuredToolErrors = true;
-  readonly serverInfo = { name: "utsu-ri-plugin-broker", version: "0.3.1" };
+  readonly serverInfo = { name: "utsu-ri-plugin-broker", version: "0.3.2" };
   readonly #projectRoot: string;
   readonly #environment: NodeJS.ProcessEnv;
   readonly #readRegistrations: typeof readMcpRunRegistrations;

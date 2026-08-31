@@ -13,7 +13,7 @@ export const nativeHelperTargets = [
 ] as const;
 export type NativeHelperTarget = (typeof nativeHelperTargets)[number];
 
-export const nativeHelperPackageVersion = "0.3.1";
+export const nativeHelperPackageVersion = "0.3.2";
 
 interface NativeHelperIntegrity {
   schemaVersion: "1.0";
