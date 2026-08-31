@@ -42,6 +42,12 @@
       "matchPackageNames": ["@sveltejs/vite-plugin-svelte", "vite"]
     },
     {
+      "description": "Svelte Vite majors require a separately reviewed compatibility migration",
+      "enabled": false,
+      "matchPackageNames": ["@sveltejs/vite-plugin-svelte", "vite"],
+      "matchUpdateTypes": ["major"]
+    },
+    {
       "description": "Node declaration majors change only with compatibility policy",
       "enabled": false,
       "matchPackageNames": ["@types/node"],
