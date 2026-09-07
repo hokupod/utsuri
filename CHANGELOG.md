@@ -7,6 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.3.3] - 2026-09-07
+
+### Changed
+
+- Update development-only `typescript-eslint` to `8.69.0` and `globals` to
+  `17.12.0` after dependency review and unchanged release-output verification.
+
 ## [0.3.2] - 2026-08-31
 
 ### Changed
