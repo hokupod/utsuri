@@ -8,12 +8,13 @@
 - **CLI name**: `utsuri`
 - **Document version**: 3.4
 - **Created**: 2026-08-06
-- **Last updated**: 2026-08-31
+- **Last updated**: 2026-09-07
 - **Language**: English (canonical)
 - **Targets**: Codex / Claude Code / local CLI / CI
 - **Implementation language**: TypeScript
 - **Development environment**: Bun
 - **Report UI**: a static application built with Svelte
+- **Maintenance publication**: synchronized `v0.3.3` completed protected npm/GitHub publication, Plugin promotion, and isolated public Git installs on Codex `0.151.0` and Claude Code `2.1.251` on 2026-09-07; see `docs/release.md` and `docs/compatibility/plugin-runtime.json`.
 - **v3.4 changes**: recorded protected `v0.3.2` npm and GitHub Release publication, verified the promoted Plugin payload, and confirmed public Git Marketplace install, MCP discovery, disable, and removal on Codex and Claude Code
 
 ---
@@ -3993,7 +3994,7 @@ Researched: 2026-08-06
 
 ## 46. Detailed interactive review and Origin Session feedback specification
 
-**v1 implementation status**: publicly available as synchronized CLI and Plugin version `v0.3.2` through `return-to-session` and `export-only`. The optional direct bridge is deliberately disabled because no configured host meets the authenticated same-session API and response-correlation requirements. Publication evidence covers the protected npm and GitHub Release, promoted Plugin payload, and live public Git Plugin verification; it does not authorize any later release operation or a new Agent/session fallback.
+**v1 implementation status**: publicly available as synchronized CLI and Plugin version `v0.3.3` through `return-to-session` and `export-only`. The optional direct bridge is deliberately disabled because no configured host meets the authenticated same-session API and response-correlation requirements. Publication evidence covers the protected npm and GitHub Release, promoted Plugin payload, and live public Git Plugin verification; it does not authorize any later release operation or a new Agent/session fallback.
 
 ### 46.1 Purpose
 
@@ -4802,7 +4803,7 @@ The implementation keeps the preview separate from storage, writes inbox/batch/c
 
 A feature outside this definition is accepted only when it makes review decisions faster, strengthens the relationship between a question and its evidence, increases evidence reliability, or improves security.
 
-The synchronized public CLI and Git Plugin version `0.3.2` satisfies this definition through local immutable reports, mutable review generations, and a same-project/same-session Marketplace MCP broker, with `return-to-session` as the host-neutral feedback path. The `v0.3.2` tag publication, Plugin promotion, and public Git smoke were separately authorized and verified; every later version requires new authorization. Direct same-session submission and a shared remote review store remain optional future capabilities.
+The synchronized public CLI and Git Plugin version `0.3.3` satisfies this definition through local immutable reports, mutable review generations, and a same-project/same-session Marketplace MCP broker, with `return-to-session` as the host-neutral feedback path. The `v0.3.3` tag publication, Plugin promotion, and public Git smoke were separately authorized and verified; every later version requires new authorization. Direct same-session submission and a shared remote review store remain optional future capabilities.
 
 ---
 
