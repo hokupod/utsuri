@@ -1,7 +1,7 @@
 # Utsuri release and distribution guide
 
-- **Current status**: CLI and Git Plugin `0.3.2` publicly available
-- **Public availability**: verified `0.3.2` npm packages, GitHub Release, and public Git Marketplace Plugin
+- **Current status**: CLI and Git Plugin `0.3.3` publicly available
+- **Public availability**: verified `0.3.3` npm packages, GitHub Release, and public Git Marketplace Plugin
 - **Version source**: root `package.json`
 - **Publisher**: `hokupod`
 - **npm maintainer**: `hokupod-npm`
@@ -13,7 +13,7 @@
 
 `.github/workflows/release.yml` runs only after an operator pushes an annotated `v*` tag. It requires the tag to match the root and CLI versions and to point to the exact `origin/main` commit. Registry writes are confined to its protected `release` environment and use GitHub OIDC trusted publishing without an npm token.
 
-All five package identities now exist publicly through `0.3.2`; release `0.3.2` was published only through the protected tag workflow. Tag creation and release-environment approval remain separate operator actions. A missing package identity or trusted-publisher configuration is release drift: stop and restore the protected configuration instead of falling back to a manual publish.
+All five package identities now exist publicly through `0.3.3`; release `0.3.3` was published only through the protected tag workflow. Tag creation and release-environment approval remain separate operator actions. A missing package identity or trusted-publisher configuration is release drift: stop and restore the protected configuration instead of falling back to a manual publish.
 
 ## Two distribution surfaces and authorization
 
@@ -24,7 +24,7 @@ The aggregate Plugin and Git Marketplace Plugin are independent outputs:
 
 CLI release and Git Plugin promotion are always separate operations and approvals. One complete SemVer identifies both surfaces, so the authorized version-change transaction updates the CLI version, Plugin version, and exact Plugin pin together. Promotion preflight may observe only one controlled skew: synchronized root/CLI package manifests at the target while every old Plugin version and MCP pin still matches. The normal verifier rejects that transient state, and promotion must end with complete synchronization. No source change authorizes npm publication, Plugin promotion, a Git commit, push, pull request, merge, tag, GitHub Release, or live Git installation test.
 
-The current source decision is one synchronized CLI/root aggregate/Git Plugin version: `0.3.3`. Both Codex and Claude MCP manifests must pin exactly `@utsu-ri/cli@0.3.3`. Public availability remains at verified `0.3.2` until the new release completes every publication and Plugin gate. Complete SemVer is mandatory; `latest`, tags, ranges, and workspace specifiers fail verification.
+The current source decision is one synchronized CLI/root aggregate/Git Plugin version: `0.3.3`. Both Codex and Claude MCP manifests must pin exactly `@utsu-ri/cli@0.3.3`. Public availability is verified at `0.3.3` after every publication and Plugin gate completed. Complete SemVer is mandatory; `latest`, tags, ranges, and workspace specifiers fail verification.
 
 ## Package identities
 
@@ -135,12 +135,12 @@ Commit, push, pull request, and merge remain further separate approvals. Only af
 
 No post-publication smoke may filter wrapper output to make invalid JSON appear valid.
 
-## Verified synchronized `0.3.2` release
+## Verified synchronized `0.3.3` release
 
-The 2026-08-31 release completed every external publication gate:
+The 2026-09-07 release completed every external publication gate:
 
-- exact release source commit `7b270f79d1510ce037af26a7ff288c0ea51c0a07` passed `main` CI run `33346964580` and four-platform Distribution Candidate run `33347165657`;
-- all five exact npm package versions were published with candidate-matching integrity and SLSA provenance through protected Release run `33351828614`;
-- [GitHub Release `v0.3.2`](https://github.com/hokupod/utsuri/releases/tag/v0.3.2) was published with the bound candidate manifest, checksums, five tarballs, and aggregate Plugin archive;
-- promotion run `33352375328` verified the exact public CLI, helper, approved candidate manifest, Skill evaluations, and Claude strict validation; and
-- isolated public Git-source installations on Codex `0.149.0` and Claude Code `2.1.238` verified the sanitized contract recorded in `docs/compatibility/plugin-runtime.json`.
+- exact release source commit `3680a056060b192d05448b3d785d7f5555611391` passed `main` CI run `34072412571` and four-platform Distribution Candidate run `34072618846`;
+- all five exact npm package versions were published with candidate-matching integrity and SLSA provenance through protected Release run `34077275746`;
+- [GitHub Release `v0.3.3`](https://github.com/hokupod/utsuri/releases/tag/v0.3.3) was published with the bound candidate manifest, checksums, five tarballs, and aggregate Plugin archive;
+- promotion run `34077718476` verified the exact public CLI, helper, approved candidate manifest, Skill evaluations, and Claude strict validation; and
+- isolated public Git-source installations on Codex `0.151.0` and Claude Code `2.1.251` verified the sanitized contract recorded in `docs/compatibility/plugin-runtime.json`.
