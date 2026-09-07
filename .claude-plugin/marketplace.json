@@ -5,14 +5,14 @@
   },
   "metadata": {
     "description": "Utsuri plugin marketplace for Claude Code",
-    "version": "0.3.2"
+    "version": "0.3.3"
   },
   "plugins": [
     {
       "name": "utsuri",
       "source": "./plugins/utsuri",
       "description": "Evidence-backed code and visual change review for Codex and Claude Code.",
-      "version": "0.3.2",
+      "version": "0.3.3",
       "author": {
         "name": "hokupod"
       },

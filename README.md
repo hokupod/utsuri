@@ -25,6 +25,8 @@ Use it when a code or UI change needs a durable report, a clear list of review g
 <!-- availability:git-marketplace-cli-and-plugin-public -->
 <!-- support-contract:macos-linux-windows-unsupported -->
 
+Release candidates are not public releases; use the verified publication status in the [release guide](https://github.com/hokupod/utsuri/blob/main/docs/release.md).
+
 The current public Git source contains a verified Git Plugin whose exact `@utsu-ri/cli` release is published. The commands below install that public source; the Plugin executes only its matching complete SemVer. Do not substitute `latest`, a range, or another package.
 
 - A Codex or Claude Code release listed in the [runtime compatibility record](https://github.com/hokupod/utsuri/blob/main/docs/compatibility/plugin-runtime.json).

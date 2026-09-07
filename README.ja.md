@@ -25,6 +25,8 @@ Utsuri は Git の変更を、コード・ブラウザキャプチャ・構造�
 <!-- availability:git-marketplace-cli-and-plugin-public -->
 <!-- support-contract:macos-linux-windows-unsupported -->
 
+リリース候補は公開済みリリースではありません。[リリースガイド](https://github.com/hokupod/utsuri/blob/main/docs/release.md)に記録された検証済みの公開状態を確認してください。
+
 現在の公開 Git ソースには、対応する `@utsu-ri/cli` release が公開済みで、その完全な SemVer に固定された検証済み Git Plugin が含まれます。以下のコマンドはその公開ソースをインストールし、Plugin は対応する完全な SemVer だけを実行します。`latest`、version range、別 package へ置き換えないでください。
 
 - [runtime compatibility record](https://github.com/hokupod/utsuri/blob/main/docs/compatibility/plugin-runtime.json) に記載された Codex または Claude Code release。
