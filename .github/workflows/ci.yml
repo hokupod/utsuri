@@ -31,12 +31,16 @@ jobs:
         run: node scripts/verify-native-cli-json.mjs
 
   bun-matrix:
-    name: Bun ${{ matrix.bun }}
+    name: Bun / ${{ matrix.role }}
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
       matrix:
-        bun: [1.3.13, 1.4.0]
+        include:
+          - bun: 1.3.13
+            role: compatibility
+          - bun: 1.4.0
+            role: primary
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
@@ -89,7 +93,7 @@ jobs:
         run: git diff --exit-code -- bun.lock packages/report-model/src/generated packages/cli/dist packages/cli/README.md packages/cli/LICENSE skills/utsuri-review
 
   nix-compatibility:
-    name: Nix / Bun 1.3.13
+    name: Nix / compatibility
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -198,30 +202,3 @@ jobs:
           path: .artifacts/playwright
           if-no-files-found: ignore
           retention-days: 7
-
-  # Transitional role checks: retain the old required names until the new
-  # names have passed on main and the ruleset has been migrated.
-  bun-role-checks:
-    name: Bun / ${{ matrix.role }}
-    if: always()
-    needs: [bun-matrix]
-    runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        role: [primary, compatibility]
-    steps:
-      - name: Require the complete Bun matrix
-        env:
-          RESULT: ${{ needs.bun-matrix.result }}
-        run: test "$RESULT" = success
-
-  nix-role-check:
-    name: Nix / compatibility
-    if: always()
-    needs: [nix-compatibility]
-    runs-on: ubuntu-latest
-    steps:
-      - name: Require the Nix compatibility gate
-        env:
-          RESULT: ${{ needs.nix-compatibility.result }}
-        run: test "$RESULT" = success
