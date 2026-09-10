@@ -7,6 +7,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.3.4] - 2026-09-10
+
+### Changed
+
+- Update bundled Playwright to `1.63.0` and fast-uri to `3.1.7`, including
+  upstream URI serialization and host parsing security fixes.
+- Update Svelte to `5.57.0`, the primary Bun runtime to `1.4.2`, its declarations
+  to `1.4.1`, Safe-chain to `1.5.16`, and age-eligible locked dependencies.
+- Keep required CI names stable across runtime updates and permit bounded
+  regeneration of reviewed dependency artifacts. Generate lockfiles with the
+  oldest supported Bun and apply the existing three-day age policy to new
+  dependency resolution.
+- Synchronize CLI, aggregate Plugin, Git Plugin, and exact MCP package pins.
+
 ## [0.3.3] - 2026-09-07
 
 ### Changed

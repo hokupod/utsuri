@@ -1,6 +1,6 @@
 {
   "schemaVersion": "1.1",
-  "toolVersion": "0.3.3",
+  "toolVersion": "0.3.4",
   "sourceHash": "fdecba5b4071c8bcb8b954f504181e08f3e6272ede361bdb9d1340787b615991",
   "sourceHashes": {
     "packages/adapters/generic/src/index.ts": "0fb851c88f14187773d97373b9d848e831abb629bb4b1834c4393f29917c4169",
@@ -86,7 +86,7 @@
     "schemas/review-state.schema.json": "27f9f98344a2b94b75f84fef9bba73978bbacca1e102ed11e459d247fbed7552",
     "schemas/review-thread.schema.json": "6c5957f14b964dfaf1601ac45870b7f3fae013209dd4964aa3831dd753f06fc1"
   },
-  "dependencyBaselineSha256": "024bca45042f914871fa67619d62f4cfe69c495e2455d12dbfe7b345ca3444e5",
+  "dependencyBaselineSha256": "5e99bc6a6a467a13fb156b5e5d2582cb5c42f86628e83c452375650109a66c22",
   "dependencyHash": "2ae495a60e4115bde871fc0a3ee7030307dea689a242889d8fe6ad6d24c94121",
   "dependencyHashes": {
     "ajv-formats@3.0.1/dist/formats.js": "b61693a26869970a92cc1fe832c931ccd3afe8b6d66802b19c48306349e84880",

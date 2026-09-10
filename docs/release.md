@@ -1,6 +1,6 @@
 # Utsuri release and distribution guide
 
-- **Current status**: CLI and Git Plugin `0.3.3` publicly available
+- **Current status**: synchronized CLI and Git Plugin `0.3.4` source candidate; publication and live verification pending
 - **Public availability**: verified `0.3.3` npm packages, GitHub Release, and public Git Marketplace Plugin
 - **Version source**: root `package.json`
 - **Publisher**: `hokupod`
@@ -28,7 +28,7 @@ The aggregate Plugin and Git Marketplace Plugin are independent outputs:
 
 CLI release and Git Plugin promotion are always separate operations and approvals. One complete SemVer identifies both surfaces, so the authorized version-change transaction updates the CLI version, Plugin version, and exact Plugin pin together. Promotion preflight may observe only one controlled skew: synchronized root/CLI package manifests at the target while every old Plugin version and MCP pin still matches. The normal verifier rejects that transient state, and promotion must end with complete synchronization. No source change authorizes npm publication, Plugin promotion, a Git commit, push, pull request, merge, tag, GitHub Release, or live Git installation test.
 
-The current source decision is one synchronized CLI/root aggregate/Git Plugin version: `0.3.3`. Both Codex and Claude MCP manifests must pin exactly `@utsu-ri/cli@0.3.3`. Public availability is verified at `0.3.3` after every publication and Plugin gate completed. Complete SemVer is mandatory; `latest`, tags, ranges, and workspace specifiers fail verification.
+The current source decision is one synchronized CLI/root aggregate/Git Plugin version: `0.3.4`. Both Codex and Claude MCP manifests must pin exactly `@utsu-ri/cli@0.3.4`. Public availability remains verified at `0.3.3` until every publication and Plugin gate for the new candidate completes. Complete SemVer is mandatory; `latest`, tags, ranges, and workspace specifiers fail verification.
 
 ## Package identities
 
@@ -112,8 +112,8 @@ Required repository configuration mirrors Kyoso:
 1. Merge the verified release-ready commit to `main` and require successful `main` CI.
 2. Confirm that all five package identities still exist and that each trusted publisher allows `npm publish` only from owner `hokupod`, repository `utsuri`, workflow `release.yml`, and environment `release`.
 3. Run the manual Distribution Candidate workflow on the exact `main` commit. Verify the exact run SHA and successful four-platform candidate before tagging.
-4. Confirm that none of the five `0.3.3` versions already exists. If one exists, reconcile its registry integrity against the approved candidate before continuing.
-5. Create annotated tag `v0.3.3` at the still-current exact `main` commit and push only that tag.
+4. Confirm that none of the five `0.3.4` versions already exists. If one exists, reconcile its registry integrity against the approved candidate before continuing.
+5. Create annotated tag `v0.3.4` at the still-current exact `main` commit and push only that tag.
 6. Approve the protected `release` environment. The workflow publishes the four helpers before the CLI, verifies every registry integrity, runs native `npx` and `bunx` smoke, and creates the immutable GitHub Release.
 7. Verify the published tag, five package integrities, provenance, release assets, and live Plugin installation before declaring availability.
 
