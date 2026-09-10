@@ -57,7 +57,7 @@ async function readPublishedOrigin(
   return structuredClone((report as UtsuriReport).origin);
 }
 
-const help = `Utsuri 0.3.3
+const help = `Utsuri 0.3.4
 
 Usage: utsuri <command> [options]
 
@@ -111,10 +111,10 @@ export async function executeCli(
           ok: true,
           command: "version",
           package: "@utsu-ri/cli",
-          version: "0.3.3",
+          version: "0.3.4",
           protocolVersion: "1.1"
         },
-        human: "0.3.3",
+        human: "0.3.4",
         json
       };
     }
@@ -203,7 +203,7 @@ export async function executeCli(
         publishedOrigin
       );
       const built = await buildReport(runDirectory, report, {
-        toolVersion: "0.3.3",
+        toolVersion: "0.3.4",
         annotations,
         ...(report.origin.bindingMode === "unbound" ? {} : { origin: report.origin })
       });

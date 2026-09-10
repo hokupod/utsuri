@@ -123,7 +123,7 @@ export interface ReviewMcpTransportService {
 export class ReviewMcpService {
   readonly toolDefinitions = toolDefinitions;
   readonly structuredToolErrors = false;
-  readonly serverInfo = { name: "utsu-ri-review", version: "0.3.3" };
+  readonly serverInfo = { name: "utsu-ri-review", version: "0.3.4" };
   readonly #runDirectory: string;
   readonly #report: UtsuriReport;
   readonly #currentSession: CurrentSessionIdentity;
@@ -358,7 +358,7 @@ export async function runReviewMcpStdio(
         result = {
           protocolVersion: "2025-06-18",
           capabilities: { tools: { listChanged: false } },
-          serverInfo: service.serverInfo ?? { name: "utsu-ri-review", version: "0.3.3" }
+          serverInfo: service.serverInfo ?? { name: "utsu-ri-review", version: "0.3.4" }
         };
       } else if (request.method === "ping") result = {};
       else if (request.method === "tools/list")
