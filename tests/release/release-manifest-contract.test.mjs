@@ -488,34 +488,23 @@ describe("cross-job distribution transport", () => {
 });
 
 describe("toolchain and CI contract", () => {
-  test("stable role checks fail closed while legacy required contexts migrate", async () => {
+  test("required Bun and Nix checks keep stable role names and canonical runtimes", async () => {
     const workflow = parseYaml(
       await readFile(path.join(repositoryRoot, ".github/workflows/ci.yml"), "utf8")
     );
-    for (const [jobId, dependency] of [
-      ["bun-role-checks", "bun-matrix"],
-      ["nix-role-check", "nix-compatibility"]
-    ]) {
-      const job = workflow.jobs[jobId];
-      assert.equal(job.if, "always()");
-      assert.deepEqual(job.needs, [dependency]);
-      assert.equal(job.steps.length, 1);
-      const step = job.steps[0];
-      assert.equal(step.env.RESULT, "${{ needs." + dependency + ".result }}");
-      assert.equal(step.run, 'test "$RESULT" = success');
-      for (const result of ["success", "failure", "cancelled", "skipped", ""]) {
-        const probe = spawnSync("sh", ["-c", step.run], { env: { RESULT: result } });
-        assert.equal(probe.status === 0, result === "success");
-      }
-    }
-    assert.deepEqual(workflow.jobs["bun-role-checks"].strategy.matrix.role, [
-      "primary",
-      "compatibility"
+    const policy = JSON.parse(
+      await readFile(path.join(repositoryRoot, "toolchain-policy.json"), "utf8")
+    );
+    const bun = workflow.jobs["bun-matrix"];
+    assert.equal(bun.name, "Bun / ${{ matrix.role }}");
+    assert.deepEqual(bun.strategy.matrix.include, [
+      { bun: policy.bun.flake, role: "compatibility" },
+      { bun: policy.bun.ciPrimary, role: "primary" }
     ]);
-    assert.equal(workflow.jobs["bun-role-checks"].name, "Bun / ${{ matrix.role }}");
-    assert.equal(workflow.jobs["nix-role-check"].name, "Nix / compatibility");
+    assert.equal(workflow.jobs["nix-compatibility"].name, "Nix / compatibility");
+    assert.equal(workflow.jobs["bun-role-checks"], undefined);
+    assert.equal(workflow.jobs["nix-role-check"], undefined);
   });
-
   test("pins the exact Safe-chain release assets and digests", async () => {
     const [policy, pluginWorkflow] = await Promise.all([
       readFile(path.join(repositoryRoot, "toolchain-policy.json"), "utf8").then(JSON.parse),
@@ -593,7 +582,14 @@ describe("toolchain and CI contract", () => {
     assert.ok(bunManager.managerFilePatterns.includes("/^\\.github/workflows/ci\\.yml$/"));
     assert.ok(bunManager.managerFilePatterns.includes("/^package\\.json$/"));
     assert.ok(bunManager.matchStrings.some((pattern) => pattern.includes('"packageManager"')));
-    assert.ok(bunManager.matchStrings.some((pattern) => pattern.includes("bun: \\[")));
+    const primaryPattern = bunManager.matchStrings.find((pattern) =>
+      pattern.includes("role: primary")
+    );
+    assert.ok(primaryPattern);
+    const ciSource = await readFile(path.join(repositoryRoot, ".github/workflows/ci.yml"), "utf8");
+    const primaryMatches = [...ciSource.matchAll(new RegExp(primaryPattern, "gu"))];
+    assert.equal(primaryMatches.length, 1);
+    assert.equal(primaryMatches[0].groups.currentValue, policy.bun.ciPrimary);
 
     const bunRule = config.packageRules.find((rule) => rule.groupName === "Bun toolchain");
     assert.ok(bunRule, "Renovate must keep primary Bun pins in one PR");
