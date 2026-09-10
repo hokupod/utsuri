@@ -196,4 +196,4 @@ claude plugin uninstall utsuri@utsuri
 
 Utsuri は `AGPL-3.0-or-later` でライセンスされています。Publisher は `hokupod` です。CLI publication、Git Plugin promotion、Git push、tag、release は個別に operator の許可を要する操作であり、source change だけで実行されることはありません。
 
-依存更新では、レビュー済みの生成物を限定的に再生成し、役割名で固定したCIで検証できます。公開成果物が変わらない開発依存の更新では、新規リリースは不要です。[貢献ガイド](https://github.com/hokupod/utsuri/blob/main/CONTRIBUTING.md#bounded-renovate-repair)を参照してください。
+依存更新では、レビュー済みの生成物を限定的に再生成し、役割名で固定したCIで検証できます。lockfile生成では対応ランタイムとの互換性と公開後3日の待機を維持します。公開成果物が変わらない開発依存の更新では、新規リリースは不要です。[貢献ガイド](https://github.com/hokupod/utsuri/blob/main/CONTRIBUTING.md#bounded-renovate-repair)を参照してください。
