@@ -6,16 +6,16 @@
 - **Plugin name**: `utsuri`
 - **Skill name**: `utsuri-review`
 - **CLI name**: `utsuri`
-- **Document version**: 3.4
+- **Document version**: 3.5
 - **Created**: 2026-08-06
-- **Last updated**: 2026-09-07
+- **Last updated**: 2026-09-10
 - **Language**: English (canonical)
 - **Targets**: Codex / Claude Code / local CLI / CI
 - **Implementation language**: TypeScript
 - **Development environment**: Bun
 - **Report UI**: a static application built with Svelte
 - **Maintenance publication**: synchronized `v0.3.3` completed protected npm/GitHub publication, Plugin promotion, and isolated public Git installs on Codex `0.151.0` and Claude Code `2.1.251` on 2026-09-07; see `docs/release.md` and `docs/compatibility/plugin-runtime.json`.
-- **v3.4 changes**: recorded protected `v0.3.2` npm and GitHub Release publication, verified the promoted Plugin payload, and confirmed public Git Marketplace install, MCP discovery, disable, and removal on Codex and Claude Code
+- **v3.5 changes**: prepare synchronized `v0.3.4` with reviewed runtime and dependency updates, stable CI roles, compatible age-filtered lockfile generation, and bounded maintenance repair; public availability remains at the previously verified release until the new publication and live Plugin gates complete.
 
 ---
 
@@ -929,7 +929,7 @@ Development source lives under `packages/`. At release time, bundle it as one No
 - Keep internal `@utsu-ri/*` workspace packages private implementation boundaries. They must not appear as registry runtime dependencies in the published CLI manifest; JavaScript runtime dependencies are bundled into the CLI.
 - Generate deterministic SPDX 2.3 and third-party-license inventories from the installed production dependency graph, exact lockfile SHA-512 integrity values, and installed-package verification codes. License-inventory schema 1.2 exposes `productionDependencySha256`; unrelated development-only manifest and lock entries do not change the published inventory. Copy identical documents into CLI and Skill artifacts. Derive bundled external package versions and the esbuild rebuild version from the canonical workspace manifests rather than repeating release numbers in verifier source.
 - Keep the public Node package engine, development major, and supported bundle majors canonical in `toolchain-policy.json`. Root, source CLI, staged CLI, installed CLI, and read-only Plugin CI must match that policy; workflow checks may mirror the policy value but must not introduce an independent patch pin. Keep Renovate's primary Bun update grouped across package-manager, CI, type-definition, and toolchain-policy pins. Runtime and declaration patch versions may differ within the supported major when typecheck and runtime tests pass. Required CI names identify stable runtime roles rather than patch versions. Keep exact versions and trusted digests canonical in policy/manifests, not duplicated as literals in tests.
-- Bind the installed production graph and every actual third-party esbuild input to an explicitly regenerated, reviewed dependency baseline. The baseline hashes the production graph rather than the entire lockfile: a development-only Renovate update passes only when the full gate proves that released bytes and metadata are unchanged. `deps:refresh` is the single installation-free path for schema declarations, dependency baseline, bundle, SPDX and license inventories, build manifests, shared fixture assets, and fixture validation. Hosted Renovate post-upgrade commands depend on host permissions. With maintenance-write authorization, a maintainer or agent may perform bounded generation in an isolated checkout, review every generated diff, and submit the repaired exact head to all required CI; `CONTRIBUTING.md` defines the boundary. Never accept regenerated hashes as independent approval of dependency changes. Renovate uses the oldest supported Bun lockfile writer, and project installation configuration applies the existing three-day age policy to newly resolved direct and transitive dependencies.
+- Bind the installed production graph and every actual third-party esbuild input to an explicitly regenerated, reviewed dependency baseline. The baseline hashes the production graph rather than the entire lockfile: a development-only Renovate update passes only when the full gate proves that released bytes and metadata are unchanged. `deps:refresh` is the single installation-free path for schema declarations, dependency baseline, bundle, SPDX and license inventories, build manifests, shared fixture assets, and fixture validation. Hosted Renovate post-upgrade commands depend on host permissions. With maintenance-write authorization, a maintainer or agent may perform bounded generation in an isolated checkout, review every generated diff, and submit the repaired exact head to all required CI; `CONTRIBUTING.md` defines the boundary. Never accept regenerated hashes as independent approval of dependency changes. Renovate uses the oldest supported Bun lockfile writer, whose tool constraint changes only with the Nix compatibility policy, and project installation configuration applies the existing three-day age policy to newly resolved direct and transitive dependencies.
 - Build-manifest 1.1 records dependency byte hashes alongside the single ESM bundle, source inputs, schemas, and report UI assets. The full `check` owns one release-input build so a clean checkout is self-contained; required workflows must not build immediately before it. Reject production-baseline drift, generated release drift, external runtime imports, symlinks, placeholders, former identifiers, source-only absolute paths, and hash drift.
 - Assemble the npm package from a newly created private staging directory. Validate the exact recursive tarball inventory, executable bits, package manifest, and absence of install lifecycle scripts before publication.
 - Install and execute the exact generated tarball in an isolated directory under supported Node versions. Do not substitute the workspace package or an ambient CLI.
@@ -970,7 +970,7 @@ Development source lives under `packages/`. At release time, bundle it as one No
 ```json
 {
   "name": "utsuri",
-  "version": "0.3.3",
+  "version": "0.3.4",
   "description": "Evidence-based visual change review for Codex and Claude Code",
   "skills": "./skills/"
 }
@@ -982,7 +982,7 @@ Development source lives under `packages/`. At release time, bundle it as one No
 {
   "name": "utsuri",
   "displayName": "Utsuri",
-  "version": "0.3.3",
+  "version": "0.3.4",
   "description": "Evidence-based visual change review for Codex and Claude Code",
   "author": {
     "name": "hokupod",
@@ -4811,6 +4811,7 @@ The synchronized public CLI and Git Plugin version `0.3.3` satisfies this defini
 
 | Entry ID                                   | Version | Date       | Change                                                                                                                                                                                                                                                                                                                                                                                                                                                    |
 | ------------------------------------------ | ------: | ---------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| design-v3.5-v0.3.4-maintenance             |     3.5 | 2026-09-10 | Prepare synchronized `v0.3.4` with reviewed dependency and toolchain updates, stable CI roles, age-filtered compatible lock generation, and bounded maintenance repair; retain the prior verified public availability until publication and live Plugin verification complete.                                                                                                                                                                            |
 | design-v3.4-v0.3.2-public-release          |     3.4 | 2026-08-31 | Recorded protected publication of all five `v0.3.2` npm packages and the verified GitHub Release, matched the promoted Plugin payload to the approved candidate, and confirmed public Git Marketplace install, MCP discovery, disable, and removal on Codex and Claude Code.                                                                                                                                                                              |
 | design-v3.3-v0.3.1-public-release          |     3.3 | 2026-08-24 | Recorded protected publication of all five `v0.3.1` npm packages and the verified GitHub Release, matched the promoted Plugin payload to the approved candidate, and confirmed public Git Marketplace install, MCP discovery, disable, and removal on the recorded minimum Codex and Claude Code releases.                                                                                                                                                |
 | design-v3.2-v0.3.1-maintenance-release     |     3.2 | 2026-08-24 | Prepared synchronized `v0.3.1` source with production-scoped dependency and license identity, refreshed bundled validation, accessibility, comparison, capture, archive, and YAML runtimes, complete Bun/Renovate toolchain policy, and Nix-pinned Git hooks with staged and outgoing secret checks.                                                                                                                                                      |
