@@ -3,6 +3,9 @@
   "extends": ["config:best-practices", ":preserveSemverRanges", ":timezone(Asia/Tokyo)"],
   "labels": ["dependencies"],
   "minimumReleaseAge": "3 days",
+  "constraints": {
+    "bun": "1.3.13"
+  },
   "customManagers": [
     {
       "customType": "regex",

@@ -563,6 +563,7 @@ describe("toolchain and CI contract", () => {
     assert.equal(config.postUpgradeTasks, undefined);
     assert.ok(config.extends.includes(":preserveSemverRanges"));
     assert.equal(config.rangeStrategy, undefined);
+    assert.equal(config.constraints.bun, policy.bun.flake);
     assert.equal(manifest.packageManager, `bun@${policy.bun.ciPrimary}`);
     const bunTypes = manifest.devDependencies["@types/bun"];
     assert.match(bunTypes, /^\d+\.\d+\.\d+$/u);
