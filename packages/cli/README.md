@@ -195,3 +195,5 @@ claude plugin uninstall utsuri@utsuri
 - [Skill contract](https://github.com/hokupod/utsuri/blob/main/skills/utsuri-review/SKILL.md)
 
 Utsuri is licensed under `AGPL-3.0-or-later`. The publisher is `hokupod`. CLI publication, Git Plugin promotion, Git push, tags, and releases are separate operator-authorized actions; source changes alone perform none of them.
+
+Dependency maintenance supports bounded regeneration of reviewed release artifacts and stable CI role checks. Development-only updates with unchanged release artifacts do not require a new release. See [Contributing](CONTRIBUTING.md#bounded-renovate-repair).

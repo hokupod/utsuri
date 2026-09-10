@@ -7,6 +7,10 @@
 - **npm maintainer**: `hokupod-npm`
 - **License**: `AGPL-3.0-or-later`
 
+## Maintenance versus publication
+
+Dependency maintenance may repair reviewed generated artifacts using the bounded procedure in `CONTRIBUTING.md`. Every resulting PR still requires successful exact-head CI. Development-only updates with unchanged release artifacts may be merged without starting publication; collect release-affecting updates into one synchronized patch release. A merged update alone does not authorize publication or change public availability.
+
 ## Release boundary
 
 `.github/workflows/distribution-candidate.yml` is the default, manually dispatched release check. It produces a private GitHub Actions artifact and has no registry-write or OIDC permission. It does not publish, tag, promote, or approve an npm version.
