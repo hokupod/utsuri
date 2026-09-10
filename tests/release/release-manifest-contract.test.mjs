@@ -488,6 +488,34 @@ describe("cross-job distribution transport", () => {
 });
 
 describe("toolchain and CI contract", () => {
+  test("stable role checks fail closed while legacy required contexts migrate", async () => {
+    const workflow = parseYaml(
+      await readFile(path.join(repositoryRoot, ".github/workflows/ci.yml"), "utf8")
+    );
+    for (const [jobId, dependency] of [
+      ["bun-role-checks", "bun-matrix"],
+      ["nix-role-check", "nix-compatibility"]
+    ]) {
+      const job = workflow.jobs[jobId];
+      assert.equal(job.if, "always()");
+      assert.deepEqual(job.needs, [dependency]);
+      assert.equal(job.steps.length, 1);
+      const step = job.steps[0];
+      assert.equal(step.env.RESULT, "${{ needs." + dependency + ".result }}");
+      assert.equal(step.run, 'test "$RESULT" = success');
+      for (const result of ["success", "failure", "cancelled", "skipped", ""]) {
+        const probe = spawnSync("sh", ["-c", step.run], { env: { RESULT: result } });
+        assert.equal(probe.status === 0, result === "success");
+      }
+    }
+    assert.deepEqual(workflow.jobs["bun-role-checks"].strategy.matrix.role, [
+      "primary",
+      "compatibility"
+    ]);
+    assert.equal(workflow.jobs["bun-role-checks"].name, "Bun / ${{ matrix.role }}");
+    assert.equal(workflow.jobs["nix-role-check"].name, "Nix / compatibility");
+  });
+
   test("pins the exact Safe-chain release assets and digests", async () => {
     const [policy, pluginWorkflow] = await Promise.all([
       readFile(path.join(repositoryRoot, "toolchain-policy.json"), "utf8").then(JSON.parse),
@@ -499,12 +527,17 @@ describe("toolchain and CI contract", () => {
       "linux-arm64": "safe-chain-linux-arm64",
       "linux-x64": "safe-chain-linux-x64"
     });
-    assert.deepEqual(policy.safeChain.sha256, {
-      "darwin-arm64": "a1a827589c46db5600c5a96d5efc5fea7c5431df6bc4d28db90bd971988075ff",
-      "darwin-x64": "c250cf0a5b7b0f75a5d10566ec10638d0e0a75fa9719db3055afb78ca1fab2d0",
-      "linux-arm64": "ae5b758820a2bf317ee843c6c4d032be04907c7d7a7579be3373372504108f94",
-      "linux-x64": "565d62360c7d17e1508e76c88319b6b58940bce5495071dca133f51eb30768cf"
-    });
+    assert.deepEqual(
+      Object.keys(policy.safeChain.sha256).sort(),
+      Object.keys(policy.safeChain.assets).sort()
+    );
+    for (const digest of Object.values(policy.safeChain.sha256)) {
+      assert.match(digest, /^[a-f0-9]{64}$/u);
+    }
+    assert.equal(
+      policy.safeChain.releaseUrl,
+      `https://github.com/AikidoSec/safe-chain/releases/tag/${policy.safeChain.version}`
+    );
     assert.match(pluginWorkflow, /safeChain\.version/u);
     assert.match(pluginWorkflow, /releases\/download\/\$\{utsuri_safe_chain_version\}\//u);
     assert.equal(pluginWorkflow.includes(`releases/download/${policy.safeChain.version}/`), false);
@@ -542,7 +575,12 @@ describe("toolchain and CI contract", () => {
     assert.ok(config.extends.includes(":preserveSemverRanges"));
     assert.equal(config.rangeStrategy, undefined);
     assert.equal(manifest.packageManager, `bun@${policy.bun.ciPrimary}`);
-    assert.equal(manifest.devDependencies["@types/bun"], policy.bun.ciPrimary);
+    const bunTypes = manifest.devDependencies["@types/bun"];
+    assert.match(bunTypes, /^\d+\.\d+\.\d+$/u);
+    assert.equal(bunTypes.split(".")[0], policy.bun.ciPrimary.split(".")[0]);
+    // Runtime and declaration patches ship independently; typecheck and both
+    // supported Bun runtimes verify the actual API compatibility.
+
     const engineRule = config.packageRules.find((rule) => rule.matchDepTypes?.includes("engines"));
     assert.equal(engineRule?.enabled, false);
     const bunManager = config.customManagers.find(
@@ -595,9 +633,7 @@ describe("toolchain and CI contract", () => {
     assert.match(apiVersion ?? "", /^\d+\.\d+\.\d+$/u, "typescript must be a plain exact version");
     assert.equal(isCompleteSemver(nativeVersion), true);
     assert.equal(isCompleteSemver(apiVersion), true);
-    assert.equal(nativeVersion, "7.0.2");
     assert.equal(nativeVersion.split(".")[0], "7");
-    assert.equal(apiVersion, "6.0.3");
     assert.equal(apiVersion.split(".")[0], "6");
     assert.equal(svelteCheckPackage.name, "svelte-check");
     assert.equal(svelteCheckPackage.version, manifest.devDependencies?.["svelte-check"]);

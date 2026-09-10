@@ -81,7 +81,7 @@ Run the full local gate before handoff:
 node scripts/safe-chain.mjs bun run check
 ```
 
-The full gate builds its release inputs itself. Do not run `build` immediately before `check` in the same required local or CI path.
+When pushing, let the pre-push hook run the full gate once; do not run the identical gate immediately before the hook. For a handoff without a push, run it explicitly. The full gate builds its release inputs itself. Do not run `build` immediately before `check` in the same required local or CI path.
 
 After an intentional dependency or lockfile change, install the reviewed lockfile as above. Development-only updates may proceed directly to the full gate when they leave the production dependency graph and every release artifact unchanged. CI rebuilds the release inputs and rejects generated drift, so this is an observed result rather than a dependency-name allowlist.
 
@@ -92,6 +92,22 @@ node scripts/safe-chain.mjs bun run deps:refresh
 ```
 
 This regenerates schemas, the production-scoped reviewed dependency baseline, bundled release inputs, SBOM and license inventories, build manifests, and shared fixture assets before validating the fixtures. It never installs dependencies or downloads external artifacts. Review every generated supply-chain and fixture diff; regeneration is not approval of changed third-party bytes.
+
+### Bounded Renovate repair
+
+With explicit maintenance-write authorization, a maintainer or agent may complete a Renovate update instead of leaving a known generation failure pending:
+
+1. Verify the bot origin, base branch, exact head, focused dependency diff, and three-day release age. Work from that reviewed state in an isolated checkout or dedicated branch; preserve concurrent changes and never force-push.
+2. Use the pinned Nix Bun to generate or repair a lockfile that every supported Bun can install with `--frozen-lockfile`. Do not hand-edit `lockfileVersion` or drop the compatibility check. Re-review all changed dependency versions and release ages if lock generation changes the dependency set.
+3. Run the existing `deps:refresh` command after a reviewed frozen install. Limit generated changes to schema declarations, `scripts/release-dependency-baseline.json`, CLI/Skill build outputs, SPDX/license inventories and shared fixture assets. Review the full diff, including removed files and license changes. Any unexpected source or workflow modification stops the repair.
+4. For Safe-chain, review its exact upstream release and synchronize version, release URL, and all four binary SHA-256 values in `toolchain-policy.json` together. Verify downloaded bytes before executing them. Keep its standard installation path; no environment override. A version-only bot update is incomplete.
+5. Commit the reviewed repair, push through the normal hook, and require fresh CI for the resulting exact head. A failed check is a reason to diagnose and repair within this boundary, never a reason to bypass CI. Behavioral fixes, major migrations, or protection changes require their own explicit scope.
+
+Bun runtime and `@types/bun` retain independent exact pins within the supported major; their patch numbers need not be identical. Typecheck and both supported Bun runtimes establish compatibility. Contract tests verify canonical-policy consistency and runtime roles instead of duplicating patch versions or trusted digest values.
+
+Required CI contexts use stable role names: `Bun / primary`, `Bun / compatibility`, and `Nix / compatibility`. During migration, publish these alongside the legacy names, verify both sets on exact main, switch only the required context names in the existing ruleset, then remove the legacy aliases. Keep enforcement, strictness, actors and every other protection unchanged.
+
+A development-only update with unchanged release artifacts may end after verified merge. Accumulate release-affecting updates into one synchronized patch release and run the complete publication and Plugin gates in `docs/release.md`.
 
 Public contract, distribution, or documentation changes also require the focused gates they affect:
 

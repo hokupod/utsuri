@@ -198,3 +198,30 @@ jobs:
           path: .artifacts/playwright
           if-no-files-found: ignore
           retention-days: 7
+
+  # Transitional role checks: retain the old required names until the new
+  # names have passed on main and the ruleset has been migrated.
+  bun-role-checks:
+    name: Bun / ${{ matrix.role }}
+    if: always()
+    needs: [bun-matrix]
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        role: [primary, compatibility]
+    steps:
+      - name: Require the complete Bun matrix
+        env:
+          RESULT: ${{ needs.bun-matrix.result }}
+        run: test "$RESULT" = success
+
+  nix-role-check:
+    name: Nix / compatibility
+    if: always()
+    needs: [nix-compatibility]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Require the Nix compatibility gate
+        env:
+          RESULT: ${{ needs.nix-compatibility.result }}
+        run: test "$RESULT" = success
