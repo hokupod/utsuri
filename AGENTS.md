@@ -3,7 +3,7 @@
 ## Development environment
 
 - Enter the pinned shell with `nix develop`.
-- Safe-chain 1.5.14 is discovered only at the standard user install location.
+- Safe-chain 1.5.16 is discovered only at the standard user install location.
 - Run local package-manager commands as `node scripts/safe-chain.mjs bun ...`.
 - Do not set an executable-path environment variable and do not add Safe-chain's directory to `PATH`.
 - Do not run dependency installation, browser download, `direnv allow`, publishing, or external upload from Utsuri runtime code.

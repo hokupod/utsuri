@@ -10,8 +10,8 @@
     "ciPrimary": "1.4.2"
   },
   "safeChain": {
-    "version": "1.5.14",
-    "releaseUrl": "https://github.com/AikidoSec/safe-chain/releases/tag/1.5.14",
+    "version": "1.5.16",
+    "releaseUrl": "https://github.com/AikidoSec/safe-chain/releases/tag/1.5.16",
     "discovery": "standard-user-install",
     "relativeExecutable": ".safe-chain/bin/safe-chain",
     "allowEnvironmentOverride": false,
@@ -22,10 +22,10 @@
       "linux-x64": "safe-chain-linux-x64"
     },
     "sha256": {
-      "darwin-arm64": "a1a827589c46db5600c5a96d5efc5fea7c5431df6bc4d28db90bd971988075ff",
-      "darwin-x64": "c250cf0a5b7b0f75a5d10566ec10638d0e0a75fa9719db3055afb78ca1fab2d0",
-      "linux-arm64": "ae5b758820a2bf317ee843c6c4d032be04907c7d7a7579be3373372504108f94",
-      "linux-x64": "565d62360c7d17e1508e76c88319b6b58940bce5495071dca133f51eb30768cf"
+      "darwin-arm64": "acb53149f1492c15838c67ed503efe72b58644e59dab21b8da91874992989d40",
+      "darwin-x64": "8c1f98930fe62cd67425d4924879ce773ba9e7a5f8a4d1bba245b0fcf4554162",
+      "linux-arm64": "5f45aaca104e1566bf0058a7c8d33b4a32d6e91f7603a381e9c7bfb9849e7649",
+      "linux-x64": "222a2dd17aa4c13ec9794a2ca242aef7cbfcf8c169b47634622a201f2cb59137"
     }
   },
   "browser": {

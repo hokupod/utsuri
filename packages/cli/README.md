@@ -196,4 +196,4 @@ claude plugin uninstall utsuri@utsuri
 
 Utsuri is licensed under `AGPL-3.0-or-later`. The publisher is `hokupod`. CLI publication, Git Plugin promotion, Git push, tags, and releases are separate operator-authorized actions; source changes alone perform none of them.
 
-Dependency maintenance supports bounded regeneration of reviewed release artifacts and stable CI role checks. Lockfile generation preserves supported-runtime compatibility and the three-day dependency age policy. Development-only updates with unchanged release artifacts do not require a new release. See [Contributing](https://github.com/hokupod/utsuri/blob/main/CONTRIBUTING.md#bounded-renovate-repair).
+Dependency maintenance supports bounded regeneration of reviewed release artifacts and stable CI role checks. Lockfile generation preserves supported-runtime compatibility and the three-day dependency age policy. Toolchain updates verify all supported-platform binary hashes together. Development-only updates with unchanged release artifacts do not require a new release. See [Contributing](https://github.com/hokupod/utsuri/blob/main/CONTRIBUTING.md#bounded-renovate-repair).

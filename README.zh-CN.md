@@ -196,4 +196,4 @@ claude plugin uninstall utsuri@utsuri
 
 Utsuri 采用 `AGPL-3.0-or-later` 许可证。Publisher 为 `hokupod`。CLI publication、Git Plugin promotion、Git push、tag 和 release 都是需要 operator 单独授权的操作；源码变更本身不会执行这些操作。
 
-依赖维护允许在受限范围内重新生成已审查的发布产物，并使用稳定的 CI 角色名称进行验证。锁文件生成保留受支持运行时的兼容性和依赖发布后三天的等待期。开发依赖更新未改变发布产物时，无需创建新版本。请参阅[贡献指南](https://github.com/hokupod/utsuri/blob/main/CONTRIBUTING.md#bounded-renovate-repair)。
+依赖维护允许在受限范围内重新生成已审查的发布产物，并使用稳定的 CI 角色名称进行验证。锁文件生成保留受支持运行时的兼容性和依赖发布后三天的等待期。工具链更新会一并验证所有受支持平台的二进制哈希。开发依赖更新未改变发布产物时，无需创建新版本。请参阅[贡献指南](https://github.com/hokupod/utsuri/blob/main/CONTRIBUTING.md#bounded-renovate-repair)。
