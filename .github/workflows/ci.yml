@@ -39,7 +39,7 @@ jobs:
         include:
           - bun: 1.3.13
             role: compatibility
-          - bun: 1.4.0
+          - bun: 1.4.2
             role: primary
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
