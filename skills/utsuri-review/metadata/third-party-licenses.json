@@ -1,7 +1,7 @@
 {
   "schemaVersion": "1.2",
-  "dependencyBaselineSha256": "4975a745b781d8f877da16715877e0e20b395774273423541a556e893c1f39cf",
-  "productionDependencySha256": "5dc053a355a278768fb2076bea50db4b1c31b3b276c662ebce5d62bee6c752dc",
+  "dependencyBaselineSha256": "024bca45042f914871fa67619d62f4cfe69c495e2455d12dbfe7b345ca3444e5",
+  "productionDependencySha256": "e827c679e61e7aa9261c9463230e2c11eca7f6a89131404d35e51ae0007947d6",
   "packages": [
     {
       "checksum": "SHA256:93dd7f299e2ba2769b3b9019a5124322bae12b9734400bbc0e986d77a7ed7700",
@@ -39,11 +39,11 @@
       "version": "3.1.3"
     },
     {
-      "checksum": "SHA512:807c00d4ef4b0c870aba730a84e6d2fc78a6c2d7a13b59cf50408a02ee53a4a81a3b5f5f716125e1b96259ed635b1545bc85f3b498e34382fc5d0d4453d7fb27",
+      "checksum": "SHA512:74ebd95738dd65dcfba6177dbfa8c26f0c6b056ddf2ba9fc45cd02b5d98ce1bba6ccc9f1cb005886ea61e89f35f51470fe4bbeacb6de9707ccba792dbb35551e",
       "license": "BSD-3-Clause",
       "name": "fast-uri",
-      "packageVerificationCode": "25c40a2e0a03d80c7158ba2bba2ad1fb5473a87f",
-      "version": "3.1.5"
+      "packageVerificationCode": "f59c4d347c0d239379137ac59772470ca385c9f7",
+      "version": "3.1.7"
     },
     {
       "checksum": "SHA512:b5b64db89acbc06529df3b2106d772e16f8e47166e221f1ae629722044030b9ad8d5fdd4db424caf2d0b977581cd4e7c1192ac12e2455e16f9830bfc0ac3ef80",

@@ -5,7 +5,7 @@
     "creators": ["Tool: Utsuri SBOM generator 1"]
   },
   "dataLicense": "CC0-1.0",
-  "documentNamespace": "https://github.com/hokupod/utsuri/sbom/0.3.3/5dc053a355a278768fb2076bea50db4b1c31b3b276c662ebce5d62bee6c752dc",
+  "documentNamespace": "https://github.com/hokupod/utsuri/sbom/0.3.3/e827c679e61e7aa9261c9463230e2c11eca7f6a89131404d35e51ae0007947d6",
   "name": "utsuri-0.3.3",
   "packages": [
     {
@@ -96,11 +96,11 @@
       "versionInfo": "3.1.3"
     },
     {
-      "SPDXID": "SPDXRef-Package-fast-uri-3.1.5",
+      "SPDXID": "SPDXRef-Package-fast-uri-3.1.7",
       "checksums": [
         {
           "algorithm": "SHA512",
-          "checksumValue": "807c00d4ef4b0c870aba730a84e6d2fc78a6c2d7a13b59cf50408a02ee53a4a81a3b5f5f716125e1b96259ed635b1545bc85f3b498e34382fc5d0d4453d7fb27"
+          "checksumValue": "74ebd95738dd65dcfba6177dbfa8c26f0c6b056ddf2ba9fc45cd02b5d98ce1bba6ccc9f1cb005886ea61e89f35f51470fe4bbeacb6de9707ccba792dbb35551e"
         }
       ],
       "downloadLocation": "NOASSERTION",
@@ -109,9 +109,9 @@
       "licenseDeclared": "BSD-3-Clause",
       "name": "fast-uri",
       "packageVerificationCode": {
-        "packageVerificationCodeValue": "25c40a2e0a03d80c7158ba2bba2ad1fb5473a87f"
+        "packageVerificationCodeValue": "f59c4d347c0d239379137ac59772470ca385c9f7"
       },
-      "versionInfo": "3.1.5"
+      "versionInfo": "3.1.7"
     },
     {
       "SPDXID": "SPDXRef-Package-fflate-0.8.3",
@@ -252,7 +252,7 @@
       "spdxElementId": "SPDXRef-Package-ajv-8.20.0"
     },
     {
-      "relatedSpdxElement": "SPDXRef-Package-fast-uri-3.1.5",
+      "relatedSpdxElement": "SPDXRef-Package-fast-uri-3.1.7",
       "relationshipType": "DEPENDS_ON",
       "spdxElementId": "SPDXRef-Package-ajv-8.20.0"
     },

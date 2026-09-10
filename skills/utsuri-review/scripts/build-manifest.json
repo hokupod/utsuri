@@ -86,8 +86,8 @@
     "schemas/review-state.schema.json": "27f9f98344a2b94b75f84fef9bba73978bbacca1e102ed11e459d247fbed7552",
     "schemas/review-thread.schema.json": "6c5957f14b964dfaf1601ac45870b7f3fae013209dd4964aa3831dd753f06fc1"
   },
-  "dependencyBaselineSha256": "4975a745b781d8f877da16715877e0e20b395774273423541a556e893c1f39cf",
-  "dependencyHash": "f089efb87d508375a949464dc7d8324cfab4de9a7e2563c3443afff6d31c5546",
+  "dependencyBaselineSha256": "024bca45042f914871fa67619d62f4cfe69c495e2455d12dbfe7b345ca3444e5",
+  "dependencyHash": "2ae495a60e4115bde871fc0a3ee7030307dea689a242889d8fe6ad6d24c94121",
   "dependencyHashes": {
     "ajv-formats@3.0.1/dist/formats.js": "b61693a26869970a92cc1fe832c931ccd3afe8b6d66802b19c48306349e84880",
     "ajv-formats@3.0.1/dist/index.js": "3f3014150293846086d11058bb8bf43e669e354a98b37adcf10281454d5e753b",
@@ -157,9 +157,9 @@
     "ajv@8.20.0/dist/vocabularies/validation/uniqueItems.js": "666d1a2aa25c0dfe3cf41312d0f9d40e9f99eb2c19be7469134ad89005aadd52",
     "axe-core@4.13.0/axe.js": "138a93a4ce7b7c6c08ed84144e45dcd8cc36d2d4ff8ed673619faf0406906d88",
     "fast-deep-equal@3.1.3/index.js": "eb469e206280321a3878f2335ec98aa2104a155079d8ed83a23029098dccd215",
-    "fast-uri@3.1.5/index.js": "79945eb0b513058251bd1c3b518b86c5c549bb73b8c37c77d717133d66277a97",
-    "fast-uri@3.1.5/lib/schemes.js": "0f9497f8e43c9b002d79c8a916709daa4ae8a6462735b1b5dc6ad587a28a5064",
-    "fast-uri@3.1.5/lib/utils.js": "3394986f9670b821493943faafe5d83ccc15109aba908f1b5dd017e27b0d0ea7",
+    "fast-uri@3.1.7/index.js": "e82d3e55d954483e4927f9740bc3113a24d19ef5a73c7962d8a93c499fc982ff",
+    "fast-uri@3.1.7/lib/schemes.js": "c2c61d3fd0bc63a587100928a399e75be8c420d210c439d75f7346da4aa4f3c3",
+    "fast-uri@3.1.7/lib/utils.js": "610a6cfa7b1c9d5689443b3a3d14af4c24afed51ef5852495ae1489ae455a9f4",
     "fflate@0.8.3/esm/index.mjs": "8d75534a30a0580608e1271c13d70943ed4cd3589fddff7b1197748036a5116e",
     "json-schema-traverse@1.0.0/index.js": "024191b747afac01b28ff11d744e9f82720bbad5f716163ba5c962eb62aa2350",
     "pixelmatch@7.2.0/index.js": "52c6026c4916a07548d4ce55090ec4ed918d353e15095406dabc3a8a5135d788",
@@ -287,5 +287,5 @@
     "app.css": "26db3b18b936af3b1cf306bbc984db50d7144d1706712bcad400e5e3af3d485a",
     "app.js": "3cdb480bc5330e46be21153aab6c67cc8b5d72df16aed0b04b43bcf76d6688e2"
   },
-  "bundleSha256": "3ca5f37dcdc26e98be418214d4539f5e798d5bc4b35bab14fd53e7b72ce3520d"
+  "bundleSha256": "4d727cf2b5b748d7d35e11f73e34c7988aa5f127a9450038e106a825d0b1ac8c"
 }
