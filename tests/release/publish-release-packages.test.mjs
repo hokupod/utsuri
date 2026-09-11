@@ -105,3 +105,44 @@ test("accepts a matching registry result after a lost publish response", async (
   });
   assert.deepEqual(results, [{ name: helper.name, status: "recovered-after-publish-error" }]);
 });
+
+test("waits for delayed registry propagation without publishing again", async () => {
+  let lookups = 0;
+  let publications = 0;
+  let waitedMs = 0;
+  const results = await publishPackageSequence({
+    packages: [helper],
+    lookupIntegrity: async () => (++lookups <= 73 ? null : helper.integrity),
+    publish: async () => {
+      publications += 1;
+      return { ok: true, status: 0 };
+    },
+    sleep: async (milliseconds) => {
+      waitedMs += milliseconds;
+    }
+  });
+  assert.equal(publications, 1);
+  assert.equal(waitedMs, 360_000);
+  assert.deepEqual(results, [{ name: helper.name, status: "published" }]);
+});
+
+test("stops after bounded registry propagation waiting", async () => {
+  let publications = 0;
+  let waitedMs = 0;
+  await assert.rejects(
+    publishPackageSequence({
+      packages: [helper, cli],
+      lookupIntegrity: async () => null,
+      publish: async () => {
+        publications += 1;
+        return { ok: true, status: 0 };
+      },
+      sleep: async (milliseconds) => {
+        waitedMs += milliseconds;
+      }
+    }),
+    /was not verified/u
+  );
+  assert.equal(publications, 1);
+  assert(waitedMs >= 360_000 && waitedMs <= 600_000);
+});
