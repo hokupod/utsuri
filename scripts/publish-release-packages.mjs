@@ -40,7 +40,7 @@ export async function publishPackageSequence({
   lookupIntegrity,
   publish,
   sleep = delay,
-  pollAttempts = 12,
+  pollAttempts = 120,
   pollDelayMs = 5_000
 }) {
   const results = [];

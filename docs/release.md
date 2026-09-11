@@ -1,7 +1,7 @@
 # Utsuri release and distribution guide
 
-- **Current status**: synchronized CLI and Git Plugin `0.3.4` source candidate; publication and live verification pending
-- **Public availability**: verified `0.3.3` npm packages, GitHub Release, and public Git Marketplace Plugin
+- **Current status**: synchronized CLI and Git Plugin `0.3.4` publicly available and live-verified
+- **Public availability**: verified `0.3.4` npm packages, GitHub Release, and public Git Marketplace Plugin
 - **Version source**: root `package.json`
 - **Publisher**: `hokupod`
 - **npm maintainer**: `hokupod-npm`
@@ -17,7 +17,7 @@ Dependency maintenance may repair reviewed generated artifacts using the bounded
 
 `.github/workflows/release.yml` runs only after an operator pushes an annotated `v*` tag. It requires the tag to match the root and CLI versions and to point to the exact `origin/main` commit. Registry writes are confined to its protected `release` environment and use GitHub OIDC trusted publishing without an npm token.
 
-All five package identities now exist publicly through `0.3.3`; release `0.3.3` was published only through the protected tag workflow. Tag creation and release-environment approval remain separate operator actions. A missing package identity or trusted-publisher configuration is release drift: stop and restore the protected configuration instead of falling back to a manual publish.
+All five package identities now exist publicly through `0.3.4`; release `0.3.4` was published only through the protected tag workflow. Tag creation and release-environment approval remain separate operator actions. A missing package identity or trusted-publisher configuration is release drift: stop and restore the protected configuration instead of falling back to a manual publish.
 
 ## Two distribution surfaces and authorization
 
@@ -28,7 +28,7 @@ The aggregate Plugin and Git Marketplace Plugin are independent outputs:
 
 CLI release and Git Plugin promotion are always separate operations and approvals. One complete SemVer identifies both surfaces, so the authorized version-change transaction updates the CLI version, Plugin version, and exact Plugin pin together. Promotion preflight may observe only one controlled skew: synchronized root/CLI package manifests at the target while every old Plugin version and MCP pin still matches. The normal verifier rejects that transient state, and promotion must end with complete synchronization. No source change authorizes npm publication, Plugin promotion, a Git commit, push, pull request, merge, tag, GitHub Release, or live Git installation test.
 
-The current source decision is one synchronized CLI/root aggregate/Git Plugin version: `0.3.4`. Both Codex and Claude MCP manifests must pin exactly `@utsu-ri/cli@0.3.4`. Public availability remains verified at `0.3.3` until every publication and Plugin gate for the new candidate completes. Complete SemVer is mandatory; `latest`, tags, ranges, and workspace specifiers fail verification.
+The current source decision is one synchronized CLI/root aggregate/Git Plugin version: `0.3.4`. Both Codex and Claude MCP manifests must pin exactly `@utsu-ri/cli@0.3.4`. Public availability is verified at `0.3.4` after completing every publication and Plugin gate. Complete SemVer is mandatory; `latest`, tags, ranges, and workspace specifiers fail verification.
 
 ## Package identities
 
@@ -119,7 +119,7 @@ Required repository configuration mirrors Kyoso:
 
 Do not declare a release publicly available until step 7 succeeds. A later release remains publicly available while its new candidate is prepared; documentation alone is not a release-authorization signal.
 
-If publication fails after some package versions appear, rerun the same immutable tag workflow; the integrity reconciliation accepts only exact candidate bytes. Never move or recreate the tag. If a draft GitHub Release remains after an upload failure, the workflow intentionally refuses to overwrite it; inspect and reconcile that draft explicitly before retrying. Follow [npm trusted publishing](https://docs.npmjs.com/trusted-publishers/) and [npm provenance](https://docs.npmjs.com/generating-provenance-statements/) for current operator-side behavior.
+After npm accepts a package, registry integrity verification waits up to ten minutes for propagation without publishing it again. A different integrity fails immediately, and an exhausted wait stops before the next package. If publication fails after some package versions appear, wait for any accepted package to become visible, reconcile it against the candidate, and rerun the same immutable tag workflow; the integrity reconciliation accepts only exact candidate bytes. Never move or recreate the tag. If a draft GitHub Release remains after an upload failure, the workflow intentionally refuses to overwrite it; inspect and reconcile that draft explicitly before retrying. Follow [npm trusted publishing](https://docs.npmjs.com/trusted-publishers/) and [npm provenance](https://docs.npmjs.com/generating-provenance-statements/) for current operator-side behavior.
 
 ## Post-publication promotion
 
@@ -147,4 +147,17 @@ The 2026-09-07 release completed every external publication gate:
 - all five exact npm package versions were published with candidate-matching integrity and SLSA provenance through protected Release run `34077275746`;
 - [GitHub Release `v0.3.3`](https://github.com/hokupod/utsuri/releases/tag/v0.3.3) was published with the bound candidate manifest, checksums, five tarballs, and aggregate Plugin archive;
 - promotion run `34077718476` verified the exact public CLI, helper, approved candidate manifest, Skill evaluations, and Claude strict validation; and
-- isolated public Git-source installations on Codex `0.151.0` and Claude Code `2.1.251` verified the sanitized contract recorded in `docs/compatibility/plugin-runtime.json`.
+- isolated public Git-source installations on Codex `0.151.0` and Claude Code `2.1.251` verified the sanitized contract in the [historical availability record](https://github.com/hokupod/utsuri/blob/39d369e1671ff84705f00999fa6c870b938472c2/docs/compatibility/plugin-runtime.json).
+
+## Verified synchronized `0.3.4` release
+
+The 2026-09-11 release completed every external publication gate:
+
+- exact release source commit `6d950103a4ccc7906f025accf7c90524caaadbbe` passed `main` CI run `34434632854` and four-platform Distribution Candidate run `34434907555`;
+- protected Release run `34546244737` reproduced the approved candidate byte-for-byte, published all five exact npm packages with matching integrity and SLSA provenance, and passed native `npx` and `bunx` smoke;
+- npm propagation exceeded the original one-minute wait. Attempts 2–4 reconciled already-published versions against the same candidate and completed the same immutable tag; no package or tag was replaced;
+- [GitHub Release `v0.3.4`](https://github.com/hokupod/utsuri/releases/tag/v0.3.4) published all nine expected assets, and their downloaded bytes matched the approved candidate;
+- promotion run `34548180981` passed the public CLI/helper, candidate manifest, Skill evaluations, and Claude strict validation. All 38 promoted Plugin files matched the released aggregate payload in bytes and modes; and
+- isolated public Git-source installations on Codex `0.151.0` and Claude Code `2.1.251` verified the exact commit and package pin, six MCP tools, disablement, and removal as recorded in `docs/compatibility/plugin-runtime.json`. Claude's first probe ended before MCP initialization; the retained isolated installation passed the subsequent connection probe.
+
+The subsequent maintenance change extends the bounded registry propagation wait to ten minutes. It preserves exact integrity checks, publishes each missing package only once per attempt, and stops before the next package when verification fails. It does not alter the published `v0.3.4` tag or artifacts.
