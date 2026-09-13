@@ -10,7 +10,7 @@
     "ciPrimary": "1.4.2"
   },
   "safeChain": {
-    "version": "1.5.16",
+    "version": "1.5.20",
     "releaseUrl": "https://github.com/AikidoSec/safe-chain/releases/tag/1.5.16",
     "discovery": "standard-user-install",
     "relativeExecutable": ".safe-chain/bin/safe-chain",
