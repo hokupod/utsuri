@@ -1,7 +1,7 @@
 {
   "schemaVersion": "1.1",
-  "productionDependencySha256": "2f271aba38209595fb0516cf36e67a15316162475f220448d808baa8367e2b27",
-  "bundledInputHash": "2ae495a60e4115bde871fc0a3ee7030307dea689a242889d8fe6ad6d24c94121",
+  "productionDependencySha256": "efa1a72df583a30970a361bee83923b740737410bb6c8fc999ab313cc1864593",
+  "bundledInputHash": "f32b3aad9838e5014736cf171afd5935cc647b6d8c2f72093139ac04079d3ea7",
   "packageVerificationCodes": {
     "ajv@8.20.0": "b3f66fdcb0928b7cc72eb9387473318b0620daf0",
     "ajv-formats@3.0.1": "10c29707282bc159f1c8261e00681eef880cd4d6",
@@ -14,6 +14,6 @@
     "playwright-core@1.63.0": "f6c6ae54bc2375d450a8d3ddbc17637ea29e18b1",
     "pngjs@7.0.0": "fb6ca73f76a553af8a1bd637fef59250fe00faf4",
     "require-from-string@2.0.2": "376512d3467526f7b9d0a6d46123a7b317af0e9c",
-    "yaml@2.9.0": "fcfd078bdf9ed3fc444a466bb1488ae9c87ab7fa"
+    "yaml@2.9.1": "e7e8cb94c4046be23aa8bcd1614d53f77114050a"
   }
 }
