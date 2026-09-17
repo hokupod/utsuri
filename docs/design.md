@@ -6,16 +6,16 @@
 - **Plugin name**: `utsuri`
 - **Skill name**: `utsuri-review`
 - **CLI name**: `utsuri`
-- **Document version**: 3.6
+- **Document version**: 3.7
 - **Created**: 2026-08-06
-- **Last updated**: 2026-09-11
+- **Last updated**: 2026-09-17
 - **Language**: English (canonical)
 - **Targets**: Codex / Claude Code / local CLI / CI
 - **Implementation language**: TypeScript
 - **Development environment**: Bun
 - **Report UI**: a static application built with Svelte
 - **Maintenance publication**: synchronized `v0.3.4` completed protected npm/GitHub publication, Plugin promotion, and isolated public Git installs on Codex `0.151.0` and Claude Code `2.1.251` on 2026-09-11; see `docs/release.md` and `docs/compatibility/plugin-runtime.json`.
-- **v3.6 changes**: record verified `v0.3.4` availability after the reviewed maintenance updates and extend future npm propagation verification from one to ten minutes following observed registry delays. Exact candidate integrity, bounded waiting, and immutable-tag recovery remain required.
+- **v3.7 changes**: prepare synchronized `v0.3.5` with YAML `2.9.1` release artifacts and verified Safe-chain `1.5.20` trust anchors; retain `v0.3.4` public availability until publication and live Plugin verification complete.
 
 ---
 
@@ -970,7 +970,7 @@ Development source lives under `packages/`. At release time, bundle it as one No
 ```json
 {
   "name": "utsuri",
-  "version": "0.3.4",
+  "version": "0.3.5",
   "description": "Evidence-based visual change review for Codex and Claude Code",
   "skills": "./skills/"
 }
@@ -982,7 +982,7 @@ Development source lives under `packages/`. At release time, bundle it as one No
 {
   "name": "utsuri",
   "displayName": "Utsuri",
-  "version": "0.3.4",
+  "version": "0.3.5",
   "description": "Evidence-based visual change review for Codex and Claude Code",
   "author": {
     "name": "hokupod",
@@ -4811,6 +4811,7 @@ The synchronized public CLI and Git Plugin version `0.3.4` satisfies this defini
 
 | Entry ID                                   | Version | Date       | Change                                                                                                                                                                                                                                                                                                                                                                                                                                                    |
 | ------------------------------------------ | ------: | ---------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| design-v3.7-v0.3.5-maintenance             |     3.7 | 2026-09-17 | Prepare synchronized YAML and Safe-chain maintenance release; retain prior verified availability until all publication and live Plugin gates complete.                                                                                                                                                                                                                                                                                                    |
 | design-v3.6-v0.3.4-public-release          |     3.6 | 2026-09-11 | Record protected publication, candidate-matching npm and GitHub assets, Plugin promotion, and isolated public Git installs on both hosts; extend bounded npm propagation waiting to ten minutes without weakening integrity or immutable-tag checks.                                                                                                                                                                                                      |
 | design-v3.5-v0.3.4-maintenance             |     3.5 | 2026-09-10 | Prepare synchronized `v0.3.4` with reviewed dependency and toolchain updates, stable CI roles, age-filtered compatible lock generation, and bounded maintenance repair; retain the prior verified public availability until publication and live Plugin verification complete.                                                                                                                                                                            |
 | design-v3.4-v0.3.2-public-release          |     3.4 | 2026-08-31 | Recorded protected publication of all five `v0.3.2` npm packages and the verified GitHub Release, matched the promoted Plugin payload to the approved candidate, and confirmed public Git Marketplace install, MCP discovery, disable, and removal on Codex and Claude Code.                                                                                                                                                                              |
