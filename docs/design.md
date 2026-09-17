@@ -6,7 +6,7 @@
 - **Plugin name**: `utsuri`
 - **Skill name**: `utsuri-review`
 - **CLI name**: `utsuri`
-- **Document version**: 3.7
+- **Document version**: 3.8
 - **Created**: 2026-08-06
 - **Last updated**: 2026-09-17
 - **Language**: English (canonical)
@@ -14,8 +14,8 @@
 - **Implementation language**: TypeScript
 - **Development environment**: Bun
 - **Report UI**: a static application built with Svelte
-- **Maintenance publication**: synchronized `v0.3.4` completed protected npm/GitHub publication, Plugin promotion, and isolated public Git installs on Codex `0.151.0` and Claude Code `2.1.251` on 2026-09-11; see `docs/release.md` and `docs/compatibility/plugin-runtime.json`.
-- **v3.7 changes**: prepare synchronized `v0.3.5` with YAML `2.9.1` release artifacts and verified Safe-chain `1.5.20` trust anchors; retain `v0.3.4` public availability until publication and live Plugin verification complete.
+- **Maintenance publication**: synchronized `v0.3.5` completed protected npm/GitHub publication, Plugin promotion, and isolated public Git installs on Codex `0.151.0` and Claude Code `2.1.251` on 2026-09-17; see `docs/release.md` and `docs/compatibility/plugin-runtime.json`.
+- **v3.8 changes**: record verified synchronized `v0.3.5` availability after YAML and Safe-chain maintenance, candidate-matching publication, and isolated public Git Plugin verification.
 
 ---
 
@@ -3994,7 +3994,7 @@ Researched: 2026-08-06
 
 ## 46. Detailed interactive review and Origin Session feedback specification
 
-**v1 implementation status**: publicly available as synchronized CLI and Plugin version `v0.3.4` through `return-to-session` and `export-only`. The optional direct bridge is deliberately disabled because no configured host meets the authenticated same-session API and response-correlation requirements. Publication evidence covers the protected npm and GitHub Release, promoted Plugin payload, and live public Git Plugin verification; it does not authorize any later release operation or a new Agent/session fallback.
+**v1 implementation status**: publicly available as synchronized CLI and Plugin version `v0.3.5` through `return-to-session` and `export-only`. The optional direct bridge is deliberately disabled because no configured host meets the authenticated same-session API and response-correlation requirements. Publication evidence covers the protected npm and GitHub Release, promoted Plugin payload, and live public Git Plugin verification; it does not authorize any later release operation or a new Agent/session fallback.
 
 ### 46.1 Purpose
 
@@ -4803,7 +4803,7 @@ The implementation keeps the preview separate from storage, writes inbox/batch/c
 
 A feature outside this definition is accepted only when it makes review decisions faster, strengthens the relationship between a question and its evidence, increases evidence reliability, or improves security.
 
-The synchronized public CLI and Git Plugin version `0.3.4` satisfies this definition through local immutable reports, mutable review generations, and a same-project/same-session Marketplace MCP broker, with `return-to-session` as the host-neutral feedback path. The `v0.3.4` tag publication, Plugin promotion, and public Git smoke were separately authorized and verified; every later version requires new authorization. Direct same-session submission and a shared remote review store remain optional future capabilities.
+The synchronized public CLI and Git Plugin version `0.3.5` satisfies this definition through local immutable reports, mutable review generations, and a same-project/same-session Marketplace MCP broker, with `return-to-session` as the host-neutral feedback path. The `v0.3.5` tag publication, Plugin promotion, and public Git smoke were separately authorized and verified; every later version requires new authorization. Direct same-session submission and a shared remote review store remain optional future capabilities.
 
 ---
 
@@ -4811,6 +4811,7 @@ The synchronized public CLI and Git Plugin version `0.3.4` satisfies this defini
 
 | Entry ID                                   | Version | Date       | Change                                                                                                                                                                                                                                                                                                                                                                                                                                                    |
 | ------------------------------------------ | ------: | ---------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| design-v3.8-v0.3.5-public-release          |     3.8 | 2026-09-17 | Record protected publication, candidate-matching assets and provenance, promoted aggregate Plugin, and isolated public Git installation verification.                                                                                                                                                                                                                                                                                                     |
 | design-v3.7-v0.3.5-maintenance             |     3.7 | 2026-09-17 | Prepare synchronized YAML and Safe-chain maintenance release; retain prior verified availability until all publication and live Plugin gates complete.                                                                                                                                                                                                                                                                                                    |
 | design-v3.6-v0.3.4-public-release          |     3.6 | 2026-09-11 | Record protected publication, candidate-matching npm and GitHub assets, Plugin promotion, and isolated public Git installs on both hosts; extend bounded npm propagation waiting to ten minutes without weakening integrity or immutable-tag checks.                                                                                                                                                                                                      |
 | design-v3.5-v0.3.4-maintenance             |     3.5 | 2026-09-10 | Prepare synchronized `v0.3.4` with reviewed dependency and toolchain updates, stable CI roles, age-filtered compatible lock generation, and bounded maintenance repair; retain the prior verified public availability until publication and live Plugin verification complete.                                                                                                                                                                            |

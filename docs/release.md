@@ -1,7 +1,7 @@
 # Utsuri release and distribution guide
 
-- **Current status**: synchronized CLI and Git Plugin `0.3.5` source candidate; publication and live verification pending
-- **Public availability**: verified `0.3.4` npm packages, GitHub Release, and public Git Marketplace Plugin
+- **Current status**: synchronized CLI and Git Plugin `0.3.5` publicly available and live-verified
+- **Public availability**: verified `0.3.5` npm packages, GitHub Release, and public Git Marketplace Plugin
 - **Version source**: root `package.json`
 - **Publisher**: `hokupod`
 - **npm maintainer**: `hokupod-npm`
@@ -17,7 +17,7 @@ Dependency maintenance may repair reviewed generated artifacts using the bounded
 
 `.github/workflows/release.yml` runs only after an operator pushes an annotated `v*` tag. It requires the tag to match the root and CLI versions and to point to the exact `origin/main` commit. Registry writes are confined to its protected `release` environment and use GitHub OIDC trusted publishing without an npm token.
 
-All five package identities now exist publicly through `0.3.4`; release `0.3.4` was published only through the protected tag workflow. Tag creation and release-environment approval remain separate operator actions. A missing package identity or trusted-publisher configuration is release drift: stop and restore the protected configuration instead of falling back to a manual publish.
+All five package identities now exist publicly through `0.3.5`; release `0.3.5` was published only through the protected tag workflow. Tag creation and release-environment approval remain separate operator actions. A missing package identity or trusted-publisher configuration is release drift: stop and restore the protected configuration instead of falling back to a manual publish.
 
 ## Two distribution surfaces and authorization
 
@@ -28,7 +28,7 @@ The aggregate Plugin and Git Marketplace Plugin are independent outputs:
 
 CLI release and Git Plugin promotion are always separate operations and approvals. One complete SemVer identifies both surfaces, so the authorized version-change transaction updates the CLI version, Plugin version, and exact Plugin pin together. Promotion preflight may observe only one controlled skew: synchronized root/CLI package manifests at the target while every old Plugin version and MCP pin still matches. The normal verifier rejects that transient state, and promotion must end with complete synchronization. No source change authorizes npm publication, Plugin promotion, a Git commit, push, pull request, merge, tag, GitHub Release, or live Git installation test.
 
-The current source decision is one synchronized CLI/root aggregate/Git Plugin version: `0.3.5`. Both Codex and Claude MCP manifests must pin exactly `@utsu-ri/cli@0.3.5`. Public availability remains verified at `0.3.4` until every publication and Plugin gate for the new candidate completes. Complete SemVer is mandatory; `latest`, tags, ranges, and workspace specifiers fail verification.
+The current source decision is one synchronized CLI/root aggregate/Git Plugin version: `0.3.5`. Both Codex and Claude MCP manifests must pin exactly `@utsu-ri/cli@0.3.5`. Public availability is verified at `0.3.5` after completing every publication and Plugin gate. Complete SemVer is mandatory; `latest`, tags, ranges, and workspace specifiers fail verification.
 
 ## Package identities
 
@@ -158,6 +158,16 @@ The 2026-09-11 release completed every external publication gate:
 - npm propagation exceeded the original one-minute wait. Attempts 2–4 reconciled already-published versions against the same candidate and completed the same immutable tag; no package or tag was replaced;
 - [GitHub Release `v0.3.4`](https://github.com/hokupod/utsuri/releases/tag/v0.3.4) published all nine expected assets, and their downloaded bytes matched the approved candidate;
 - promotion run `34548180981` passed the public CLI/helper, candidate manifest, Skill evaluations, and Claude strict validation. All 38 promoted Plugin files matched the released aggregate payload in bytes and modes; and
-- isolated public Git-source installations on Codex `0.151.0` and Claude Code `2.1.251` verified the exact commit and package pin, six MCP tools, disablement, and removal as recorded in `docs/compatibility/plugin-runtime.json`. Claude's first probe ended before MCP initialization; the retained isolated installation passed the subsequent connection probe.
+- isolated public Git-source installations on Codex `0.151.0` and Claude Code `2.1.251` verified the exact commit and package pin, six MCP tools, disablement, and removal as recorded in the [historical availability record](https://github.com/hokupod/utsuri/blob/74c66d78256cab7680199e11cd31da60851d8473/docs/compatibility/plugin-runtime.json). Claude's first probe ended before MCP initialization; the retained isolated installation passed the subsequent connection probe.
 
 The subsequent maintenance change extends the bounded registry propagation wait to ten minutes. It preserves exact integrity checks, publishes each missing package only once per attempt, and stops before the next package when verification fails. It does not alter the published `v0.3.4` tag or artifacts.
+
+## Verified synchronized `0.3.5` release
+
+The 2026-09-17 release completed every external publication gate:
+
+- exact source `e3036e1acdccb765cfad8d9d7fb6b398f440e4cd` passed main CI `35191523340` and four-platform Distribution Candidate `35191827174`;
+- protected Release run `35192132195` reproduced the approved candidate and published all five exact npm packages with matching integrity and source-bound SLSA provenance; native `npx` and `bunx` smoke passed;
+- [GitHub Release `v0.3.5`](https://github.com/hokupod/utsuri/releases/tag/v0.3.5) contains all nine expected assets, whose downloaded bytes match the approved candidate;
+- promotion run `35193311630` verified the exact public CLI/helper, candidate-bound aggregate Plugin, Skill evaluations, and Claude strict validation; and
+- isolated public Git installations on Codex `0.151.0` and Claude Code `2.1.251` verified the release source, exact package pin, MCP availability, and lifecycle behavior recorded in `docs/compatibility/plugin-runtime.json`.
