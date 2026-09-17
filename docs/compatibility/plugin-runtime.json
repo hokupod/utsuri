@@ -10,11 +10,11 @@
     "mcpPackagePin": "@utsu-ri/cli@0.3.5"
   },
   "publicGitVerification": {
-    "verifiedAt": "2026-09-11",
+    "verifiedAt": "2026-09-17",
     "source": "hokupod/utsuri",
-    "sourceCommit": "6d950103a4ccc7906f025accf7c90524caaadbbe",
-    "pluginVersion": "0.3.4",
-    "cliPackage": "@utsu-ri/cli@0.3.4",
+    "sourceCommit": "e3036e1acdccb765cfad8d9d7fb6b398f440e4cd",
+    "pluginVersion": "0.3.5",
+    "cliPackage": "@utsu-ri/cli@0.3.5",
     "hosts": {
       "codex": {
         "version": "0.151.0",
