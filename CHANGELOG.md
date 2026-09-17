@@ -7,6 +7,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.3.5] - 2026-09-17
+
+### Changed
+
+- Update bundled YAML to `2.9.1`, including upstream recursive merge alias limits
+  and quoted-string line unfolding fixes, and refresh reviewed release artifacts.
+- Update Safe-chain to `1.5.20` with verified official hashes for all four platforms.
+- Include reviewed development declaration and lint updates since the prior release.
+- Synchronize CLI, aggregate Plugin, Git Plugin, and exact MCP package pins.
+
 ## [0.3.4] - 2026-09-10
 
 ### Changed

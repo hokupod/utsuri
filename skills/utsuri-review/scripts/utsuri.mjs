@@ -214258,7 +214258,7 @@ var nativeHelperTargets = [
   "linux-arm64",
   "linux-x64"
 ];
-var nativeHelperPackageVersion = "0.3.4";
+var nativeHelperPackageVersion = "0.3.5";
 function currentTarget() {
   const value2 = `${process.platform}-${process.arch}`;
   return nativeHelperTargets.find((target) => target === value2) ?? null;
@@ -224477,7 +224477,7 @@ function exactArguments(value2, required, optional = []) {
 var ReviewMcpService = class {
   toolDefinitions = toolDefinitions;
   structuredToolErrors = false;
-  serverInfo = { name: "utsu-ri-review", version: "0.3.4" };
+  serverInfo = { name: "utsu-ri-review", version: "0.3.5" };
   #runDirectory;
   #report;
   #currentSession;
@@ -224676,7 +224676,7 @@ async function runReviewMcpStdio(service, streams = {}) {
         result2 = {
           protocolVersion: "2025-06-18",
           capabilities: { tools: { listChanged: false } },
-          serverInfo: service.serverInfo ?? { name: "utsu-ri-review", version: "0.3.4" }
+          serverInfo: service.serverInfo ?? { name: "utsu-ri-review", version: "0.3.5" }
         };
       } else if (request3.method === "ping") result2 = {};
       else if (request3.method === "tools/list")
@@ -227490,7 +227490,7 @@ async function readPublishedOrigin(runDirectory) {
   assertArtifact("report", report);
   return structuredClone(report.origin);
 }
-var help = `Utsuri 0.3.4
+var help = `Utsuri 0.3.5
 
 Usage: utsuri <command> [options]
 
@@ -227532,10 +227532,10 @@ async function executeCli(argv2, cwd = process.cwd(), environment = process.env)
           ok: true,
           command: "version",
           package: "@utsu-ri/cli",
-          version: "0.3.4",
+          version: "0.3.5",
           protocolVersion: "1.1"
         },
-        human: "0.3.4",
+        human: "0.3.5",
         json
       };
     }
@@ -227619,7 +227619,7 @@ async function executeCli(argv2, cwd = process.cwd(), environment = process.env)
         publishedOrigin
       );
       const built = await buildReport(runDirectory, report, {
-        toolVersion: "0.3.4",
+        toolVersion: "0.3.5",
         annotations,
         ...report.origin.bindingMode === "unbound" ? {} : { origin: report.origin }
       });
@@ -228024,7 +228024,7 @@ function sameRegistration(left, right) {
 var PluginBrokerMcpService = class {
   toolDefinitions = brokerMcpToolDefinitions;
   structuredToolErrors = true;
-  serverInfo = { name: "utsu-ri-plugin-broker", version: "0.3.4" };
+  serverInfo = { name: "utsu-ri-plugin-broker", version: "0.3.5" };
   #projectRoot;
   #environment;
   #readRegistrations;
