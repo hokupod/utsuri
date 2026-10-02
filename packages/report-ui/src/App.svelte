@@ -392,6 +392,7 @@
     unreadAnswerItemIds: string[];
   }> = [];
   let feedbackPreview: BrowserFeedbackPreview | null = null;
+  let reviewFeedbackBatches: FeedbackBatch[] = [];
   let feedbackCollapsed = false;
   let answerReadQueue = Promise.resolve();
   const manualUnread = new SvelteSet<string>();
@@ -745,11 +746,17 @@
       events: reviewStore.events
     };
     reviewInboxEntries = structuredClone(value.inbox?.entries ?? reviewInboxEntries);
-    const latest = value.batches?.find((batch) => batch.id === feedbackPreview?.batch.id);
+    reviewFeedbackBatches = structuredClone(value.batches ?? reviewFeedbackBatches);
+    const latest = reviewFeedbackBatches.find((batch) => batch.id === feedbackPreview?.batch.id);
     if (feedbackPreview && latest) {
       feedbackPreview = { ...feedbackPreview, batch: structuredClone(latest) };
       if (latest.state !== "ready") feedbackHandoff = "";
     }
+  }
+
+  function reconcileFeedbackPreview(preview: BrowserFeedbackPreview): BrowserFeedbackPreview {
+    const latest = reviewFeedbackBatches.find((batch) => batch.id === preview.batch.id);
+    return { ...preview, batch: structuredClone(latest ?? preview.batch) };
   }
 
   async function refreshInteractiveReview(): Promise<void> {
@@ -998,7 +1005,7 @@
             deliveryMode: "return-to-session"
           })
         });
-        feedbackPreview = value.preview as BrowserFeedbackPreview;
+        feedbackPreview = reconcileFeedbackPreview(value.preview as BrowserFeedbackPreview);
       } else {
         feedbackPreview = await createBrowserFeedbackPreview(reviewStore);
       }
@@ -1028,8 +1035,8 @@
             deliveryMode: "return-to-session"
           })
         });
-        feedbackPreview = value.preview as BrowserFeedbackPreview;
         applyInteractiveState(value);
+        feedbackPreview = reconcileFeedbackPreview(value.preview as BrowserFeedbackPreview);
       } else {
         downloadJson(`${report.reportId}-${feedbackPreview.batch.id.replace(":", "-")}.json`, {
           schemaVersion: "1.0",
@@ -1044,7 +1051,8 @@
           }
         });
       }
-      feedbackHandoff = handoffText(feedbackPreview.batch);
+      feedbackHandoff =
+        feedbackPreview.batch.state === "ready" ? handoffText(feedbackPreview.batch) : "";
     } catch (error) {
       reviewNotice = error instanceof Error ? error.message : String(error);
     } finally {

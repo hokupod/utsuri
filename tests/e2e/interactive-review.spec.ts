@@ -227,6 +227,116 @@ test("keeps preview, Inbox and answers synchronized without losing a draft; read
   }
 });
 
+for (const batchState of ["consumed", "answered"] as const) {
+  test(`keeps a ${batchState} batch authoritative when its older POST response arrives last`, async ({
+    page
+  }) => {
+    const fixture = await createPhase6ReviewFixture();
+    try {
+      await page.addInitScript(() => {
+        const browserWindow = window as Window;
+        const nativeFetch = browserWindow.fetch.bind(browserWindow);
+        const delayed = browserWindow as Window & {
+          batchResponsePending?: boolean;
+          releaseBatchResponse?: () => void;
+        };
+        browserWindow.fetch = async (...args) => {
+          const response = await nativeFetch(...args);
+          if (
+            args[0] === "./api/v1/feedback-batches" &&
+            args[1]?.method === "POST" &&
+            response.ok
+          ) {
+            delayed.batchResponsePending = true;
+            await new Promise<void>((resolve) => {
+              delayed.releaseBatchResponse = resolve;
+            });
+          }
+          return response;
+        };
+      });
+      await page.goto(fixture.server.url);
+      await page.getByRole("button", { name: "Start with highest attention" }).click();
+      await addFeedbackComment(page.locator(".line-comment").first(), "Delayed handoff");
+      await page.getByRole("button", { name: "Review items" }).click();
+      await expect(page.locator(".feedback-preview li")).toHaveCount(1);
+      await page.getByRole("button", { name: "Return to current conversation" }).click();
+      await page.waitForFunction(
+        () => (window as typeof window & { batchResponsePending?: boolean }).batchResponsePending
+      );
+
+      const runtime = await prepareFeedbackRuntime(fixture.root, "run", {
+        CODEX_THREAD_ID: "codex-origin-session"
+      });
+      const store = await loadReviewStore(fixture.run, fixture.report, new Date().toISOString());
+      const batch = listFeedbackBatches(store)[0]!;
+      const claimed = await claimFeedbackBatch(
+        store,
+        batch.id,
+        runtime.currentSession,
+        new Date().toISOString()
+      );
+      await persistReviewStore(fixture.run, claimed.store, store.state.revision);
+      if (batchState === "answered") {
+        const answers: ReviewAnswer[] = batch.items.map((item) => ({
+          schemaVersion: "1.0",
+          batchId: batch.id,
+          itemId: item.id,
+          directAnswer: "Answer arrived before the POST response",
+          evidence: [],
+          uncertainty: [],
+          suggestedNextActions: [],
+          metadata: {
+            host: "codex",
+            originSessionRef: runtime.currentSession.sessionRef!,
+            contextHash: getFeedbackItemContext(claimed.store, item.id).contextHash
+          }
+        }));
+        const updated = await postFeedbackAnswers(
+          claimed.store,
+          batch.id,
+          answers,
+          runtime.currentSession,
+          new Date().toISOString()
+        );
+        await persistReviewStore(fixture.run, updated, claimed.store.state.revision);
+      }
+      // Wait for the newer state to reach the UI, not just the network response.
+      await expect(page.locator(".attention-state")).toHaveText(
+        `Agent attention: ${batchState === "answered" ? "answered" : "acknowledged"}`
+      );
+      await page.evaluate(() =>
+        (window as typeof window & { releaseBatchResponse?: () => void }).releaseBatchResponse?.()
+      );
+      await expect(page.locator(".feedback-batch-state")).toHaveText(batchState);
+      await expect(page.locator(".feedback-preview li > span")).toHaveText([
+        batchState === "answered" ? "answered" : "acknowledged"
+      ]);
+      await expect(
+        page.getByRole("button", { name: "Return to current conversation" })
+      ).toHaveCount(0);
+      await expect(page.getByRole("button", { name: "Copy handoff" })).toHaveCount(0);
+      await expect(page.locator(".feedback-preview pre")).toHaveCount(0);
+      expect(
+        listFeedbackBatches(
+          await loadReviewStore(fixture.run, fixture.report, new Date().toISOString())
+        )[0]!.state
+      ).toBe(batchState);
+    } finally {
+      await page
+        .evaluate(() =>
+          (
+            window as typeof window & {
+              releaseBatchResponse?: () => void;
+            }
+          ).releaseBatchResponse?.()
+        )
+        .catch(() => {});
+      await fixture.close();
+    }
+  });
+}
+
 for (const mode of ["Unified", "Side by side"]) {
   test(`persists before/after range selection in ${mode}`, async ({ page }) => {
     const fixture = await createPhase6ReviewFixture();
