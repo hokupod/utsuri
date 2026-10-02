@@ -14,6 +14,8 @@ import {
 } from "@utsu-ri/report-model";
 import {
   getFeedbackBatch,
+  listFeedbackBatches,
+  setFeedbackAnswerUnread,
   previewFeedbackBatch,
   readReviewInbox,
   storeFeedbackBatch,
@@ -21,6 +23,8 @@ import {
 } from "@utsu-ri/review-inbox";
 import {
   createHumanComment,
+  resolveLineRangeAnchor,
+  nodeReviewDigest,
   createReviewBundle,
   findAnchor,
   loadReviewStore,
@@ -99,6 +103,9 @@ const contentTypes = new Map([
   [".html", "text/html; charset=utf-8"],
   [".js", "text/javascript; charset=utf-8"],
   [".json", "application/json; charset=utf-8"],
+  [".txt", "text/plain; charset=utf-8"],
+  [".log", "text/plain; charset=utf-8"],
+  [".ndjson", "text/plain; charset=utf-8"],
   [".png", "image/png"]
 ]);
 
@@ -383,7 +390,10 @@ function requireInteractiveBoundary(
   }
 }
 
-function anchorFromAction(store: ReviewStore, action: Record<string, unknown>): ReviewAnchor {
+async function anchorFromAction(
+  store: ReviewStore,
+  action: Record<string, unknown>
+): Promise<ReviewAnchor> {
   const input = action.anchor;
   if (
     !isRecord(input) ||
@@ -394,7 +404,11 @@ function anchorFromAction(store: ReviewStore, action: Record<string, unknown>): 
   ) {
     throw serverError("INTERACTIVE_ANCHOR_INVALID", "Interactive review anchor is invalid");
   }
-  const anchor = findAnchor(store.anchorCatalog, input.type as ReviewAnchor["type"], input.ref);
+  const anchor =
+    findAnchor(store.anchorCatalog, input.type as ReviewAnchor["type"], input.ref) ??
+    (input.type === "line-range"
+      ? await resolveLineRangeAnchor(store.report, input.ref, nodeReviewDigest)
+      : undefined);
   if (!anchor || anchor.fingerprint !== input.fingerprint) {
     throw serverError("INTERACTIVE_ANCHOR_STALE", "Interactive review anchor is stale");
   }
@@ -419,7 +433,7 @@ async function applyReviewMutation(
     }
     return setViewed(
       store,
-      anchorFromAction(store, action),
+      await anchorFromAction(store, action),
       action.viewState as "unseen" | "viewed",
       updatedAt
     );
@@ -451,13 +465,23 @@ async function applyReviewMutation(
     }
     return createHumanComment(
       store,
-      anchorFromAction(store, action),
+      await anchorFromAction(store, action),
       action.body,
       action.kind as ReviewThreadKind,
       updatedAt,
       undefined,
       action.requestAgentAttention === true
     );
+  }
+  if (action.type === "answer-read.changed") {
+    if (
+      !hasExactKeys(action, ["type", "itemId", "unread"]) ||
+      typeof action.itemId !== "string" ||
+      typeof action.unread !== "boolean"
+    ) {
+      throw serverError("INTERACTIVE_ACTION_INVALID", "Answer read action is invalid");
+    }
+    return setFeedbackAnswerUnread(store, action.itemId, action.unread, updatedAt);
   }
   if (action.type === "agent-attention.changed") {
     if (
@@ -644,7 +668,8 @@ export async function startInteractiveReportServer(
           reportId: report.reportId,
           state: store.state,
           threads: store.threads,
-          inbox: readReviewInbox(store)
+          inbox: readReviewInbox(store),
+          batches: listFeedbackBatches(store)
         });
         return;
       }
@@ -681,6 +706,7 @@ export async function startInteractiveReportServer(
           state: next.state,
           threads: next.threads,
           inbox: readReviewInbox(next),
+          batches: listFeedbackBatches(next),
           event: next.events.at(-1) ?? null
         });
         return;
@@ -773,7 +799,8 @@ export async function startInteractiveReportServer(
           preview: stored.preview,
           state: stored.store.state,
           threads: stored.store.threads,
-          inbox: readReviewInbox(stored.store)
+          inbox: readReviewInbox(stored.store),
+          batches: listFeedbackBatches(stored.store)
         });
         return;
       }

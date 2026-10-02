@@ -2219,3 +2219,75 @@ main {
     box-shadow: none;
   }
 }
+
+.feedback-dock.collapsed {
+  width: min(24rem, calc(100vw - 2rem));
+  max-height: 9rem;
+  padding: 0.55rem 0.75rem;
+}
+.answer-message[data-unread="true"] {
+  border-left: 0.2rem solid var(--blue);
+  padding-left: 0.6rem;
+}
+
+.priority-help,
+.priority-reason,
+.human-status {
+  font-size: 0.75rem;
+  line-height: 1.5;
+  color: var(--muted);
+}
+.priority-help {
+  margin: 0.7rem 0;
+}
+
+.range-line {
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  color: inherit;
+  cursor: pointer;
+  font: inherit;
+  padding: 0;
+}
+.range-line.range-selected {
+  background: #386ee5;
+  color: white;
+}
+.range-help {
+  font-size: 0.8rem;
+  color: var(--muted);
+}
+
+.registered-checks {
+  margin: 1rem 0;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  padding: 1rem;
+}
+.registered-checks > p {
+  font-size: 0.8rem;
+  color: var(--muted);
+}
+.registered-checks ol {
+  padding-left: 1.2rem;
+}
+.registered-checks li {
+  padding: 0.6rem 0;
+}
+.registered-checks span,
+.registered-checks code {
+  display: block;
+  overflow-wrap: anywhere;
+  font-size: 0.75rem;
+}
+.registered-checks dl {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.7rem;
+  font-size: 0.75rem;
+}
+.registered-checks dd {
+  margin: 0;
+  overflow-wrap: anywhere;
+}

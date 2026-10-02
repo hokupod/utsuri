@@ -389,3 +389,14 @@ export function assertPngBytes(
   }
   return { width, height };
 }
+
+/** Logs are text-only assets in a dedicated namespace, never captured active markup. */
+export function assertVerificationLogReference(reference: string): string {
+  if (
+    !/^verification\/[A-Za-z0-9][A-Za-z0-9._/-]*\.(?:txt|log|ndjson)$/u.test(reference) ||
+    reference.split("/").some((segment) => !segment || segment === "." || segment === "..")
+  ) {
+    throw new Error(`Verification log reference is unsafe: ${reference}`);
+  }
+  return reference;
+}

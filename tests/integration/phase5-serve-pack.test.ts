@@ -1,4 +1,5 @@
 import { afterAll, beforeAll, describe, expect, test } from "bun:test";
+import { createHash } from "node:crypto";
 import { execFileSync } from "node:child_process";
 import { request } from "node:http";
 import { createConnection } from "node:net";
@@ -217,6 +218,66 @@ describe("ci-policy and pack integration", () => {
     ).rejects.toMatchObject({
       code: "ENOENT"
     });
+  });
+
+  test("preserves verification logs as plain text in archive and single-file reports", async () => {
+    const temporary = await mkdtemp(path.join(os.tmpdir(), "utsuri-verification-pack-"));
+    temporaryDirectories.push(temporary);
+    const run = path.join(temporary, "run");
+    await mkdir(path.join(run, "verification"), { recursive: true });
+    await writeFile(
+      path.join(run, "input.json"),
+      JSON.stringify({ mode: "empty", head: "a".repeat(40) })
+    );
+    const log = "<script>untrusted log text</script>\n12 pass\n0 fail\n";
+    await writeFile(path.join(run, "verification/check.log"), log);
+    const annotations = {
+      schemaVersion: "1.0" as const,
+      language: "en",
+      overview: "Registered verification without visual evidence",
+      changes: [],
+      verificationResults: [
+        {
+          id: "verification:unit",
+          kind: "unit-tests" as const,
+          environment: "Local mocked tests",
+          command: ["bun", "test"],
+          subjectSha: "a".repeat(40),
+          exitCode: 0,
+          passedCount: 12,
+          warnings: ["External service not exercised"],
+          changeRefs: [],
+          completedAt: "2026-10-02T00:00:00Z",
+          logRef: "verification/check.log",
+          logSha256: createHash("sha256").update(log).digest("hex")
+        }
+      ]
+    };
+    const report = await createInitialReport(run, annotations);
+    await buildReport(run, report, { annotations });
+    expect(report.status).toBe("SKIPPED");
+    expect(report.verificationResults![0]!.shaMatch).toBe("match");
+    await packReport(temporary, "run/report", "packed", { singleFile: true });
+    const html = await readFile(path.join(temporary, "packed/report.single.html"), "utf8");
+    const data = html.match(
+      /<script type="application\/json" data-utsuri-report>(.*?)<\/script>/su
+    )![1]!;
+    const packedReport = JSON.parse(data) as UtsuriReport;
+    const logRef = packedReport.verificationResults![0]!.logRef!;
+    expect(logRef).toBe(
+      `data:text/plain;charset=utf-8;base64,${Buffer.from(log).toString("base64")}`
+    );
+    expect(packedReport.status).toBe("SKIPPED");
+    const archive = unzipSync(await readFile(path.join(temporary, "packed/report.zip")));
+    expect(Buffer.from(archive["report/verification/check.log"]!).toString("utf8")).toBe(log);
+    const server = await startStaticReportServer(path.join(run, "report"));
+    try {
+      const response = await fetch(new URL("./verification/check.log", server.url));
+      expect(response.headers.get("content-type")).toStartWith("text/plain");
+      expect(await response.text()).toBe(log);
+    } finally {
+      await server.close();
+    }
   });
 
   test("excludes timestamps, temporary paths, and ports from the cache key", async () => {

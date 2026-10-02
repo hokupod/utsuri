@@ -7,6 +7,8 @@ import {
   buildAnchorCatalog,
   buildLegacyVisualAnchorCatalog,
   classifyAnchor,
+  includeLineRangeAnchors,
+  resolveLineRangeAnchor,
   migrateLegacyVisualRegionAnchors,
   reportFingerprint
 } from "./anchors";
@@ -185,6 +187,16 @@ export async function createHumanComment(
   digest: ReviewDigest = nodeReviewDigest,
   requestAgentAttention = false
 ): Promise<ReviewStore> {
+  if (anchor.type === "line-range" && anchor.ref.includes(":range:")) {
+    const canonical = await resolveLineRangeAnchor(store.report, anchor.ref, digest);
+    if (!canonical || canonicalReviewJson(canonical) !== canonicalReviewJson(anchor))
+      throw new UtsuriError(
+        "REVIEW_RANGE_INVALID",
+        "Review line range is invalid",
+        ExitCode.Artifact
+      );
+  }
+
   requireIsoDate(createdAt);
   const normalizedBody = requireCommentBody(body);
   const identity = { reportId: store.report.reportId, anchor, kind, normalizedBody, createdAt };
@@ -394,6 +406,15 @@ export async function importReviewBundle(
     throw new UtsuriError("REVIEW_BUNDLE_INVALID", validation.errors.join("; "), ExitCode.Artifact);
   }
   const sourceBundle = migratedBundle as ReviewBundleDocument;
+  current = {
+    ...current,
+    anchorCatalog: await includeLineRangeAnchors(
+      current.report,
+      current.anchorCatalog,
+      sourceBundle.threads.map((thread) => thread.anchor),
+      digest
+    )
+  };
   if (!exactReport && !options.reanchor) {
     throw new UtsuriError(
       "REVIEW_REPORT_MISMATCH",

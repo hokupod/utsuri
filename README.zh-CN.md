@@ -119,6 +119,11 @@ Utsuri 首先检查可用 capability，不会安装任何内容。未请求浏�
 
 报告保留 source identity、evidence hash 和 review gap，让其他审查者能够核查哪些内容已检查、哪些尚未检查。
 
+- **自动审查优先级** 将风险、未验证事项和未知意图区别于发现及人工判断。隐藏已审查的更改不会删除证据。
+- **范围评论** 在同一文件的before/after同一侧点击行号，再Shift点击终点；支持统一与左右差异视图。范围在重新加载、review export/import及Feedback Batch中保留。
+- **Feedback Batch** 可折叠和展开而不修改数据。已保存的预览同步ready/consumed/answered，可跳转到回答，处理开始后不再提供交接操作。新回答为未读，正文进入视口700毫秒后变为已读。手动恢复未读后，离开视口并再次查看或导航后重新打开才会自动变为已读。
+- **登记的验证结果** 区分单元测试、类型检查、Lint、构建、应用E2E和外部服务。annotations可登记SHA、argv、退出码、成功数、警告、环境及带哈希的文本日志。`verification/`日志成为immutable report资产，作者报告与日志附件保持区别。本地或mock成功不会将画面覆盖率提升为`PASS`。
+
 <a id="security-privacy"></a><!-- section:security-privacy -->
 
 ## 安全与隐私
@@ -129,6 +134,7 @@ Utsuri 首先检查可用 capability，不会安装任何内容。未请求浏�
 - 生成的 `report/` 是 immutable。可变的 review / feedback record 保存在 run 的 `review/` directory。
 - Marketplace MCP 不暴露任意 path、working directory、command、provider、model、destination 或 raw session input。
 - MCP tool 只能处理为 canonical 当前 project 和同一 Origin Session 注册的 schema-valid report。跨 project、跨 host、跨 session、stale 或 swapped registration 都会 fail closed。
+- Interactive viewer 使用认证后的 sessionStorage capability cache 恢复刷新，最多八小时，并按 origin/port、viewer path 和 report ID 隔离。同源 JavaScript 可读取，复制 tab 可能复制 cache。过期或认证失败时清除当前 tab cache，需要重新打开当前 server link。八小时仅是客户端缓存期限，不是 server TTL；server 重启会更换 capability。不会写入 localStorage、review export 或 log。
 - Raw host session value 只用于 equality check 和 opaque hash，不会被 persist、log、diagnose 或通过 tool 返回。
 - Marketplace broker 只接受 `CODEX_THREAD_ID`，或 `CLAUDE_CODE_SESSION_ID` + `CLAUDE_PROJECT_DIR` host contract。Fixed-run 的 `finalize`、`feedback` 与 `review-mcp` 继续兼容 `UTSURI_CODEX_SESSION_ID` 和 `CLAUDE_SESSION_ID`，但 legacy/new 值冲突时会拒绝。即使从 child directory 启动，Claude Plugin finalize 也始终绑定 canonical host project root。
 - Release artifact 包含 production dependency graph 的确定性 SPDX 与 license inventory。其 identity 来自 lockfile 的精确 integrity value 和已安装 package 字节；无关的 development-only lock 变更不会改变发布的 inventory。

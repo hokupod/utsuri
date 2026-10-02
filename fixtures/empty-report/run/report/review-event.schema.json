@@ -42,7 +42,8 @@
         "feedback-batch.stored",
         "feedback-batch.claimed",
         "feedback-batch.released",
-        "feedback-batch.answered"
+        "feedback-batch.answered",
+        "answer-read.changed"
       ]
     },
     "createdAt": {
@@ -134,6 +135,9 @@
         "return-to-session",
         "export-only"
       ]
+    },
+    "answerUnread": {
+      "type": "boolean"
     },
     "originSessionMatched": {
       "type": "boolean"
@@ -302,6 +306,22 @@
         "required": [
           "batchId",
           "itemIds"
+        ]
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "type": {
+            "const": "answer-read.changed"
+          }
+        }
+      },
+      "then": {
+        "required": [
+          "batchId",
+          "itemIds",
+          "answerUnread"
         ]
       }
     }

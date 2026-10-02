@@ -104,6 +104,91 @@ export async function buildAnchorCatalog(
   );
 }
 
+/** Derive a bounded continuous range from the immutable diff, never from caller text. */
+export async function buildLineRangeAnchor(
+  report: UtsuriReport,
+  hunkId: string,
+  side: "before" | "after",
+  startLine: number,
+  endLine: number,
+  digest: ReviewDigest
+): Promise<ReviewAnchor | undefined> {
+  const hunk = report.hunks.find((entry) => entry.id === hunkId);
+  if (
+    !hunk ||
+    (side !== "before" && side !== "after") ||
+    !Number.isSafeInteger(startLine) ||
+    !Number.isSafeInteger(endLine) ||
+    startLine < 1 ||
+    endLine < startLine ||
+    endLine - startLine > 1000
+  )
+    return undefined;
+  const lines = hunk.lines.filter((line) => {
+    const number = side === "before" ? line.oldLine : line.newLine;
+    return (
+      line.kind !== "no-newline" &&
+      number !== null &&
+      number !== undefined &&
+      number >= startLine &&
+      number <= endLine
+    );
+  });
+  if (
+    lines.length !== endLine - startLine + 1 ||
+    lines.some(
+      (line, index) => (side === "before" ? line.oldLine : line.newLine) !== startLine + index
+    )
+  )
+    return undefined;
+  return anchor(
+    digest,
+    {
+      type: "line-range",
+      ref: `${hunk.id}:range:${side}:${startLine}:${endLine}`,
+      path: hunk.path,
+      side,
+      startLine,
+      endLine
+    },
+    { path: hunk.path, side, startLine, endLine, lines: lines.map((line) => line.content) }
+  );
+}
+
+export async function resolveLineRangeAnchor(
+  report: UtsuriReport,
+  ref: string,
+  digest: ReviewDigest
+): Promise<ReviewAnchor | undefined> {
+  const match = ref.match(/^(.*):range:(before|after):(\d+):(\d+)$/u);
+  return match
+    ? buildLineRangeAnchor(
+        report,
+        match[1]!,
+        match[2] as "before" | "after",
+        Number(match[3]),
+        Number(match[4]),
+        digest
+      )
+    : undefined;
+}
+
+/** Register only ranges that can be reconstructed in the current report for import matching. */
+export async function includeLineRangeAnchors(
+  report: UtsuriReport,
+  catalog: readonly ReviewAnchor[],
+  sources: readonly ReviewAnchor[],
+  digest: ReviewDigest
+): Promise<ReviewAnchor[]> {
+  const result = new Map(catalog.map((entry) => [anchorKey(entry), entry]));
+  for (const source of sources) {
+    if (source.type !== "line-range") continue;
+    const current = await resolveLineRangeAnchor(report, source.ref, digest);
+    if (current) result.set(anchorKey(current), current);
+  }
+  return [...result.values()];
+}
+
 export async function buildLegacyVisualAnchorCatalog(
   report: UtsuriReport,
   digest: ReviewDigest
