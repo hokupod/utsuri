@@ -1,7 +1,7 @@
 {
   "schemaVersion": "1.1",
   "toolVersion": "0.3.5",
-  "sourceHash": "9347b0f3b6c1382986e32913ad323a2039d26a61b4a7e6590733fe932e5914fc",
+  "sourceHash": "7b821d2434f16084301c4e55ae84d0baceb7db959fc08afd543a680a0416e1dc",
   "sourceHashes": {
     "packages/adapters/generic/src/index.ts": "0fb851c88f14187773d97373b9d848e831abb629bb4b1834c4393f29917c4169",
     "packages/adapters/playwright/src/index.ts": "7714950f8fbcc160493e649a13e2c96d2843530307150357c30b9155c42b6081",
@@ -51,7 +51,7 @@
     "packages/git-collector/src/index.ts": "c8686ef8faa57f1fa17a105a57f7306ff8372de171f9469ae6e22aa1b278f86d",
     "packages/git-collector/src/patch.ts": "2ad71151ca382bc5be3b9396e60aeb36394151e5ae5670687414f967fa893e96",
     "packages/interactive-server/src/index.ts": "26bf78f00bf0d8c2f2a1a6efa86611b1f7e626ef7f1708faa6266da7bb8f9f14",
-    "packages/report-builder/src/generated-ui-assets.ts": "5668f0e0cb1f74e14b7b49f3e63a0cfe9c938c1d4a4f8d8c9ce768aeadde6bed",
+    "packages/report-builder/src/generated-ui-assets.ts": "f5494d368da0453661e5a01c760ba895e12540fe8c4b574e619d962224b43cfe",
     "packages/report-builder/src/index.ts": "e21268bf02facd8930bdbfe2cf9dce31e162c31ac193b1b811f047895c77652a",
     "packages/report-builder/src/native-publish.ts": "1476a27dfbb7172caf656b996b7aa71ca8c7ec3ddf1d85ee0028d11a3029f222",
     "packages/report-builder/src/schema-assets.ts": "ef080b08889e19f291d92f260fc4f731b1505552c5f3481734de9c6414d0c23a",
@@ -285,7 +285,7 @@
   },
   "uiAssetHashes": {
     "app.css": "bd56eba551e8c6ae7078733090215158b7992abe68a6a2cebb3519345485bc87",
-    "app.js": "83e291437d381ac8388153874078b7734ef459b6fde70ca67afc1f221c82bfe7"
+    "app.js": "a542786879b07ca3dd0c5f41ad16978e6ffd43a1e0628831c575ec1d263457f0"
   },
-  "bundleSha256": "11cbfc5a41617e8be55f5b9bcaba0d7299a49f86ebc003ecbd9a316c52ed749e"
+  "bundleSha256": "ace7d895302b282d1b93daecc3fea4e0d8575477dbd6d2acab3ef2c9e44ef931"
 }

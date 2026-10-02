@@ -167,6 +167,9 @@
       selectedItems: "Items for Agent review",
       reviewItems: "Review items",
       feedbackPreview: "Feedback Batch preview",
+      feedbackUpdating: "Updating feedback…",
+      feedbackUpdateFailed: "Review update failed",
+      retryReviewUpdate: "Retry review update",
       shared: "Shared",
       notShared: "Not shared",
       delivery: "Delivery",
@@ -298,6 +301,9 @@
       selectedItems: "Agent 確認対象",
       reviewItems: "確認項目をレビュー",
       feedbackPreview: "Feedback Batch プレビュー",
+      feedbackUpdating: "回答状態を更新中…",
+      feedbackUpdateFailed: "レビュー状態を取得できませんでした",
+      retryReviewUpdate: "レビュー状態を再取得",
       shared: "共有する情報",
       notShared: "共有しない情報",
       delivery: "受け渡し",
@@ -393,6 +399,9 @@
   }> = [];
   let feedbackPreview: BrowserFeedbackPreview | null = null;
   let reviewFeedbackBatches: FeedbackBatch[] = [];
+  let interactiveRevision = 0;
+  let interactiveRefresh: Promise<void> | null = null;
+  let interactiveRefreshFailed = false;
   let feedbackCollapsed = false;
   let answerReadQueue = Promise.resolve();
   const manualUnread = new SvelteSet<string>();
@@ -402,6 +411,9 @@
   let eventAbort: AbortController | null = null;
 
   $: t = copy[locale];
+  $: feedbackSyncPending = Boolean(
+    interactiveToken && reviewStore && reviewStore.state.revision < interactiveRevision
+  );
   $: selectedChange = report?.changes.find((change) => change.id === selectedChangeId);
   $: selectedHunks = selectedChange
     ? selectedChange.hunkRefs
@@ -738,7 +750,12 @@
     };
     batches?: FeedbackBatch[];
   }): void {
-    if (!reviewStore || value.state.revision < reviewStore.state.revision) return;
+    if (
+      !reviewStore ||
+      value.state.revision < Math.max(reviewStore.state.revision, interactiveRevision)
+    )
+      return;
+    interactiveRevision = value.state.revision;
     reviewStore = {
       ...reviewStore,
       state: structuredClone(value.state),
@@ -762,6 +779,59 @@
   async function refreshInteractiveReview(): Promise<void> {
     const value = await interactiveRequest("review-state");
     applyInteractiveState(value);
+  }
+
+  function hasPendingInteractiveState(): boolean {
+    return Boolean(
+      interactiveToken && reviewStore && reviewStore.state.revision < interactiveRevision
+    );
+  }
+
+  function refreshNotifiedReview(): Promise<void> {
+    if (interactiveRefresh) return interactiveRefresh;
+    if (!hasPendingInteractiveState()) return Promise.resolve();
+    if (interactiveRefreshFailed) reviewNotice = "";
+    interactiveRefreshFailed = false;
+    interactiveRefresh = (async () => {
+      try {
+        while (hasPendingInteractiveState()) {
+          const requestedRevision = interactiveRevision;
+          await refreshInteractiveReview();
+          if (hasPendingInteractiveState() && interactiveRevision <= requestedRevision) {
+            throw new Error(t.feedbackUpdateFailed);
+          }
+        }
+      } catch (error) {
+        interactiveRefreshFailed = true;
+        reviewNotice = error instanceof Error ? error.message : String(error);
+      } finally {
+        interactiveRefresh = null;
+      }
+    })();
+    return interactiveRefresh;
+  }
+
+  function observeInteractiveRevision(message: string): void {
+    try {
+      const data = message
+        .split("\n")
+        .filter((line) => line.startsWith("data:"))
+        .map((line) => line.slice(5).trimStart())
+        .join("\n");
+      const event = JSON.parse(data);
+      const revision = event.revision ?? event.sequence;
+      if (
+        event.reportId !== report?.reportId ||
+        !Number.isSafeInteger(revision) ||
+        revision <= interactiveRevision
+      )
+        return;
+      interactiveRevision = revision;
+      feedbackHandoff = "";
+      void refreshNotifiedReview();
+    } catch {
+      // An invalid notification cannot advance the authoritative review revision.
+    }
   }
 
   async function interactiveMutation(action: Record<string, unknown>): Promise<void> {
@@ -806,13 +876,7 @@
         pending += decoder.decode(value, { stream: true });
         const messages = pending.split("\n\n");
         pending = messages.pop() ?? "";
-        if (
-          messages.some(
-            (message) => message.startsWith("data:") && !message.includes('"type":"ready"')
-          )
-        ) {
-          await refreshInteractiveReview();
-        }
+        for (const message of messages) observeInteractiveRevision(message);
       }
     } catch (error) {
       if (!controller.signal.aborted) {
@@ -992,7 +1056,7 @@
   }
 
   async function reviewFeedbackItems(): Promise<void> {
-    if (!reviewStore || !report) return;
+    if (!reviewStore || !report || hasPendingInteractiveState()) return;
     feedbackBusy = true;
     try {
       if (interactiveToken) {
@@ -1020,7 +1084,13 @@
   }
 
   async function prepareFeedbackRequest(): Promise<void> {
-    if (!feedbackPreview || feedbackPreview.batch.state !== "ready" || !reviewStore || !report)
+    if (
+      !feedbackPreview ||
+      feedbackPreview.batch.state !== "ready" ||
+      !reviewStore ||
+      !report ||
+      hasPendingInteractiveState()
+    )
       return;
     feedbackBusy = true;
     try {
@@ -1052,7 +1122,9 @@
         });
       }
       feedbackHandoff =
-        feedbackPreview.batch.state === "ready" ? handoffText(feedbackPreview.batch) : "";
+        feedbackPreview.batch.state === "ready" && !hasPendingInteractiveState()
+          ? handoffText(feedbackPreview.batch)
+          : "";
     } catch (error) {
       reviewNotice = error instanceof Error ? error.message : String(error);
     } finally {
@@ -1155,6 +1227,7 @@
   }
 
   async function copyFeedbackHandoff(): Promise<void> {
+    if (hasPendingInteractiveState()) return;
     if (!feedbackHandoff) return;
     try {
       await navigator.clipboard.writeText(feedbackHandoff);
@@ -2928,8 +3001,10 @@
       >
         <header>
           <div>
-            <strong>{t.selectedItems}: {pendingFeedbackCount}</strong>
-            <span class="unread-badge">{t.unreadAnswers}: {unreadAnswerCount}</span>
+            <strong>{t.selectedItems}: {feedbackSyncPending ? "…" : pendingFeedbackCount}</strong>
+            <span class="unread-badge"
+              >{t.unreadAnswers}: {feedbackSyncPending ? "…" : unreadAnswerCount}</span
+            >
           </div>
           <button
             type="button"
@@ -2942,8 +3017,15 @@
           {#if selectedAttentionCount > 0 && !feedbackCollapsed}
             <button
               type="button"
-              disabled={feedbackBusy || reviewBusy}
+              disabled={feedbackBusy || reviewBusy || feedbackSyncPending}
               onclick={() => void reviewFeedbackItems()}>{t.reviewItems}</button
+            >
+          {/if}
+          {#if feedbackSyncPending && interactiveRefreshFailed}
+            <button
+              type="button"
+              disabled={interactiveRefresh !== null}
+              onclick={() => void refreshNotifiedReview()}>{t.retryReviewUpdate}</button
             >
           {/if}
         </header>
@@ -2954,13 +3036,19 @@
             aria-labelledby="feedback-preview-heading"
           >
             <h2 id="feedback-preview-heading">{t.feedbackPreview}</h2>
-            <p class="feedback-batch-state">{feedbackPreview.batch.state}</p>
+            <p class="feedback-batch-state">
+              {feedbackSyncPending
+                ? interactiveRefreshFailed
+                  ? t.feedbackUpdateFailed
+                  : t.feedbackUpdating
+                : feedbackPreview.batch.state}
+            </p>
             <ol>
               {#each feedbackPreview.batch.items as item (item.id)}
                 <li>
                   <strong>{item.question}</strong>
                   <code>{item.anchor.type}: {anchorLabel(item.anchor)}</code>
-                  <span>{item.state}</span>
+                  <span>{feedbackSyncPending ? t.feedbackUpdating : item.state}</span>
                   <button type="button" onclick={() => void viewFeedbackItem(item.threadId)}
                     >{t.viewAnswer}</button
                   >
@@ -2991,7 +3079,7 @@
             {#each feedbackPreview.warnings as warning (warning)}<p class="feedback-warning">
                 {warning}
               </p>{/each}
-            {#if feedbackPreview.batch.state === "ready"}
+            {#if feedbackPreview.batch.state === "ready" && !feedbackSyncPending}
               <div class="feedback-actions">
                 <button
                   type="button"
