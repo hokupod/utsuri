@@ -156,9 +156,7 @@ function assertInbox(value: unknown, reportId: string): asserts value is ReviewI
       new Set(raw.unreadAnswerItemIds).size !== raw.unreadAnswerItemIds.length ||
       (raw.state === "consumed" || raw.state === "answered") !==
         (raw.claimedBySessionRef !== undefined) ||
-      (raw.state === "answered"
-        ? raw.unreadAnswerItemIds.length !== itemIds.length
-        : raw.unreadAnswerItemIds.length !== 0)
+      (raw.state !== "answered" && raw.unreadAnswerItemIds.length !== 0)
     ) {
       inboxError("REVIEW_INBOX_INVALID", "Review Inbox entry fields are invalid");
     }
@@ -801,5 +799,47 @@ export async function postFeedbackAnswers(
     answeredAt,
     { threads, sidecarFiles: nextSidecars },
     digest
+  );
+}
+
+/** Toggle only Inbox visibility state; immutable answers and human review stay intact. */
+export async function setFeedbackAnswerUnread(
+  store: ReviewStore,
+  itemId: string,
+  unread: boolean,
+  updatedAt: string
+): Promise<ReviewStore> {
+  const inbox = readReviewInbox(store);
+  const entries = inbox.entries.filter((entry) => entry.itemIds.includes(itemId));
+  const entry = entries[0];
+  if (entries.length !== 1 || !entry || entry.state !== "answered") {
+    inboxError("FEEDBACK_ANSWER_MISSING", "Only a saved answer can change read state");
+  }
+  const batch = readBatch(store, entry.batchId, entry);
+  if (!batch.items.some((item) => item.id === itemId && item.state === "answered")) {
+    inboxError("FEEDBACK_ANSWER_MISSING", "Feedback item has no saved answer");
+  }
+  const content = store.sidecarFiles[sidecarPath("answers", itemId)];
+  if (!content) inboxError("FEEDBACK_ANSWER_MISSING", "Feedback answer is missing");
+  const answer = parseBoundedJson(content, { label: "review answer", maximumBytes: 1024 * 1024 });
+  assertArtifact("review-answer", answer);
+  if ((answer as ReviewAnswer).itemId !== itemId || (answer as ReviewAnswer).batchId !== batch.id) {
+    inboxError("FEEDBACK_ANSWER_BINDING", "Feedback answer belongs to another item");
+  }
+  if (entry.unreadAnswerItemIds.includes(itemId) === unread) return store;
+  entry.unreadAnswerItemIds = unread
+    ? entry.itemIds.filter((id) => id === itemId || entry.unreadAnswerItemIds.includes(id))
+    : entry.unreadAnswerItemIds.filter((id) => id !== itemId);
+  entry.updatedAt = updatedAt;
+  return appendReviewEvent(
+    store,
+    {
+      type: "answer-read.changed",
+      batchId: batch.id,
+      itemIds: [itemId],
+      answerUnread: unread
+    },
+    updatedAt,
+    { sidecarFiles: replaceInbox(store.sidecarFiles, inbox) }
   );
 }

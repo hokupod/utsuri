@@ -17,6 +17,7 @@ import {
   postFeedbackAnswers,
   previewFeedbackBatch,
   readReviewInbox,
+  setFeedbackAnswerUnread,
   storeFeedbackBatch
 } from "./index";
 import { createBrowserFeedbackPreview } from "./browser";
@@ -192,6 +193,29 @@ describe("Review Inbox", () => {
       "2026-08-08T00:04:00.000Z"
     );
     expect(listFeedbackBatches(answered, "answered")).toHaveLength(1);
+    const itemId = answers[0]!.itemId;
+    expect(readReviewInbox(answered).entries[0]!.unreadAnswerItemIds).toHaveLength(3);
+    let read = await setFeedbackAnswerUnread(answered, itemId, false, "2026-08-08T00:05:00.000Z");
+    expect(readReviewInbox(read).entries[0]!.unreadAnswerItemIds).toHaveLength(2);
+    expect(read.threads).toEqual(answered.threads);
+    expect(read.state.judgments).toEqual(answered.state.judgments);
+    expect(read.state.viewed).toEqual(answered.state.viewed);
+    expect(await setFeedbackAnswerUnread(read, itemId, false, "2026-08-08T00:05:01.000Z")).toBe(
+      read
+    );
+    for (const answer of answers)
+      read = await setFeedbackAnswerUnread(read, answer.itemId, false, "2026-08-08T00:05:02.000Z");
+    expect(readReviewInbox(read).entries[0]!.unreadAnswerItemIds).toEqual([]);
+    expect(listFeedbackBatches(read, "answered")).toHaveLength(1);
+    expect(
+      await postFeedbackAnswers(read, batchId, answers, current, "2026-08-08T00:05:03.000Z")
+    ).toBe(read);
+    read = await setFeedbackAnswerUnread(read, itemId, true, "2026-08-08T00:05:04.000Z");
+    expect(readReviewInbox(read).entries[0]!.unreadAnswerItemIds).toEqual([itemId]);
+    await expect(
+      setFeedbackAnswerUnread(read, "item:missing", false, "2026-08-08T00:05:05.000Z")
+    ).rejects.toMatchObject({ diagnosticId: "FEEDBACK_ANSWER_MISSING" });
+
     expect(answered.state.judgments).toEqual(judgmentsBefore);
     expect(answered.threads.every((thread) => thread.state === "answered")).toBe(true);
     expect(answered.threads.map((thread) => thread.messages.at(-1)?.body)).toEqual([

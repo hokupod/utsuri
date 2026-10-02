@@ -1,4 +1,5 @@
 import { afterAll, describe, expect, test } from "bun:test";
+import { createHash } from "node:crypto";
 import { constants } from "node:fs";
 import {
   chmod,
@@ -503,4 +504,108 @@ describe("atomic publication helper", () => {
     expect(await readFile(path.join(source, "foreign.txt"), "utf8")).toBe("foreign\n");
     await expect(lstat(path.join(root, "report"))).rejects.toMatchObject({ code: "ENOENT" });
   });
+});
+
+test("registers SHA-scoped checks and text logs without promoting visual coverage", async () => {
+  const { run, annotations } = await createAnnotatedReportRun();
+  const input = JSON.parse(await readFile(path.join(run, "input.json"), "utf8")) as {
+    head: string | null;
+  };
+  input.head = "a".repeat(40);
+  await writeFile(path.join(run, "input.json"), JSON.stringify(input));
+  await mkdir(path.join(run, "verification"));
+  const log = "205 pass\n0 fail\n";
+  await writeFile(path.join(run, "verification/unit-tests.log"), log);
+  const result = {
+    id: "verification:unit-tests",
+    kind: "unit-tests" as const,
+    environment: "Mocked APIs and in-memory SQLite; external services not exercised",
+    command: ["bun", "test"],
+    subjectSha: input.head,
+    exitCode: 0,
+    passedCount: 205,
+    warnings: ["SQLite is not Cloudflare D1"],
+    changeRefs: [annotations.changes[0]!.id],
+    completedAt: "2026-10-02T00:00:00Z",
+    logRef: "verification/unit-tests.log",
+    logSha256: createHash("sha256").update(log).digest("hex")
+  };
+  const annotated = {
+    ...annotations,
+    verificationResults: [
+      result,
+      {
+        ...result,
+        id: "verification:typecheck",
+        kind: "typecheck" as const,
+        logRef: undefined,
+        logSha256: undefined,
+        subjectSha: "b".repeat(40)
+      }
+    ]
+  };
+  const report = await createInitialReport(run, annotated);
+  expect(report.status).toBe("UNCOVERED");
+  expect(report.coverage.verifiedUsages).toBe(0);
+  expect(report.verificationResults![0]).toMatchObject({
+    provenance: "log-attached",
+    shaMatch: "match",
+    passedCount: 205
+  });
+  expect(report.verificationResults![1]).toMatchObject({
+    provenance: "reported",
+    shaMatch: "mismatch"
+  });
+  const built = await buildReport(run, report, { annotations: annotated });
+  expect(await readFile(path.join(built.reportDirectory, result.logRef), "utf8")).toBe(log);
+  expect(built.manifest.assetHashes[result.logRef]).toBe(result.logSha256);
+  expect(await validateReportDirectory(built.reportDirectory, { strict: true })).toMatchObject({
+    ok: true
+  });
+  await writeFile(path.join(built.reportDirectory, result.logRef), "forged");
+  expect((await validateReportDirectory(built.reportDirectory, { strict: true })).errors).toContain(
+    `Hash mismatch: ${result.logRef}`
+  );
+});
+
+test("rejects unsafe verification references and changed log bytes before publication", async () => {
+  const { run, annotations } = await createAnnotatedReportRun();
+  await mkdir(path.join(run, "verification"));
+  await writeFile(path.join(run, "verification/test.log"), "original");
+  const result = {
+    id: "verification:one",
+    kind: "lint" as const,
+    environment: "local",
+    command: ["eslint", "."],
+    subjectSha: null,
+    exitCode: 0,
+    passedCount: null,
+    warnings: [],
+    changeRefs: [],
+    completedAt: "2026-10-02T00:00:00Z",
+    logRef: "verification/test.log",
+    logSha256: createHash("sha256").update("original").digest("hex")
+  };
+  const annotated = { ...annotations, verificationResults: [result] };
+  const report = await createInitialReport(run, annotated);
+  expect(report.verificationResults![0]!.shaMatch).toBe("unknown");
+  await writeFile(path.join(run, result.logRef), "changed");
+  await expect(buildReport(run, report, { annotations: annotated })).rejects.toMatchObject({
+    diagnosticId: "VERIFICATION_LOG_INVALID"
+  });
+  await expect(
+    createInitialReport(run, {
+      ...annotations,
+      verificationResults: [{ ...result, logRef: "verification/../test.log" }]
+    })
+  ).rejects.toThrow();
+  await expect(
+    createInitialReport(run, {
+      ...annotations,
+      verificationResults: [{ ...result, logRef: "verification/active.html" }]
+    })
+  ).rejects.toThrow();
+  await unlink(path.join(run, result.logRef));
+  await symlink(path.join(run, "input.json"), path.join(run, result.logRef));
+  await expect(createInitialReport(run, annotated)).rejects.toThrow();
 });

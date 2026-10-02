@@ -180,11 +180,17 @@ export async function createBrowserFeedbackPreview(
       code: item.contextSelection.includeCodeDiff
         ? hunks.map((hunk) => ({
             path: hunk.path,
-            startLine: Math.max(1, hunk.newStart || hunk.oldStart),
-            endLine: Math.max(
-              1,
-              (hunk.newStart || hunk.oldStart) + Math.max(hunk.newLines, hunk.oldLines) - 1
-            ),
+            startLine:
+              thread.anchor.type === "line-range"
+                ? thread.anchor.startLine!
+                : Math.max(1, hunk.newStart || hunk.oldStart),
+            endLine:
+              thread.anchor.type === "line-range"
+                ? thread.anchor.endLine!
+                : Math.max(
+                    1,
+                    (hunk.newStart || hunk.oldStart) + Math.max(hunk.newLines, hunk.oldLines) - 1
+                  ),
             textRef: hunk.id
           }))
         : [],

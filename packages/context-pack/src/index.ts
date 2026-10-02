@@ -196,11 +196,17 @@ export async function buildContextPack(
     ...(semanticChange ? { semanticChange } : {}),
     code: hunks.map((hunk) => ({
       path: assertReportPath(hunk.path),
-      startLine: Math.max(1, hunk.newStart || hunk.oldStart),
-      endLine: Math.max(
-        1,
-        (hunk.newStart || hunk.oldStart) + Math.max(hunk.newLines, hunk.oldLines) - 1
-      ),
+      startLine:
+        item.anchor.type === "line-range"
+          ? item.anchor.startLine!
+          : Math.max(1, hunk.newStart || hunk.oldStart),
+      endLine:
+        item.anchor.type === "line-range"
+          ? item.anchor.endLine!
+          : Math.max(
+              1,
+              (hunk.newStart || hunk.oldStart) + Math.max(hunk.newLines, hunk.oldLines) - 1
+            ),
       textRef: hunk.id
     })),
     images,
