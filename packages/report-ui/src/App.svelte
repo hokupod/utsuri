@@ -1,8 +1,11 @@
 <script lang="ts">
   import { onDestroy, onMount, tick } from "svelte";
-  import type { UtsuriReport } from "../../report-model/src";
+  import { SvelteSet } from "svelte/reactivity";
+  import type { FeedbackBatch, UtsuriReport } from "../../report-model/src";
   import {
     anchorKey,
+    buildLineRangeAnchor,
+    browserReviewDigest,
     browserCreateComment,
     browserResolveThread,
     browserSetAgentAttention,
@@ -24,6 +27,12 @@
     createBrowserFeedbackPreview,
     type BrowserFeedbackPreview
   } from "../../review-inbox/src/browser";
+
+  import {
+    capabilityCacheAgeMs,
+    capabilityStorageKey,
+    parseCachedCapability
+  } from "./interactive-capability";
 
   type Change = UtsuriReport["changes"][number];
   type Hunk = UtsuriReport["hunks"][number];
@@ -56,10 +65,16 @@
   const copy = {
     en: {
       queue: "Review queue",
+      autoPriority: "Automatic review priority",
+      priorityHelp:
+        "Priority is based on risk, verification gaps and unknown intent. Findings and human judgment are separate; completing review preserves the priority and evidence.",
+      hideReviewed: "Hide reviewed changes",
+      unknownIntent: "Unknown intent",
+      verificationGaps: "Verification gaps",
       search: "Filter changes",
-      action: "Action required",
-      confirm: "Needs confirmation",
-      clear: "No issue found",
+      action: "Priority review",
+      confirm: "Review suggested",
+      clear: "Routine review",
       unclassified: "Unclassified hunks",
       summary: "Review brief",
       reviewMap: "Change map",
@@ -82,6 +97,9 @@
       verified: "Verified",
       evidence: "Evidence",
       codeDiff: "Code diff",
+      rangeHelp:
+        "Select a line number, then Shift-click another on the same side. Comment on the highlighted range.",
+      rangeComment: "Comment on selected range",
       unified: "Unified",
       split: "Side by side",
       context: "Show {count} hidden context lines",
@@ -105,6 +123,19 @@
       findings: "Findings",
       noFindings: "No linked findings",
       coverage: "Visual coverage",
+      registeredChecks: "Registered verification results",
+      verificationHelp:
+        "Commands and outcomes are reported by the author. Attached logs are hashed assets; matching SHA identifies the subject, not independent proof of execution. Mock/local checks do not establish application E2E or external services.",
+      noChecks: "No structured verification results registered",
+      logAttached: "Log attached",
+      authorReported: "Author reported",
+      shaMatch: "SHA matches report",
+      shaMismatch: "Different SHA",
+      shaUnknown: "SHA match unknown",
+      checkPassed: "Reported success",
+      checkFailed: "Reported failure",
+      checkNotRun: "Not run",
+      checkLog: "Open verification log",
       planned: "Planned targets",
       captured: "Captured targets",
       failed: "Failed targets",
@@ -144,6 +175,13 @@
       copyHandoff: "Copy handoff",
       handoffCopied: "Handoff copied",
       unreadAnswers: "Unread answers",
+      collapseFeedback: "Collapse Feedback Batch",
+      expandFeedback: "Expand Feedback Batch",
+      viewAnswer: "View comment and answer",
+      markRead: "Mark as read",
+      markUnread: "Mark as unread",
+      answerReadHelp:
+        "Visible answers become read after 700 ms. Marking unread pauses this until you leave and return to the answer.",
       exportReview: "Export review",
       importReview: "Import review",
       reviewBundleFile: "Review bundle file",
@@ -158,10 +196,16 @@
     },
     ja: {
       queue: "レビューキュー",
+      autoPriority: "自動のレビュー優先度",
+      priorityHelp:
+        "リスク・未検証事項・意図不明から優先度を付けます。検出事項や人の判断は別です。レビュー済みでも優先度と根拠は残ります。",
+      hideReviewed: "レビュー済みを非表示",
+      unknownIntent: "意図不明",
+      verificationGaps: "未検証事項あり",
       search: "変更を絞り込む",
-      action: "対応が必要",
-      confirm: "確認が必要",
-      clear: "問題なし",
+      action: "重点確認",
+      confirm: "要確認",
+      clear: "通常確認",
       unclassified: "未分類のハンク",
       summary: "レビュー要旨",
       reviewMap: "変更の全体像",
@@ -184,6 +228,9 @@
       verified: "検証済み",
       evidence: "根拠",
       codeDiff: "コード差分",
+      rangeHelp:
+        "行番号を選び、同じ側の別の行をShiftクリックすると範囲を選択できます。選択した範囲にコメントできます。",
+      rangeComment: "選択範囲にコメント",
       unified: "統合表示",
       split: "左右表示",
       context: "非表示のコンテキスト {count} 行を表示",
@@ -207,6 +254,19 @@
       findings: "検出事項",
       noFindings: "関連する検出事項はありません",
       coverage: "画面カバレッジ",
+      registeredChecks: "登録した検証結果",
+      verificationHelp:
+        "コマンドと実行結果は作者の申告です。添付ログはハッシュ付き資産として検証でき、SHA一致は対象を識別します。モックやローカル検証をアプリE2E・外部サービスの成功として扱いません。",
+      noChecks: "構造化した検証結果は未登録です",
+      logAttached: "ログ添付",
+      authorReported: "作者申告",
+      shaMatch: "レポートとSHA一致",
+      shaMismatch: "異なるSHA",
+      shaUnknown: "SHA一致は不明",
+      checkPassed: "成功の申告",
+      checkFailed: "失敗の申告",
+      checkNotRun: "未実施",
+      checkLog: "検証ログを開く",
       planned: "予定 target",
       captured: "取得済み target",
       failed: "失敗 target",
@@ -246,6 +306,13 @@
       copyHandoff: "引き継ぎ文をコピー",
       handoffCopied: "引き継ぎ文をコピーしました",
       unreadAnswers: "未読回答",
+      collapseFeedback: "Feedback Batch を折りたたむ",
+      expandFeedback: "Feedback Batch を展開する",
+      viewAnswer: "コメント・回答を確認",
+      markRead: "既読にする",
+      markUnread: "未読に戻す",
+      answerReadHelp:
+        "回答が画面に700ミリ秒表示されると既読になります。手動で未読に戻した回答は、一度表示領域を離れて再閲覧するまで自動既読にしません。",
       exportReview: "レビューを書き出す",
       importReview: "レビューを読み込む",
       reviewBundleFile: "レビューバンドルファイル",
@@ -289,6 +356,7 @@
   let selectedEvidence: UtsuriReport["evidence"] = [];
   let prioritizedChanges: Change[] = [];
   let filteredChanges: Change[] = [];
+  let hideReviewed = false;
   let briefChanges: Change[] = [];
   let selectedComparisons: Comparison[] = [];
   let activeComparison: Comparison | undefined;
@@ -302,6 +370,12 @@
   let reviewReanchor = false;
   let reviewBusy = false;
   let commentAnchor: ReviewAnchor | null = null;
+  let rangeSelection: {
+    hunkId: string;
+    side: "before" | "after";
+    start: number;
+    end: number;
+  } | null = null;
   let commentBody = "";
   let commentKind: ReviewThreadKind = "note";
   let commentAgentAttention = false;
@@ -309,8 +383,18 @@
   let reviewImportInput: HTMLInputElement;
   let selectedThreads: ReviewStore["threads"] = [];
   let interactiveToken = "";
-  let reviewInboxEntries: Array<{ unreadAnswerItemIds: string[] }> = [];
+  let interactiveSessionExpected = false;
+  let capabilityKey = "";
+  let capabilityExpiresAt = 0;
+  let reviewInboxEntries: Array<{
+    state: FeedbackBatch["state"];
+    itemIds: string[];
+    unreadAnswerItemIds: string[];
+  }> = [];
   let feedbackPreview: BrowserFeedbackPreview | null = null;
+  let feedbackCollapsed = false;
+  let answerReadQueue = Promise.resolve();
+  const manualUnread = new SvelteSet<string>();
   let feedbackHandoff = "";
   let feedbackIdempotencyKey = "";
   let feedbackBusy = false;
@@ -334,10 +418,12 @@
   $: prioritizedChanges = report
     ? [...report.changes].sort((left, right) => queuePriority(left) - queuePriority(right))
     : [];
-  $: filteredChanges = prioritizedChanges.filter((change) =>
-    `${change.title} ${change.summary}`.toLocaleLowerCase().includes(query.toLocaleLowerCase())
+  $: filteredChanges = prioritizedChanges.filter(
+    (change) =>
+      `${change.title} ${change.summary}`.toLocaleLowerCase().includes(query.toLocaleLowerCase()) &&
+      (!hideReviewed || judgment(reviewStore, change.id) !== "reviewed")
   );
-  $: briefChanges = prioritizedChanges.slice(0, 5);
+  $: briefChanges = filteredChanges.slice(0, 5);
   $: reviewStart = briefChanges[0];
   $: selectedComparisons =
     selectedChange && report
@@ -376,6 +462,12 @@
   $: selectedAttentionCount =
     reviewStore?.threads.filter((thread) => thread.agentAttention.state === "requested").length ??
     0;
+  $: pendingFeedbackCount =
+    selectedAttentionCount +
+    reviewInboxEntries.reduce(
+      (count, entry) => count + (entry.state === "answered" ? 0 : entry.itemIds.length),
+      0
+    );
   $: unreadAnswerCount = reviewInboxEntries.reduce(
     (count, entry) => count + entry.unreadAnswerItemIds.length,
     0
@@ -401,6 +493,14 @@
       return "needs-confirmation";
     }
     return "no-issue";
+  }
+
+  function priorityReasons(change: Change): string {
+    return [
+      `${change.risk.level} risk`,
+      ...(change.verification.gaps.length ? [t.verificationGaps] : []),
+      ...(change.intent.source === "unknown" ? [t.unknownIntent] : [])
+    ].join(" · ");
   }
 
   function queuePriority(change: Change): number {
@@ -458,6 +558,54 @@
       : undefined;
   }
 
+  function selectRangeLine(
+    hunk: Hunk,
+    side: "before" | "after",
+    number: number,
+    extend: boolean
+  ): void {
+    const previous = rangeSelection;
+    rangeSelection =
+      extend && previous?.hunkId === hunk.id && previous.side === side
+        ? { ...previous, end: number }
+        : { hunkId: hunk.id, side, start: number, end: number };
+  }
+
+  function rangeSelected(
+    selection: typeof rangeSelection,
+    hunkId: string,
+    side: "before" | "after",
+    number: number | null
+  ): boolean {
+    return Boolean(
+      number &&
+      selection?.hunkId === hunkId &&
+      selection.side === side &&
+      number >= Math.min(selection.start, selection.end) &&
+      number <= Math.max(selection.start, selection.end)
+    );
+  }
+
+  async function commentOnRange(): Promise<void> {
+    if (!rangeSelection || !report) return;
+    const { hunkId, side, start, end } = rangeSelection;
+    const anchor = await buildLineRangeAnchor(
+      report,
+      hunkId,
+      side,
+      Math.min(start, end),
+      Math.max(start, end),
+      browserReviewDigest
+    );
+    await startComment(anchor);
+  }
+
+  function anchorLabel(anchor: ReviewAnchor): string {
+    return anchor.type === "line-range"
+      ? `${anchor.path} · ${anchor.side} · ${anchor.startLine}–${anchor.endLine}`
+      : (anchor.path ?? anchor.ref);
+  }
+
   function threadBelongsToChange(anchor: ReviewAnchor, change: Change): boolean {
     if (anchor.type === "change") return anchor.ref === change.id;
     if (anchor.type === "hunk" || anchor.type === "line-range") {
@@ -482,13 +630,72 @@
     );
     const token = parameters.get("token") ?? "";
     if (!token) return;
+    interactiveSessionExpected = true;
     if (!/^[A-Za-z0-9_-]{32,128}$/u.test(token)) {
       reviewFailure = "Interactive capability token is invalid";
       history.replaceState(null, "", `${location.pathname}${location.search}`);
       return;
     }
+    reviewFailure = "";
     interactiveToken = token;
+    capabilityExpiresAt = Date.now() + capabilityCacheAgeMs;
     history.replaceState(null, "", `${location.pathname}${location.search}`);
+  }
+
+  function reopenInteractiveMessage(): string {
+    return locale === "ja"
+      ? "対話セッションを復元できません。現在のサーバーの対話リンクを開き直してください。保存済みレビューは保持されています。"
+      : "Interactive session could not be restored. Reopen the current server's interactive link. Saved review data is retained.";
+  }
+
+  function clearInteractiveCapability(): void {
+    interactiveToken = "";
+    reviewStore = null;
+    eventAbort?.abort();
+    try {
+      if (capabilityKey) sessionStorage.removeItem(capabilityKey);
+    } catch {
+      // Storage may be disabled; the in-memory capability is still cleared.
+    }
+    reviewFailure = reopenInteractiveMessage();
+  }
+
+  function restoreInteractiveCapability(): void {
+    if (!report) return;
+    capabilityKey = capabilityStorageKey(location.origin, location.pathname, report.reportId);
+    if (interactiveSessionExpected) return;
+    try {
+      const serialized = sessionStorage.getItem(capabilityKey);
+      if (!serialized) return;
+      interactiveSessionExpected = true;
+      const cached = parseCachedCapability(serialized, Date.now());
+      if (!cached) {
+        clearInteractiveCapability();
+        return;
+      }
+      interactiveToken = cached.token;
+      capabilityExpiresAt = cached.expiresAt;
+    } catch {
+      reviewFailure = reopenInteractiveMessage();
+      interactiveSessionExpected = true;
+    }
+  }
+
+  function cacheInteractiveCapability(): void {
+    try {
+      sessionStorage.setItem(
+        capabilityKey,
+        JSON.stringify({
+          token: interactiveToken,
+          expiresAt: capabilityExpiresAt
+        })
+      );
+    } catch {
+      reviewFailure =
+        locale === "ja"
+          ? "このブラウザーではセッション保存を利用できません。再読み込み時は対話リンクを開き直してください。"
+          : "Session storage is unavailable. Reopen the interactive link after reloading.";
+    }
   }
 
   async function interactiveRequest(
@@ -508,16 +715,29 @@
       }
     });
     const value = await response.json();
-    if (!response.ok) throw new Error(value?.error?.message ?? `HTTP ${response.status}`);
+    if (!response.ok) {
+      if (response.status === 401 || response.status === 403) {
+        clearInteractiveCapability();
+        throw new Error(reopenInteractiveMessage());
+      }
+      throw new Error(value?.error?.message ?? `HTTP ${response.status}`);
+    }
     return value;
   }
 
   function applyInteractiveState(value: {
     state: ReviewStore["state"];
     threads: ReviewStore["threads"];
-    inbox?: { entries?: Array<{ unreadAnswerItemIds: string[] }> };
+    inbox?: {
+      entries?: Array<{
+        state: FeedbackBatch["state"];
+        itemIds: string[];
+        unreadAnswerItemIds: string[];
+      }>;
+    };
+    batches?: FeedbackBatch[];
   }): void {
-    if (!reviewStore) return;
+    if (!reviewStore || value.state.revision < reviewStore.state.revision) return;
     reviewStore = {
       ...reviewStore,
       state: structuredClone(value.state),
@@ -525,6 +745,11 @@
       events: reviewStore.events
     };
     reviewInboxEntries = structuredClone(value.inbox?.entries ?? reviewInboxEntries);
+    const latest = value.batches?.find((batch) => batch.id === feedbackPreview?.batch.id);
+    if (feedbackPreview && latest) {
+      feedbackPreview = { ...feedbackPreview, batch: structuredClone(latest) };
+      if (latest.state !== "ready") feedbackHandoff = "";
+    }
   }
 
   async function refreshInteractiveReview(): Promise<void> {
@@ -560,6 +785,10 @@
         },
         signal: controller.signal
       });
+      if (response.status === 401 || response.status === 403) {
+        clearInteractiveCapability();
+        return;
+      }
       if (!response.ok || !response.body) return;
       const reader = response.body.getReader();
       const decoder = new TextDecoder();
@@ -773,6 +1002,7 @@
       } else {
         feedbackPreview = await createBrowserFeedbackPreview(reviewStore);
       }
+      feedbackCollapsed = false;
       feedbackIdempotencyKey = `ui:${feedbackPreview.batch.id}`;
       feedbackHandoff = "";
     } catch (error) {
@@ -783,7 +1013,8 @@
   }
 
   async function prepareFeedbackRequest(): Promise<void> {
-    if (!feedbackPreview || !reviewStore || !report) return;
+    if (!feedbackPreview || feedbackPreview.batch.state !== "ready" || !reviewStore || !report)
+      return;
     feedbackBusy = true;
     try {
       if (interactiveToken) {
@@ -819,6 +1050,100 @@
     } finally {
       feedbackBusy = false;
     }
+  }
+
+  function isAnswerUnread(itemId: string): boolean {
+    return reviewInboxEntries.some((entry) => entry.unreadAnswerItemIds.includes(itemId));
+  }
+
+  function changeAnswerRead(itemId: string, unread: boolean, manual = false): Promise<void> {
+    if (manual && unread) manualUnread.add(itemId);
+    answerReadQueue = answerReadQueue
+      .then(async () => {
+        if (!interactiveToken || isAnswerUnread(itemId) === unread) return;
+        for (let attempt = 0; attempt < 3; attempt += 1) {
+          try {
+            await interactiveMutation({ type: "answer-read.changed", itemId, unread });
+            return;
+          } catch (error) {
+            if (
+              !(error instanceof Error) ||
+              !error.message.includes("changed before this mutation") ||
+              attempt === 2
+            ) {
+              reviewNotice = error instanceof Error ? error.message : String(error);
+              return;
+            }
+            await refreshInteractiveReview();
+          }
+        }
+      })
+      .catch((error) => {
+        reviewNotice = error instanceof Error ? error.message : String(error);
+      });
+    return answerReadQueue;
+  }
+
+  function visibleAnswer(node: HTMLParagraphElement, input: { itemId: string; unread: boolean }) {
+    let timer: ReturnType<typeof setTimeout> | undefined;
+    let visible = false;
+    let current = input;
+    function cancel() {
+      clearTimeout(timer);
+      timer = undefined;
+    }
+    function schedule() {
+      cancel();
+      if (
+        !visible ||
+        document.visibilityState !== "visible" ||
+        !current.unread ||
+        manualUnread.has(current.itemId)
+      )
+        return;
+      timer = setTimeout(() => {
+        if (visible && document.visibilityState === "visible" && !manualUnread.has(current.itemId))
+          void changeAnswerRead(current.itemId, false);
+      }, 700);
+    }
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        visible = Boolean(
+          entry?.isIntersecting &&
+          entry.intersectionRect.height >= Math.min(48, entry.boundingClientRect.height)
+        );
+        if (!visible) manualUnread.delete(current.itemId);
+        schedule();
+      },
+      { threshold: [0, Math.min(1, 48 / Math.max(1, node.getBoundingClientRect().height)), 1] }
+    );
+    observer.observe(node);
+    document.addEventListener("visibilitychange", schedule);
+    return {
+      update(next: typeof input) {
+        current = next;
+        schedule();
+      },
+      destroy() {
+        cancel();
+        manualUnread.delete(current.itemId);
+        observer.disconnect();
+        document.removeEventListener("visibilitychange", schedule);
+      }
+    };
+  }
+
+  async function viewFeedbackItem(threadId: string): Promise<void> {
+    const thread = reviewStore?.threads.find((entry) => entry.id === threadId);
+    const change =
+      thread && report?.changes.find((entry) => threadBelongsToChange(thread.anchor, entry));
+    if (!change) return;
+    selectedChangeId = change.id;
+    feedbackCollapsed = true;
+    await tick();
+    const element = document.getElementById(domId("thread", threadId));
+    element?.scrollIntoView({ block: "center", behavior: "instant" });
+    element?.focus({ preventScroll: true });
   }
 
   async function copyFeedbackHandoff(): Promise<void> {
@@ -959,16 +1284,16 @@
     if (currentLocale === "ja") {
       const base =
         known === null
-          ? `${value.coverage.verifiedUsages}件を検証済み、既知の利用件数は不明`
-          : `既知の利用箇所${known}件中${value.coverage.verifiedUsages}件を検証済み`;
+          ? `${value.coverage.verifiedUsages}件の画面利用箇所を検証済み、既知の利用件数は不明`
+          : `既知の画面利用箇所${known}件中${value.coverage.verifiedUsages}件を検証済み`;
       return value.coverage.unknownPossible
         ? `${base}。ほかの利用箇所が存在する可能性があります`
         : base;
     }
     const base =
       known === null
-        ? `${value.coverage.verifiedUsages} verified; known usage count unavailable`
-        : `${value.coverage.verifiedUsages} of ${known} known usages verified`;
+        ? `${value.coverage.verifiedUsages} visual usages verified; known usage count unavailable`
+        : `${value.coverage.verifiedUsages} of ${known} known visual usages verified`;
     return value.coverage.unknownPossible ? `${base}; additional usage may exist` : base;
   }
 
@@ -1068,6 +1393,12 @@
     }
   }
 
+  function handleLocationChange(): void {
+    const parameters = new URLSearchParams(location.hash.slice(1));
+    if (parameters.has("token")) void loadReport();
+    else applyLocation();
+  }
+
   async function loadReport(): Promise<void> {
     try {
       captureInteractiveToken();
@@ -1099,6 +1430,7 @@
       document.querySelector("[data-static-fallback]")?.remove();
       locale = /^ja(?:-|$)/iu.test(report.language) ? "ja" : "en";
       document.documentElement.lang = report.language;
+      restoreInteractiveCapability();
       if (manifest) {
         reviewSource = {
           base: manifest.source?.base ?? null,
@@ -1109,11 +1441,13 @@
         if (interactiveToken) {
           reviewStore = await createBrowserReviewStore(report, new Date().toISOString());
           await refreshInteractiveReview();
+          cacheInteractiveCapability();
           void listenForInteractiveEvents();
-        } else {
+        } else if (!interactiveSessionExpected) {
           reviewStore = await loadBrowserReviewStore(report);
         }
       } catch (error) {
+        reviewStore = null;
         reviewFailure = error instanceof Error ? error.message : String(error);
       }
       applyLocation();
@@ -1202,14 +1536,68 @@
     locale = navigator.language.toLowerCase().startsWith("ja") ? "ja" : "en";
     void loadReport();
     reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-    window.addEventListener("hashchange", applyLocation);
+    window.addEventListener("hashchange", handleLocationChange);
     window.addEventListener("keydown", handleShortcut);
     return () => {
-      window.removeEventListener("hashchange", applyLocation);
+      window.removeEventListener("hashchange", handleLocationChange);
       window.removeEventListener("keydown", handleShortcut);
     };
   });
 </script>
+
+{#snippet verificationResults(results: NonNullable<UtsuriReport["verificationResults"]>)}
+  <section class="registered-checks" aria-label={t.registeredChecks}>
+    <h3>{t.registeredChecks}</h3>
+    <p>{t.verificationHelp}</p>
+    {#if results.length === 0}<p>{t.noChecks}</p>{:else}
+      <ol>
+        {#each results as result (result.id)}<li data-verification-kind={result.kind}>
+            <strong>{result.kind}</strong> · {result.exitCode === null
+              ? t.checkNotRun
+              : result.exitCode === 0
+                ? t.checkPassed
+                : t.checkFailed}
+            <span
+              >{result.provenance === "log-attached" ? t.logAttached : t.authorReported} · {result.shaMatch ===
+              "match"
+                ? t.shaMatch
+                : result.shaMatch === "mismatch"
+                  ? t.shaMismatch
+                  : t.shaUnknown}</span
+            >
+            <p>{result.environment}</p>
+            <code>{result.command.join(" ")}</code>
+            <dl>
+              <div>
+                <dt>SHA</dt>
+                <dd>{result.subjectSha ?? "—"}</dd>
+              </div>
+              <div>
+                <dt>Exit code</dt>
+                <dd>{result.exitCode ?? "—"}</dd>
+              </div>
+              <div>
+                <dt>Passed</dt>
+                <dd>{result.passedCount ?? "—"}</dd>
+              </div>
+              <div>
+                <dt>Completed</dt>
+                <dd>{result.completedAt ?? "—"}</dd>
+              </div>
+            </dl>
+            {#each result.warnings as warning (warning)}<p>{warning}</p>{/each}
+            {#if result.logRef}<a
+                href={result.logRef.startsWith("data:text/plain;")
+                  ? result.logRef
+                  : `./${result.logRef}`}
+                target="_blank"
+                rel="noopener noreferrer">{t.checkLog}</a
+              ><code>SHA-256: {result.logSha256}</code>{/if}
+          </li>{/each}
+      </ol>
+    {/if}
+  </section>
+{/snippet}
 
 {#if report}
   <div class="report-shell">
@@ -1233,6 +1621,7 @@
       </div>
       <p class="report-id">{report.reportId}</p>
     </header>
+    {#if reviewFailure}<p class="review-message" role="alert">{reviewFailure}</p>{/if}
 
     <aside class="review-rail" aria-labelledby="queue-heading">
       <div class="rail-heading">
@@ -1244,6 +1633,10 @@
         <input type="search" bind:this={searchInput} bind:value={query} autocomplete="off" />
       </label>
 
+      <p class="priority-help">{t.autoPriority}: {t.priorityHelp}</p>
+      <label class="viewed-control"
+        ><input type="checkbox" bind:checked={hideReviewed} /><span>{t.hideReviewed}</span></label
+      >
       <nav aria-label={t.queue}>
         {#each ["action-required", "needs-confirmation", "no-issue"] as kind (kind)}
           <section class="queue-section" data-queue={kind}>
@@ -1272,6 +1665,13 @@
                             >{change.verification.gaps.length} gaps</span
                           >{/if}
                       </span>
+                      <small class="priority-reason">{priorityReasons(change)}</small>
+                      <small class="human-status"
+                        >{t.humanJudgment}: {judgmentLabel(
+                          judgment(reviewStore, change.id),
+                          t
+                        )}</small
+                      >
                     </span>
                   </a>
                 </li>
@@ -1345,6 +1745,7 @@
             <p>{t.empty}</p>
           {/if}
         </aside>
+        {@render verificationResults(report.verificationResults ?? [])}
         <dl class="metrics">
           <div>
             <dt>{t.files}</dt>
@@ -1473,14 +1874,15 @@
               <h2 id={domId("title", selectedChange.id)}>{selectedChange.title}</h2>
             </div>
             <div class="change-badges" aria-label="Change status">
-              <span data-queue={queueKind(selectedChange)}
-                >{queueLabel(queueKind(selectedChange), t)}</span
+              <span title={priorityReasons(selectedChange)} data-queue={queueKind(selectedChange)}
+                >{t.autoPriority}: {queueLabel(queueKind(selectedChange), t)}</span
               >
               <span>{selectedChange.risk.level} risk</span>
               <span>{selectedChange.intent.source}</span>
             </div>
           </header>
 
+          <p class="priority-reason">{t.autoPriority}: {priorityReasons(selectedChange)}</p>
           <section class="review-workspace" aria-labelledby="review-workspace-heading">
             <div class="review-workspace-heading">
               <div>
@@ -1568,7 +1970,6 @@
               </div>
               <p class="local-only-note">{t.localOnly}</p>
             {/if}
-            {#if reviewFailure}<p class="review-message" role="alert">{reviewFailure}</p>{/if}
             {#if reviewNotice}<p class="review-message" role="status">{reviewNotice}</p>{/if}
           </section>
 
@@ -2043,6 +2444,13 @@
             {/if}
           </section>
 
+          <p class="range-help">{t.rangeHelp}</p>
+          {@render verificationResults(
+            (report.verificationResults ?? []).filter(
+              (result) =>
+                result.changeRefs.length === 0 || result.changeRefs.includes(selectedChange!.id)
+            )
+          )}
           <section class="diff-section" aria-labelledby="diff-heading">
             <div class="section-heading">
               <div>
@@ -2100,6 +2508,11 @@
                         >{t.comment}</button
                       >
                     {/if}
+                    {#if rangeSelection?.hunkId === hunk.id}<button
+                        type="button"
+                        disabled={reviewBusy}
+                        onclick={() => void commentOnRange()}>{t.rangeComment}</button
+                      >{/if}
                     {#if selectedComparisons.length > 0}
                       <button type="button" onclick={openVisualEvidence}>{t.viewVisual}</button>
                     {/if}
@@ -2145,8 +2558,46 @@
                         role="group"
                         aria-label={`${row.line.kind}, old line ${row.line.oldLine ?? "none"}, new line ${row.line.newLine ?? "none"}`}
                       >
-                        <span class="line-number" aria-hidden="true">{row.line.oldLine ?? ""}</span>
-                        <span class="line-number" aria-hidden="true">{row.line.newLine ?? ""}</span>
+                        {#if row.line.oldLine}<button
+                            type="button"
+                            class="line-number range-line"
+                            class:range-selected={rangeSelected(
+                              rangeSelection,
+                              hunk.id,
+                              "before",
+                              row.line.oldLine
+                            )}
+                            aria-label={`Select before line ${row.line.oldLine} in ${hunk.path}`}
+                            aria-pressed={rangeSelected(
+                              rangeSelection,
+                              hunk.id,
+                              "before",
+                              row.line.oldLine
+                            )}
+                            onclick={(event) =>
+                              selectRangeLine(hunk, "before", row.line.oldLine!, event.shiftKey)}
+                            >{row.line.oldLine}</button
+                          >{:else}<span class="line-number"></span>{/if}
+                        {#if row.line.newLine}<button
+                            type="button"
+                            class="line-number range-line"
+                            class:range-selected={rangeSelected(
+                              rangeSelection,
+                              hunk.id,
+                              "after",
+                              row.line.newLine
+                            )}
+                            aria-label={`Select after line ${row.line.newLine} in ${hunk.path}`}
+                            aria-pressed={rangeSelected(
+                              rangeSelection,
+                              hunk.id,
+                              "after",
+                              row.line.newLine
+                            )}
+                            onclick={(event) =>
+                              selectRangeLine(hunk, "after", row.line.newLine!, event.shiftKey)}
+                            >{row.line.newLine}</button
+                          >{:else}<span class="line-number"></span>{/if}
                         <span class="line-sign" aria-hidden="true"
                           >{row.line.kind === "addition"
                             ? "+"
@@ -2179,9 +2630,26 @@
                           class:empty-side={row.line.kind === "addition"}
                           class={`diff-line ${row.line.kind === "addition" ? "empty" : row.line.kind}`}
                         >
-                          <span class="line-number" aria-hidden="true"
-                            >{row.line.oldLine ?? ""}</span
-                          >
+                          {#if row.line.oldLine}<button
+                              type="button"
+                              class="line-number range-line"
+                              class:range-selected={rangeSelected(
+                                rangeSelection,
+                                hunk.id,
+                                "before",
+                                row.line.oldLine
+                              )}
+                              aria-label={`Select before line ${row.line.oldLine} in ${hunk.path}`}
+                              aria-pressed={rangeSelected(
+                                rangeSelection,
+                                hunk.id,
+                                "before",
+                                row.line.oldLine
+                              )}
+                              onclick={(event) =>
+                                selectRangeLine(hunk, "before", row.line.oldLine!, event.shiftKey)}
+                              >{row.line.oldLine}</button
+                            >{:else}<span class="line-number"></span>{/if}
                           <span class="line-sign" aria-hidden="true"
                             >{row.line.kind === "deletion" ? "−" : " "}</span
                           >
@@ -2195,9 +2663,26 @@
                           class:empty-side={row.line.kind === "deletion"}
                           class={`diff-line ${row.line.kind === "deletion" ? "empty" : row.line.kind}`}
                         >
-                          <span class="line-number" aria-hidden="true"
-                            >{row.line.newLine ?? ""}</span
-                          >
+                          {#if row.line.newLine}<button
+                              type="button"
+                              class="line-number range-line"
+                              class:range-selected={rangeSelected(
+                                rangeSelection,
+                                hunk.id,
+                                "after",
+                                row.line.newLine
+                              )}
+                              aria-label={`Select after line ${row.line.newLine} in ${hunk.path}`}
+                              aria-pressed={rangeSelected(
+                                rangeSelection,
+                                hunk.id,
+                                "after",
+                                row.line.newLine
+                              )}
+                              onclick={(event) =>
+                                selectRangeLine(hunk, "after", row.line.newLine!, event.shiftKey)}
+                              >{row.line.newLine}</button
+                            >{:else}<span class="line-number"></span>{/if}
                           <span class="line-sign" aria-hidden="true"
                             >{row.line.kind === "addition" ? "+" : " "}</span
                           >
@@ -2246,7 +2731,7 @@
               >
                 <div>
                   <p class="kicker">{t.commentOn} / {commentAnchor.type}</p>
-                  <code>{commentAnchor.path ?? commentAnchor.ref}</code>
+                  <code>{anchorLabel(commentAnchor)}</code>
                 </div>
                 <label>
                   <span>Kind</span>
@@ -2309,9 +2794,36 @@
                       </div>
                       <span>{thread.state === "resolved" ? t.resolved : thread.state}</span>
                     </header>
-                    <code>{thread.anchor.path ?? thread.anchor.ref}</code>
+                    <code>{anchorLabel(thread.anchor)}</code>
                     {#each thread.messages as message (message.id)}
-                      <p>{message.body}</p>
+                      {#if interactiveToken && message.kind === "agent-answer" && message.feedbackItemId}
+                        <div
+                          class="answer-message"
+                          data-unread={isAnswerUnread(message.feedbackItemId)}
+                        >
+                          <p
+                            use:visibleAnswer={{
+                              itemId: message.feedbackItemId,
+                              unread: isAnswerUnread(message.feedbackItemId)
+                            }}
+                          >
+                            {message.body}
+                          </p>
+                          <button
+                            type="button"
+                            title={t.answerReadHelp}
+                            onclick={() =>
+                              void changeAnswerRead(
+                                message.feedbackItemId!,
+                                !isAnswerUnread(message.feedbackItemId!),
+                                true
+                              )}
+                            >{isAnswerUnread(message.feedbackItemId)
+                              ? t.markRead
+                              : t.markUnread}</button
+                          >
+                        </div>
+                      {:else}<p>{message.body}</p>{/if}
                     {/each}
                     {#if thread.agentAttention.state === "none" || thread.agentAttention.state === "requested"}
                       <label class="agent-attention-control compact-attention">
@@ -2399,16 +2911,27 @@
         <section class="focused-change empty-focus"><h2>{t.empty}</h2></section>
       {/if}
     </main>
-    {#if reviewStore && (selectedAttentionCount > 0 || unreadAnswerCount > 0 || feedbackPreview)}
-      <aside class="feedback-dock" aria-live="polite" aria-label={t.selectedItems}>
+    {#if reviewStore && (pendingFeedbackCount > 0 || unreadAnswerCount > 0 || feedbackPreview)}
+      <aside
+        class:collapsed={feedbackCollapsed}
+        class="feedback-dock"
+        aria-live="polite"
+        aria-label={t.selectedItems}
+      >
         <header>
           <div>
-            <strong>{t.selectedItems}: {selectedAttentionCount}</strong>
-            {#if unreadAnswerCount > 0}<span class="unread-badge"
-                >{t.unreadAnswers}: {unreadAnswerCount}</span
-              >{/if}
+            <strong>{t.selectedItems}: {pendingFeedbackCount}</strong>
+            <span class="unread-badge">{t.unreadAnswers}: {unreadAnswerCount}</span>
           </div>
-          {#if selectedAttentionCount > 0}
+          <button
+            type="button"
+            aria-expanded={!feedbackCollapsed}
+            aria-controls="feedback-preview-panel"
+            onclick={() => {
+              feedbackCollapsed = !feedbackCollapsed;
+            }}>{feedbackCollapsed ? t.expandFeedback : t.collapseFeedback}</button
+          >
+          {#if selectedAttentionCount > 0 && !feedbackCollapsed}
             <button
               type="button"
               disabled={feedbackBusy || reviewBusy}
@@ -2416,15 +2939,23 @@
             >
           {/if}
         </header>
-        {#if feedbackPreview}
-          <section class="feedback-preview" aria-labelledby="feedback-preview-heading">
+        {#if feedbackPreview && !feedbackCollapsed}
+          <section
+            id="feedback-preview-panel"
+            class="feedback-preview"
+            aria-labelledby="feedback-preview-heading"
+          >
             <h2 id="feedback-preview-heading">{t.feedbackPreview}</h2>
+            <p class="feedback-batch-state">{feedbackPreview.batch.state}</p>
             <ol>
               {#each feedbackPreview.batch.items as item (item.id)}
                 <li>
                   <strong>{item.question}</strong>
-                  <code>{item.anchor.type}: {item.anchor.ref}</code>
+                  <code>{item.anchor.type}: {anchorLabel(item.anchor)}</code>
                   <span>{item.state}</span>
+                  <button type="button" onclick={() => void viewFeedbackItem(item.threadId)}
+                    >{t.viewAnswer}</button
+                  >
                 </li>
               {/each}
             </ol>
@@ -2452,22 +2983,24 @@
             {#each feedbackPreview.warnings as warning (warning)}<p class="feedback-warning">
                 {warning}
               </p>{/each}
-            <div class="feedback-actions">
-              <button
-                type="button"
-                disabled={feedbackBusy}
-                onclick={() => void prepareFeedbackRequest()}
-                >{interactiveToken ? t.returnConversation : t.prepareRequest}</button
-              >
-              {#if feedbackHandoff}
+            {#if feedbackPreview.batch.state === "ready"}
+              <div class="feedback-actions">
                 <button
                   type="button"
                   disabled={feedbackBusy}
-                  onclick={() => void copyFeedbackHandoff()}>{t.copyHandoff}</button
+                  onclick={() => void prepareFeedbackRequest()}
+                  >{interactiveToken ? t.returnConversation : t.prepareRequest}</button
                 >
-              {/if}
-            </div>
-            {#if feedbackHandoff}<pre>{feedbackHandoff}</pre>{/if}
+                {#if feedbackHandoff}
+                  <button
+                    type="button"
+                    disabled={feedbackBusy}
+                    onclick={() => void copyFeedbackHandoff()}>{t.copyHandoff}</button
+                  >
+                {/if}
+              </div>
+              {#if feedbackHandoff}<pre>{feedbackHandoff}</pre>{/if}
+            {/if}
           </section>
         {/if}
       </aside>

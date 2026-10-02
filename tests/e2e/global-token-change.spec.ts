@@ -16,7 +16,7 @@ test("shows known, verified, unknown, planned, succeeded, and failed coverage se
     failed: 0
   });
   const coverage = page.locator(".coverage-overview");
-  await expect(coverage).toContainText("7 of 12 known usages verified");
+  await expect(coverage).toContainText("7 of 12 known visual usages verified");
   await expect(coverage).toContainText("additional usage may exist");
   await expect(coverage).toContainText("Planned targets");
   await expect(coverage).toContainText("Captured targets");
