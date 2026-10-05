@@ -13,6 +13,8 @@ import {
   buildAnchorCatalog,
   buildLegacyVisualAnchorCatalog,
   classifyAnchor,
+  includeLineRangeAnchors,
+  resolveLineRangeAnchor,
   migrateLegacyVisualRegionAnchors
 } from "./anchors";
 import { canonicalReviewJson } from "./canonical";
@@ -350,6 +352,12 @@ export async function browserCreateComment(
   createdAt = new Date().toISOString(),
   requestAgentAttention = false
 ): Promise<ReviewStore> {
+  if (anchor.type === "line-range" && anchor.ref.includes(":range:")) {
+    const canonical = await resolveLineRangeAnchor(store.report, anchor.ref, browserReviewDigest);
+    if (!canonical || canonicalReviewJson(canonical) !== canonicalReviewJson(anchor))
+      throw browserError("REVIEW_RANGE_INVALID", "Review line range is invalid");
+  }
+
   const normalized = body.trim();
   if (!normalized) throw browserError("REVIEW_COMMENT_EMPTY", "Review comments must not be empty");
   if (new TextEncoder().encode(normalized).byteLength > 16 * 1024) {
@@ -525,6 +533,15 @@ export async function importBrowserReviewBundle(
     throw browserError("REVIEW_BUNDLE_INVALID", validation.errors.join("; "));
   }
   const bundle = migrated as ReviewBundleDocument;
+  current = {
+    ...current,
+    anchorCatalog: await includeLineRangeAnchors(
+      current.report,
+      current.anchorCatalog,
+      bundle.threads.map((thread) => thread.anchor),
+      browserReviewDigest
+    )
+  };
   if (!exactReport && !options.reanchor) {
     throw browserError(
       "REVIEW_REPORT_MISMATCH",

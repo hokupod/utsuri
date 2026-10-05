@@ -11,6 +11,7 @@ export {
   assertPngBytes,
   assertRasterImageReference,
   assertSafeReportAssetReference,
+  assertVerificationLogReference,
   interactiveReportCsp,
   parseBoundedJson,
   reportSecurityHeaders,

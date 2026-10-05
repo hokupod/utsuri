@@ -18,7 +18,8 @@ export type ReviewEvent = {
     | "feedback-batch.stored"
     | "feedback-batch.claimed"
     | "feedback-batch.released"
-    | "feedback-batch.answered";
+    | "feedback-batch.answered"
+    | "answer-read.changed";
   createdAt: string;
   anchor?: ReviewAnchor;
   changeId?: string;
@@ -303,6 +304,7 @@ export type ReviewEvent = {
       ];
   itemCount?: number;
   deliveryMode?: "direct-same-session" | "return-to-session" | "export-only";
+  answerUnread?: boolean;
   originSessionMatched?: boolean;
 };
 

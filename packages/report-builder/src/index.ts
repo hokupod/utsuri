@@ -21,6 +21,7 @@ import {
   assertPngBytes,
   assertRasterImageReference,
   assertSafeReportAssetReference,
+  assertVerificationLogReference,
   interactiveReportCsp,
   parseBoundedJson,
   resolveContainedPath,
@@ -123,10 +124,10 @@ function reportText(language: string, english: string, japanese: string): string
 
 const generatedPreComparisonGaps: Readonly<Record<string, true>> = {
   "Visual behavior was not captured.": true,
-  "Runtime behavior was not executed.": true,
+  "Application E2E and external integrations are not established by browser evidence.": true,
   "Captured evidence has not been compared or mapped to this change.": true,
   "画面上の挙動は取得されていません。": true,
-  "実行時の挙動は検証されていません。": true,
+  "アプリのE2E・外部連携はブラウザ根拠による検証がありません。": true,
   "取得済みの根拠は、この変更との比較または対応付けが完了していません。": true
 };
 
@@ -411,7 +412,7 @@ function createCandidateChanges(
           : [
               reportText(
                 language,
-                "Runtime and visual effects have not been exercised.",
+                "Application behavior, external integrations and visual effects have no browser verification.",
                 "実行時および画面上の影響は検証されていません。"
               )
             ]
@@ -435,8 +436,8 @@ function createCandidateChanges(
           ),
           reportText(
             language,
-            "Runtime behavior was not executed.",
-            "実行時の挙動は検証されていません。"
+            "Application E2E and external integrations are not established by browser evidence.",
+            "アプリのE2E・外部連携はブラウザ根拠による検証がありません。"
           )
         ]
       }
@@ -1173,6 +1174,7 @@ function reportArtifactReferences(report: UtsuriReport): string[] {
   const references = [
     ...captureReferences,
     ...rasterReferences,
+    ...(report.verificationResults ?? []).map((result) => result.logRef),
     ...report.evidence
       .filter((evidence) => evidence.type !== "visual")
       .map((evidence) => evidence.path)
@@ -1183,6 +1185,7 @@ function reportArtifactReferences(report: UtsuriReport): string[] {
   for (const reference of references) {
     try {
       if (rasterReferences.includes(reference)) assertRasterImageReference(reference);
+      else if (reference.startsWith("verification/")) assertVerificationLogReference(reference);
       else assertSafeReportAssetReference(reference);
     } catch (error) {
       throw new UtsuriError(
@@ -1623,8 +1626,8 @@ function createCodeOnlyReport(
               ),
               reportText(
                 language,
-                "Runtime behavior was not executed.",
-                "実行時の挙動は検証されていません。"
+                "Application E2E and external integrations are not established by browser evidence.",
+                "アプリのE2E・外部連携はブラウザ根拠による検証がありません。"
               )
             ])
           ]
@@ -1656,8 +1659,8 @@ function createCodeOnlyReport(
             )
         : reportText(
             language,
-            "Code changes were collected and grouped. Visual and runtime behavior remain unverified.",
-            "コード変更を収集してグループ化しました。画面および実行時の挙動は未検証です。"
+            "Code changes were collected and grouped. Visual comparison, application E2E and external integrations have no browser verification. Registered checks are shown separately.",
+            "コード変更を収集してグループ化しました。画面比較・アプリのE2E・外部連携はブラウザ根拠による検証がありません。登録した検証結果は別に表示します。"
           ),
       filesChanged: diff.summary.filesChanged,
       additions: diff.summary.additions,
@@ -1706,6 +1709,71 @@ function createCodeOnlyReport(
       incompleteReasons: captureState.incompleteReasons,
       blockedRequestCount: captureState.blockedRequestCount
     }
+  };
+}
+
+async function integrateVerificationResults(
+  runDirectory: string,
+  report: UtsuriReport,
+  input: unknown,
+  annotations: Annotations | null,
+  artifactDigests: Readonly<Record<string, string>>
+): Promise<{ report: UtsuriReport; artifactDigests: Readonly<Record<string, string>> }> {
+  if (!annotations?.verificationResults) return { report, artifactDigests };
+  const ids = new Set<string>();
+  const digests = { ...artifactDigests };
+  const results: NonNullable<UtsuriReport["verificationResults"]> = [];
+  const subject =
+    isRecord(input) &&
+    typeof input.head === "string" &&
+    /^[a-f0-9]{40}(?:[a-f0-9]{24})?$/u.test(input.head)
+      ? input.head
+      : null;
+  for (const result of annotations.verificationResults) {
+    if (
+      ids.has(result.id) ||
+      result.changeRefs.some((ref) => !report.changes.some((change) => change.id === ref)) ||
+      (result.exitCode !== null && result.completedAt === null)
+    ) {
+      throw new UtsuriError(
+        "VERIFICATION_RESULT_INVALID",
+        "Verification result identity, scope or completion is invalid",
+        ExitCode.Artifact
+      );
+    }
+    ids.add(result.id);
+    if (result.logRef) {
+      assertVerificationLogReference(result.logRef);
+      const bytes = await readRegularBytes(await resolveContainedPath(runDirectory, result.logRef));
+      let validUtf8 = true;
+      try {
+        new TextDecoder("utf-8", { fatal: true }).decode(bytes);
+      } catch {
+        validUtf8 = false;
+      }
+      if (!validUtf8 || bytes.includes(0) || sha256(bytes) !== result.logSha256) {
+        throw new UtsuriError(
+          "VERIFICATION_LOG_INVALID",
+          "Verification log is not text or its SHA-256 differs",
+          ExitCode.Artifact
+        );
+      }
+      digests[result.logRef] = result.logSha256!;
+    }
+    results.push({
+      ...result,
+      provenance: result.logRef ? "log-attached" : "reported",
+      shaMatch:
+        subject && result.subjectSha
+          ? subject === result.subjectSha
+            ? "match"
+            : "mismatch"
+          : "unknown"
+    });
+  }
+  return {
+    report: { ...report, verificationSubjectSha: subject, verificationResults: results },
+    artifactDigests: immutableJsonSnapshot(digests)
   };
 }
 
@@ -1783,7 +1851,16 @@ async function reconstructReportFromSourceSnapshot(
       discovery
     );
     assertReferenceResult("REPORT_REFERENCE_INVALID", validateReportReferences(report));
-    return { report, artifactDigests, sourceSnapshotHash };
+    return {
+      ...(await integrateVerificationResults(
+        runDirectory,
+        report,
+        input,
+        annotations,
+        artifactDigests
+      )),
+      sourceSnapshotHash
+    };
   }
   if (annotations?.changes.length) {
     throw new UtsuriError(
@@ -1817,6 +1894,9 @@ async function reconstructReportFromSourceSnapshot(
   const reportId = `report-${stableHash({
     input,
     ...(annotations ? { language } : {}),
+    ...(annotations?.verificationResults
+      ? { verificationResults: annotations.verificationResults }
+      : {}),
     ...(capture ? { capture } : {})
   }).slice(0, 16)}`;
   const report: UtsuriReport = {
@@ -1877,7 +1957,16 @@ async function reconstructReportFromSourceSnapshot(
     }
   };
   assertReferenceResult("REPORT_REFERENCE_INVALID", validateReportReferences(report));
-  return { report, artifactDigests, sourceSnapshotHash };
+  return {
+    ...(await integrateVerificationResults(
+      runDirectory,
+      report,
+      input,
+      annotations,
+      artifactDigests
+    )),
+    sourceSnapshotHash
+  };
 }
 
 export async function createInitialReport(
@@ -2524,6 +2613,21 @@ export async function validateReportDirectory(
       }
     }
     if (report) {
+      for (const result of report.verificationResults ?? []) {
+        const subject = report.verificationSubjectSha;
+        const expectedMatch =
+          subject && result.subjectSha
+            ? subject === result.subjectSha
+              ? "match"
+              : "mismatch"
+            : "unknown";
+        if (result.shaMatch !== expectedMatch)
+          errors.push(`Verification SHA classification mismatch: ${result.id}`);
+        if (result.provenance !== (result.logRef ? "log-attached" : "reported"))
+          errors.push(`Verification provenance mismatch: ${result.id}`);
+        if (result.logRef && result.logSha256 !== manifest.assetHashes[result.logRef])
+          errors.push(`Verification log hash mismatch: ${result.id}`);
+      }
       if (manifest.reportId !== report.reportId) errors.push("Manifest reportId mismatch");
       if (
         manifest.semanticHash !==

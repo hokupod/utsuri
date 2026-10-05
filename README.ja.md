@@ -119,6 +119,11 @@ Utsuri は何もインストールせず、最初に利用可能な capability �
 
 レポートは source identity、evidence hash、review gap を保持し、別の reviewer が確認範囲を監査できるようにします。
 
+- **自動のレビュー優先度** は、リスク・未検証事項・意図不明の理由を、検出事項や人の判断と分けて示します。レビュー済みを非表示にしても根拠は残ります。
+- **範囲コメント** は、同じファイル・before/after の同じ側の行番号をクリックし、Shiftクリックで終点を指定します。統合表示・左右表示に対応し、再読み込み、レビューexport/import、Feedback Batchでも範囲を保持します。
+- **Feedback Batch** は、データを変更せず折りたたみ・再展開できます。保存済みプレビューはready/consumed/answeredへ追従し、対応する回答へ移動でき、処理開始後は引き継ぎ操作を表示しません。新着回答は未読で、本文が画面に700ミリ秒表示されると既読になります。手動で未読へ戻した回答は、画面外へ移動して再閲覧するか、画面移動後に再び開くまで未読を保持します。
+- **登録した検証結果** は、単体テスト・型チェック・Lint・ビルド・アプリE2E・外部サービスを区別します。annotationsにSHA、argv、終了コード、成功数、警告、環境、ハッシュ付きテキストログを登録できます。`verification/` のログをimmutableなreport資産に組み込み、作者申告とログ添付を区別します。ローカル・モックの成功で画面カバレッジを`PASS`へ変更しません。
+
 <a id="security-privacy"></a><!-- section:security-privacy -->
 
 ## セキュリティとプライバシー
@@ -129,6 +134,7 @@ Utsuri は何もインストールせず、最初に利用可能な capability �
 - 生成済み `report/` は immutable です。変更可能な review / feedback record は run の `review/` directory に保存します。
 - Marketplace MCP は任意の path、working directory、command、provider、model、destination、raw session input を公開しません。
 - MCP tool が扱えるのは canonical な現在の project と同じ Origin Session に登録された schema-valid report だけです。別 project、別 host、別 session、stale または swapped registration は fail closed します。
+- 対話 viewer は認証済み capability を sessionStorage に最大8時間保存し、再読み込み時に復元します。origin/port・viewer path・report ID ごとに分離します。同一 origin の JavaScript が読め、タブ複製時はコピーされる場合があります。期限切れや認証拒否時はそのタブの保存を消去し、現在の対話リンクを開き直す必要があります。8時間はクライアント保存期限であり、サーバー側 TTL ではありません。サーバー再起動で capability は変わります。localStorage・レビュー export・log には含めません。
 - Raw host session value は equality check と opaque hash にだけ使用し、persist、log、diagnostic、tool return には含めません。
 - Marketplace broker が受け付ける host contract は `CODEX_THREAD_ID`、または `CLAUDE_CODE_SESSION_ID` + `CLAUDE_PROJECT_DIR` だけです。Fixed-run の `finalize`、`feedback`、`review-mcp` は `UTSURI_CODEX_SESSION_ID` と `CLAUDE_SESSION_ID` の互換性も維持しますが、legacy/new の値が競合する場合は拒否します。Claude Plugin の finalize は child directory から起動しても canonical な host project root に binding します。
 - Release artifact には production dependency graph の決定的な SPDX と license inventory を含めます。その identity は lockfile の正確な integrity value と install 済み package の byte から算出し、無関係な development-only lock 変更では published inventory を変更しません。

@@ -256,7 +256,13 @@ async function loadConfig(
 }
 
 function dataUri(filename: string, bytes: Buffer): string {
-  const contentType = path.extname(filename).toLowerCase() === ".png" ? "image/png" : null;
+  const extension = path.extname(filename).toLowerCase();
+  const contentType =
+    extension === ".png"
+      ? "image/png"
+      : [".txt", ".log", ".ndjson"].includes(extension)
+        ? "text/plain;charset=utf-8"
+        : null;
   if (!contentType) throw new Error(`Unsupported embedded asset: ${filename}`);
   return `data:${contentType};base64,${bytes.toString("base64")}`;
 }
@@ -300,7 +306,10 @@ function singleFileDocument(loaded: LoadedReport): Buffer {
   }
   const replacements = new Map<string, string>();
   for (const [name, bytes] of loaded.files) {
-    if (/^(?:capture|comparison)\/.+\.png$/u.test(name)) {
+    if (
+      /^(?:capture|comparison)\/.+\.png$/u.test(name) ||
+      /^verification\/.+\.(?:txt|log|ndjson)$/u.test(name)
+    ) {
       replacements.set(name, dataUri(name, bytes));
     }
   }
