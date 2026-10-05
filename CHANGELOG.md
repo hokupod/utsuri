@@ -7,6 +7,26 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.3.6] - 2026-10-05
+
+### Added
+
+- Add continuous before/after line-range comments in Unified and Side by side views.
+- Register SHA-scoped verification results and sanitized text logs without promoting them to visual coverage.
+- Resume interactive review across reloads with a scoped, expiring tab capability cache.
+
+### Changed
+
+- Separate automatic priority reasons from findings and human review completion.
+- Add a collapsible Feedback Batch dock and persistent answer read/unread state across tabs.
+- Synchronize CLI, aggregate Plugin, Git Plugin, and exact MCP package pins.
+
+### Fixed
+
+- Keep Feedback Batch previews synchronized with consumed and answered state, including delayed POST responses and pending SSE refreshes.
+- Preserve safe feedback actions during refresh failures and recover through retry or later notifications.
+- Report invalid UTF-8 verification logs with the artifact diagnostic, explain invalid range selections, and use the defined muted-text color token.
+
 ## [0.3.5] - 2026-09-17
 
 ### Changed
