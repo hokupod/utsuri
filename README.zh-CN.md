@@ -25,9 +25,9 @@ Utsuri 将 Git 变更转换为本地审查，把代码、浏览器截图、结�
 <!-- availability:git-marketplace-cli-and-plugin-public -->
 <!-- support-contract:macos-linux-windows-unsupported -->
 
-下一个同步CLI与Git Plugin版本正在验证中。之前发布的版本仍可使用；证据见[发布指南](https://github.com/hokupod/utsuri/blob/main/docs/release.md)。
+当前版本已通过发布验证及两个受支持宿主的隔离环境 Git Plugin 安装验证；证据见[发布指南](https://github.com/hokupod/utsuri/blob/main/docs/release.md)。
 
-此checkout中的Git源码是发布候选版本。使用以下命令前，必须先发布精确固定的`@utsu-ri/cli`版本并验证Git Plugin安装。Plugin只执行与其匹配的完整SemVer。请勿替换为`latest`、版本范围或其他package。
+当前公开 Git 源码包含经过验证的 Git Plugin，且其精确固定的 `@utsu-ri/cli` release 已发布。以下命令会安装该公开源码；Plugin 只执行与其匹配的完整 SemVer。请勿替换为 `latest`、版本范围或其他 package。
 
 - [runtime compatibility record](https://github.com/hokupod/utsuri/blob/main/docs/compatibility/plugin-runtime.json) 中列出的 Codex 或 Claude Code release。
 - macOS 或 Linux、Node.js 22 或更高版本，以及首次启动 MCP 所需的 `npx`。
