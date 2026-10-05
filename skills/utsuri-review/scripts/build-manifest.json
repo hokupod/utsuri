@@ -1,7 +1,7 @@
 {
   "schemaVersion": "1.1",
-  "toolVersion": "0.3.5",
-  "sourceHash": "b43fbe38f6208e19ba710e4efc6fa34b68f39d06585887f1e988930b43797f27",
+  "toolVersion": "0.3.6",
+  "sourceHash": "447dbdce0b18ed09b3d15bb37491880184fa65b569b13438ce34b9c4c8d2d98a",
   "sourceHashes": {
     "packages/adapters/generic/src/index.ts": "0fb851c88f14187773d97373b9d848e831abb629bb4b1834c4393f29917c4169",
     "packages/adapters/playwright/src/index.ts": "7714950f8fbcc160493e649a13e2c96d2843530307150357c30b9155c42b6081",
@@ -23,12 +23,12 @@
     "packages/capture/src/runtime/container.ts": "d6f53ec8d03dcf2f9774436c533fc0cd6dd72c85fe7f1d60f4f3daf5f3c18452",
     "packages/capture/src/server-runtime.ts": "8b4055dad80efa008548c9efcd502f80ca29abcfae062c63fa3cf701a41a0472",
     "packages/cli/src/arguments.ts": "0ab06574a833531cb6084b555d11847d6deca4fd082fa3035c5e2a72a8870005",
-    "packages/cli/src/cli.ts": "502e73345542aaa9a14649a6119a5334b53ed26583a8cae57bb512d1cac55e32",
+    "packages/cli/src/cli.ts": "6662553e77fc0be14e24f827a4f97509b2c0ecd8662539fd9802cdc9649f7ca6",
     "packages/cli/src/doctor.ts": "fdf26a40387b433878e257c3f857348e6bbe510e63b56a6a9623c1a5b6876287",
     "packages/cli/src/feedback.ts": "5c85a25385d488b8813edf10ab16f9a071128e67bd3c97aa792820ab54f68892",
     "packages/cli/src/init.ts": "5250d75ae8de6a7471bce58ff4f1b27b830cbf090bc55a8ec16c9125376cfb65",
     "packages/cli/src/main.ts": "d399e4b4a8a951cbb18fb6244ffa789dd3ed16cc49d6b7edb4f62078ab9a18fe",
-    "packages/cli/src/mcp.ts": "79d3b4e0662cd67b52c3c5e910cf4a6e848991290db97440b9c63321f83d78a2",
+    "packages/cli/src/mcp.ts": "78e1cf661b19e6e3ce374fcd6e923e3150cc58779ef02ce43184e4de493b388a",
     "packages/cli/src/pack.ts": "b2c616bffe4280ac49ed20a4330a91cdc2bad26559843d9b842139fe4d8d3c85",
     "packages/cli/src/review.ts": "6dd667da53cd5efae84899e23d2381ab3a04193b3ca0590a3c39802e69187709",
     "packages/cli/src/serve.ts": "0a3a302b5b2630354464b3fc6c15ac838649879a820a3a4db0df09f033e4cf88",
@@ -58,7 +58,7 @@
     "packages/report-model/src/index.ts": "38ba6c90d0404cacc4d738adccbfd7daf0a2c5cfef40178842c776945db226f2",
     "packages/report-model/src/validator.ts": "c6944b0bb97942e2332634b0fded31f7bfadde2612e4531314202d5415332f25",
     "packages/review-inbox/src/index.ts": "1cc8bdae5fb0f8c4917b1379f9137aaa15815757401a97d1fdd21022981735b2",
-    "packages/review-mcp-server/src/index.ts": "1a9f23239425a4b719280c5998441bc1093f05bbcf385a686d50e2782e139da4",
+    "packages/review-mcp-server/src/index.ts": "d4ddbd9a885ad698ea9de504152037b051b79393e5f5f8f00cf8009c332020c8",
     "packages/review-mcp-server/src/run-registry.ts": "7bdb8aa633b7757bce50652ae8a64636b805622ab9b85de8e5a1c94d2a5809ca",
     "packages/review-state/src/anchors.ts": "77b2f3e8496c77300e4e96a01b8f50671f9d25d80d0b624a60adf755a8bfb7d2",
     "packages/review-state/src/canonical.ts": "844b47cee854771c920f55e24d25d1487551dd4edff80ce90b7914bb4b63c434",
@@ -66,7 +66,7 @@
     "packages/review-state/src/model.ts": "8e1bdd00bbf8e83f8b1a488e930eabed28996978ced0e4ac356febcbaab8bf1e",
     "packages/review-state/src/persistence.ts": "e825604b9cafac8d22137075e9846fea53d5ea924faaac2aeb6dfbe246f1520f",
     "packages/security/src/index.ts": "cfaaf74b77fdb886cccb937fc2b12036ff192cda4c6f7aa3d6d30a8d5a6c4651",
-    "packages/security/src/native-helper.ts": "2da439c47069fb8658a2a18e7298660dd2412ca527cc6511db6d1e69d9397a8f",
+    "packages/security/src/native-helper.ts": "9d52c6742d5e49548be4ca2344adc85abab6ce63ba60f8cd6975a8430607b379",
     "packages/security/src/report.ts": "9323d3837f0636196973fa2990365fa8ca232b9d07e9988083d9667a4a08ccff",
     "packages/session-binding/src/index.ts": "57221d67fcff2d6922287a1efbcef7074e7c1df847b09466a43e3310b075825b",
     "schemas/annotations.schema.json": "0ecbe8f4ab7faa07d0c288238c9e25f880db99eed5db83d69076cfebde9cbd9c",
@@ -86,7 +86,7 @@
     "schemas/review-state.schema.json": "27f9f98344a2b94b75f84fef9bba73978bbacca1e102ed11e459d247fbed7552",
     "schemas/review-thread.schema.json": "6c5957f14b964dfaf1601ac45870b7f3fae013209dd4964aa3831dd753f06fc1"
   },
-  "dependencyBaselineSha256": "5f60b6037a1f6b8be54e73c407c56e86f0969328f4b9ca21444a1f567b8d4156",
+  "dependencyBaselineSha256": "5e7faacf859a8c56e0ee8ce92fc0f6ac7367081ace67361a8649ecfcaac910ff",
   "dependencyHash": "f32b3aad9838e5014736cf171afd5935cc647b6d8c2f72093139ac04079d3ea7",
   "dependencyHashes": {
     "ajv-formats@3.0.1/dist/formats.js": "b61693a26869970a92cc1fe832c931ccd3afe8b6d66802b19c48306349e84880",
@@ -287,5 +287,5 @@
     "app.css": "e3a13751daed2f092852837659997d863ba24dfb7fc8e1f23dc82ec8b9762e2a",
     "app.js": "45f3af65efeedfe618c42daffdeef64f442cd863d87465ebbca8e7340953b4ce"
   },
-  "bundleSha256": "dda263edd70925b007bf617cbd2d014dd919ab7d80bd1390aea84ef141bf098c"
+  "bundleSha256": "b4d16d906d89d55cbc2fc2ecdbb4429635528b2f0ccc6ab2794de726fea1627b"
 }
