@@ -7,7 +7,7 @@ Utsuri development uses a pinned Nix shell, Safe-chain-protected package-manager
 Requirements:
 
 - Nix with flakes enabled;
-- Safe-chain 1.5.20 installed only at its standard user location;
+- Safe-chain matching the exact version and platform digest in `toolchain-policy.json`, installed only at its standard user location;
 - Git; and
 - an existing compatible browser only when capture tests require one.
 
