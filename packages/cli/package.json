@@ -1,6 +1,6 @@
 {
   "name": "@utsu-ri/cli",
-  "version": "0.3.3",
+  "version": "0.3.6",
   "private": true,
   "description": "Evidence-backed visual change review for Codex and Claude Code",
   "license": "AGPL-3.0-or-later",
@@ -46,6 +46,6 @@
     "@utsu-ri/security": "workspace:*",
     "@utsu-ri/session-binding": "workspace:*",
     "fflate": "0.8.3",
-    "yaml": "2.9.0"
+    "yaml": "2.9.1"
   }
 }

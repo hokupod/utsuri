@@ -35,6 +35,13 @@
   ],
   "packageRules": [
     {
+      "description": "Change the lockfile writer only with the Nix compatibility policy",
+      "matchManagers": ["renovate-config"],
+      "matchPackageNames": ["bun", "oven-sh/bun"],
+      "matchDepTypes": ["tool-constraint"],
+      "enabled": false
+    },
+    {
       "description": "Keep the primary Bun runtime and type definitions in one tested update",
       "groupName": "Bun toolchain",
       "matchPackageNames": ["bun", "oven-sh/bun", "@types/bun"]

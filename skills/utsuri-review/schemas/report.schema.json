@@ -36,6 +36,17 @@
       "maxLength": 256
     },
     "status": { "enum": ["PASS", "CHANGED", "REGRESSION", "INCOMPLETE", "UNCOVERED", "SKIPPED"] },
+    "verificationResults": {
+      "type": "array",
+      "maxItems": 100,
+      "items": {
+        "$ref": "#/$defs/verificationResult"
+      }
+    },
+    "verificationSubjectSha": {
+      "type": ["string", "null"],
+      "pattern": "^(?:[a-f0-9]{40}|[a-f0-9]{64})$"
+    },
     "summary": {
       "type": "object",
       "additionalProperties": false,
@@ -88,6 +99,101 @@
     }
   },
   "$defs": {
+    "verificationResult": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "kind",
+        "environment",
+        "command",
+        "subjectSha",
+        "exitCode",
+        "passedCount",
+        "warnings",
+        "changeRefs",
+        "completedAt",
+        "provenance",
+        "shaMatch"
+      ],
+      "properties": {
+        "id": {
+          "type": "string",
+          "pattern": "^verification[-:][A-Za-z0-9._:-]+$",
+          "maxLength": 128
+        },
+        "kind": {
+          "enum": ["unit-tests", "typecheck", "lint", "build", "app-e2e", "external-service"]
+        },
+        "environment": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 500
+        },
+        "command": {
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 100,
+          "items": {
+            "type": "string",
+            "maxLength": 2048
+          }
+        },
+        "subjectSha": {
+          "type": ["string", "null"],
+          "pattern": "^(?:[a-f0-9]{40}|[a-f0-9]{64})$"
+        },
+        "exitCode": {
+          "type": ["integer", "null"],
+          "minimum": 0,
+          "maximum": 255
+        },
+        "passedCount": {
+          "type": ["integer", "null"],
+          "minimum": 0
+        },
+        "warnings": {
+          "type": "array",
+          "maxItems": 100,
+          "items": {
+            "type": "string",
+            "maxLength": 2000
+          }
+        },
+        "changeRefs": {
+          "type": "array",
+          "maxItems": 1000,
+          "uniqueItems": true,
+          "items": {
+            "type": "string",
+            "pattern": "^change[-:]"
+          }
+        },
+        "completedAt": {
+          "type": ["string", "null"],
+          "format": "date-time"
+        },
+        "logRef": {
+          "type": "string",
+          "pattern": "^verification/[A-Za-z0-9][A-Za-z0-9._/-]*\\.(?:txt|log|ndjson)$",
+          "maxLength": 500
+        },
+        "logSha256": {
+          "type": "string",
+          "pattern": "^[a-f0-9]{64}$"
+        },
+        "provenance": {
+          "enum": ["reported", "log-attached"]
+        },
+        "shaMatch": {
+          "enum": ["match", "mismatch", "unknown"]
+        }
+      },
+      "dependencies": {
+        "logRef": ["logSha256"],
+        "logSha256": ["logRef"]
+      }
+    },
     "file": {
       "type": "object",
       "additionalProperties": false,

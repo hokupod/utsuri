@@ -7,6 +7,50 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.3.6] - 2026-10-05
+
+### Added
+
+- Add continuous before/after line-range comments in Unified and Side by side views.
+- Register SHA-scoped verification results and sanitized text logs without promoting them to visual coverage.
+- Resume interactive review across reloads with a scoped, expiring tab capability cache.
+
+### Changed
+
+- Separate automatic priority reasons from findings and human review completion.
+- Add a collapsible Feedback Batch dock and persistent answer read/unread state across tabs.
+- Synchronize CLI, aggregate Plugin, Git Plugin, and exact MCP package pins.
+
+### Fixed
+
+- Keep Feedback Batch previews synchronized with consumed and answered state, including delayed POST responses and pending SSE refreshes.
+- Preserve safe feedback actions during refresh failures and recover through retry or later notifications.
+- Report invalid UTF-8 verification logs with the artifact diagnostic, explain invalid range selections, and use the defined muted-text color token.
+
+## [0.3.5] - 2026-09-17
+
+### Changed
+
+- Update bundled YAML to `2.9.1`, including upstream recursive merge alias limits
+  and quoted-string line unfolding fixes, and refresh reviewed release artifacts.
+- Update Safe-chain to `1.5.20` with verified official hashes for all four platforms.
+- Include reviewed development declaration and lint updates since the prior release.
+- Synchronize CLI, aggregate Plugin, Git Plugin, and exact MCP package pins.
+
+## [0.3.4] - 2026-09-10
+
+### Changed
+
+- Update bundled Playwright to `1.63.0` and fast-uri to `3.1.7`, including
+  upstream URI serialization and host parsing security fixes.
+- Update Svelte to `5.57.0`, the primary Bun runtime to `1.4.2`, its declarations
+  to `1.4.1`, Safe-chain to `1.5.16`, and age-eligible locked dependencies.
+- Keep required CI names stable across runtime updates and permit bounded
+  regeneration of reviewed dependency artifacts. Generate lockfiles with the
+  oldest supported Bun and apply the existing three-day age policy to new
+  dependency resolution.
+- Synchronize CLI, aggregate Plugin, Git Plugin, and exact MCP package pins.
+
 ## [0.3.3] - 2026-09-07
 
 ### Changed

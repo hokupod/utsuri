@@ -6,16 +6,16 @@
 - **Plugin name**: `utsuri`
 - **Skill name**: `utsuri-review`
 - **CLI name**: `utsuri`
-- **Document version**: 3.4
+- **Document version**: 4.0
 - **Created**: 2026-08-06
-- **Last updated**: 2026-09-07
+- **Last updated**: 2026-10-05
 - **Language**: English (canonical)
 - **Targets**: Codex / Claude Code / local CLI / CI
 - **Implementation language**: TypeScript
 - **Development environment**: Bun
 - **Report UI**: a static application built with Svelte
-- **Maintenance publication**: synchronized `v0.3.3` completed protected npm/GitHub publication, Plugin promotion, and isolated public Git installs on Codex `0.151.0` and Claude Code `2.1.251` on 2026-09-07; see `docs/release.md` and `docs/compatibility/plugin-runtime.json`.
-- **v3.4 changes**: recorded protected `v0.3.2` npm and GitHub Release publication, verified the promoted Plugin payload, and confirmed public Git Marketplace install, MCP discovery, disable, and removal on Codex and Claude Code
+- **Maintenance publication**: synchronized `v0.3.6` completed protected npm/GitHub publication, Plugin promotion, and isolated public Git installs on Codex `0.151.0` and Claude Code `2.1.251` on 2026-10-05; see `docs/release.md` and `docs/compatibility/plugin-runtime.json`.
+- **v4.0 changes**: record protected `v0.3.6` publication with candidate-matching assets and provenance, promoted aggregate Plugin, and isolated public Git installation verification on both hosts.
 
 ---
 
@@ -929,7 +929,7 @@ Development source lives under `packages/`. At release time, bundle it as one No
 - Keep internal `@utsu-ri/*` workspace packages private implementation boundaries. They must not appear as registry runtime dependencies in the published CLI manifest; JavaScript runtime dependencies are bundled into the CLI.
 - Generate deterministic SPDX 2.3 and third-party-license inventories from the installed production dependency graph, exact lockfile SHA-512 integrity values, and installed-package verification codes. License-inventory schema 1.2 exposes `productionDependencySha256`; unrelated development-only manifest and lock entries do not change the published inventory. Copy identical documents into CLI and Skill artifacts. Derive bundled external package versions and the esbuild rebuild version from the canonical workspace manifests rather than repeating release numbers in verifier source.
 - Keep the public Node package engine, development major, and supported bundle majors canonical in `toolchain-policy.json`. Root, source CLI, staged CLI, installed CLI, and read-only Plugin CI must match that policy; workflow checks may mirror the policy value but must not introduce an independent patch pin. Keep Renovate's primary Bun update grouped across package-manager, CI, type-definition, and toolchain-policy pins. Runtime and declaration patch versions may differ within the supported major when typecheck and runtime tests pass. Required CI names identify stable runtime roles rather than patch versions. Keep exact versions and trusted digests canonical in policy/manifests, not duplicated as literals in tests.
-- Bind the installed production graph and every actual third-party esbuild input to an explicitly regenerated, reviewed dependency baseline. The baseline hashes the production graph rather than the entire lockfile: a development-only Renovate update passes only when the full gate proves that released bytes and metadata are unchanged. `deps:refresh` is the single installation-free path for schema declarations, dependency baseline, bundle, SPDX and license inventories, build manifests, shared fixture assets, and fixture validation. Hosted Renovate post-upgrade commands depend on host permissions. With maintenance-write authorization, a maintainer or agent may perform bounded generation in an isolated checkout, review every generated diff, and submit the repaired exact head to all required CI; `CONTRIBUTING.md` defines the boundary. Never accept regenerated hashes as independent approval of dependency changes. Renovate uses the oldest supported Bun lockfile writer, and project installation configuration applies the existing three-day age policy to newly resolved direct and transitive dependencies.
+- Bind the installed production graph and every actual third-party esbuild input to an explicitly regenerated, reviewed dependency baseline. The baseline hashes the production graph rather than the entire lockfile: a development-only Renovate update passes only when the full gate proves that released bytes and metadata are unchanged. `deps:refresh` is the single installation-free path for schema declarations, dependency baseline, bundle, SPDX and license inventories, build manifests, shared fixture assets, and fixture validation. Hosted Renovate post-upgrade commands depend on host permissions. With maintenance-write authorization, a maintainer or agent may perform bounded generation in an isolated checkout, review every generated diff, and submit the repaired exact head to all required CI; `CONTRIBUTING.md` defines the boundary. Never accept regenerated hashes as independent approval of dependency changes. Renovate uses the oldest supported Bun lockfile writer, whose tool constraint changes only with the Nix compatibility policy, and project installation configuration applies the existing three-day age policy to newly resolved direct and transitive dependencies.
 - Build-manifest 1.1 records dependency byte hashes alongside the single ESM bundle, source inputs, schemas, and report UI assets. The full `check` owns one release-input build so a clean checkout is self-contained; required workflows must not build immediately before it. Reject production-baseline drift, generated release drift, external runtime imports, symlinks, placeholders, former identifiers, source-only absolute paths, and hash drift.
 - Assemble the npm package from a newly created private staging directory. Validate the exact recursive tarball inventory, executable bits, package manifest, and absence of install lifecycle scripts before publication.
 - Install and execute the exact generated tarball in an isolated directory under supported Node versions. Do not substitute the workspace package or an ambient CLI.
@@ -970,7 +970,7 @@ Development source lives under `packages/`. At release time, bundle it as one No
 ```json
 {
   "name": "utsuri",
-  "version": "0.3.3",
+  "version": "0.3.6",
   "description": "Evidence-based visual change review for Codex and Claude Code",
   "skills": "./skills/"
 }
@@ -982,7 +982,7 @@ Development source lives under `packages/`. At release time, bundle it as one No
 {
   "name": "utsuri",
   "displayName": "Utsuri",
-  "version": "0.3.3",
+  "version": "0.3.6",
   "description": "Evidence-based visual change review for Codex and Claude Code",
   "author": {
     "name": "hokupod",
@@ -1369,6 +1369,7 @@ With `--interactive`:
 
 - Generate a high-entropy capability token at every start.
 - Pass the token to the browser in the URL fragment and remove it from the address bar after JavaScript reads it.
+- Cache an authenticated capability in sessionStorage for at most eight hours, keyed by exact origin (including port), viewer path, and report ID. Reload preserves the original expiry; expired/malformed caches and HTTP 401/403 clear the tab copy and require reopening the current interactive link. This is a client cache age, not a server TTL: the server capability remains valid until server close/restart, and every startup rotates it. Same-origin JavaScript can read the cache; duplicated tabs may inherit a copy, with independent expiry/clearing. Do not put capabilities in localStorage, review exports, diagnostics, or logs.
 - Enable only the fixed-report same-origin loopback API.
 - Fix report ID, Origin Session binding, and review-state directory at server startup.
 - Do not accept arbitrary session IDs, commands, or paths from browser APIs.
@@ -3644,7 +3645,7 @@ Phases define implementation order, not a reduction of final scope.
 - English living canonical design;
 - synchronized English, Japanese, and Simplified Chinese READMEs;
 - locked Nix development shell with Node 24 and Bun;
-- Safe-chain 1.5.14 resolved from the standard user installation by the repository wrapper, without an absolute-path setting, and verified against a pinned official platform SHA-256 before its first execution;
+- Safe-chain 1.5.20 resolved from the standard user installation by the repository wrapper, without an absolute-path setting, and verified against a pinned official platform SHA-256 before its first execution;
 - monorepo scaffold;
 - JSON Schemas;
 - core data model;
@@ -3788,7 +3789,7 @@ Before persisted state, browser storage, or a review bundle is validated, Phase 
 - A repository prompt-injection fixture cannot cross the current conversation’s permission boundary.
 - The English design, release guide, and three README languages pass focused documentation checks and normal pull-request review.
 - Locked local Bun 1.3.13 and CI Bun 1.3.14 both pass the frozen-install, check, build, and fixture gates without lockfile drift.
-- Safe-chain 1.5.14 is verified against a pinned official platform SHA-256 before its first execution, and its npx/bunx shims are verified before local or CI package operations.
+- Safe-chain 1.5.20 is verified against a pinned official platform SHA-256 before its first execution, and its npx/bunx shims are verified before local or CI package operations.
 - Immutable reports are published with the verified four-platform no-replace helper set; missing, mismatched, or unsupported helpers fail closed.
 - The published `@utsu-ri/cli` tarball has an exact recursive inventory, no install lifecycle scripts, no runtime dependency on private workspace packages, version-tagged documentation links, and a successful isolated exact-tarball smoke test.
 - A distribution candidate binds all four architecture-matched native-helper packages and the aggregate Plugin by exact file hash and executable mode; candidate generation performs no registry write.
@@ -3852,7 +3853,7 @@ The v1 source implementation maps every item below to an automated gate or an ex
 20. Evidence links in Agent answers return to the original diff or view.
 21. Stale and orphaned states remain unambiguous after report updates.
 22. The English canonical design, release guide, and all three READMEs remain synchronized and reviewed in the pull request.
-23. Node 24, both required Bun versions, Safe-chain 1.5.14, both hosts, and the release-candidate layout pass their full gates.
+23. Node 24, both required Bun versions, Safe-chain 1.5.20, both hosts, and the release-candidate layout pass their full gates.
 
 Phase 6 adds executable coverage for all §46.25 fixtures, the three-item return-to-session acceptance scenario on both hosts, explicit unsupported-bridge fallback, localhost API boundaries, and independent review-state semantics. The synchronized `v0.3.0`, `v0.3.1`, and `v0.3.2` releases satisfied the public gates on 2026-08-21, 2026-08-24, and 2026-08-31 respectively: normal pull-request review, successful remote CI and multi-platform candidate evidence, protected GitHub configuration, OIDC registry publication, verified GitHub Release assets, promoted-Plugin verification, and isolated public Git installs on both hosts. Each later release requires the same separate authorizations and evidence.
 
@@ -3987,14 +3988,14 @@ Researched: 2026-08-06
     https://developer.apple.com/design/human-interface-guidelines/typography
 38. NixOS, Nix Flakes  
     https://nixos.wiki/wiki/Flakes
-39. Aikido Security, Safe-chain 1.5.14 release<br>
-    https://github.com/AikidoSec/safe-chain/releases/tag/1.5.14
+39. Aikido Security, Safe-chain 1.5.20 release<br>
+    https://github.com/AikidoSec/safe-chain/releases/tag/1.5.20
 
 ---
 
 ## 46. Detailed interactive review and Origin Session feedback specification
 
-**v1 implementation status**: publicly available as synchronized CLI and Plugin version `v0.3.3` through `return-to-session` and `export-only`. The optional direct bridge is deliberately disabled because no configured host meets the authenticated same-session API and response-correlation requirements. Publication evidence covers the protected npm and GitHub Release, promoted Plugin payload, and live public Git Plugin verification; it does not authorize any later release operation or a new Agent/session fallback.
+**v1 implementation status**: publicly available as synchronized CLI and Plugin version `v0.3.6` through `return-to-session` and `export-only`. The optional direct bridge is deliberately disabled because no configured host meets the authenticated same-session API and response-correlation requirements. Publication evidence covers the protected npm and GitHub Release, promoted Plugin payload, and live public Git Plugin verification; it does not authorize any later release operation or a new Agent/session fallback.
 
 ### 46.1 Purpose
 
@@ -4803,7 +4804,7 @@ The implementation keeps the preview separate from storage, writes inbox/batch/c
 
 A feature outside this definition is accepted only when it makes review decisions faster, strengthens the relationship between a question and its evidence, increases evidence reliability, or improves security.
 
-The synchronized public CLI and Git Plugin version `0.3.3` satisfies this definition through local immutable reports, mutable review generations, and a same-project/same-session Marketplace MCP broker, with `return-to-session` as the host-neutral feedback path. The `v0.3.3` tag publication, Plugin promotion, and public Git smoke were separately authorized and verified; every later version requires new authorization. Direct same-session submission and a shared remote review store remain optional future capabilities.
+The synchronized public CLI and Git Plugin version `0.3.6` satisfies this definition through local immutable reports, mutable review generations, and a same-project/same-session Marketplace MCP broker, with `return-to-session` as the host-neutral feedback path. The `v0.3.6` tag publication, Plugin promotion, and public Git smoke were separately authorized and verified; every later version requires new authorization. Direct same-session submission and a shared remote review store remain optional future capabilities.
 
 ---
 
@@ -4811,6 +4812,12 @@ The synchronized public CLI and Git Plugin version `0.3.3` satisfies this defini
 
 | Entry ID                                   | Version | Date       | Change                                                                                                                                                                                                                                                                                                                                                                                                                                                    |
 | ------------------------------------------ | ------: | ---------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| design-v4.0-v0.3.6-public-release          |     4.0 | 2026-10-05 | Record protected publication, candidate-matching npm and GitHub assets, source-bound provenance, promoted aggregate Plugin, and isolated public Git installs on both hosts.                                                                                                                                                                                                                                                                               |
+| design-v3.9-v0.3.6-review-workflow         |     3.9 | 2026-10-05 | Prepare synchronized feedback, range-comment and verification-evidence release; retain prior verified availability until publication and live Plugin gates complete.                                                                                                                                                                                                                                                                                      |
+| design-v3.8-v0.3.5-public-release          |     3.8 | 2026-09-17 | Record protected publication, candidate-matching assets and provenance, promoted aggregate Plugin, and isolated public Git installation verification.                                                                                                                                                                                                                                                                                                     |
+| design-v3.7-v0.3.5-maintenance             |     3.7 | 2026-09-17 | Prepare synchronized YAML and Safe-chain maintenance release; retain prior verified availability until all publication and live Plugin gates complete.                                                                                                                                                                                                                                                                                                    |
+| design-v3.6-v0.3.4-public-release          |     3.6 | 2026-09-11 | Record protected publication, candidate-matching npm and GitHub assets, Plugin promotion, and isolated public Git installs on both hosts; extend bounded npm propagation waiting to ten minutes without weakening integrity or immutable-tag checks.                                                                                                                                                                                                      |
+| design-v3.5-v0.3.4-maintenance             |     3.5 | 2026-09-10 | Prepare synchronized `v0.3.4` with reviewed dependency and toolchain updates, stable CI roles, age-filtered compatible lock generation, and bounded maintenance repair; retain the prior verified public availability until publication and live Plugin verification complete.                                                                                                                                                                            |
 | design-v3.4-v0.3.2-public-release          |     3.4 | 2026-08-31 | Recorded protected publication of all five `v0.3.2` npm packages and the verified GitHub Release, matched the promoted Plugin payload to the approved candidate, and confirmed public Git Marketplace install, MCP discovery, disable, and removal on Codex and Claude Code.                                                                                                                                                                              |
 | design-v3.3-v0.3.1-public-release          |     3.3 | 2026-08-24 | Recorded protected publication of all five `v0.3.1` npm packages and the verified GitHub Release, matched the promoted Plugin payload to the approved candidate, and confirmed public Git Marketplace install, MCP discovery, disable, and removal on the recorded minimum Codex and Claude Code releases.                                                                                                                                                |
 | design-v3.2-v0.3.1-maintenance-release     |     3.2 | 2026-08-24 | Prepared synchronized `v0.3.1` source with production-scoped dependency and license identity, refreshed bundled validation, accessibility, comparison, capture, archive, and YAML runtimes, complete Bun/Renovate toolchain policy, and Nix-pinned Git hooks with staged and outgoing secret checks.                                                                                                                                                      |
@@ -4832,3 +4839,19 @@ The synchronized public CLI and Git Plugin version `0.3.3` satisfies this defini
 | design-v1.6-publication-and-safe-chain     |     1.6 | 2026-08-07 | Fixed publisher, npm maintainer, trusted-publishing, and SPDX metadata; replaced the local absolute-path Safe-chain requirement with exact-version discovery at the standard user installation; pinned official platform SHA-256 digests for verification before first execution.                                                                                                                                                                         |
 | design-v1.5-english-canonical              |     1.5 | 2026-08-06 | Established English as the living canonical design; retained the verified Japanese v1.4 source for review; fixed npm identifiers at `@utsu-ri/*`; selected `review-answer.schema.json` and `run/review/`; added the locked Nix, Bun, Safe-chain, Apple HIG, synchronized README, and documentation-review gates.                                                                                                                                          |
 | design-v1.4-product-name                   |     1.4 | 2026-08-06 | Established Utsuri as the product name and unified Plugin, Skill, CLI, configuration, artifact, and display identifiers.                                                                                                                                                                                                                                                                                                                                  |
+
+## Reviewer controls and registered verification results
+
+The viewer labels its queue as automatic review priority (priority review, review suggested, routine review), exposes the risk/gap/unknown-intent reasons and independently shows human judgment. The hide-reviewed filter does not mutate risk, findings, gaps or viewed state.
+
+Line-number buttons select the start of a continuous range; Shift-click selects the end in the same hunk and before/after side. A changed side/file starts a fresh selection. Selection is bounded to 1,001 lines and must reconstruct exactly from the immutable diff. Range anchors carry path, side, startLine, endLine and a content-derived fingerprint. Dynamic range refs use `HUNK:range:SIDE:START:END`; Node, browser, interactive mutation and bundle import reconstruct them from current report data. A changed range is stale on reanchor; an unavailable range is orphaned. Single-line and hunk comments remain available. Context Packs preserve the exact range in both the anchor and code reference.
+
+Saved Feedback Batch previews follow authoritative batch/item state returned with review-state and mutation responses. Consumed/answered batches do not offer another pending handoff. Items navigate to their comment and answer. Collapse/expand changes only the viewer layout and always shows requested-item and unread-answer counts. Unpersisted draft input is not overwritten by state refresh; responses older than the current revision are ignored.
+
+`unreadAnswerItemIds` is a subset of answered item IDs, including the empty subset; legacy all-unread 0.3.5 data remains valid. `answer-read.changed` mutates only Inbox read state through the existing revision-checked generation transaction. New answers are unread; identical retries do not create revisions or reset read state. The viewer serializes read changes and retries revision conflicts against refreshed state. Automatic read requires at least 48 pixels (or the full height of a shorter answer) of answer text visible in an active document for 700 ms. A manual unread pauses automatic read until the answer leaves the viewport and returns, or is reopened after navigation. Read state is independent of human judgment, viewed markers and resolution.
+
+`annotations.verificationResults` is optional and contains at most 100 records. Every record includes `id`, `kind` (`unit-tests`, `typecheck`, `lint`, `build`, `app-e2e`, `external-service`), `environment`, `command` as argv, `subjectSha` (full SHA or null), `exitCode` (null means not run), `passedCount` (or null), `warnings`, `changeRefs` (empty means whole report) and `completedAt`. A completed command requires a completion timestamp. Record IDs are unique and change references must exist.
+
+Optional `logRef` and `logSha256` occur together. Only normalized `verification/` text files with `.txt`, `.log` or `.ndjson` suffixes are accepted. The operator registers sanitized UTF-8 logs inside the run; Utsuri neither executes the recorded command nor installs dependencies. Logs use contained regular-file reads, the existing 16 MiB per-artifact bound, independent SHA-256 comparison, immutable publication, exact report inventory and strict digest revalidation. Active HTML/SVG, traversal, symlink and special files are rejected. Log bytes are copied unchanged, so operators must remove secrets before registration.
+
+The published `report.verificationResults` adds derived `provenance` (`reported` or `log-attached`) and `shaMatch` (`match`, `mismatch`, `unknown`). SHA matching compares the record to the collected input's full head SHA; patch/worktree subjects without a fixed SHA remain unknown. A log attachment proves the registered bytes and matching subject identity; it does not independently attest execution. Summary and change panels display the same applicable records, environment, command, exit code, counts, warning, timestamp, SHA, log link and hash. Mocked/SQLite success is not translated into real D1/API/E2E success. Visual coverage explicitly counts visual usages/targets, and neither registered tests nor reported E2E changes comparison status or fills unmapped visual coverage.

@@ -119,6 +119,11 @@ In a human conversation, the Agent authors the evidence-backed interpretation in
 
 The report preserves source identity, evidence hashes, and review gaps so another reviewer can audit what was and was not checked.
 
+- **Automatic review priority** explains risk, gaps and unknown intent separately from findings and human judgment. Reviewed changes can be hidden without removing their evidence.
+- **Range comments** use line-number selection followed by Shift-click on the same file and before/after side, in unified or side-by-side diffs. Ranges survive reload, review export/import and Feedback Batches.
+- **Feedback Batch** can be collapsed without changing review data. Saved previews follow ready/consumed/answered state, link to the corresponding answer, and stop offering a handoff after consumption. New answers start unread; a visible answer becomes read after 700 ms. Manual unread lasts until the answer leaves the viewport and is viewed again, or is reopened after navigation.
+- **Registered verification results** distinguish unit tests, typecheck, lint, build, application E2E and external services. Annotations can include SHA, argv, exit code, passed count, warnings, environment and hashed text logs. Logs under `verification/` become immutable report assets; author reports and log attachments remain distinguishable. Local or mock success never promotes visual coverage to `PASS`.
+
 <a id="security-privacy"></a><!-- section:security-privacy -->
 
 ## Security and privacy
@@ -129,6 +134,7 @@ The report preserves source identity, evidence hashes, and review gaps so anothe
 - Generated `report/` files are immutable. Mutable review and feedback records live under the run's `review/` directory.
 - The Marketplace MCP exposes no arbitrary path, working directory, command, provider, model, destination, or raw session input.
 - MCP tools can use only schema-valid reports registered for the canonical current project and the same Origin Session. Cross-project, cross-host, cross-session, stale, or swapped registrations fail closed.
+- Interactive viewers resume reloads using an authenticated, tab-scoped sessionStorage capability cache (up to eight hours), scoped to origin/port, viewer path and report ID. Same-origin JavaScript can read it and duplicated tabs may copy it. Expired or rejected caches are cleared; reopen the current server link. This client cache age does not set a server TTL: restart rotates the capability. Capabilities never enter localStorage, review exports or logs.
 - Raw host session values are used only for equality checking and opaque hashing. They are not persisted, logged, diagnosed, or returned by tools.
 - The Marketplace broker accepts only `CODEX_THREAD_ID` or the `CLAUDE_CODE_SESSION_ID` + `CLAUDE_PROJECT_DIR` host contract. Fixed-run `finalize`, `feedback`, and `review-mcp` also retain `UTSURI_CODEX_SESSION_ID` and `CLAUDE_SESSION_ID` compatibility; conflicting legacy/new values are rejected. Claude Plugin finalization always binds to the canonical host project root, including when launched from a child directory.
 - Release artifacts include deterministic SPDX and license inventories for the production dependency graph. Its identity uses exact lockfile integrity values and installed package bytes; unrelated development-only lock changes do not alter the published inventory.
@@ -196,4 +202,4 @@ claude plugin uninstall utsuri@utsuri
 
 Utsuri is licensed under `AGPL-3.0-or-later`. The publisher is `hokupod`. CLI publication, Git Plugin promotion, Git push, tags, and releases are separate operator-authorized actions; source changes alone perform none of them.
 
-Dependency maintenance supports bounded regeneration of reviewed release artifacts and stable CI role checks. Lockfile generation preserves supported-runtime compatibility and the three-day dependency age policy. Development-only updates with unchanged release artifacts do not require a new release. See [Contributing](https://github.com/hokupod/utsuri/blob/main/CONTRIBUTING.md#bounded-renovate-repair).
+Dependency maintenance supports bounded regeneration of reviewed release artifacts and stable CI role checks. Lockfile generation preserves supported-runtime compatibility and the three-day dependency age policy. Toolchain updates verify all supported-platform binary hashes together. Development-only updates with unchanged release artifacts do not require a new release. See [Contributing](https://github.com/hokupod/utsuri/blob/main/CONTRIBUTING.md#bounded-renovate-repair).

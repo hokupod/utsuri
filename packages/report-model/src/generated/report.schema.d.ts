@@ -16,6 +16,11 @@ export interface UtsuriReport {
   language: string;
   reportId: string;
   status: "PASS" | "CHANGED" | "REGRESSION" | "INCOMPLETE" | "UNCOVERED" | "SKIPPED";
+  /**
+   * @maxItems 100
+   */
+  verificationResults?: VerificationResult[];
+  verificationSubjectSha?: string | null;
   summary: {
     overview?: string;
     statement: string;
@@ -44,6 +49,32 @@ export interface UtsuriReport {
     incompleteReasons: string[];
     blockedRequestCount: number;
   };
+}
+export interface VerificationResult {
+  id: string;
+  kind: "unit-tests" | "typecheck" | "lint" | "build" | "app-e2e" | "external-service";
+  environment: string;
+  /**
+   * @minItems 1
+   * @maxItems 100
+   */
+  command: [string, ...string[]];
+  subjectSha: string | null;
+  exitCode: number | null;
+  passedCount: number | null;
+  /**
+   * @maxItems 100
+   */
+  warnings: string[];
+  /**
+   * @maxItems 1000
+   */
+  changeRefs: string[];
+  completedAt: string | null;
+  logRef?: string;
+  logSha256?: string;
+  provenance: "reported" | "log-attached";
+  shaMatch: "match" | "mismatch" | "unknown";
 }
 export interface File {
   id: string;

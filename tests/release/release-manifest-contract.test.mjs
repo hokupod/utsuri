@@ -564,6 +564,12 @@ describe("toolchain and CI contract", () => {
     assert.ok(config.extends.includes(":preserveSemverRanges"));
     assert.equal(config.rangeStrategy, undefined);
     assert.equal(config.constraints.bun, policy.bun.flake);
+    const writerRule = config.packageRules.find(
+      (rule) =>
+        rule.matchPackageNames?.includes("bun") && rule.matchDepTypes?.includes("tool-constraint")
+    );
+    assert.equal(writerRule?.enabled, false);
+    assert.deepEqual(writerRule.matchManagers, ["renovate-config"]);
     assert.equal(manifest.packageManager, `bun@${policy.bun.ciPrimary}`);
     const bunTypes = manifest.devDependencies["@types/bun"];
     assert.match(bunTypes, /^\d+\.\d+\.\d+$/u);

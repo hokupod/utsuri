@@ -45,7 +45,7 @@ async function serveReport(
           };
     })
   }));
-  await page.route("http://utsuri.test/**", async (route: Route) => {
+  await page.route("http://127.0.0.1:4174/**", async (route: Route) => {
     const requestPath = new URL(route.request().url()).pathname;
     const relative = requestPath === "/" ? "index.html" : requestPath.slice(1);
     if (relative.includes("..")) return await route.abort("blockedbyclient");
@@ -71,7 +71,7 @@ async function serveReport(
       await route.fulfill({ status: 404, body: "Not found" });
     }
   });
-  await page.goto("http://utsuri.test/index.html");
+  await page.goto("http://127.0.0.1:4174/index.html");
   await expect(page.locator("#summary-heading")).toBeVisible();
 }
 
@@ -128,7 +128,7 @@ test("prioritizes medium risk ahead of lower-risk uncertainty", async ({ page })
 
   const reviewRoute = page.locator(".review-route");
   await expect(reviewRoute.getByRole("heading", { level: 3 })).toHaveText(mediumKnown.title);
-  await expect(reviewRoute.locator(".route-status")).toHaveText("Needs confirmation");
+  await expect(reviewRoute.locator(".route-status")).toHaveText("Review suggested");
   await expect(page.locator(".review-map li").first().locator("strong")).toHaveText(
     mediumKnown.title
   );
@@ -160,7 +160,7 @@ test("renders every hunk from structured data without executing diff text", asyn
   await expect(page.locator("img[src='x']")).toHaveCount(0);
 
   for (const hunk of report.hunks) {
-    await page.goto(`http://utsuri.test/index.html#hunk=${encodeURIComponent(hunk.id)}`);
+    await page.goto(`http://127.0.0.1:4174/index.html#hunk=${encodeURIComponent(hunk.id)}`);
     await expect(
       page.locator(`[id="hunk-${hunk.id.replace(/[^a-zA-Z0-9_-]/gu, "-")}"]`)
     ).toBeFocused();
@@ -233,12 +233,12 @@ test("preserves hierarchy across language, theme, viewport, and 200% zoom", asyn
       await expect(page.getByRole("heading", { name: "レビュー要旨" })).toBeVisible();
       expect(await page.evaluate(() => document.documentElement.lang)).toBe("ja");
       await expect(
-        page.getByLabel("レビュー経路").getByText("確認が必要", { exact: true })
+        page.getByLabel("レビュー経路").getByText("要確認", { exact: true })
       ).toBeVisible();
       await expect(
         page
           .getByText(
-            "0件を検証済み、既知の利用件数は不明。ほかの利用箇所が存在する可能性があります",
+            "0件の画面利用箇所を検証済み、既知の利用件数は不明。ほかの利用箇所が存在する可能性があります",
             {
               exact: true
             }
@@ -282,4 +282,152 @@ test("preserves hierarchy across language, theme, viewport, and 200% zoom", asyn
     body: zoomScreenshot
   });
   await context.close();
+});
+
+test("shows automatic priority reasons separately from findings and human completion", async ({
+  page
+}) => {
+  const priorityReport = structuredClone(report);
+  const high = priorityReport.changes[0]!;
+  high.risk.level = "high";
+  high.findingRefs = [];
+  high.verification.gaps = [];
+  high.intent.source = "declared";
+  const low = priorityReport.changes[1]!;
+  low.risk.level = "low";
+  low.verification.gaps = ["App E2E not verified"];
+  low.intent.source = "declared";
+  await serveReport(page, "en", priorityReport);
+  await expect(page.locator('.queue-section[data-queue="action-required"]')).toContainText(
+    "Priority review"
+  );
+  await expect(page.locator('.queue-section[data-queue="action-required"]')).toContainText(
+    "high risk"
+  );
+  await expect(page.locator('.queue-section[data-queue="needs-confirmation"]')).toContainText(
+    "Verification gaps"
+  );
+  await page.locator('.queue-section[data-queue="action-required"] a').first().click();
+  await page.getByRole("combobox", { name: "Human judgment" }).selectOption("reviewed");
+  await expect(page.locator('.queue-section[data-queue="action-required"]')).toContainText(
+    "Human judgment: Reviewed"
+  );
+  await expect(page.locator(".change-badges")).toContainText(
+    "Automatic review priority: Priority review"
+  );
+  await expect(page.locator(".finding-list")).toContainText("No linked findings");
+  await page.getByRole("checkbox", { name: "Hide reviewed changes" }).check();
+  await expect(page.locator('.queue-section[data-queue="action-required"] a')).toHaveCount(0);
+  await page.getByRole("checkbox", { name: "Hide reviewed changes" }).uncheck();
+  await expect(page.locator('.queue-section[data-queue="action-required"] a')).toHaveCount(1);
+});
+
+for (const language of ["en", "ja"]) {
+  test(`explains an oversized range selection in ${language} and allows recovery`, async ({
+    page
+  }) => {
+    const largeReport = structuredClone(report);
+    const hunk = largeReport.hunks[0]!;
+    hunk.oldLines = 0;
+    hunk.newLines = 1002;
+    hunk.lines = Array.from({ length: 1002 }, (_, index) => ({
+      kind: "addition" as const,
+      content: `const line${index + 1} = true;`,
+      oldLine: null,
+      newLine: index + 1
+    }));
+    await serveReport(page, language, largeReport);
+    await page.getByRole("link", { name: /navigation and related files/u }).click();
+    await page
+      .getByRole("button", { name: "Select after line 1 in src/navigation.ts", exact: true })
+      .click();
+    await page
+      .getByRole("button", { name: "Select after line 1002 in src/navigation.ts", exact: true })
+      .click({ modifiers: ["Shift"] });
+    const commentButton = page.getByRole("button", {
+      name: language === "ja" ? "選択範囲にコメント" : "Comment on selected range"
+    });
+    await commentButton.click();
+    await expect(page.locator(".review-message")).toHaveText(
+      language === "ja"
+        ? "選択範囲にコメントできません。連続した1,001行以内の範囲を選択してください。"
+        : "Cannot comment on this range. Select up to 1,001 consecutive lines.",
+      { timeout: 3000 }
+    );
+    await expect(page.locator(".comment-composer")).toHaveCount(0);
+    await mkdir(visualEvidence, { recursive: true });
+    await page
+      .locator(".review-message")
+      .screenshot({ path: path.join(visualEvidence, `invalid-range-${language}.png`) });
+    await page
+      .getByRole("button", { name: "Select after line 1 in src/navigation.ts", exact: true })
+      .click();
+    await page
+      .getByRole("button", { name: "Select after line 2 in src/navigation.ts", exact: true })
+      .click({ modifiers: ["Shift"] });
+    await commentButton.click();
+    await expect(page.locator(".comment-composer")).toContainText("after · 1–2");
+    await expect(page.locator(".review-message")).toHaveCount(0);
+  });
+}
+
+test("separates registered local results from visual coverage in brief and change panels", async ({
+  page
+}) => {
+  const verifiedReport = structuredClone(report);
+  verifiedReport.verificationSubjectSha = "a".repeat(40);
+  verifiedReport.verificationResults = [
+    {
+      id: "verification:unit",
+      kind: "unit-tests",
+      environment: "In-memory SQLite and mocked API",
+      command: ["bun", "test"],
+      subjectSha: "a".repeat(40),
+      exitCode: 0,
+      passedCount: 205,
+      warnings: ["Real D1 and external API not tested"],
+      completedAt: "2026-10-02T00:00:00Z",
+      changeRefs: [],
+      logRef: "verification/tests.log",
+      logSha256: "b".repeat(64),
+      provenance: "log-attached",
+      shaMatch: "match"
+    },
+    {
+      id: "verification:e2e",
+      kind: "app-e2e",
+      environment: "Real application",
+      command: ["playwright", "test"],
+      subjectSha: null,
+      exitCode: null,
+      passedCount: null,
+      warnings: [],
+      completedAt: null,
+      changeRefs: [],
+      provenance: "reported",
+      shaMatch: "unknown"
+    }
+  ];
+  await serveReport(page, "en", verifiedReport);
+  const brief = page.locator(".decision-summary .registered-checks");
+  await expect(brief).toContainText("205");
+  await expect(brief).toContainText("Log attached · SHA matches report");
+  await expect(brief).toContainText("app-e2e · Not run");
+  await expect(brief).toContainText("Real D1 and external API not tested");
+  await expect(page.locator(".report-state")).toContainText("UNCOVERED");
+  await expect(page.locator(".report-state")).toContainText("0 visual usages verified");
+  await mkdir(path.resolve(".artifacts/issue-ui"), { recursive: true });
+  await brief.screenshot({ path: ".artifacts/issue-ui/verification-results.png" });
+  await page.getByRole("button", { name: "Start with highest attention" }).click();
+  await expect(page.locator(".focused-change .registered-checks")).toContainText(
+    "Log attached · SHA matches report"
+  );
+  await expect(page.locator(".focused-change .registered-checks")).toContainText(
+    "app-e2e · Not run"
+  );
+  await expect(
+    page
+      .locator(".focused-change .registered-checks")
+      .getByRole("link", { name: "Open verification log" })
+  ).toHaveAttribute("href", "./verification/tests.log");
 });

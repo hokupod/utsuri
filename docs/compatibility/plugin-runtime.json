@@ -5,16 +5,16 @@
     "claude": "2.1.220"
   },
   "distribution": {
-    "pluginVersion": "0.3.3",
-    "cliVersion": "0.3.3",
-    "mcpPackagePin": "@utsu-ri/cli@0.3.3"
+    "pluginVersion": "0.3.6",
+    "cliVersion": "0.3.6",
+    "mcpPackagePin": "@utsu-ri/cli@0.3.6"
   },
   "publicGitVerification": {
-    "verifiedAt": "2026-09-07",
+    "verifiedAt": "2026-10-05",
     "source": "hokupod/utsuri",
-    "sourceCommit": "3680a056060b192d05448b3d785d7f5555611391",
-    "pluginVersion": "0.3.3",
-    "cliPackage": "@utsu-ri/cli@0.3.3",
+    "sourceCommit": "adf875f0fbb398202a93500b3ec47e0aa78e869a",
+    "pluginVersion": "0.3.6",
+    "cliPackage": "@utsu-ri/cli@0.3.6",
     "hosts": {
       "codex": {
         "version": "0.151.0",
