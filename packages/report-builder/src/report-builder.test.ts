@@ -25,6 +25,7 @@ import {
   validateReportDirectory
 } from "./index";
 import { publishDirectoryNoReplace } from "./native-publish";
+import { ExitCode } from "../../core/src";
 
 const temporaryDirectories: string[] = [];
 
@@ -609,3 +610,43 @@ test("rejects unsafe verification references and changed log bytes before public
   await symlink(path.join(run, "input.json"), path.join(run, result.logRef));
   await expect(createInitialReport(run, annotated)).rejects.toThrow();
 });
+
+for (const [name, bytes] of [
+  ["invalid UTF-8", Buffer.from([0xff])],
+  ["NUL", Buffer.from("text\0log")]
+] as const) {
+  test(`rejects ${name} verification logs with the artifact diagnostic`, async () => {
+    const { run, annotations } = await createAnnotatedReportRun();
+    const report = await createInitialReport(run, annotations);
+    await mkdir(path.join(run, "verification"));
+    await writeFile(path.join(run, "verification/test.log"), bytes);
+    const annotated = {
+      ...annotations,
+      verificationResults: [
+        {
+          id: "verification:invalid-text",
+          kind: "lint" as const,
+          environment: "local",
+          command: ["eslint", "."],
+          subjectSha: null,
+          exitCode: 0,
+          passedCount: null,
+          warnings: [],
+          changeRefs: [],
+          completedAt: "2026-10-02T00:00:00Z",
+          logRef: "verification/test.log",
+          logSha256: createHash("sha256").update(bytes).digest("hex")
+        }
+      ]
+    };
+    for (const operation of [
+      () => createInitialReport(run, annotated),
+      () => buildReport(run, report, { annotations: annotated })
+    ]) {
+      await expect(operation()).rejects.toMatchObject({
+        diagnosticId: "VERIFICATION_LOG_INVALID",
+        exitCode: ExitCode.Artifact
+      });
+    }
+  });
+}

@@ -322,6 +322,55 @@ test("shows automatic priority reasons separately from findings and human comple
   await expect(page.locator('.queue-section[data-queue="action-required"] a')).toHaveCount(1);
 });
 
+for (const language of ["en", "ja"]) {
+  test(`explains an oversized range selection in ${language} and allows recovery`, async ({
+    page
+  }) => {
+    const largeReport = structuredClone(report);
+    const hunk = largeReport.hunks[0]!;
+    hunk.oldLines = 0;
+    hunk.newLines = 1002;
+    hunk.lines = Array.from({ length: 1002 }, (_, index) => ({
+      kind: "addition" as const,
+      content: `const line${index + 1} = true;`,
+      oldLine: null,
+      newLine: index + 1
+    }));
+    await serveReport(page, language, largeReport);
+    await page.getByRole("link", { name: /navigation and related files/u }).click();
+    await page
+      .getByRole("button", { name: "Select after line 1 in src/navigation.ts", exact: true })
+      .click();
+    await page
+      .getByRole("button", { name: "Select after line 1002 in src/navigation.ts", exact: true })
+      .click({ modifiers: ["Shift"] });
+    const commentButton = page.getByRole("button", {
+      name: language === "ja" ? "選択範囲にコメント" : "Comment on selected range"
+    });
+    await commentButton.click();
+    await expect(page.locator(".review-message")).toHaveText(
+      language === "ja"
+        ? "選択範囲にコメントできません。連続した1,001行以内の範囲を選択してください。"
+        : "Cannot comment on this range. Select up to 1,001 consecutive lines.",
+      { timeout: 3000 }
+    );
+    await expect(page.locator(".comment-composer")).toHaveCount(0);
+    await mkdir(visualEvidence, { recursive: true });
+    await page
+      .locator(".review-message")
+      .screenshot({ path: path.join(visualEvidence, `invalid-range-${language}.png`) });
+    await page
+      .getByRole("button", { name: "Select after line 1 in src/navigation.ts", exact: true })
+      .click();
+    await page
+      .getByRole("button", { name: "Select after line 2 in src/navigation.ts", exact: true })
+      .click({ modifiers: ["Shift"] });
+    await commentButton.click();
+    await expect(page.locator(".comment-composer")).toContainText("after · 1–2");
+    await expect(page.locator(".review-message")).toHaveCount(0);
+  });
+}
+
 test("separates registered local results from visual coverage in brief and change panels", async ({
   page
 }) => {

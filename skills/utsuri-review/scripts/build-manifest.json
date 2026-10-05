@@ -1,7 +1,7 @@
 {
   "schemaVersion": "1.1",
   "toolVersion": "0.3.5",
-  "sourceHash": "7b821d2434f16084301c4e55ae84d0baceb7db959fc08afd543a680a0416e1dc",
+  "sourceHash": "b43fbe38f6208e19ba710e4efc6fa34b68f39d06585887f1e988930b43797f27",
   "sourceHashes": {
     "packages/adapters/generic/src/index.ts": "0fb851c88f14187773d97373b9d848e831abb629bb4b1834c4393f29917c4169",
     "packages/adapters/playwright/src/index.ts": "7714950f8fbcc160493e649a13e2c96d2843530307150357c30b9155c42b6081",
@@ -51,8 +51,8 @@
     "packages/git-collector/src/index.ts": "c8686ef8faa57f1fa17a105a57f7306ff8372de171f9469ae6e22aa1b278f86d",
     "packages/git-collector/src/patch.ts": "2ad71151ca382bc5be3b9396e60aeb36394151e5ae5670687414f967fa893e96",
     "packages/interactive-server/src/index.ts": "26bf78f00bf0d8c2f2a1a6efa86611b1f7e626ef7f1708faa6266da7bb8f9f14",
-    "packages/report-builder/src/generated-ui-assets.ts": "f5494d368da0453661e5a01c760ba895e12540fe8c4b574e619d962224b43cfe",
-    "packages/report-builder/src/index.ts": "e21268bf02facd8930bdbfe2cf9dce31e162c31ac193b1b811f047895c77652a",
+    "packages/report-builder/src/generated-ui-assets.ts": "bc6e20f8961d1ba3b8ddcc34dd1dce0d0dd61947aca4805462c53afd5854d9bb",
+    "packages/report-builder/src/index.ts": "a21ad7f0db4268ff946b23f1c455ad5d55a2e2551b3e048b4cb8e5d09fba1c54",
     "packages/report-builder/src/native-publish.ts": "1476a27dfbb7172caf656b996b7aa71ca8c7ec3ddf1d85ee0028d11a3029f222",
     "packages/report-builder/src/schema-assets.ts": "ef080b08889e19f291d92f260fc4f731b1505552c5f3481734de9c6414d0c23a",
     "packages/report-model/src/index.ts": "38ba6c90d0404cacc4d738adccbfd7daf0a2c5cfef40178842c776945db226f2",
@@ -284,8 +284,8 @@
     "review-thread.schema.json": "6c5957f14b964dfaf1601ac45870b7f3fae013209dd4964aa3831dd753f06fc1"
   },
   "uiAssetHashes": {
-    "app.css": "bd56eba551e8c6ae7078733090215158b7992abe68a6a2cebb3519345485bc87",
-    "app.js": "a542786879b07ca3dd0c5f41ad16978e6ffd43a1e0628831c575ec1d263457f0"
+    "app.css": "e3a13751daed2f092852837659997d863ba24dfb7fc8e1f23dc82ec8b9762e2a",
+    "app.js": "45f3af65efeedfe618c42daffdeef64f442cd863d87465ebbca8e7340953b4ce"
   },
-  "bundleSha256": "ace7d895302b282d1b93daecc3fea4e0d8575477dbd6d2acab3ef2c9e44ef931"
+  "bundleSha256": "dda263edd70925b007bf617cbd2d014dd919ab7d80bd1390aea84ef141bf098c"
 }

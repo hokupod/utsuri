@@ -100,6 +100,7 @@
       rangeHelp:
         "Select a line number, then Shift-click another on the same side. Comment on the highlighted range.",
       rangeComment: "Comment on selected range",
+      rangeInvalid: "Cannot comment on this range. Select up to 1,001 consecutive lines.",
       unified: "Unified",
       split: "Side by side",
       context: "Show {count} hidden context lines",
@@ -234,6 +235,7 @@
       rangeHelp:
         "行番号を選び、同じ側の別の行をShiftクリックすると範囲を選択できます。選択した範囲にコメントできます。",
       rangeComment: "選択範囲にコメント",
+      rangeInvalid: "選択範囲にコメントできません。連続した1,001行以内の範囲を選択してください。",
       unified: "統合表示",
       split: "左右表示",
       context: "非表示のコンテキスト {count} 行を表示",
@@ -610,6 +612,11 @@
       Math.max(start, end),
       browserReviewDigest
     );
+    if (!anchor) {
+      reviewNotice = t.rangeInvalid;
+      return;
+    }
+    reviewNotice = "";
     await startComment(anchor);
   }
 

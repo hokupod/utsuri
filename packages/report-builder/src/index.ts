@@ -1745,8 +1745,13 @@ async function integrateVerificationResults(
     if (result.logRef) {
       assertVerificationLogReference(result.logRef);
       const bytes = await readRegularBytes(await resolveContainedPath(runDirectory, result.logRef));
-      new TextDecoder("utf-8", { fatal: true }).decode(bytes);
-      if (bytes.includes(0) || sha256(bytes) !== result.logSha256) {
+      let validUtf8 = true;
+      try {
+        new TextDecoder("utf-8", { fatal: true }).decode(bytes);
+      } catch {
+        validUtf8 = false;
+      }
+      if (!validUtf8 || bytes.includes(0) || sha256(bytes) !== result.logSha256) {
         throw new UtsuriError(
           "VERIFICATION_LOG_INVALID",
           "Verification log is not text or its SHA-256 differs",
