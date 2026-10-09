@@ -5,7 +5,7 @@
     "creators": ["Tool: Utsuri SBOM generator 1"]
   },
   "dataLicense": "CC0-1.0",
-  "documentNamespace": "https://github.com/hokupod/utsuri/sbom/0.3.6/8ebeb9a4e1baaeaab98f9b38152be5c51f21c39456d8e1830c1baa705ea18e0b",
+  "documentNamespace": "https://github.com/hokupod/utsuri/sbom/0.3.6/5f5fce118a0a7fbb6aa8fc0d37e9268f03d5c4049fd8ef0529e96a2a368c7812",
   "name": "utsuri-0.3.6",
   "packages": [
     {
@@ -13,7 +13,7 @@
       "checksums": [
         {
           "algorithm": "SHA256",
-          "checksumValue": "9dfe4b252574c3b7bf6259ebc0cf49560df7f9b3cbbdc0f18e89b48f3b8abf5f"
+          "checksumValue": "9c765e9e1abde9677c946ce437a59c8218f7863e180ed858e2e60445945900c3"
         }
       ],
       "downloadLocation": "NOASSERTION",
@@ -60,11 +60,11 @@
       "versionInfo": "3.0.1"
     },
     {
-      "SPDXID": "SPDXRef-Package-axe-core-4.13.0",
+      "SPDXID": "SPDXRef-Package-axe-core-4.14.0",
       "checksums": [
         {
           "algorithm": "SHA512",
-          "checksumValue": "5331adf3383b372f1d8db60c871976cee11ebd56bbaf68098d86392f0af5c4cefe5d4da777a0a421615355c0886c03fadef4b3ef535a572cae4a4f651ca732d0"
+          "checksumValue": "f564d9c448ec67b6f5dd31fc24f99b576cfc0876e5f34ff6866dd73c41b826035d40b2bcd480515e64b11df3003a44aa41e4714ffd1dc0d0f3d863a6df3ce971"
         }
       ],
       "downloadLocation": "NOASSERTION",
@@ -73,9 +73,9 @@
       "licenseDeclared": "MPL-2.0",
       "name": "axe-core",
       "packageVerificationCode": {
-        "packageVerificationCodeValue": "36bcbcd4afb1c01fc929c1190917902b5ea470c3"
+        "packageVerificationCodeValue": "3a410f830859e6fdf0aa6343532fbda274d2a325"
       },
-      "versionInfo": "4.13.0"
+      "versionInfo": "4.14.0"
     },
     {
       "SPDXID": "SPDXRef-Package-fast-deep-equal-3.1.3",
@@ -287,7 +287,7 @@
       "spdxElementId": "SPDXRef-Package-utsuri-workspace-0.3.6"
     },
     {
-      "relatedSpdxElement": "SPDXRef-Package-axe-core-4.13.0",
+      "relatedSpdxElement": "SPDXRef-Package-axe-core-4.14.0",
       "relationshipType": "DEPENDS_ON",
       "spdxElementId": "SPDXRef-Package-utsuri-workspace-0.3.6"
     },
