@@ -18,7 +18,7 @@ concurrency:
 jobs:
   preflight:
     name: Release ref and public history
-    runs-on: ubuntu-24.04
+    runs-on: ubuntu-26.04
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
@@ -57,7 +57,7 @@ jobs:
   publish:
     name: Publish exact npm packages
     needs: candidate
-    runs-on: ubuntu-24.04
+    runs-on: ubuntu-26.04
     environment: release
     permissions:
       contents: read
@@ -106,7 +106,7 @@ jobs:
   published-smoke:
     name: Published native npx and bunx
     needs: publish
-    runs-on: ubuntu-24.04
+    runs-on: ubuntu-26.04
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
@@ -125,7 +125,7 @@ jobs:
   github-release:
     name: Publish immutable GitHub release assets
     needs: published-smoke
-    runs-on: ubuntu-24.04
+    runs-on: ubuntu-26.04
     permissions:
       contents: write
     steps:
