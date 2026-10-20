@@ -85,7 +85,7 @@ jobs:
           cp ".artifacts/native/${UTSURI_TARGET}/proof.json" \
             ".artifacts/platform/${UTSURI_TARGET}/upload/native/proof.json"
       - name: Upload target package and proof
-        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: native-${{ matrix.target }}
           path: .artifacts/platform/${{ matrix.target }}/upload
@@ -171,7 +171,7 @@ jobs:
           node scripts/release-assets.mjs finalize \
             --candidate .artifacts/release-candidate
       - name: Upload the release candidate
-        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: utsuri-release-candidate
           path: .artifacts/release-candidate
