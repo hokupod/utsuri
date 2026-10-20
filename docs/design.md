@@ -3645,7 +3645,7 @@ Phases define implementation order, not a reduction of final scope.
 - English living canonical design;
 - synchronized English, Japanese, and Simplified Chinese READMEs;
 - locked Nix development shell with Node 24 and Bun;
-- Safe-chain 1.5.20 resolved from the standard user installation by the repository wrapper, without an absolute-path setting, and verified against a pinned official platform SHA-256 before its first execution;
+- The exact policy-pinned Safe-chain resolved from the standard user installation by the repository wrapper, without an absolute-path setting, and verified against a pinned official platform SHA-256 before its first execution;
 - monorepo scaffold;
 - JSON Schemas;
 - core data model;
@@ -3789,7 +3789,7 @@ Before persisted state, browser storage, or a review bundle is validated, Phase 
 - A repository prompt-injection fixture cannot cross the current conversation’s permission boundary.
 - The English design, release guide, and three README languages pass focused documentation checks and normal pull-request review.
 - Locked local Bun 1.3.13 and CI Bun 1.3.14 both pass the frozen-install, check, build, and fixture gates without lockfile drift.
-- Safe-chain 1.5.20 is verified against a pinned official platform SHA-256 before its first execution, and its npx/bunx shims are verified before local or CI package operations.
+- The exact policy-pinned Safe-chain is verified against a pinned official platform SHA-256 before its first execution, and its npx/bunx shims are verified before local or CI package operations.
 - Immutable reports are published with the verified four-platform no-replace helper set; missing, mismatched, or unsupported helpers fail closed.
 - The published `@utsu-ri/cli` tarball has an exact recursive inventory, no install lifecycle scripts, no runtime dependency on private workspace packages, version-tagged documentation links, and a successful isolated exact-tarball smoke test.
 - A distribution candidate binds all four architecture-matched native-helper packages and the aggregate Plugin by exact file hash and executable mode; candidate generation performs no registry write.
@@ -3853,7 +3853,7 @@ The v1 source implementation maps every item below to an automated gate or an ex
 20. Evidence links in Agent answers return to the original diff or view.
 21. Stale and orphaned states remain unambiguous after report updates.
 22. The English canonical design, release guide, and all three READMEs remain synchronized and reviewed in the pull request.
-23. Node 24, both required Bun versions, Safe-chain 1.5.20, both hosts, and the release-candidate layout pass their full gates.
+23. Node 24, both required Bun versions, the exact policy-pinned Safe-chain, both hosts, and the release-candidate layout pass their full gates.
 
 Phase 6 adds executable coverage for all §46.25 fixtures, the three-item return-to-session acceptance scenario on both hosts, explicit unsupported-bridge fallback, localhost API boundaries, and independent review-state semantics. The synchronized `v0.3.0`, `v0.3.1`, and `v0.3.2` releases satisfied the public gates on 2026-08-21, 2026-08-24, and 2026-08-31 respectively: normal pull-request review, successful remote CI and multi-platform candidate evidence, protected GitHub configuration, OIDC registry publication, verified GitHub Release assets, promoted-Plugin verification, and isolated public Git installs on both hosts. Each later release requires the same separate authorizations and evidence.
 

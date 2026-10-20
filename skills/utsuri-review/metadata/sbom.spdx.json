@@ -5,7 +5,7 @@
     "creators": ["Tool: Utsuri SBOM generator 1"]
   },
   "dataLicense": "CC0-1.0",
-  "documentNamespace": "https://github.com/hokupod/utsuri/sbom/0.3.6/8ebeb9a4e1baaeaab98f9b38152be5c51f21c39456d8e1830c1baa705ea18e0b",
+  "documentNamespace": "https://github.com/hokupod/utsuri/sbom/0.3.6/ff83d0cc2771cd402c0e8c74c1af7e4d4192812c9527dec469a0b6e08b793f97",
   "name": "utsuri-0.3.6",
   "packages": [
     {
@@ -13,7 +13,7 @@
       "checksums": [
         {
           "algorithm": "SHA256",
-          "checksumValue": "9dfe4b252574c3b7bf6259ebc0cf49560df7f9b3cbbdc0f18e89b48f3b8abf5f"
+          "checksumValue": "1fbd2766102da029f0b693ac8db46ce697580745dda1bb58a4333b54cdf0d312"
         }
       ],
       "downloadLocation": "NOASSERTION",
@@ -60,11 +60,11 @@
       "versionInfo": "3.0.1"
     },
     {
-      "SPDXID": "SPDXRef-Package-axe-core-4.13.0",
+      "SPDXID": "SPDXRef-Package-axe-core-4.14.0",
       "checksums": [
         {
           "algorithm": "SHA512",
-          "checksumValue": "5331adf3383b372f1d8db60c871976cee11ebd56bbaf68098d86392f0af5c4cefe5d4da777a0a421615355c0886c03fadef4b3ef535a572cae4a4f651ca732d0"
+          "checksumValue": "f564d9c448ec67b6f5dd31fc24f99b576cfc0876e5f34ff6866dd73c41b826035d40b2bcd480515e64b11df3003a44aa41e4714ffd1dc0d0f3d863a6df3ce971"
         }
       ],
       "downloadLocation": "NOASSERTION",
@@ -73,9 +73,9 @@
       "licenseDeclared": "MPL-2.0",
       "name": "axe-core",
       "packageVerificationCode": {
-        "packageVerificationCodeValue": "36bcbcd4afb1c01fc929c1190917902b5ea470c3"
+        "packageVerificationCodeValue": "3a410f830859e6fdf0aa6343532fbda274d2a325"
       },
-      "versionInfo": "4.13.0"
+      "versionInfo": "4.14.0"
     },
     {
       "SPDXID": "SPDXRef-Package-fast-deep-equal-3.1.3",
@@ -168,11 +168,11 @@
       "versionInfo": "7.2.0"
     },
     {
-      "SPDXID": "SPDXRef-Package-playwright-core-1.63.0",
+      "SPDXID": "SPDXRef-Package-playwright-core-1.64.1",
       "checksums": [
         {
           "algorithm": "SHA512",
-          "checksumValue": "ad80ac045fcce478d4721e766dbb5538d1058efe97bbcb26f21ef674d951e5bcc81357ef0bf6f182ca7392349f53e3307843263ccf0a25e6c6ea79f2c68e660a"
+          "checksumValue": "042e2cf32e9211503a435ad2c594eda3c848d4a508df15e51c6660bc6a8fe08a8f748fdae855fd1f6f480cdcfbbcaa3d976d5be8b7d8a2c49c3cbe8cdf1c720d"
         }
       ],
       "downloadLocation": "NOASSERTION",
@@ -181,9 +181,9 @@
       "licenseDeclared": "Apache-2.0",
       "name": "playwright-core",
       "packageVerificationCode": {
-        "packageVerificationCodeValue": "f6c6ae54bc2375d450a8d3ddbc17637ea29e18b1"
+        "packageVerificationCodeValue": "8b1133f7d9ba9a286b583c470c48cb9feba8474b"
       },
-      "versionInfo": "1.63.0"
+      "versionInfo": "1.64.1"
     },
     {
       "SPDXID": "SPDXRef-Package-pngjs-7.0.0",
@@ -287,7 +287,7 @@
       "spdxElementId": "SPDXRef-Package-utsuri-workspace-0.3.6"
     },
     {
-      "relatedSpdxElement": "SPDXRef-Package-axe-core-4.13.0",
+      "relatedSpdxElement": "SPDXRef-Package-axe-core-4.14.0",
       "relationshipType": "DEPENDS_ON",
       "spdxElementId": "SPDXRef-Package-utsuri-workspace-0.3.6"
     },
@@ -302,7 +302,7 @@
       "spdxElementId": "SPDXRef-Package-utsuri-workspace-0.3.6"
     },
     {
-      "relatedSpdxElement": "SPDXRef-Package-playwright-core-1.63.0",
+      "relatedSpdxElement": "SPDXRef-Package-playwright-core-1.64.1",
       "relationshipType": "DEPENDS_ON",
       "spdxElementId": "SPDXRef-Package-utsuri-workspace-0.3.6"
     },

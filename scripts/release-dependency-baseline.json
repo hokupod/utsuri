@@ -1,17 +1,17 @@
 {
   "schemaVersion": "1.1",
-  "productionDependencySha256": "8ebeb9a4e1baaeaab98f9b38152be5c51f21c39456d8e1830c1baa705ea18e0b",
-  "bundledInputHash": "681cb800a2bb674d8c9603b7a0bb30a62bc4673847537f71854a8873e259dc6b",
+  "productionDependencySha256": "ff83d0cc2771cd402c0e8c74c1af7e4d4192812c9527dec469a0b6e08b793f97",
+  "bundledInputHash": "032b052ba22693c1d32c4acfc93d6d27cf0dc0875d6ff2758850e50a090bdf08",
   "packageVerificationCodes": {
     "ajv@8.20.0": "b3f66fdcb0928b7cc72eb9387473318b0620daf0",
     "ajv-formats@3.0.1": "10c29707282bc159f1c8261e00681eef880cd4d6",
-    "axe-core@4.13.0": "36bcbcd4afb1c01fc929c1190917902b5ea470c3",
+    "axe-core@4.14.0": "3a410f830859e6fdf0aa6343532fbda274d2a325",
     "fast-deep-equal@3.1.3": "765fba27abdad11c0d38d6211c8b642157af946b",
     "fast-uri@3.1.8": "fb63ea4badeecda48a4935ca187db681547e59ef",
     "fflate@0.8.3": "4b139fac54a9fc5959b61d187c3c6a21f06bcf57",
     "json-schema-traverse@1.0.0": "fa754101884a041b574c6107d37d5479c44e156d",
     "pixelmatch@7.2.0": "556285d498517e93f6fd9a04c3cd43364b56dcd1",
-    "playwright-core@1.63.0": "f6c6ae54bc2375d450a8d3ddbc17637ea29e18b1",
+    "playwright-core@1.64.1": "8b1133f7d9ba9a286b583c470c48cb9feba8474b",
     "pngjs@7.0.0": "fb6ca73f76a553af8a1bd637fef59250fe00faf4",
     "require-from-string@2.0.2": "376512d3467526f7b9d0a6d46123a7b317af0e9c",
     "yaml@2.9.1": "e7e8cb94c4046be23aa8bcd1614d53f77114050a"

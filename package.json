@@ -5,7 +5,7 @@
   "description": "Evidence-backed visual change review for Codex and Claude Code",
   "license": "AGPL-3.0-or-later",
   "type": "module",
-  "packageManager": "bun@1.4.2",
+  "packageManager": "bun@1.4.3",
   "engines": {
     "node": ">=22"
   },
@@ -47,31 +47,31 @@
   "dependencies": {
     "ajv": "8.20.0",
     "ajv-formats": "3.0.1",
-    "axe-core": "4.13.0",
+    "axe-core": "4.14.0",
     "fflate": "0.8.3",
     "pixelmatch": "7.2.0",
-    "playwright-core": "1.63.0",
+    "playwright-core": "1.64.1",
     "pngjs": "7.0.0",
     "yaml": "2.9.1"
   },
   "devDependencies": {
     "@eslint/js": "9.39.5",
-    "@playwright/test": "1.63.0",
+    "@playwright/test": "1.64.1",
     "@sveltejs/vite-plugin-svelte": "6.2.4",
-    "@types/bun": "1.4.2",
-    "@types/node": "24.19.1",
+    "@types/bun": "1.4.3",
+    "@types/node": "24.19.2",
     "@typescript/native": "npm:typescript@7.0.2",
     "esbuild": "0.28.2",
     "eslint": "9.39.5",
-    "eslint-plugin-svelte": "3.23.0",
+    "eslint-plugin-svelte": "3.23.1",
     "globals": "17.13.0",
     "json-schema-to-typescript": "15.0.4",
-    "prettier": "3.9.9",
+    "prettier": "3.9.10",
     "prettier-plugin-svelte": "4.1.1",
-    "svelte": "5.57.1",
-    "svelte-check": "4.7.6",
+    "svelte": "5.57.2",
+    "svelte-check": "4.7.7",
     "typescript": "6.0.3",
-    "typescript-eslint": "8.71.0",
-    "vite": "7.3.6"
+    "typescript-eslint": "8.71.2",
+    "vite": "7.3.7"
   }
 }

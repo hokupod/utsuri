@@ -1,10 +1,10 @@
 {
   "schemaVersion": "1.2",
-  "dependencyBaselineSha256": "ba76af26ffe9623eecba7f63490108f044f1b802d8e1c2c66598a6289037040e",
-  "productionDependencySha256": "8ebeb9a4e1baaeaab98f9b38152be5c51f21c39456d8e1830c1baa705ea18e0b",
+  "dependencyBaselineSha256": "fc5ff8fa9cbe59ac2306771621f973f598dbd4e7c9a29022a1ab188dbaacbd94",
+  "productionDependencySha256": "ff83d0cc2771cd402c0e8c74c1af7e4d4192812c9527dec469a0b6e08b793f97",
   "packages": [
     {
-      "checksum": "SHA256:9dfe4b252574c3b7bf6259ebc0cf49560df7f9b3cbbdc0f18e89b48f3b8abf5f",
+      "checksum": "SHA256:1fbd2766102da029f0b693ac8db46ce697580745dda1bb58a4333b54cdf0d312",
       "license": "AGPL-3.0-or-later",
       "name": "utsuri-workspace",
       "packageVerificationCode": null,
@@ -25,11 +25,11 @@
       "version": "3.0.1"
     },
     {
-      "checksum": "SHA512:5331adf3383b372f1d8db60c871976cee11ebd56bbaf68098d86392f0af5c4cefe5d4da777a0a421615355c0886c03fadef4b3ef535a572cae4a4f651ca732d0",
+      "checksum": "SHA512:f564d9c448ec67b6f5dd31fc24f99b576cfc0876e5f34ff6866dd73c41b826035d40b2bcd480515e64b11df3003a44aa41e4714ffd1dc0d0f3d863a6df3ce971",
       "license": "MPL-2.0",
       "name": "axe-core",
-      "packageVerificationCode": "36bcbcd4afb1c01fc929c1190917902b5ea470c3",
-      "version": "4.13.0"
+      "packageVerificationCode": "3a410f830859e6fdf0aa6343532fbda274d2a325",
+      "version": "4.14.0"
     },
     {
       "checksum": "SHA512:7f7a90f68432f63d808417bf1fd542f75c0b98a042094fe00ce9ca340606e61b303bb04b2a3d3d1dce4760dcfd70623efb19690c22200da8ad56cd3701347ce1",
@@ -67,11 +67,11 @@
       "version": "7.2.0"
     },
     {
-      "checksum": "SHA512:ad80ac045fcce478d4721e766dbb5538d1058efe97bbcb26f21ef674d951e5bcc81357ef0bf6f182ca7392349f53e3307843263ccf0a25e6c6ea79f2c68e660a",
+      "checksum": "SHA512:042e2cf32e9211503a435ad2c594eda3c848d4a508df15e51c6660bc6a8fe08a8f748fdae855fd1f6f480cdcfbbcaa3d976d5be8b7d8a2c49c3cbe8cdf1c720d",
       "license": "Apache-2.0",
       "name": "playwright-core",
-      "packageVerificationCode": "f6c6ae54bc2375d450a8d3ddbc17637ea29e18b1",
-      "version": "1.63.0"
+      "packageVerificationCode": "8b1133f7d9ba9a286b583c470c48cb9feba8474b",
+      "version": "1.64.1"
     },
     {
       "checksum": "SHA512:2ca5aa589461b2dc98a3da46be0a2bfe2be4db0f787928c4dd1195bb32c696bdcd983f1b7fb45c606cded6635d10744fe9344feab32e0c7939b78e219d3472a3",
