@@ -5,7 +5,7 @@
     "creators": ["Tool: Utsuri SBOM generator 1"]
   },
   "dataLicense": "CC0-1.0",
-  "documentNamespace": "https://github.com/hokupod/utsuri/sbom/0.3.6/ff83d0cc2771cd402c0e8c74c1af7e4d4192812c9527dec469a0b6e08b793f97",
+  "documentNamespace": "https://github.com/hokupod/utsuri/sbom/0.3.6/284dfc4efce6a33446e2b37e1533c33558133b7e30a4207b2a7f5c7b364813c5",
   "name": "utsuri-0.3.6",
   "packages": [
     {
@@ -13,7 +13,7 @@
       "checksums": [
         {
           "algorithm": "SHA256",
-          "checksumValue": "1fbd2766102da029f0b693ac8db46ce697580745dda1bb58a4333b54cdf0d312"
+          "checksumValue": "25842df8168426193a350ba376fdfb20ba7b0dfd6c6e11e446c4c6175e874212"
         }
       ],
       "downloadLocation": "NOASSERTION",
@@ -150,11 +150,11 @@
       "versionInfo": "1.0.0"
     },
     {
-      "SPDXID": "SPDXRef-Package-pixelmatch-7.2.0",
+      "SPDXID": "SPDXRef-Package-pixelmatch-8.0.0",
       "checksums": [
         {
           "algorithm": "SHA512",
-          "checksumValue": "c6171be321eef6c33f1bb7e81b3a0bb5761c0b4cc711a3975e344a846ba9d1fc3bf0d7f64e489aa6fe04432333adb72640fb2594023b0db158d944fb3e523d3e"
+          "checksumValue": "708a8e2df879939daeb3bd79a9fdc1dfe9133b166ff960efefb1cdef1a242d27184066101e2e26ff29e80c83e9bc5d8bbc2c94246cafcd8eb88b44025edceed6"
         }
       ],
       "downloadLocation": "NOASSERTION",
@@ -163,9 +163,9 @@
       "licenseDeclared": "ISC",
       "name": "pixelmatch",
       "packageVerificationCode": {
-        "packageVerificationCodeValue": "556285d498517e93f6fd9a04c3cd43364b56dcd1"
+        "packageVerificationCodeValue": "64bc39d76bac3864cc28ea29f8526928395031c6"
       },
-      "versionInfo": "7.2.0"
+      "versionInfo": "8.0.0"
     },
     {
       "SPDXID": "SPDXRef-Package-playwright-core-1.64.1",
@@ -274,7 +274,7 @@
     {
       "relatedSpdxElement": "SPDXRef-Package-pngjs-7.0.0",
       "relationshipType": "DEPENDS_ON",
-      "spdxElementId": "SPDXRef-Package-pixelmatch-7.2.0"
+      "spdxElementId": "SPDXRef-Package-pixelmatch-8.0.0"
     },
     {
       "relatedSpdxElement": "SPDXRef-Package-ajv-8.20.0",
@@ -297,7 +297,7 @@
       "spdxElementId": "SPDXRef-Package-utsuri-workspace-0.3.6"
     },
     {
-      "relatedSpdxElement": "SPDXRef-Package-pixelmatch-7.2.0",
+      "relatedSpdxElement": "SPDXRef-Package-pixelmatch-8.0.0",
       "relationshipType": "DEPENDS_ON",
       "spdxElementId": "SPDXRef-Package-utsuri-workspace-0.3.6"
     },

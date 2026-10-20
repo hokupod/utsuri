@@ -1,7 +1,7 @@
 {
   "schemaVersion": "1.1",
-  "productionDependencySha256": "ff83d0cc2771cd402c0e8c74c1af7e4d4192812c9527dec469a0b6e08b793f97",
-  "bundledInputHash": "032b052ba22693c1d32c4acfc93d6d27cf0dc0875d6ff2758850e50a090bdf08",
+  "productionDependencySha256": "284dfc4efce6a33446e2b37e1533c33558133b7e30a4207b2a7f5c7b364813c5",
+  "bundledInputHash": "b1bec89ba00c596f9fbd95d20e2cb93cd619b8d079e911aa33cb90cb18340847",
   "packageVerificationCodes": {
     "ajv@8.20.0": "b3f66fdcb0928b7cc72eb9387473318b0620daf0",
     "ajv-formats@3.0.1": "10c29707282bc159f1c8261e00681eef880cd4d6",
@@ -10,7 +10,7 @@
     "fast-uri@3.1.8": "fb63ea4badeecda48a4935ca187db681547e59ef",
     "fflate@0.8.3": "4b139fac54a9fc5959b61d187c3c6a21f06bcf57",
     "json-schema-traverse@1.0.0": "fa754101884a041b574c6107d37d5479c44e156d",
-    "pixelmatch@7.2.0": "556285d498517e93f6fd9a04c3cd43364b56dcd1",
+    "pixelmatch@8.0.0": "64bc39d76bac3864cc28ea29f8526928395031c6",
     "playwright-core@1.64.1": "8b1133f7d9ba9a286b583c470c48cb9feba8474b",
     "pngjs@7.0.0": "fb6ca73f76a553af8a1bd637fef59250fe00faf4",
     "require-from-string@2.0.2": "376512d3467526f7b9d0a6d46123a7b317af0e9c",
