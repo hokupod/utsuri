@@ -86,8 +86,8 @@
     "schemas/review-state.schema.json": "27f9f98344a2b94b75f84fef9bba73978bbacca1e102ed11e459d247fbed7552",
     "schemas/review-thread.schema.json": "6c5957f14b964dfaf1601ac45870b7f3fae013209dd4964aa3831dd753f06fc1"
   },
-  "dependencyBaselineSha256": "fc5ff8fa9cbe59ac2306771621f973f598dbd4e7c9a29022a1ab188dbaacbd94",
-  "dependencyHash": "032b052ba22693c1d32c4acfc93d6d27cf0dc0875d6ff2758850e50a090bdf08",
+  "dependencyBaselineSha256": "e768ca0eacac675025134e4f8a51a748207c579ce924ebb430e7cab278e21435",
+  "dependencyHash": "b1bec89ba00c596f9fbd95d20e2cb93cd619b8d079e911aa33cb90cb18340847",
   "dependencyHashes": {
     "ajv-formats@3.0.1/dist/formats.js": "b61693a26869970a92cc1fe832c931ccd3afe8b6d66802b19c48306349e84880",
     "ajv-formats@3.0.1/dist/index.js": "3f3014150293846086d11058bb8bf43e669e354a98b37adcf10281454d5e753b",
@@ -162,7 +162,7 @@
     "fast-uri@3.1.8/lib/utils.js": "610a6cfa7b1c9d5689443b3a3d14af4c24afed51ef5852495ae1489ae455a9f4",
     "fflate@0.8.3/esm/index.mjs": "8d75534a30a0580608e1271c13d70943ed4cd3589fddff7b1197748036a5116e",
     "json-schema-traverse@1.0.0/index.js": "024191b747afac01b28ff11d744e9f82720bbad5f716163ba5c962eb62aa2350",
-    "pixelmatch@7.2.0/index.js": "52c6026c4916a07548d4ce55090ec4ed918d353e15095406dabc3a8a5135d788",
+    "pixelmatch@8.0.0/index.js": "5b8583627704b4e1fe4fea472c283c8ca03d10ae4c94e5e029ea3b271a998ee6",
     "playwright-core@1.64.1/browsers.json": "2cfd419f71ac6475d81e1301fa86c34cf2a2a6bae2a0da4b5a2b18310216b6bf",
     "playwright-core@1.64.1/index.js": "a58fb2cec4293e7dcf73c58a179898a4f3986666451a19da4e731fa3af63265b",
     "playwright-core@1.64.1/index.mjs": "3d36e2132d3c8b62397d23f0bb4177336aaee503203ae2a2c90fbeb5bf3317dd",
@@ -287,5 +287,5 @@
     "app.css": "e3a13751daed2f092852837659997d863ba24dfb7fc8e1f23dc82ec8b9762e2a",
     "app.js": "421cb6d9f1c148af5250d81b192642fb76580667bedb757e44c185a05fb51bad"
   },
-  "bundleSha256": "8255c372b36b7c58ceeee66ef436ee005332cb20375397b7639542b587d40d38"
+  "bundleSha256": "e185e26cbf29e20f6f2f2758af5d70a2d7a7712914323095c38ddef16aa059e3"
 }

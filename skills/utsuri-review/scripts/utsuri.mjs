@@ -174429,12 +174429,12 @@ var require_axe = __commonJS2({
             return to(origin, space2);
           }
           var oklchOrigin = to(origin, oklch_default);
-          var _oklchOrigin$coords = _slicedToArray(oklchOrigin.coords, 3), lightness = _oklchOrigin$coords[0], chroma = _oklchOrigin$coords[1], hue = _oklchOrigin$coords[2];
-          if (lightness >= 1) {
+          var _oklchOrigin$coords = _slicedToArray(oklchOrigin.coords, 3), lightness2 = _oklchOrigin$coords[0], chroma = _oklchOrigin$coords[1], hue = _oklchOrigin$coords[2];
+          if (lightness2 >= 1) {
             var white6 = to(COLORS.WHITE, space2);
             white6.alpha = origin.alpha;
             return to(white6, space2);
-          } else if (lightness <= 0) {
+          } else if (lightness2 <= 0) {
             var black = to(COLORS.BLACK, space2);
             black.alpha = origin.alpha;
             return to(black, space2);
@@ -174468,7 +174468,7 @@ var require_axe = __commonJS2({
           })) {
             var anchor2 = to({
               space: oklch_default,
-              coords: [lightness, 0, hue]
+              coords: [lightness2, 0, hue]
             }, space2).coords;
             var low = mn + 1e-12;
             var high = mx - 1e-12;
@@ -174476,7 +174476,7 @@ var require_axe = __commonJS2({
             for (var i3 = 0; i3 < 4; i3++) {
               if (i3) {
                 var oklchColor = to(rgbOrigin, oklch_default);
-                oklchColor.coords[0] = lightness;
+                oklchColor.coords[0] = lightness2;
                 oklchColor.coords[2] = hue;
                 rgbOrigin = to(oklchColor, space2);
               }
@@ -175469,16 +175469,16 @@ var require_axe = __commonJS2({
         function _lighten(color2) {
           var amount = arguments.length > 1 && arguments[1] !== void 0 ? arguments[1] : 0.25;
           var space2 = ColorSpace_default.get("oklch", "lch");
-          var lightness = [space2, "l"];
-          return set(color2, lightness, function(l) {
+          var lightness2 = [space2, "l"];
+          return set(color2, lightness2, function(l) {
             return l * (1 + amount);
           });
         }
         function _darken(color2) {
           var amount = arguments.length > 1 && arguments[1] !== void 0 ? arguments[1] : 0.25;
           var space2 = ColorSpace_default.get("oklch", "lch");
-          var lightness = [space2, "l"];
-          return set(color2, lightness, function(l) {
+          var lightness2 = [space2, "l"];
+          return set(color2, lightness2, function(l) {
             return l * (1 - amount);
           });
         }
@@ -225650,7 +225650,7 @@ async function loadCaptureConfig(cwd, configPath) {
 import { lstat as lstat5, mkdir as mkdir3, readFile as readFile3, realpath as realpath6, rename as rename2, unlink, writeFile as writeFile4 } from "node:fs/promises";
 import path13 from "node:path";
 
-// node_modules/.bun/pixelmatch@7.2.0/node_modules/pixelmatch/index.js
+// node_modules/.bun/pixelmatch@8.0.0/node_modules/pixelmatch/index.js
 function pixelmatch(img1, img2, output, width, height, options2 = {}) {
   const {
     threshold = 0.1,
@@ -225658,44 +225658,51 @@ function pixelmatch(img1, img2, output, width, height, options2 = {}) {
     aaColor = [255, 255, 0],
     diffColor = [255, 0, 0],
     checkerboard = true,
+    windowSize = Infinity,
     includeAA,
     diffColorAlt,
-    diffMask
+    diffMask,
+    ignoreMask
   } = options2;
-  if (!isPixelData(img1) || !isPixelData(img2) || output && !isPixelData(output))
+  if (!isPixelData(img1) || !isPixelData(img2) || output && !isPixelData(output) || ignoreMask && !isPixelData(ignoreMask))
     throw new Error("Image data: Uint8Array, Uint8ClampedArray or Buffer expected.");
   if (img1.length !== img2.length || output && output.length !== img1.length)
     throw new Error(`Image sizes do not match. Image 1 size: ${img1.length}, image 2 size: ${img2.length}`);
-  if (img1.length !== width * height * 4) throw new Error(`Image data size does not match width/height. Expecting ${width * height * 4}. Got ${img1.length}`);
   const len = width * height;
+  if (img1.length !== len * 4) throw new Error(`Image data size does not match width/height. Expecting ${len * 4}. Got ${img1.length}`);
+  if (ignoreMask && ignoreMask.length !== len)
+    throw new Error(`Ignore mask size does not match image width/height. Expecting ${len}. Got ${ignoreMask.length}`);
   const a32 = new Uint32Array(img1.buffer, img1.byteOffset, len);
   const b32 = new Uint32Array(img2.buffer, img2.byteOffset, len);
   let identical = true;
   for (let i2 = 0; i2 < len; i2++) {
-    if (a32[i2] !== b32[i2]) {
+    if (a32[i2] !== b32[i2] && (!ignoreMask || !ignoreMask[i2])) {
       identical = false;
       break;
     }
   }
   if (identical) {
     if (output && !diffMask) {
-      for (let i2 = 0, pos = 0; i2 < len; i2++, pos += 4) drawGrayPixel(img1, pos, alpha, output);
+      for (let i2 = 0, pos = 0; i2 < len; i2++, pos += 4) drawGrayPixel(output, pos, img1, alpha);
     }
     return 0;
   }
-  const maxDelta = 35215 * threshold * threshold;
   const [aaR, aaG, aaB] = aaColor;
   const [diffR, diffG, diffB] = diffColor;
   const [altR, altG, altB] = diffColorAlt || diffColor;
   let diff2 = 0;
+  const mask = Number.isFinite(windowSize) ? new Uint8Array(len) : null;
+  let firstDiffY = -1;
+  let lastDiffY = 0;
   for (let i2 = 0, pos = 0; i2 < len; i2++, pos += 4) {
-    const delta = a32[i2] === b32[i2] ? 0 : colorDelta(img1, img2, pos, pos, checkerboard);
-    if (Math.abs(delta) > maxDelta) {
+    const delta = a32[i2] === b32[i2] || ignoreMask && ignoreMask[i2] ? 0 : colorDelta(img1, img2, pos, checkerboard, threshold);
+    if (delta) {
       const x2 = i2 % width;
       const y = i2 / width | 0;
-      const isExcludedAA = !includeAA && (antialiased(img1, x2, y, width, height, a32, b32, checkerboard) || antialiased(img2, x2, y, width, height, b32, a32, checkerboard));
+      const isExcludedAA = !includeAA && (antialiased(img1, x2, y, width, height, a32, b32) || antialiased(img2, x2, y, width, height, b32, a32));
       if (isExcludedAA) {
         if (output && !diffMask) drawPixel2(output, pos, aaR, aaG, aaB);
+        if (mask) mask[i2] = 2;
       } else {
         if (output) {
           if (delta < 0) {
@@ -225704,22 +225711,60 @@ function pixelmatch(img1, img2, output, width, height, options2 = {}) {
             drawPixel2(output, pos, diffR, diffG, diffB);
           }
         }
+        if (mask) {
+          mask[i2] = 1;
+          if (firstDiffY < 0) firstDiffY = y;
+          lastDiffY = y;
+        }
         diff2++;
       }
     } else if (output && !diffMask) {
-      drawGrayPixel(img1, pos, alpha, output);
+      drawGrayPixel(output, pos, img1, alpha);
     }
   }
-  return diff2;
+  if (!mask || !diff2) return diff2;
+  const n = Math.min(Math.max(Math.floor(windowSize), 1), width, height);
+  const colSum = new Uint16Array(width);
+  let maxCount = 0;
+  let bandTotal = 0;
+  const yEnd = Math.min(height - 1, lastDiffY + n - 1);
+  for (let y = firstDiffY; y <= yEnd; y++) {
+    const rowStart = y * width;
+    const leaving = y - n;
+    if (leaving >= 0) {
+      const leavingStart = leaving * width;
+      for (let x2 = 0; x2 < width; x2++) {
+        const d = (mask[rowStart + x2] & 1) - (mask[leavingStart + x2] & 1);
+        colSum[x2] += d;
+        bandTotal += d;
+      }
+    } else {
+      for (let x2 = 0; x2 < width; x2++) {
+        const e = mask[rowStart + x2] & 1;
+        colSum[x2] += e;
+        bandTotal += e;
+      }
+      if (y < n - 1) continue;
+    }
+    if (bandTotal <= maxCount) continue;
+    let windowSum = 0;
+    for (let x2 = 0; x2 < n - 1; x2++) windowSum += colSum[x2];
+    for (let x2 = n - 1; x2 < width; x2++) {
+      windowSum += colSum[x2];
+      if (windowSum > maxCount) maxCount = windowSum;
+      windowSum -= colSum[x2 - n + 1];
+    }
+  }
+  return maxCount;
 }
 function isPixelData(arr) {
   return ArrayBuffer.isView(arr) && arr.BYTES_PER_ELEMENT === 1;
 }
-function antialiased(img, x1, y1, width, height, a32, b32, checkerboard) {
-  const x0 = Math.max(x1 - 1, 0);
-  const y0 = Math.max(y1 - 1, 0);
-  const x2 = Math.min(x1 + 1, width - 1);
-  const y2 = Math.min(y1 + 1, height - 1);
+function antialiased(img, x1, y1, width, height, a32, b32) {
+  const x0 = x1 > 0 ? x1 - 1 : 0;
+  const y0 = y1 > 0 ? y1 - 1 : 0;
+  const x2 = x1 < width - 1 ? x1 + 1 : width - 1;
+  const y2 = y1 < height - 1 ? y1 + 1 : height - 1;
   const pos4 = (y1 * width + x1) * 4;
   const cr = img[pos4];
   const cg = img[pos4 + 1];
@@ -225732,10 +225777,12 @@ function antialiased(img, x1, y1, width, height, a32, b32, checkerboard) {
   let minY = 0;
   let maxX = 0;
   let maxY = 0;
+  const rowStep = width * 4;
   for (let x3 = x0; x3 <= x2; x3++) {
-    for (let y = y0; y <= y2; y++) {
+    let m = (y0 * width + x3) * 4;
+    for (let y = y0; y <= y2; y++, m += rowStep) {
       if (x3 === x1 && y === y1) continue;
-      const delta = brightnessDelta(img, pos4, (y * width + x3) * 4, cr, cg, cb, ca, checkerboard);
+      const delta = brightnessDelta(img, m, cr, cg, cb, ca);
       if (delta === 0) {
         zeroes++;
         if (zeroes > 2) return false;
@@ -225754,52 +225801,175 @@ function antialiased(img, x1, y1, width, height, a32, b32, checkerboard) {
   return hasManySiblings(a32, minX, minY, width, height) && hasManySiblings(b32, minX, minY, width, height) || hasManySiblings(a32, maxX, maxY, width, height) && hasManySiblings(b32, maxX, maxY, width, height);
 }
 function hasManySiblings(img, x1, y1, width, height) {
-  const x0 = Math.max(x1 - 1, 0);
-  const y0 = Math.max(y1 - 1, 0);
-  const x2 = Math.min(x1 + 1, width - 1);
-  const y2 = Math.min(y1 + 1, height - 1);
-  const val = img[y1 * width + x1];
+  const pos1 = y1 * width + x1;
+  const val = img[pos1];
+  if (x1 > 0 && x1 < width - 1 && y1 > 0 && y1 < height - 1) {
+    return +(val === img[pos1 - width - 1]) + +(val === img[pos1 - 1]) + +(val === img[pos1 + width - 1]) + +(val === img[pos1 - width]) + +(val === img[pos1 + width]) + +(val === img[pos1 - width + 1]) + +(val === img[pos1 + 1]) + +(val === img[pos1 + width + 1]) > 2;
+  }
+  const x0 = x1 > 0 ? x1 - 1 : 0;
+  const y0 = y1 > 0 ? y1 - 1 : 0;
+  const x2 = x1 < width - 1 ? x1 + 1 : width - 1;
+  const y2 = y1 < height - 1 ? y1 + 1 : height - 1;
   let zeroes = x1 === x0 || x1 === x2 || y1 === y0 || y1 === y2 ? 1 : 0;
   for (let x3 = x0; x3 <= x2; x3++) {
-    for (let y = y0; y <= y2; y++) {
+    let pos = y0 * width + x3;
+    for (let y = y0; y <= y2; y++, pos += width) {
       if (x3 === x1 && y === y1) continue;
-      zeroes += +(val === img[y * width + x3]);
+      zeroes += +(val === img[pos]);
       if (zeroes > 2) return true;
     }
   }
   return false;
 }
-function colorDelta(img1, img2, k, m, checkerboard) {
+var LIN = new Float64Array(257);
+for (let i2 = 0; i2 < 256; i2++) {
+  const c = i2 / 255;
+  LIN[i2] = c <= 0.04045 ? c / 12.92 : ((c + 0.055) / 1.055) ** 2.4;
+}
+LIN[256] = LIN[255];
+var L_R = new Float64Array(256);
+var L_G = new Float64Array(256);
+var L_B = new Float64Array(256);
+var M_R = new Float64Array(256);
+var M_G = new Float64Array(256);
+var M_B = new Float64Array(256);
+var S_R = new Float64Array(256);
+var S_G = new Float64Array(256);
+var S_B = new Float64Array(256);
+for (let i2 = 0; i2 < 256; i2++) {
+  const lr = LIN[i2];
+  L_R[i2] = 0.4122214708 * lr;
+  M_R[i2] = 0.2119034982 * lr;
+  S_R[i2] = 0.0883024619 * lr;
+  L_G[i2] = 0.5363325363 * lr;
+  M_G[i2] = 0.6806995451 * lr;
+  S_G[i2] = 0.2817188376 * lr;
+  L_B[i2] = 0.0514459929 * lr;
+  M_B[i2] = 0.1073969566 * lr;
+  S_B[i2] = 0.6299787005 * lr;
+}
+function linLUT(x2) {
+  const i2 = x2 | 0;
+  return LIN[i2] + (LIN[i2 + 1] - LIN[i2]) * (x2 - i2);
+}
+var CBRT_N = 4096;
+var CBRT = new Float64Array(CBRT_N + 2);
+for (let i2 = 0; i2 <= CBRT_N + 1; i2++) CBRT[i2] = Math.cbrt(i2 / CBRT_N);
+var CBRT_EXACT = 8;
+function cbrtLUT(x2) {
+  const t = x2 * CBRT_N;
+  const i2 = t | 0;
+  if (i2 < CBRT_EXACT) return Math.cbrt(x2);
+  return CBRT[i2] + (CBRT[i2 + 1] - CBRT[i2]) * (t - i2);
+}
+var OKLAB_CACHE_BITS = 12;
+var OKLAB_CACHE_SHIFT = 32 - OKLAB_CACHE_BITS;
+var OKLAB_CACHE_SIZE = 1 << OKLAB_CACHE_BITS;
+var OKLAB_CACHE_KEYS = new Uint32Array(OKLAB_CACHE_SIZE);
+var OKLAB_CACHE_VALUES = new Float64Array(OKLAB_CACHE_SIZE * 4);
+var TOE_K1 = 0.206;
+var TOE_K2 = 0.03;
+var TOE_K3 = (1 + TOE_K1) / (1 + TOE_K2);
+function colorDelta(img1, img2, k, checkerboard, maxDelta) {
   const r1 = img1[k];
   const g1 = img1[k + 1];
   const b1 = img1[k + 2];
   const a1 = img1[k + 3];
-  const r2 = img2[m];
-  const g2 = img2[m + 1];
-  const b2 = img2[m + 2];
-  const a2 = img2[m + 3];
-  let dr = r1 - r2;
-  let dg = g1 - g2;
-  let db = b1 - b2;
-  const da = a1 - a2;
-  if (a1 < 255 || a2 < 255) {
-    let rb = 255, gb = 255, bb = 255;
-    if (checkerboard) {
-      rb = 48 + 159 * (k % 2);
-      gb = 48 + 159 * ((k / 1.618033988749895 | 0) % 2);
-      bb = 48 + 159 * ((k / 2.618033988749895 | 0) % 2);
-    }
-    dr = (r1 * a1 - r2 * a2 - rb * da) / 255;
-    dg = (g1 * a1 - g2 * a2 - gb * da) / 255;
-    db = (b1 * a1 - b2 * a2 - bb * da) / 255;
+  const r2 = img2[k];
+  const g2 = img2[k + 1];
+  const b2 = img2[k + 2];
+  const a2 = img2[k + 3];
+  if (a1 === 255 && a2 === 255) {
+    return colorDeltaOpaque(r1, g1, b1, r2, g2, b2, maxDelta);
   }
-  const y = dr * 0.29889531 + dg * 0.58662247 + db * 0.11448223;
-  const i2 = dr * 0.59597799 - dg * 0.2741761 - db * 0.32180189;
-  const q = dr * 0.21147017 - dg * 0.52261711 + db * 0.31114694;
-  const delta = 0.5053 * y * y + 0.299 * i2 * i2 + 0.1957 * q * q;
-  return y > 0 ? -delta : delta;
+  return colorDeltaTransparent(r1, g1, b1, a1, r2, g2, b2, a2, k, checkerboard, maxDelta);
 }
-function brightnessDelta(img, k, m, r1, g1, b1, a1, checkerboard) {
+function colorDeltaOpaque(r1, g1, b1, r2, g2, b2, maxDelta) {
+  const key1 = r1 << 16 | g1 << 8 | b1;
+  const slot1 = Math.imul(key1, 2654435761) >>> OKLAB_CACHE_SHIFT;
+  const stored1 = key1 + 1;
+  const offset1 = slot1 * 4;
+  let l1, m1, s1, lr1;
+  if (OKLAB_CACHE_KEYS[slot1] === stored1) {
+    l1 = OKLAB_CACHE_VALUES[offset1];
+    m1 = OKLAB_CACHE_VALUES[offset1 + 1];
+    s1 = OKLAB_CACHE_VALUES[offset1 + 2];
+    lr1 = OKLAB_CACHE_VALUES[offset1 + 3];
+  } else {
+    l1 = cbrtLUT(L_R[r1] + L_G[g1] + L_B[b1]);
+    m1 = cbrtLUT(M_R[r1] + M_G[g1] + M_B[b1]);
+    s1 = cbrtLUT(S_R[r1] + S_G[g1] + S_B[b1]);
+    lr1 = lightness(l1, m1, s1);
+    OKLAB_CACHE_KEYS[slot1] = stored1;
+    OKLAB_CACHE_VALUES[offset1] = l1;
+    OKLAB_CACHE_VALUES[offset1 + 1] = m1;
+    OKLAB_CACHE_VALUES[offset1 + 2] = s1;
+    OKLAB_CACHE_VALUES[offset1 + 3] = lr1;
+  }
+  const key2 = r2 << 16 | g2 << 8 | b2;
+  const slot2 = Math.imul(key2, 2654435761) >>> OKLAB_CACHE_SHIFT;
+  const stored2 = key2 + 1;
+  const offset2 = slot2 * 4;
+  let l2, m2, s2, lr2;
+  if (OKLAB_CACHE_KEYS[slot2] === stored2) {
+    l2 = OKLAB_CACHE_VALUES[offset2];
+    m2 = OKLAB_CACHE_VALUES[offset2 + 1];
+    s2 = OKLAB_CACHE_VALUES[offset2 + 2];
+    lr2 = OKLAB_CACHE_VALUES[offset2 + 3];
+  } else {
+    l2 = cbrtLUT(L_R[r2] + L_G[g2] + L_B[b2]);
+    m2 = cbrtLUT(M_R[r2] + M_G[g2] + M_B[b2]);
+    s2 = cbrtLUT(S_R[r2] + S_G[g2] + S_B[b2]);
+    lr2 = lightness(l2, m2, s2);
+    OKLAB_CACHE_KEYS[slot2] = stored2;
+    OKLAB_CACHE_VALUES[offset2] = l2;
+    OKLAB_CACHE_VALUES[offset2 + 1] = m2;
+    OKLAB_CACHE_VALUES[offset2 + 2] = s2;
+    OKLAB_CACHE_VALUES[offset2 + 3] = lr2;
+  }
+  return oklabHyabDelta(lr1 - lr2, l1 - l2, m1 - m2, s1 - s2, maxDelta);
+}
+function colorDeltaTransparent(r1, g1, b1, a1, r2, g2, b2, a2, k, checkerboard, maxDelta) {
+  let rb = 255, gb = 255, bb = 255;
+  if (checkerboard) {
+    const h = Math.imul(k >> 2, 2654435761);
+    rb = 48 + 159 * (h >>> 31);
+    gb = 48 + 159 * (h >>> 30 & 1);
+    bb = 48 + 159 * (h >>> 29 & 1);
+  }
+  r1 = (r1 * a1 + rb * (255 - a1)) / 255;
+  g1 = (g1 * a1 + gb * (255 - a1)) / 255;
+  b1 = (b1 * a1 + bb * (255 - a1)) / 255;
+  r2 = (r2 * a2 + rb * (255 - a2)) / 255;
+  g2 = (g2 * a2 + gb * (255 - a2)) / 255;
+  b2 = (b2 * a2 + bb * (255 - a2)) / 255;
+  const lr1 = linLUT(r1), lg1 = linLUT(g1), lb1 = linLUT(b1);
+  const lr2 = linLUT(r2), lg2 = linLUT(g2), lb2 = linLUT(b2);
+  const l1 = cbrtLUT(0.4122214708 * lr1 + 0.5363325363 * lg1 + 0.0514459929 * lb1);
+  const m1 = cbrtLUT(0.2119034982 * lr1 + 0.6806995451 * lg1 + 0.1073969566 * lb1);
+  const s1 = cbrtLUT(0.0883024619 * lr1 + 0.2817188376 * lg1 + 0.6299787005 * lb1);
+  const l2 = cbrtLUT(0.4122214708 * lr2 + 0.5363325363 * lg2 + 0.0514459929 * lb2);
+  const m2 = cbrtLUT(0.2119034982 * lr2 + 0.6806995451 * lg2 + 0.1073969566 * lb2);
+  const s2 = cbrtLUT(0.0883024619 * lr2 + 0.2817188376 * lg2 + 0.6299787005 * lb2);
+  const Lr1 = lightness(l1, m1, s1);
+  const Lr2 = lightness(l2, m2, s2);
+  return oklabHyabDelta(Lr1 - Lr2, l1 - l2, m1 - m2, s1 - s2, maxDelta);
+}
+function oklabHyabDelta(dLr, dl, dm, ds, maxDelta) {
+  const rest = maxDelta - Math.abs(dLr);
+  if (rest >= 0) {
+    const da = 1.9779984951 * dl - 2.428592205 * dm + 0.4505937099 * ds;
+    const db = 0.0259040371 * dl + 0.7827717662 * dm - 0.808675766 * ds;
+    if (da * da + db * db <= rest * rest) return 0;
+  }
+  return dLr > 0 ? -1 : 1;
+}
+function lightness(l, m, s) {
+  const L = 0.2104542553 * l + 0.793617785 * m - 0.0040720468 * s;
+  const x2 = TOE_K3 * L - TOE_K1;
+  return 0.5 * (x2 + Math.sqrt(x2 * x2 + 4 * TOE_K2 * TOE_K3 * L));
+}
+function brightnessDelta(img, m, r1, g1, b1, a1) {
   const r2 = img[m];
   const g2 = img[m + 1];
   const b2 = img[m + 2];
@@ -225810,15 +225980,11 @@ function brightnessDelta(img, k, m, r1, g1, b1, a1, checkerboard) {
   const da = a1 - a2;
   if (!dr && !dg && !db && !da) return 0;
   if (a1 < 255 || a2 < 255) {
-    let rb = 255, gb = 255, bb = 255;
-    if (checkerboard) {
-      rb = 48 + 159 * (k % 2);
-      gb = 48 + 159 * ((k / 1.618033988749895 | 0) % 2);
-      bb = 48 + 159 * ((k / 2.618033988749895 | 0) % 2);
-    }
-    dr = (r1 * a1 - r2 * a2 - rb * da) / 255;
-    dg = (g1 * a1 - g2 * a2 - gb * da) / 255;
-    db = (b1 * a1 - b2 * a2 - bb * da) / 255;
+    dr = (r1 * a1 - r2 * a2 - 255 * da) / 255;
+    dg = (g1 * a1 - g2 * a2 - 255 * da) / 255;
+    db = (b1 * a1 - b2 * a2 - 255 * da) / 255;
+    const d = dr * 0.29889531 + dg * 0.58662247 + db * 0.11448223;
+    return d === 0 && da ? da / 2 : d;
   }
   return dr * 0.29889531 + dg * 0.58662247 + db * 0.11448223;
 }
@@ -225828,7 +225994,7 @@ function drawPixel2(output, pos, r, g, b) {
   output[pos + 2] = b;
   output[pos + 3] = 255;
 }
-function drawGrayPixel(img, i2, alpha, output) {
+function drawGrayPixel(output, i2, img, alpha) {
   const val = 255 + (img[i2] * 0.29889531 + img[i2 + 1] * 0.58662247 + img[i2 + 2] * 0.11448223 - 255) * alpha * img[i2 + 3] / 255;
   drawPixel2(output, i2, val, val, val);
 }
