@@ -14,8 +14,8 @@
 - **Implementation language**: TypeScript
 - **Development environment**: Bun
 - **Report UI**: a static application built with Svelte
-- **Maintenance publication**: CLI/aggregate `v0.3.7` is a source candidate for the reviewed dependency and toolchain updates; the unchanged Git Plugin remains pinned to the verified published CLI until post-publication promotion. Verified public availability remains at `v0.3.6` until protected publication, Plugin promotion, and live installation verification complete.
-- **v4.1 changes**: prepare a two-phase maintenance release with immutable previous public Git inputs and a required public-pin CI smoke; retain the recorded `v0.3.6` publication evidence until the new release gates pass.
+- **Maintenance publication**: CLI/aggregate `v0.3.7` is published with verified package bytes and provenance. The tracked Git Plugin and both pins advance to `v0.3.7` through post-publication promotion; its protected merge and live public Git installation checks remain pending. The previous `v0.3.6` host installation record remains historical evidence until those checks succeed.
+- **v4.1 changes**: publish a two-phase maintenance release with immutable previous public Git inputs and a required public-pin CI smoke; record CLI `v0.3.7` publication separately from the pending promoted Git installation evidence.
 
 ---
 

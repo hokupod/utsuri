@@ -1,12 +1,12 @@
 {
   "schemaVersion": 1,
   "generator": "scripts/plugin-distribution.mjs",
-  "cliPackagePin": "@utsu-ri/cli@0.3.6",
-  "canonicalSha256": "1b85a96245aacbd3bcf23a0207ba832908cc01aff611a41abbc2efe39c8f5391",
+  "cliPackagePin": "@utsu-ri/cli@0.3.7",
+  "canonicalSha256": "eb1097f17dc4e50fa231e732397416229b3e066ff4f7274111513ca3b31cc11b",
   "files": {
     "SKILL.md": {
       "sourceSha256": "dfa193569c947abfb4b9a81f3ae77511b904133aad8965af85f54306839aad3e",
-      "generatedSha256": "324cb18ac16008ab2a6794da374d1ce7ab97e5f7d52a76597594a6f8e1525169"
+      "generatedSha256": "3bd19725f7e1a88d66d81bfc60d6a826c1f8db2ca8ccacc3cf4d7bbf2eaccd85"
     },
     "agents/openai.yaml": {
       "sourceSha256": "cec07fd1b327d962f7f26ac944a7c099804d646180e637497e89728bd3898841",
@@ -14,15 +14,15 @@
     },
     "references/capture-modes.md": {
       "sourceSha256": "1f2ade08185b0ecd20162d49da15e9370b9e9c77213ab3d6a373ce5192d7cdca",
-      "generatedSha256": "ffc348a0ad24ff6d5bfa99393febf3fdbcfe5a7aa9ce1374ed902bc79c121650"
+      "generatedSha256": "d0f23a101f2139be47621bb679846db7a5176d65b0f5e8b85a5691b8408810ca"
     },
     "references/cli-contract.md": {
       "sourceSha256": "c1ff0b52787323968f7bc6763cd7eaecb802f217db6578e61934624022ad169d",
-      "generatedSha256": "a22f79a0f9c838273b89069fd7bf9121dc87748ea61088b0994bf3689e9a1d83"
+      "generatedSha256": "5fc81d0958dade47af64deffe9f709547e5e14338c2989cd2b7b1f44a9a6f282"
     },
     "references/distribution.md": {
-      "sourceSha256": "5cb5ee799956aefd939800341f817d4c0e5361c4a50eae3ebc1e14da051f3099",
-      "generatedSha256": "5cb5ee799956aefd939800341f817d4c0e5361c4a50eae3ebc1e14da051f3099"
+      "sourceSha256": "9dbb0a25fd092e2d4eabad98a7c8139f17b7ab5141edb3d5496a2fd20a29507f",
+      "generatedSha256": "9dbb0a25fd092e2d4eabad98a7c8139f17b7ab5141edb3d5496a2fd20a29507f"
     },
     "references/failure-continuation.md": {
       "sourceSha256": "4a2df6ed64bf7d3a79b94bc35ec379dca6b6e163d21c0acdae17f913293ff05f",
@@ -30,11 +30,11 @@
     },
     "references/feedback.md": {
       "sourceSha256": "2eac33f41d27d9a8f9d59bb3c41b0ec5a48c01d65664922043ff4ecf4ae656df",
-      "generatedSha256": "65a2437c51937e8b2c9520e552faffc62dcc5cafa53cf446e512bee773b44f81"
+      "generatedSha256": "c61840e95144200958f2858af04c5431abd482891da4c844fe4d86912dfca97f"
     },
     "references/review-state.md": {
       "sourceSha256": "802687df68bea76e7b7f70229fe80c3906df5892a3aa6c83345b935842ec2a70",
-      "generatedSha256": "272ec4419bbbd75352bc53debd01c2464c0d336785815a0a9fe861e6673ec1a7"
+      "generatedSha256": "3a398edaf69a1ad273f2c212fe1eef8f26f7619a27922d196f2fdc0fe614c383"
     },
     "references/security.md": {
       "sourceSha256": "a622a6d53aaf5ff3ddccde5d18ddfb2b3738251a0c2424975be809f3c4168ba5",

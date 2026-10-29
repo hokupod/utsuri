@@ -25,6 +25,8 @@ Use it when a code or UI change needs a durable report, a clear list of review g
 <!-- availability:git-marketplace-cli-and-plugin-public -->
 <!-- support-contract:macos-linux-windows-unsupported -->
 
+This promotion uses an independently verified published CLI. Live public Git installation evidence is recorded after the protected source merge.
+
 CLI/aggregate publication and Git Marketplace Plugin updates are verified in separate stages. The Git Plugin stays pinned to its verified published CLI while the next candidate is prepared. See the [release guide](https://github.com/hokupod/utsuri/blob/main/docs/release.md) for current availability.
 
 The commands below install the Git Marketplace Plugin. It executes only its matching complete CLI SemVer, never `latest`, a range, or another package.

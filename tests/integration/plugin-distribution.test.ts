@@ -1,4 +1,5 @@
 import { afterEach, describe, expect, test } from "bun:test";
+import { execFileSync } from "node:child_process";
 import {
   cpSync,
   chmodSync,
@@ -48,13 +49,53 @@ function fixtureRoot(options: { staged?: boolean } = {}): string {
   for (const relativePath of canonicalSkillFiles) {
     copyFile(`skills/utsuri-review/${relativePath}`, root);
   }
-  if (!options.staged) {
+  if (options.staged) restorePublishedSurface(root);
+  else {
     const version = JSON.parse(readFileSync(join(root, "package.json"), "utf8")).version;
     for (const update of createPromotionUpdates({ version }, root)) {
       writeFileSync(update.path, update.next);
     }
   }
   return root;
+}
+
+function restorePublishedSurface(root: string): void {
+  const git = (args: string[]) => execFileSync("git", ["-C", repositoryRoot, ...args]);
+  const anchor = JSON.parse(
+    git(["show", "origin/main:docs/compatibility/plugin-runtime.json"]).toString("utf8")
+  ).publicGitVerification;
+  const paths = [
+    "plugins/utsuri",
+    ".agents/plugins/marketplace.json",
+    ".claude-plugin/marketplace.json",
+    "docs/compatibility/plugin-runtime.json"
+  ];
+  const entries = git(["ls-tree", "-r", "-z", anchor.sourceCommit, "--", ...paths])
+    .toString("utf8")
+    .split("\0")
+    .filter(Boolean);
+  rmSync(join(root, "plugins/utsuri"), { recursive: true, force: true });
+  for (const entry of entries) {
+    const match = /^(100644|100755) blob ([a-f0-9]{40})\t(.+)$/u.exec(entry);
+    if (!match) throw new Error("Published fixture requires regular Git blobs");
+    const [, mode, objectId, relativePath] = match;
+    if (!mode || !objectId || !relativePath) throw new Error("Incomplete published fixture entry");
+    const destination = join(root, relativePath);
+    mkdirSync(dirname(destination), { recursive: true });
+    writeFileSync(destination, git(["cat-file", "blob", objectId]), {
+      mode: Number.parseInt(mode.slice(3), 8)
+    });
+  }
+  mutateJson(root, "docs/compatibility/plugin-runtime.json", (value) => {
+    value.publicGitVerification = anchor;
+  });
+  const parts = anchor.pluginVersion.split(".");
+  parts[2] = String(BigInt(parts[2]) + 1n);
+  for (const name of ["package.json", "packages/cli/package.json"]) {
+    mutateJson(root, name, (value) => {
+      value.version = parts.join(".");
+    });
+  }
 }
 
 function copyFile(relativePath: string, root: string): void {
@@ -75,10 +116,14 @@ function mutateJson(root: string, relativePath: string, mutate: (value: any) => 
 describe("Git Marketplace Plugin distribution", () => {
   test("keeps the verified published Git surface intact while the next CLI is staged", () => {
     const root = fixtureRoot({ staged: true });
+    const { distribution } = JSON.parse(
+      readFileSync(join(root, "docs/compatibility/plugin-runtime.json"), "utf8")
+    );
+    const { version } = JSON.parse(readFileSync(join(root, "package.json"), "utf8"));
     expect(verifyPluginDistribution({ root })).toMatchObject({
-      pluginVersion: "0.3.6",
-      cliVersion: "0.3.6",
-      sourceCliVersion: "0.3.7",
+      pluginVersion: distribution.pluginVersion,
+      cliVersion: distribution.cliVersion,
+      sourceCliVersion: version,
       publicationStage: "cli-candidate-with-published-git-plugin"
     });
   });
@@ -104,7 +149,8 @@ describe("Git Marketplace Plugin distribution", () => {
     expect(() => verifyPluginDistribution({ root })).toThrow(
       "preserve main's verified public Git record"
     );
-    for (const version of ["0.3.5", "0.3.7-beta.1", "0.3.7\n"]) {
+    const candidate = JSON.parse(readFileSync(join(root, "package.json"), "utf8")).version;
+    for (const version of ["0.0.0", `${candidate}-beta.1`, `${candidate}\n`]) {
       const downgraded = fixtureRoot({ staged: true });
       for (const name of ["package.json", "packages/cli/package.json"]) {
         mutateJson(downgraded, name, (value) => {
