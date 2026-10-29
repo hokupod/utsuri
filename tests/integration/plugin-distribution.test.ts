@@ -1,6 +1,7 @@
 import { afterEach, describe, expect, test } from "bun:test";
 import {
   cpSync,
+  chmodSync,
   lstatSync,
   mkdirSync,
   mkdtempSync,
@@ -18,6 +19,8 @@ import {
   verifyPluginDistribution
 } from "../../scripts/plugin-distribution.mjs";
 
+import { createPromotionUpdates } from "../../scripts/plugin-promote.mjs";
+
 const temporaryRoots: string[] = [];
 
 afterEach(() => {
@@ -26,7 +29,7 @@ afterEach(() => {
   }
 });
 
-function fixtureRoot(): string {
+function fixtureRoot(options: { staged?: boolean } = {}): string {
   const root = mkdtempSync(join(tmpdir(), "utsuri-plugin-distribution-test-"));
   temporaryRoots.push(root);
   const files = [
@@ -44,6 +47,12 @@ function fixtureRoot(): string {
   });
   for (const relativePath of canonicalSkillFiles) {
     copyFile(`skills/utsuri-review/${relativePath}`, root);
+  }
+  if (!options.staged) {
+    const version = JSON.parse(readFileSync(join(root, "package.json"), "utf8")).version;
+    for (const update of createPromotionUpdates({ version }, root)) {
+      writeFileSync(update.path, update.next);
+    }
   }
   return root;
 }
@@ -64,6 +73,56 @@ function mutateJson(root: string, relativePath: string, mutate: (value: any) => 
 }
 
 describe("Git Marketplace Plugin distribution", () => {
+  test("keeps the verified published Git surface intact while the next CLI is staged", () => {
+    const root = fixtureRoot({ staged: true });
+    expect(verifyPluginDistribution({ root })).toMatchObject({
+      pluginVersion: "0.3.6",
+      cliVersion: "0.3.6",
+      sourceCliVersion: "0.3.7",
+      publicationStage: "cli-candidate-with-published-git-plugin"
+    });
+  });
+
+  test("rejects changed public Plugin bytes and modes during CLI staging", () => {
+    for (const change of ["bytes", "mode"]) {
+      const root = fixtureRoot({ staged: true });
+      const name = join(root, "plugins/utsuri/skills/utsuri-review/SKILL.md");
+      if (change === "bytes") writeFileSync(name, `${readFileSync(name, "utf8")}\n`);
+      else chmodSync(name, 0o755);
+      const legacyOptions = { root, allowRootReleaseSkew: true };
+      expect(() => verifyPluginDistribution(legacyOptions)).toThrow(
+        "verified public Git Plugin preimage"
+      );
+    }
+  });
+
+  test("rejects an edited publication anchor and a staged CLI downgrade", () => {
+    const root = fixtureRoot({ staged: true });
+    mutateJson(root, "docs/compatibility/plugin-runtime.json", (value) => {
+      value.publicGitVerification.sourceCommit = "f".repeat(40);
+    });
+    expect(() => verifyPluginDistribution({ root })).toThrow(
+      "preserve main's verified public Git record"
+    );
+    for (const version of ["0.3.5", "0.3.7-beta.1", "0.3.7\n"]) {
+      const downgraded = fixtureRoot({ staged: true });
+      for (const name of ["package.json", "packages/cli/package.json"]) {
+        mutateJson(downgraded, name, (value) => {
+          value.version = version;
+        });
+      }
+      expect(() => verifyPluginDistribution({ root: downgraded })).toThrow("newer stable CLI");
+    }
+  });
+
+  test("refuses Skill synchronization before verified post-publication promotion", () => {
+    const root = fixtureRoot({ staged: true });
+    const name = join(root, "plugins/utsuri/skills/utsuri-review/SKILL.md");
+    const before = readFileSync(name);
+    expect(() => syncPluginSkill(root)).toThrow("verified post-publication promotion");
+    expect(readFileSync(name)).toEqual(before);
+  });
+
   test("accepts the exact bounded inventory and exact CLI pin", () => {
     const root = fixtureRoot();
     const result = verifyPluginDistribution({ root });

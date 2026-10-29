@@ -505,6 +505,23 @@ describe("toolchain and CI contract", () => {
     assert.equal(workflow.jobs["bun-role-checks"], undefined);
     assert.equal(workflow.jobs["nix-role-check"], undefined);
   });
+  test("verifies the exact public Git pin before installing Safe-chain or source dependencies", async () => {
+    const text = await readFile(path.join(repositoryRoot, ".github/workflows/ci.yml"), "utf8");
+    const workflow = parseYaml(text);
+    const steps = workflow.jobs["bun-matrix"].steps;
+    const publicSmoke = steps.findIndex(
+      (step) => step.run === "node scripts/verify-published-cli.mjs --version-from-plugin"
+    );
+    const safeChain = steps.findIndex(
+      (step) => step.name === "Install and verify Safe-chain trust anchor"
+    );
+    assert.ok(publicSmoke > 0);
+    assert.ok(publicSmoke < safeChain);
+    assert.equal(steps[publicSmoke].if, "matrix.role == 'primary'");
+    assert.equal(steps[0].with["fetch-depth"], 0);
+    assert.deepEqual(readOnlyPermissionErrors(".github/workflows/ci.yml", text), []);
+  });
+
   test("pins the exact Safe-chain release assets and digests", async () => {
     const [policy, pluginWorkflow] = await Promise.all([
       readFile(path.join(repositoryRoot, "toolchain-policy.json"), "utf8").then(JSON.parse),

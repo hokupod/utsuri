@@ -18,7 +18,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Update the primary Bun runtime and declarations to `1.4.4`, Safe-chain to
   `1.5.26` with independently verified four-platform hashes, and reviewed
   development dependencies and pinned GitHub Actions.
-- Synchronize CLI, aggregate Plugin, Git Plugin, and exact MCP package pins.
+- Separate CLI/aggregate publication from post-publication Git Plugin promotion,
+  preserving the previous verified public pin during release preparation.
 
 ## [0.3.6] - 2026-10-05
 

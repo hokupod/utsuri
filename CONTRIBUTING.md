@@ -36,6 +36,10 @@ The hook launcher re-enters the pinned Nix shell and fails closed instead of usi
 
 Do not add Safe-chain to `PATH`, configure an executable override, run a lifecycle install, download a browser, pull a container image, or upload an artifact from Utsuri runtime code. Native JSON and NDJSON protocol probes intentionally run outside Safe-chain so wrapper output cannot contaminate stdout.
 
+## Two-phase release preparation
+
+Keep CLI/aggregate candidates separate from the verified public Git Plugin until npm publication succeeds. `plugin:verify` binds a staged Git surface to the unchanged public verification record, annotated release tag, and exact source bytes/modes reachable from `origin/main`. Fetch main and release tags before checking a staged source checkout. Do not regenerate or advance its previous Git Skill/pin during preparation. After publication, the existing promotion command verifies the exact public CLI before its atomic manifest/pin/Skill transaction. The resulting PR must pass the required native public-pin CI smoke and ordinary protected merge. See `docs/release.md`.
+
 ## Source-checkout CLI workflow
 
 The source checkout contains a bundled development CLI. A minimal code-review fixture can be exercised with:

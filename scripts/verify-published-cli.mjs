@@ -18,6 +18,7 @@ import os from "node:os";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { isDeepStrictEqual } from "node:util";
+import { readDistributionIdentity } from "./plugin-distribution.mjs";
 
 const repositoryRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const packageName = "@utsu-ri/cli";
@@ -428,21 +429,24 @@ export async function verifyPublishedCli(options) {
   }
 }
 
-function option(name) {
-  const index = process.argv.indexOf(name);
-  return index === -1 ? undefined : process.argv[index + 1];
+export async function publishedVersionFromArguments(args, root = repositoryRoot) {
+  const index = args.indexOf("--version");
+  const explicit = index >= 0 ? args[index + 1] : undefined;
+  const fromPackage = args.includes("--version-from-package");
+  const fromPlugin = args.includes("--version-from-plugin");
+  if (Number(index >= 0) + Number(fromPackage) + Number(fromPlugin) !== 1) {
+    throw new Error("Use only one published version source");
+  }
+  if (fromPlugin) return exactVersion(readDistributionIdentity(root).cliVersion);
+  if (fromPackage) {
+    const manifest = JSON.parse(await readFile(path.join(root, "package.json"), "utf8"));
+    return exactVersion(manifest.version);
+  }
+  return exactVersion(explicit);
 }
 
 async function main() {
-  let version = option("--version");
-  if (process.argv.includes("--version-from-package")) {
-    if (version) throw new Error("Use only one published version source");
-    const manifest = JSON.parse(await readFile(path.join(repositoryRoot, "package.json"), "utf8"));
-    version = manifest.version;
-  }
-  if (!version) {
-    throw new Error("Usage: verify-published-cli.mjs --version VERSION | --version-from-package");
-  }
+  const version = await publishedVersionFromArguments(process.argv.slice(2));
   const result = await verifyPublishedCli({ version });
   console.log(
     `Verified ${result.package}@${result.version} through native npx and bunx strict JSON and MCP NDJSON`

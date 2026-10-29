@@ -11,7 +11,10 @@ import {
 } from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
-import { verifyPublishedCli } from "../../scripts/verify-published-cli.mjs";
+import {
+  verifyPublishedCli,
+  publishedVersionFromArguments
+} from "../../scripts/verify-published-cli.mjs";
 
 const temporaryDirectories: string[] = [];
 
@@ -387,4 +390,22 @@ else {
     await expect(verifyPublishedCli({ version: "latest" })).rejects.toThrow("exact SemVer");
     await expect(verifyPublishedCli({ version: "^0.1.0" })).rejects.toThrow("exact SemVer");
   });
+});
+
+// The source candidate may be newer than the public Git Plugin. Never resolve the candidate pin here.
+test("selects the public Git Plugin version independently of the source candidate", async () => {
+  const root = await temporaryDirectory();
+  const plugin = path.join(root, "plugins/utsuri/.codex-plugin");
+  await mkdir(plugin, { recursive: true });
+  await writeFile(path.join(root, "package.json"), JSON.stringify({ version: "0.3.7" }));
+  await writeFile(path.join(plugin, "plugin.json"), JSON.stringify({ version: "0.3.6" }));
+  await writeFile(
+    path.join(plugin, "mcp.json"),
+    JSON.stringify({ utsuri: { args: ["-y", "--package=@utsu-ri/cli@0.3.6", "utsuri", "mcp"] } })
+  );
+  expect(await publishedVersionFromArguments(["--version-from-plugin"], root)).toBe("0.3.6");
+  expect(await publishedVersionFromArguments(["--version-from-package"], root)).toBe("0.3.7");
+  await expect(
+    publishedVersionFromArguments(["--version-from-plugin", "--version-from-package"], root)
+  ).rejects.toThrow("only one published version source");
 });
