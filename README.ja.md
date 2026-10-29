@@ -25,9 +25,9 @@ Utsuri は Git の変更を、コード・ブラウザキャプチャ・構造�
 <!-- availability:git-marketplace-cli-and-plugin-public -->
 <!-- support-contract:macos-linux-windows-unsupported -->
 
-現在のリリースは公開検証と、対応する両ホストの分離環境での Git Plugin インストール検証を完了しています。証拠は[リリースガイド](https://github.com/hokupod/utsuri/blob/main/docs/release.md)を確認してください。
+CLI・aggregate Plugin の公開と Git Marketplace Plugin の更新は、別々の段階で検証します。Git Plugin は公開確認済みの CLI に固定され、次の候補版を準備している間もその版を利用します。公開状況は[リリースガイド](https://github.com/hokupod/utsuri/blob/main/docs/release.md)を確認してください。
 
-現在の公開 Git ソースには、対応する `@utsu-ri/cli` release が公開済みで、その完全な SemVer に固定された検証済み Git Plugin が含まれます。以下のコマンドはその公開ソースをインストールし、Plugin は対応する完全な SemVer だけを実行します。`latest`、version range、別 package へ置き換えないでください。
+以下のコマンドは Git Marketplace Plugin をインストールします。対応する完全な SemVer の CLI だけを実行し、`latest`、version range、別 package へは置き換えません。
 
 - [runtime compatibility record](https://github.com/hokupod/utsuri/blob/main/docs/compatibility/plugin-runtime.json) に記載された Codex または Claude Code release。
 - macOS または Linux、Node.js 22 以降、および MCP 初回起動に使う `npx`。

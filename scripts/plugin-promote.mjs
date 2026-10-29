@@ -89,7 +89,7 @@ export async function runPluginPromotion(options, dependencies = {}) {
   const finalizeUpdates = dependencies.finalizeUpdates ?? finalizeCommittedUpdates;
   const log = dependencies.log ?? console.log;
 
-  const current = verifyDistribution({ root, allowRootReleaseSkew: true });
+  const current = verifyDistribution({ root });
   const currentIdentity = readDistributionIdentity(root);
   if (
     current.cliVersion !== currentIdentity.cliVersion ||
@@ -145,7 +145,7 @@ export async function runPluginPromotion(options, dependencies = {}) {
     let rollbackError;
     try {
       restoreUpdates(committed);
-      verifyDistribution({ root, allowRootReleaseSkew: true });
+      verifyDistribution({ root });
     } catch (error) {
       rollbackError = error;
     }

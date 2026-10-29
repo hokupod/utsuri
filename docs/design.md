@@ -6,16 +6,16 @@
 - **Plugin name**: `utsuri`
 - **Skill name**: `utsuri-review`
 - **CLI name**: `utsuri`
-- **Document version**: 4.0
+- **Document version**: 4.1
 - **Created**: 2026-08-06
-- **Last updated**: 2026-10-05
+- **Last updated**: 2026-10-29
 - **Language**: English (canonical)
 - **Targets**: Codex / Claude Code / local CLI / CI
 - **Implementation language**: TypeScript
 - **Development environment**: Bun
 - **Report UI**: a static application built with Svelte
-- **Maintenance publication**: synchronized `v0.3.6` completed protected npm/GitHub publication, Plugin promotion, and isolated public Git installs on Codex `0.151.0` and Claude Code `2.1.251` on 2026-10-05; see `docs/release.md` and `docs/compatibility/plugin-runtime.json`.
-- **v4.0 changes**: record protected `v0.3.6` publication with candidate-matching assets and provenance, promoted aggregate Plugin, and isolated public Git installation verification on both hosts.
+- **Maintenance publication**: CLI/aggregate `v0.3.7` is a source candidate for the reviewed dependency and toolchain updates; the unchanged Git Plugin remains pinned to the verified published CLI until post-publication promotion. Verified public availability remains at `v0.3.6` until protected publication, Plugin promotion, and live installation verification complete.
+- **v4.1 changes**: prepare a two-phase maintenance release with immutable previous public Git inputs and a required public-pin CI smoke; retain the recorded `v0.3.6` publication evidence until the new release gates pass.
 
 ---
 
@@ -938,6 +938,7 @@ Development source lives under `packages/`. At release time, bundle it as one No
 - Assemble all four helper packages, the private-staged `@utsu-ri/cli`, and the shared Plugin into one distribution candidate. Its aggregate manifest binds every file hash and executable mode; a missing target, source mismatch, tamper, symlink, or normal-rename fallback rejects the candidate.
 - Carry helper proofs and Plugin files between workflow jobs as regular Actions-artifact entries rather than downloaded tarballs. Revalidate hashes before restoring only manifest-declared `0644` / `0755` modes, and create the promoted archive only after the exact restored tree passes all promotion gates.
 - Keep `.github/workflows/distribution-candidate.yml` manually dispatchable and callable without registry-write or OIDC permission. It must bind the five npm tarballs and deterministic Plugin archive in `release-assets.json` and `SHA256SUMS` after the four-platform candidate passes.
+- Stage a newer stable CLI/aggregate candidate while preserving the exact previous public Git Plugin preimage, catalogs, and distribution identity against its recorded source in main. Verify the Git pin independently through native public-package smoke. Advance its manifests, pin, and generated Skill only after exact CLI publication is verified; the promotion source commit may follow the CLI tag.
 - Run `.github/workflows/release.yml` only for an annotated `v<version>` tag at the exact `main` commit. Require current CHANGELOG and successful exact-main CI, public-history PII/secret scans, the protected `release` environment, OIDC trusted publishing without an npm token, exact registry integrity for recovery, native published-package smoke, and draft-first GitHub Release publication. The complete `v0.3.0`, `v0.3.1`, and `v0.3.2` package sets and GitHub Releases were published through this workflow on 2026-08-21, 2026-08-24, and 2026-08-31 respectively and verified against registry integrity, Release assets, native package smoke, promoted-Plugin checks, and live Git Plugin installation. Treat a missing package identity or trusted-publisher configuration as release drift and never fall back to a manual registry write.
 - Before Plugin promotion, run native `npx` and `bunx` against the exact published SemVer in isolated caches before Safe-chain or dependency setup. Parse one strict JSON line, reject notices or fallback, use a failing ambient-command sentinel, and terminate the complete process group on timeout.
 - The product name `Utsuri`, CLI name `utsuri`, and Skill name `utsuri-review` remain fixed; changing the package identifier requires an explicit design change.
@@ -970,7 +971,7 @@ Development source lives under `packages/`. At release time, bundle it as one No
 ```json
 {
   "name": "utsuri",
-  "version": "0.3.6",
+  "version": "0.3.7",
   "description": "Evidence-based visual change review for Codex and Claude Code",
   "skills": "./skills/"
 }
@@ -982,7 +983,7 @@ Development source lives under `packages/`. At release time, bundle it as one No
 {
   "name": "utsuri",
   "displayName": "Utsuri",
-  "version": "0.3.6",
+  "version": "0.3.7",
   "description": "Evidence-based visual change review for Codex and Claude Code",
   "author": {
     "name": "hokupod",
@@ -4804,7 +4805,7 @@ The implementation keeps the preview separate from storage, writes inbox/batch/c
 
 A feature outside this definition is accepted only when it makes review decisions faster, strengthens the relationship between a question and its evidence, increases evidence reliability, or improves security.
 
-The synchronized public CLI and Git Plugin version `0.3.6` satisfies this definition through local immutable reports, mutable review generations, and a same-project/same-session Marketplace MCP broker, with `return-to-session` as the host-neutral feedback path. The `v0.3.6` tag publication, Plugin promotion, and public Git smoke were separately authorized and verified; every later version requires new authorization. Direct same-session submission and a shared remote review store remain optional future capabilities.
+The verified public CLI and Git Plugin version `0.3.6` satisfies this definition through local immutable reports, mutable review generations, and a same-project/same-session Marketplace MCP broker, with `return-to-session` as the host-neutral feedback path. The `v0.3.6` tag publication, Plugin promotion, and public Git smoke were separately authorized and verified; every later version requires new authorization. Direct same-session submission and a shared remote review store remain optional future capabilities.
 
 ---
 
@@ -4812,6 +4813,7 @@ The synchronized public CLI and Git Plugin version `0.3.6` satisfies this defini
 
 | Entry ID                                   | Version | Date       | Change                                                                                                                                                                                                                                                                                                                                                                                                                                                    |
 | ------------------------------------------ | ------: | ---------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| design-v4.1-v0.3.7-maintenance             |     4.1 | 2026-10-29 | Prepare reviewed dependency and toolchain updates with synchronized CLI, Plugin, and exact MCP pins; retain prior public availability until all release gates complete.                                                                                                                                                                                                                                                                                   |
 | design-v4.0-v0.3.6-public-release          |     4.0 | 2026-10-05 | Record protected publication, candidate-matching npm and GitHub assets, source-bound provenance, promoted aggregate Plugin, and isolated public Git installs on both hosts.                                                                                                                                                                                                                                                                               |
 | design-v3.9-v0.3.6-review-workflow         |     3.9 | 2026-10-05 | Prepare synchronized feedback, range-comment and verification-evidence release; retain prior verified availability until publication and live Plugin gates complete.                                                                                                                                                                                                                                                                                      |
 | design-v3.8-v0.3.5-public-release          |     3.8 | 2026-09-17 | Record protected publication, candidate-matching assets and provenance, promoted aggregate Plugin, and isolated public Git installation verification.                                                                                                                                                                                                                                                                                                     |

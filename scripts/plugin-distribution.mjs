@@ -12,6 +12,7 @@ import {
 } from "node:fs";
 import { basename, dirname, isAbsolute, join, relative, resolve, sep } from "node:path";
 import { fileURLToPath } from "node:url";
+import { verifyPublishedPluginPreimage } from "./plugin-release-stage.mjs";
 
 export const repositoryRoot = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 
@@ -111,14 +112,25 @@ export function transformCanonicalToPlugin(relativePath, content, cliVersion) {
 
 export function expectedPluginSkill(root = repositoryRoot, cliVersion) {
   const paths = distributionPaths(root);
+  return expectedSkillFromContents(
+    new Map(
+      canonicalSkillFiles.map((name) => [
+        name,
+        readRegularFile(join(paths.canonicalSkill, name), `Canonical Skill ${name}`)
+      ])
+    ),
+    cliVersion
+  );
+}
+
+function expectedSkillFromContents(contents, cliVersion) {
   const files = new Map();
   const sourceDigests = {};
   const generatedDigests = {};
   const aggregate = createHash("sha256");
 
   for (const relativePath of canonicalSkillFiles) {
-    const absolutePath = join(paths.canonicalSkill, relativePath);
-    const bytes = readRegularFile(absolutePath, `Canonical Skill ${relativePath}`);
+    const bytes = contents.get(relativePath);
     const generated = transformCanonicalToPlugin(relativePath, bytes, cliVersion);
     const sourceSha256 = sha256(bytes);
     const generatedSha256 = sha256(generated);
@@ -153,6 +165,11 @@ export function expectedPluginSkill(root = repositoryRoot, cliVersion) {
 export function syncPluginSkill(root = repositoryRoot) {
   const paths = distributionPaths(root);
   const cliVersion = readDistributionIdentity(root).cliVersion;
+  if (JSON.parse(readFileSync(paths.packageManifest, "utf8")).version !== cliVersion) {
+    throw new Error(
+      "Keep the published Git Plugin unchanged during CLI staging; use verified post-publication promotion"
+    );
+  }
   const expected = expectedPluginSkill(root, cliVersion);
   const parent = dirname(paths.pluginSkill);
   mkdirSync(parent, { recursive: true });
@@ -228,6 +245,22 @@ export function verifyPluginDistribution(options = {}) {
   validatePluginManifests(codexManifest, claudeManifest, paths, failures);
   const codexVersion = validateCodexMcp(codexMcp, failures);
   const claudeVersion = validateClaudeMcp(claudeManifest, failures);
+  let publishedStage;
+  if (codexVersion && packageManifest?.version !== codexVersion) {
+    try {
+      publishedStage = verifyPublishedPluginPreimage({
+        root,
+        repositoryRoot,
+        version: codexVersion,
+        targetVersion: packageManifest?.version,
+        compatibility,
+        canonicalSkillFiles
+      });
+    } catch (error) {
+      failures.push(errorMessage(error));
+    }
+  }
+
   validateVersions(
     {
       packageManifest,
@@ -240,17 +273,17 @@ export function verifyPluginDistribution(options = {}) {
       claudeVersion
     },
     failures,
-    { allowRootReleaseSkew: options.allowRootReleaseSkew === true }
+    { verifiedPublishedStage: Boolean(publishedStage) }
   );
-  validateDistributionSafety(paths, failures, transactionArtifacts);
+  validateDistributionSafety(paths, failures, transactionArtifacts, publishedStage?.canonicalIcon);
 
+  let expectedSkill;
   if (codexVersion) {
     try {
-      verifyPluginSkill(
-        paths.pluginSkill,
-        expectedPluginSkill(root, codexVersion),
-        transactionArtifacts
-      );
+      expectedSkill = publishedStage
+        ? expectedSkillFromContents(publishedStage.canonicalSkill, codexVersion)
+        : expectedPluginSkill(root, codexVersion);
+      verifyPluginSkill(paths.pluginSkill, expectedSkill, transactionArtifacts);
     } catch (error) {
       failures.push(errorMessage(error));
     }
@@ -270,7 +303,9 @@ export function verifyPluginDistribution(options = {}) {
     packageName: cliPackageName,
     cliVersion: codexVersion,
     sourcePath: "./plugins/utsuri",
-    canonicalSha256: expectedPluginSkill(root, codexVersion).inventory.canonicalSha256
+    canonicalSha256: expectedSkill.inventory.canonicalSha256,
+    sourceCliVersion: packageManifest.version,
+    publicationStage: publishedStage ? "cli-candidate-with-published-git-plugin" : "synchronized"
   };
 }
 
@@ -489,7 +524,7 @@ function validateVersions(values, failures, options = {}) {
     values.packageManifest?.version,
     values.cliManifest?.version
   ];
-  if (!options.allowRootReleaseSkew && new Set(releaseVersions).size !== 1) {
+  if (!options.verifiedPublishedStage && new Set(releaseVersions).size !== 1) {
     failures.push("Plugin, CLI, and root versions are not synchronized");
   }
   if (values.cliManifest?.name !== cliPackageName) {
@@ -510,11 +545,17 @@ function validateVersions(values, failures, options = {}) {
   }
 }
 
-function validateDistributionSafety(paths, failures, transactionArtifacts = new Set()) {
+function validateDistributionSafety(
+  paths,
+  failures,
+  transactionArtifacts = new Set(),
+  publishedIcon
+) {
   const pluginEntries = listTreeFiles(paths.pluginRoot, failures, transactionArtifacts);
   let canonicalIcon;
   try {
-    canonicalIcon = readRegularFile(paths.canonicalIcon, "Canonical product illustration");
+    canonicalIcon =
+      publishedIcon ?? readRegularFile(paths.canonicalIcon, "Canonical product illustration");
   } catch (error) {
     failures.push(`Canonical product illustration: ${errorMessage(error)}`);
   }

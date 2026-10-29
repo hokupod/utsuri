@@ -25,9 +25,9 @@ Use it when a code or UI change needs a durable report, a clear list of review g
 <!-- availability:git-marketplace-cli-and-plugin-public -->
 <!-- support-contract:macos-linux-windows-unsupported -->
 
-The current release has passed publication and isolated Git Plugin installation checks on both supported hosts; see the evidence in the [release guide](https://github.com/hokupod/utsuri/blob/main/docs/release.md).
+CLI/aggregate publication and Git Marketplace Plugin updates are verified in separate stages. The Git Plugin stays pinned to its verified published CLI while the next candidate is prepared. See the [release guide](https://github.com/hokupod/utsuri/blob/main/docs/release.md) for current availability.
 
-The current public Git source contains a verified Git Plugin whose exact `@utsu-ri/cli` release is published. The commands below install that public source; the Plugin executes only its matching complete SemVer. Do not substitute `latest`, a range, or another package.
+The commands below install the Git Marketplace Plugin. It executes only its matching complete CLI SemVer, never `latest`, a range, or another package.
 
 - A Codex or Claude Code release listed in the [runtime compatibility record](https://github.com/hokupod/utsuri/blob/main/docs/compatibility/plugin-runtime.json).
 - macOS or Linux, Node.js 22 or later, and `npx` for first MCP startup.

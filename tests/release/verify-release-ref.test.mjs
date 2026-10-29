@@ -6,6 +6,7 @@ import path from "node:path";
 import { test } from "node:test";
 import { fileURLToPath } from "node:url";
 import { validateReleaseMetadata, verifyReleaseRef } from "../../scripts/verify-release-ref.mjs";
+import { verifyPluginDistribution } from "../../scripts/plugin-distribution.mjs";
 
 const repositoryRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../..");
 const validRoot = { version: "0.1.0" };
@@ -68,20 +69,37 @@ test("current repository metadata is ready for its release tag", async () => {
   ]);
   const utsuriMarketplacePlugin = claudeMarketplace.plugins.find(({ name }) => name === "utsuri");
 
+  // Each surface is internally synchronized. A staged public Git surface must also
+  // pass the immutable published-source check; it is not an arbitrary version skew.
+  const gitDistribution = verifyPluginDistribution({ root: repositoryRoot });
+  assert.equal(gitDistribution.sourceCliVersion, rootManifest.version);
+  assert.equal(gitDistribution.pluginVersion, gitDistribution.cliVersion);
   for (const [source, version] of [
     [".codex-plugin/plugin.json", rootCodexPlugin.version],
-    [".claude-plugin/plugin.json", rootClaudePlugin.version],
+    [".claude-plugin/plugin.json", rootClaudePlugin.version]
+  ]) {
+    assert.equal(
+      version,
+      rootManifest.version,
+      `${source} must match the CLI/aggregate release version`
+    );
+  }
+  for (const [source, version] of [
     ["plugins/utsuri/.codex-plugin/plugin.json", bundledCodexPlugin.version],
     ["plugins/utsuri/.claude-plugin/plugin.json", bundledClaudePlugin.version],
     [".claude-plugin/marketplace.json metadata", claudeMarketplace.metadata.version],
     [".claude-plugin/marketplace.json utsuri entry", utsuriMarketplacePlugin?.version]
   ]) {
-    assert.equal(version, rootManifest.version, `${source} must match the release version`);
+    assert.equal(
+      version,
+      gitDistribution.pluginVersion,
+      `${source} must match the verified Git Plugin version`
+    );
   }
 
   const expectedMcpArguments = [
     "-y",
-    `--package=@utsu-ri/cli@${rootManifest.version}`,
+    `--package=@utsu-ri/cli@${gitDistribution.cliVersion}`,
     "utsuri",
     "mcp"
   ];

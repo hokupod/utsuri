@@ -16,6 +16,7 @@ import {
 import { arch, platform, release, tmpdir } from "node:os";
 import { delimiter, dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
+import { buildPluginMcpArgs, readDistributionIdentity } from "./plugin-distribution.mjs";
 
 const repositoryRoot = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 const exactVersionPattern =
@@ -511,7 +512,7 @@ function writeLocalNpxShim(path, cli, observation) {
   const source = `#!/usr/bin/env node
 const { appendFileSync } = require("node:fs");
 const { spawn } = require("node:child_process");
-const expected = ["-y", "--package=@utsu-ri/cli@0.3.6", "utsuri", "mcp"];
+const expected = ${JSON.stringify(buildPluginMcpArgs(readDistributionIdentity(repositoryRoot).cliVersion))};
 if (JSON.stringify(process.argv.slice(2)) !== JSON.stringify(expected)) process.exit(64);
 appendFileSync(${JSON.stringify(observation)}, JSON.stringify({
   kind: "launch",

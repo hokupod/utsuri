@@ -36,6 +36,10 @@ The hook launcher re-enters the pinned Nix shell and fails closed instead of usi
 
 Do not add Safe-chain to `PATH`, configure an executable override, run a lifecycle install, download a browser, pull a container image, or upload an artifact from Utsuri runtime code. Native JSON and NDJSON protocol probes intentionally run outside Safe-chain so wrapper output cannot contaminate stdout.
 
+## Two-phase release preparation
+
+Keep CLI/aggregate candidates separate from the verified public Git Plugin until npm publication succeeds. `plugin:verify` binds a staged Git surface to the unchanged public verification record, annotated release tag, and exact source bytes/modes reachable from `origin/main`. Fetch main and release tags before checking a staged source checkout. Do not regenerate or advance its previous Git Skill/pin during preparation. After publication, the existing promotion command verifies the exact public CLI before its atomic manifest/pin/Skill transaction. The resulting PR must pass the required native public-pin CI smoke and ordinary protected merge. See `docs/release.md`.
+
 ## Source-checkout CLI workflow
 
 The source checkout contains a bundled development CLI. A minimal code-review fixture can be exercised with:
@@ -128,14 +132,14 @@ Utsuri deliberately maintains two different surfaces:
 - the aggregate Plugin in `.codex-plugin/`, `.claude-plugin/`, and `skills/`, which contains the bundled CLI, report UI, schemas, metadata, and native helper in a release candidate; and
 - the Git Marketplace Plugin in `plugins/utsuri/`, which contains only manifests and generated Skill documentation. It starts an exact published npm CLI and must never contain compiled CLI code, native helpers, report assets, SBOM files, or `ai/`.
 
-Do not edit `plugins/utsuri/skills/utsuri-review/**` by hand. Change the canonical root Skill or its references, then regenerate and verify the transform:
+Do not edit `plugins/utsuri/skills/utsuri-review/**` by hand. Outside staged CLI preparation, change the canonical root Skill or its references, then regenerate and verify the transform. During staged preparation, preserve the published Git Plugin; synchronize its Skill only through post-publication promotion:
 
 ```bash
 node scripts/plugin-distribution.mjs --sync-skill
 node scripts/verify-plugin.mjs
 ```
 
-The root aggregate, CLI, Git Plugin, and both MCP package pins must use one complete exact SemVer. Codex forwards only `CODEX_THREAD_ID`. Claude uses its host-provided project and session inputs and clears `CODEX_THREAD_ID` to prevent nested-host ambiguity.
+Outside staged CLI preparation, the root aggregate, CLI, Git Plugin, and both MCP package pins must use one complete exact SemVer. Codex forwards only `CODEX_THREAD_ID`. Claude uses its host-provided project and session inputs and clears `CODEX_THREAD_ID` to prevent nested-host ambiguity.
 
 Promotion defaults to a no-write dry-run and first verifies the exact published CLI through native `npx` and `bunx` strict JSON and MCP NDJSON. Its preflight permits only synchronized root/CLI package manifests at the target with one internally consistent previous Plugin version; the post-write verifier requires every version and pin to match:
 
