@@ -78,10 +78,12 @@ function restorePublishedSurface(root: string): void {
   for (const entry of entries) {
     const match = /^(100644|100755) blob ([a-f0-9]{40})\t(.+)$/u.exec(entry);
     if (!match) throw new Error("Published fixture requires regular Git blobs");
-    const destination = join(root, match[3]);
+    const [, mode, objectId, relativePath] = match;
+    if (!mode || !objectId || !relativePath) throw new Error("Incomplete published fixture entry");
+    const destination = join(root, relativePath);
     mkdirSync(dirname(destination), { recursive: true });
-    writeFileSync(destination, git(["cat-file", "blob", match[2]]), {
-      mode: Number.parseInt(match[1].slice(3), 8)
+    writeFileSync(destination, git(["cat-file", "blob", objectId]), {
+      mode: Number.parseInt(mode.slice(3), 8)
     });
   }
   mutateJson(root, "docs/compatibility/plugin-runtime.json", (value) => {
