@@ -1,7 +1,7 @@
 # Utsuri release and distribution guide
 
-- **Current status**: CLI and aggregate Plugin `0.3.7` published and verified; tracked Git Plugin `0.3.7` promotion awaits protected merge and live installation verification
-- **Public availability**: verified `0.3.7` npm packages and GitHub Release; the latest completed public Git installation record remains `0.3.6` until the promoted source is checked
+- **Current status**: CLI, aggregate Plugin, and Git Marketplace Plugin `0.3.7` published and verified
+- **Public availability**: verified `0.3.7` npm packages, GitHub Release, public Git installation on Codex/Claude Code, and the installed Mac Codex Plugin
 - **Version source**: root `package.json` for CLI/aggregate candidates; exact Git Plugin manifests and `distribution` identity for the public Git surface
 - **Publisher**: `hokupod`
 - **npm maintainer**: `hokupod-npm`
@@ -32,7 +32,7 @@ The previous Git Plugin is checked against its own published canonical Skill and
 
 After the target CLI is publicly verified, the promotion workflow and local `plugin-promote.mjs --version VERSION --write` transaction verify that exact public version before changing Git Plugin manifests, pin, generated Skill, catalogs, and distribution identity together. The source-change PR requires fresh CI and another exact-public-pin smoke. Public Git verification then records the promoted source commit, which may follow the annotated CLI release tag. Final synchronized availability requires both phases and live installation verification; no source change alone authorizes publication or promotion.
 
-The published CLI/root aggregate and tracked Git Plugin version are `0.3.7`; both tracked MCP pins are exactly `@utsu-ri/cli@0.3.7`. CLI publication is verified. The Git promotion still requires its protected source merge and live installation checks; the historical `0.3.6` Git installation record is retained until those checks succeed. Complete SemVer is mandatory; `latest`, tags, ranges, and workspace specifiers fail verification.
+The published CLI/root aggregate and tracked Git Plugin version are `0.3.7`; both tracked MCP pins are exactly `@utsu-ri/cli@0.3.7`. CLI publication and live Git installation are verified; the public Git record binds the promoted source commit separately from the immutable CLI release tag. Complete SemVer is mandatory; `latest`, tags, ranges, and workspace specifiers fail verification.
 
 ## Package identities
 
@@ -144,14 +144,17 @@ Commit, push, pull request, and merge remain further separate approvals. Only af
 
 No post-publication smoke may filter wrapper output to make invalid JSON appear valid.
 
-## Published CLI `0.3.7`; Git promotion verification pending
+## Verified synchronized `0.3.7` release
 
 The 2026-10-29 CLI publication used annotated tag `v0.3.7` at source commit `695a0f38dca2911fef94db9b7e8deddf5755981e`:
 
 - [Exact-main CI](https://github.com/hokupod/utsuri/actions/runs/40854706950) and the [four-platform candidate](https://github.com/hokupod/utsuri/actions/runs/40855226464) succeeded, including isolated exact-tarball installs under Node 22 and 24.
 - The [protected Release workflow](https://github.com/hokupod/utsuri/actions/runs/40855818221) published all five packages through existing OIDC settings, passed native published `npx`/`bunx` JSON and MCP checks, and published [GitHub Release `v0.3.7`](https://github.com/hokupod/utsuri/releases/tag/v0.3.7).
 - Independent verification matched all five public tarball bytes and integrities, registry signatures, and Sigstore SLSA provenance to that tag/source/workflow; all nine public Release assets matched the approved candidate.
-- [Post-publication promotion verification](https://github.com/hokupod/utsuri/actions/runs/40858399337) passed. The tracked Git Plugin is promoted to the public exact pin, but public Git-source host installation checks remain pending until its source PR is normally merged and main CI succeeds.
+- [Post-publication promotion verification](https://github.com/hokupod/utsuri/actions/runs/40858399337) passed. [Promotion PR #126](https://github.com/hokupod/utsuri/pull/126) was normally merged to `7aca81a1f90cbef50fde2f51c7952f56cfa3f2f0`; its [exact-main CI](https://github.com/hokupod/utsuri/actions/runs/40862961328) passed all required checks.
+- Isolated public Git-source installations at that promoted source passed the recorded lifecycle contract on Codex `0.165.0` and Claude Code `2.1.312`: exact pin, installation/enabled state, MCP discovery/connection, and disabled/removed behavior. Codex used the [documented App Server configuration API](https://developers.openai.com/codex/app-server) only inside the isolated configuration; no direct configuration-file or database edits were used. Synthetic host session inputs were confined to temporary workspaces, with no model inference or paid API test. These checks do not claim a real model-driven conversation round trip.
+- The Mac's existing Codex Plugin was upgraded through `codex plugin marketplace upgrade utsuri --json`. Its enabled state and policies were preserved, its exact CLI pin is `@utsu-ri/cli@0.3.7`, and a new MCP process reported broker version `0.3.7` with all six bounded tools and no discovery error. Existing chats and MCP processes were not forcibly stopped.
+- The formal public macOS arm64 tarballs also passed an offline isolated install, native-helper architecture/proof validation, exact version JSON, report finalization, and strict report validation. The temporary installations and isolated host configurations were removed.
 
 ## Verified synchronized `0.3.3` release
 
