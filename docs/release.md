@@ -1,7 +1,7 @@
 # Utsuri release and distribution guide
 
-- **Current status**: CLI and aggregate Plugin `0.3.7` source candidate; verified Git Plugin remains `0.3.6` until post-publication promotion
-- **Public availability**: verified `0.3.6` npm packages, GitHub Release, and public Git Marketplace Plugin
+- **Current status**: CLI and aggregate Plugin `0.3.7` published and verified; tracked Git Plugin `0.3.7` promotion awaits protected merge and live installation verification
+- **Public availability**: verified `0.3.7` npm packages and GitHub Release; the latest completed public Git installation record remains `0.3.6` until the promoted source is checked
 - **Version source**: root `package.json` for CLI/aggregate candidates; exact Git Plugin manifests and `distribution` identity for the public Git surface
 - **Publisher**: `hokupod`
 - **npm maintainer**: `hokupod-npm`
@@ -17,7 +17,7 @@ Dependency maintenance may repair reviewed generated artifacts using the bounded
 
 `.github/workflows/release.yml` runs only after an operator pushes an annotated `v*` tag. It requires the tag to match the root and CLI versions and to point to the exact `origin/main` commit. Registry writes are confined to its protected `release` environment and use GitHub OIDC trusted publishing without an npm token.
 
-All five package identities now exist publicly through `0.3.6`; release `0.3.6` was published only through the protected tag workflow. Tag creation and release-environment approval remain separate operator actions. A missing package identity or trusted-publisher configuration is release drift: stop and restore the protected configuration instead of falling back to a manual publish.
+All five package identities now exist publicly through `0.3.7`; release `0.3.7` was published only through the protected tag workflow. Tag creation and release-environment approval remain separate operator actions. A missing package identity or trusted-publisher configuration is release drift: stop and restore the protected configuration instead of falling back to a manual publish.
 
 ## Two distribution surfaces and authorization
 
@@ -32,7 +32,7 @@ The previous Git Plugin is checked against its own published canonical Skill and
 
 After the target CLI is publicly verified, the promotion workflow and local `plugin-promote.mjs --version VERSION --write` transaction verify that exact public version before changing Git Plugin manifests, pin, generated Skill, catalogs, and distribution identity together. The source-change PR requires fresh CI and another exact-public-pin smoke. Public Git verification then records the promoted source commit, which may follow the annotated CLI release tag. Final synchronized availability requires both phases and live installation verification; no source change alone authorizes publication or promotion.
 
-The current CLI/root aggregate candidate is `0.3.7`. The public Git Plugin and both MCP pins remain exactly `@utsu-ri/cli@0.3.6`, with verified public availability at `0.3.6`. Complete SemVer is mandatory; `latest`, tags, ranges, and workspace specifiers fail verification.
+The published CLI/root aggregate and tracked Git Plugin version are `0.3.7`; both tracked MCP pins are exactly `@utsu-ri/cli@0.3.7`. CLI publication is verified. The Git promotion still requires its protected source merge and live installation checks; the historical `0.3.6` Git installation record is retained until those checks succeed. Complete SemVer is mandatory; `latest`, tags, ranges, and workspace specifiers fail verification.
 
 ## Package identities
 
@@ -143,6 +143,15 @@ Ordinary `plugin:verify` validates the staged preimage against the recorded publ
 Commit, push, pull request, and merge remain further separate approvals. Only after the exact promoted source is merged and publicly reachable may an operator run live Git-source installation in isolated Codex and Claude configurations. Record the exact commit, host versions, package identity, and sanitized boolean results. Never copy raw session values, credentials, local paths, or support correspondence into repository evidence.
 
 No post-publication smoke may filter wrapper output to make invalid JSON appear valid.
+
+## Published CLI `0.3.7`; Git promotion verification pending
+
+The 2026-10-29 CLI publication used annotated tag `v0.3.7` at source commit `695a0f38dca2911fef94db9b7e8deddf5755981e`:
+
+- [Exact-main CI](https://github.com/hokupod/utsuri/actions/runs/40854706950) and the [four-platform candidate](https://github.com/hokupod/utsuri/actions/runs/40855226464) succeeded, including isolated exact-tarball installs under Node 22 and 24.
+- The [protected Release workflow](https://github.com/hokupod/utsuri/actions/runs/40855818221) published all five packages through existing OIDC settings, passed native published `npx`/`bunx` JSON and MCP checks, and published [GitHub Release `v0.3.7`](https://github.com/hokupod/utsuri/releases/tag/v0.3.7).
+- Independent verification matched all five public tarball bytes and integrities, registry signatures, and Sigstore SLSA provenance to that tag/source/workflow; all nine public Release assets matched the approved candidate.
+- [Post-publication promotion verification](https://github.com/hokupod/utsuri/actions/runs/40858399337) passed. The tracked Git Plugin is promoted to the public exact pin, but public Git-source host installation checks remain pending until its source PR is normally merged and main CI succeeds.
 
 ## Verified synchronized `0.3.3` release
 
