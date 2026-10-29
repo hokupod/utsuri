@@ -132,14 +132,14 @@ Utsuri deliberately maintains two different surfaces:
 - the aggregate Plugin in `.codex-plugin/`, `.claude-plugin/`, and `skills/`, which contains the bundled CLI, report UI, schemas, metadata, and native helper in a release candidate; and
 - the Git Marketplace Plugin in `plugins/utsuri/`, which contains only manifests and generated Skill documentation. It starts an exact published npm CLI and must never contain compiled CLI code, native helpers, report assets, SBOM files, or `ai/`.
 
-Do not edit `plugins/utsuri/skills/utsuri-review/**` by hand. Change the canonical root Skill or its references, then regenerate and verify the transform:
+Do not edit `plugins/utsuri/skills/utsuri-review/**` by hand. Outside staged CLI preparation, change the canonical root Skill or its references, then regenerate and verify the transform. During staged preparation, preserve the published Git Plugin; synchronize its Skill only through post-publication promotion:
 
 ```bash
 node scripts/plugin-distribution.mjs --sync-skill
 node scripts/verify-plugin.mjs
 ```
 
-The root aggregate, CLI, Git Plugin, and both MCP package pins must use one complete exact SemVer. Codex forwards only `CODEX_THREAD_ID`. Claude uses its host-provided project and session inputs and clears `CODEX_THREAD_ID` to prevent nested-host ambiguity.
+Outside staged CLI preparation, the root aggregate, CLI, Git Plugin, and both MCP package pins must use one complete exact SemVer. Codex forwards only `CODEX_THREAD_ID`. Claude uses its host-provided project and session inputs and clears `CODEX_THREAD_ID` to prevent nested-host ambiguity.
 
 Promotion defaults to a no-write dry-run and first verifies the exact published CLI through native `npx` and `bunx` strict JSON and MCP NDJSON. Its preflight permits only synchronized root/CLI package manifests at the target with one internally consistent previous Plugin version; the post-write verifier requires every version and pin to match:
 
