@@ -810,6 +810,12 @@ test("tab duplication copies session storage; 401/403 clears only the rejected t
       fixture.report.reportId
     );
     for (const status of [401, 403]) {
+      // The heading renders before capability restoration finishes. Wait for the
+      // popup's event subscription so rejection targets the reload, not startup.
+      const readyPromise = page.context().waitForEvent("request", {
+        predicate: (request) =>
+          new URL(request.url()).pathname === "/api/v1/events" && request.frame().page() !== page
+      });
       const popupPromise = page.waitForEvent("popup");
       await page.evaluate(() => window.open(location.href, "_blank"));
       const popup = await popupPromise;
@@ -817,6 +823,7 @@ test("tab duplication copies session storage; 401/403 clears only the rejected t
       expect(
         await popup.evaluate((storageKey) => sessionStorage.getItem(storageKey) !== null, key)
       ).toBe(true);
+      await readyPromise;
       await popup.route("**/api/v1/review-state", (route) =>
         route.fulfill({
           status,
