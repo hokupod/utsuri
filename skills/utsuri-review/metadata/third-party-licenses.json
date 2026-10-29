@@ -1,14 +1,14 @@
 {
   "schemaVersion": "1.2",
-  "dependencyBaselineSha256": "e768ca0eacac675025134e4f8a51a748207c579ce924ebb430e7cab278e21435",
-  "productionDependencySha256": "284dfc4efce6a33446e2b37e1533c33558133b7e30a4207b2a7f5c7b364813c5",
+  "dependencyBaselineSha256": "3c88bcd7266c3d5955ce8500e0370f04425fa60eb9afc6013252f733f734dafb",
+  "productionDependencySha256": "4a38a06e16af461ad2d08bc9991b6557c53983f7636e4269ebf62908946231d6",
   "packages": [
     {
-      "checksum": "SHA256:25842df8168426193a350ba376fdfb20ba7b0dfd6c6e11e446c4c6175e874212",
+      "checksum": "SHA256:0e6880e19c6d68c19b74310f5c499115cad9bc3b76b44ffcc213ce822e19203d",
       "license": "AGPL-3.0-or-later",
       "name": "utsuri-workspace",
       "packageVerificationCode": null,
-      "version": "0.3.6"
+      "version": "0.3.7"
     },
     {
       "checksum": "SHA512:4e16e58be3a53a3fa230f60505505f2773a60809da4b2367e0cd6fcfd4fa1a46b926df5b6bf1c8479ea3a32eb9b58ea4c7f142179557341f35f58eff194ac118",

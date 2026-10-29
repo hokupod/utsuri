@@ -7,6 +7,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.3.7] - 2026-10-29
+
+### Changed
+
+- Update bundled axe-core to `4.14.0`, Playwright to `1.64.1`, and pixelmatch
+  to `8.0.0`. Pixelmatch now uses OKLab/HyAB color distance for image comparison.
+- Update the report UI toolchain to Svelte `5.57.2` and Vite `7.3.7`, with
+  reviewed bundles, fixtures, dependency baselines, SBOM, and license inventories.
+- Update the primary Bun runtime and declarations to `1.4.4`, Safe-chain to
+  `1.5.26` with independently verified four-platform hashes, and reviewed
+  development dependencies and pinned GitHub Actions.
+- Synchronize CLI, aggregate Plugin, Git Plugin, and exact MCP package pins.
+
 ## [0.3.6] - 2026-10-05
 
 ### Added

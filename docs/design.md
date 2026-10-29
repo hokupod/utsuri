@@ -6,16 +6,16 @@
 - **Plugin name**: `utsuri`
 - **Skill name**: `utsuri-review`
 - **CLI name**: `utsuri`
-- **Document version**: 4.0
+- **Document version**: 4.1
 - **Created**: 2026-08-06
-- **Last updated**: 2026-10-05
+- **Last updated**: 2026-10-29
 - **Language**: English (canonical)
 - **Targets**: Codex / Claude Code / local CLI / CI
 - **Implementation language**: TypeScript
 - **Development environment**: Bun
 - **Report UI**: a static application built with Svelte
-- **Maintenance publication**: synchronized `v0.3.6` completed protected npm/GitHub publication, Plugin promotion, and isolated public Git installs on Codex `0.151.0` and Claude Code `2.1.251` on 2026-10-05; see `docs/release.md` and `docs/compatibility/plugin-runtime.json`.
-- **v4.0 changes**: record protected `v0.3.6` publication with candidate-matching assets and provenance, promoted aggregate Plugin, and isolated public Git installation verification on both hosts.
+- **Maintenance publication**: synchronized `v0.3.7` is a source candidate for the reviewed dependency and toolchain updates. Verified public availability remains at `v0.3.6` until protected publication, Plugin promotion, and live installation verification complete.
+- **v4.1 changes**: prepare the synchronized maintenance release and exact MCP pins; retain the recorded `v0.3.6` publication evidence until the new release gates pass.
 
 ---
 
@@ -970,7 +970,7 @@ Development source lives under `packages/`. At release time, bundle it as one No
 ```json
 {
   "name": "utsuri",
-  "version": "0.3.6",
+  "version": "0.3.7",
   "description": "Evidence-based visual change review for Codex and Claude Code",
   "skills": "./skills/"
 }
@@ -982,7 +982,7 @@ Development source lives under `packages/`. At release time, bundle it as one No
 {
   "name": "utsuri",
   "displayName": "Utsuri",
-  "version": "0.3.6",
+  "version": "0.3.7",
   "description": "Evidence-based visual change review for Codex and Claude Code",
   "author": {
     "name": "hokupod",
@@ -4812,6 +4812,7 @@ The synchronized public CLI and Git Plugin version `0.3.6` satisfies this defini
 
 | Entry ID                                   | Version | Date       | Change                                                                                                                                                                                                                                                                                                                                                                                                                                                    |
 | ------------------------------------------ | ------: | ---------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| design-v4.1-v0.3.7-maintenance             |     4.1 | 2026-10-29 | Prepare reviewed dependency and toolchain updates with synchronized CLI, Plugin, and exact MCP pins; retain prior public availability until all release gates complete.                                                                                                                                                                                                                                                                                   |
 | design-v4.0-v0.3.6-public-release          |     4.0 | 2026-10-05 | Record protected publication, candidate-matching npm and GitHub assets, source-bound provenance, promoted aggregate Plugin, and isolated public Git installs on both hosts.                                                                                                                                                                                                                                                                               |
 | design-v3.9-v0.3.6-review-workflow         |     3.9 | 2026-10-05 | Prepare synchronized feedback, range-comment and verification-evidence release; retain prior verified availability until publication and live Plugin gates complete.                                                                                                                                                                                                                                                                                      |
 | design-v3.8-v0.3.5-public-release          |     3.8 | 2026-09-17 | Record protected publication, candidate-matching assets and provenance, promoted aggregate Plugin, and isolated public Git installation verification.                                                                                                                                                                                                                                                                                                     |
