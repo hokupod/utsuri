@@ -25,7 +25,7 @@ Utsuri 将 Git 变更转换为本地审查，把代码、浏览器截图、结�
 <!-- availability:git-marketplace-cli-and-plugin-public -->
 <!-- support-contract:macos-linux-windows-unsupported -->
 
-此次更新使用已独立验证实际分发文件的公开 CLI。受保护的源码合并完成后，再记录公开 Git 源的实际安装验证。
+公开 CLI 与 Git Plugin 已通过公开源码安装及 MCP 检查。确切版本与验证范围记录在发布指南和 runtime compatibility record 中。
 
 CLI 与 aggregate Plugin 的发布、Git Marketplace Plugin 的更新分两个阶段验证。准备下一个候选版本时，Git Plugin 继续固定使用已验证发布的 CLI。发布状态请查看[发布指南](https://github.com/hokupod/utsuri/blob/main/docs/release.md)。
 

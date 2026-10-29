@@ -14,8 +14,8 @@
 - **Implementation language**: TypeScript
 - **Development environment**: Bun
 - **Report UI**: a static application built with Svelte
-- **Maintenance publication**: CLI/aggregate `v0.3.7` is published with verified package bytes and provenance. The tracked Git Plugin and both pins advance to `v0.3.7` through post-publication promotion; its protected merge and live public Git installation checks remain pending. The previous `v0.3.6` host installation record remains historical evidence until those checks succeed.
-- **v4.1 changes**: publish a two-phase maintenance release with immutable previous public Git inputs and a required public-pin CI smoke; record CLI `v0.3.7` publication separately from the pending promoted Git installation evidence.
+- **Maintenance publication**: CLI/aggregate and Git Plugin `v0.3.7` are published and verified. Package bytes and provenance bind the immutable CLI tag; the public Git record binds the normally merged promotion source. Isolated Codex and Claude Code installation/lifecycle checks passed, and the existing Mac Codex Plugin reports the exact new version through a fresh MCP process.
+- **v4.1 changes**: complete a two-phase maintenance release with immutable previous public Git inputs and a required public-pin CI smoke; record CLI `v0.3.7` publication separately from the verified promoted Git source.
 
 ---
 
