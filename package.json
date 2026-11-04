@@ -64,7 +64,7 @@
     "esbuild": "0.28.2",
     "eslint": "9.39.5",
     "eslint-plugin-svelte": "3.23.1",
-    "globals": "17.13.0",
+    "globals": "17.14.0",
     "json-schema-to-typescript": "15.0.4",
     "prettier": "3.9.10",
     "prettier-plugin-svelte": "4.1.1",
