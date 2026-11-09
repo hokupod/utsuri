@@ -1,7 +1,7 @@
 {
   "schemaVersion": "1.1",
-  "productionDependencySha256": "4a38a06e16af461ad2d08bc9991b6557c53983f7636e4269ebf62908946231d6",
-  "bundledInputHash": "b1bec89ba00c596f9fbd95d20e2cb93cd619b8d079e911aa33cb90cb18340847",
+  "productionDependencySha256": "039c8b222b0c96f943c2a2c6df57cfdd354865bb8dca020d0058f5a618d878c2",
+  "bundledInputHash": "05c6b4c06855c9125835b6335a308cd659e86b0720cd9f4f37ee65a566e36900",
   "packageVerificationCodes": {
     "ajv@8.20.0": "b3f66fdcb0928b7cc72eb9387473318b0620daf0",
     "ajv-formats@3.0.1": "10c29707282bc159f1c8261e00681eef880cd4d6",
@@ -11,7 +11,7 @@
     "fflate@0.8.3": "4b139fac54a9fc5959b61d187c3c6a21f06bcf57",
     "json-schema-traverse@1.0.0": "fa754101884a041b574c6107d37d5479c44e156d",
     "pixelmatch@8.0.0": "64bc39d76bac3864cc28ea29f8526928395031c6",
-    "playwright-core@1.64.1": "8b1133f7d9ba9a286b583c470c48cb9feba8474b",
+    "playwright-core@1.65.0": "ec818e54027d3f15f3580b402c08148964a887f5",
     "pngjs@7.0.0": "fb6ca73f76a553af8a1bd637fef59250fe00faf4",
     "require-from-string@2.0.2": "376512d3467526f7b9d0a6d46123a7b317af0e9c",
     "yaml@2.9.1": "e7e8cb94c4046be23aa8bcd1614d53f77114050a"
