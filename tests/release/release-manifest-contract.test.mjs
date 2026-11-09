@@ -248,7 +248,7 @@ describe("cross-job distribution transport", () => {
       "jobs:",
       "  published-smoke:",
       "    needs: publish",
-      "    runs-on: ubuntu-24.04",
+      "    runs-on: ubuntu-26.04",
       "    steps:",
       "      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0",
       "        with:",
@@ -272,6 +272,12 @@ describe("cross-job distribution transport", () => {
         bunVersion: "1.3.14"
       });
     assert.deepEqual(smokeErrors(workflow), []);
+    assert.match(
+      smokeErrors(workflow.replace("    runs-on: ubuntu-26.04", "    runs-on: ubuntu-24.04")).join(
+        "\n"
+      ),
+      /wrong runner or dependency/u
+    );
     assert.match(
       publishedCliSmokeErrors("release.yml", workflow, {
         nodeVersion: 24,
@@ -315,8 +321,8 @@ describe("cross-job distribution transport", () => {
     assert.match(
       smokeErrors(
         workflow.replace(
-          "    runs-on: ubuntu-24.04",
-          "    runs-on: ubuntu-24.04\n    env: { NODE_OPTIONS: --require ./scripts/inject.cjs }"
+          "    runs-on: ubuntu-26.04",
+          "    runs-on: ubuntu-26.04\n    env: { NODE_OPTIONS: --require ./scripts/inject.cjs }"
         )
       ).join("\n"),
       /job has unapproved keys: env/u
