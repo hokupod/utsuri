@@ -123,7 +123,8 @@ jobs:
         run: nix flake check
       - name: Verify Nix toolchain
         run: |
-          test "$(nix develop --command node --version)" = "v24.16.0"
+          utsuri_nix_node_version="$(nix eval --raw .#checks.x86_64-linux.toolchain.nodeVersion)"
+          test "$(nix develop --command node --version)" = "v${utsuri_nix_node_version}"
           test "$(nix develop --command bun --version)" = "1.3.13"
       - name: Install and verify Safe-chain trust anchor
         run: |
