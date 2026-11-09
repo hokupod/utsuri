@@ -139,7 +139,7 @@ export function publishedCliSmokeErrors(relativePath, text, toolchain) {
       `${relativePath} published-smoke job has unapproved keys: ${extraJobKeys.join(", ")}`
     );
   }
-  if (job.needs !== "publish" || job["runs-on"] !== "ubuntu-24.04") {
+  if (job.needs !== "publish" || job["runs-on"] !== "ubuntu-26.04") {
     errors.push(`${relativePath} published-smoke job has the wrong runner or dependency`);
   }
 
