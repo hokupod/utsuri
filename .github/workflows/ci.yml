@@ -48,7 +48,7 @@ jobs:
           fetch-depth: 0
       - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
         with:
-          node-version: 24
+          node-version: 26
       - uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6 # v2.2.0
         with:
           bun-version: ${{ matrix.bun }}
@@ -107,7 +107,7 @@ jobs:
       - uses: DeterminateSystems/nix-installer-action@3138316df39ed29be04236d7ffc686fa525866aa # v23
       - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
         with:
-          node-version: 24
+          node-version: 26
       - name: Evaluate every supported system
         run: nix flake check --all-systems --no-build
       - name: Reject PII and secrets in public history
@@ -123,7 +123,8 @@ jobs:
         run: nix flake check
       - name: Verify Nix toolchain
         run: |
-          test "$(nix develop --command node --version)" = "v24.16.0"
+          utsuri_nix_node_version="$(nix eval --raw .#checks.x86_64-linux.toolchain.nodeVersion)"
+          test "$(nix develop --command node --version)" = "v${utsuri_nix_node_version}"
           test "$(nix develop --command bun --version)" = "1.3.13"
       - name: Install and verify Safe-chain trust anchor
         run: |
@@ -162,7 +163,7 @@ jobs:
       - uses: DeterminateSystems/nix-installer-action@3138316df39ed29be04236d7ffc686fa525866aa # v23
       - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
         with:
-          node-version: 24
+          node-version: 26
       - name: Resolve the pinned Nix Chromium executable
         run: |
           utsuri_browser_executable="$(nix develop --command which chromium)"

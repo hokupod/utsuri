@@ -8,7 +8,7 @@
 - **CLI name**: `utsuri`
 - **Document version**: 4.1
 - **Created**: 2026-08-06
-- **Last updated**: 2026-10-29
+- **Last updated**: 2026-11-09
 - **Language**: English (canonical)
 - **Targets**: Codex / Claude Code / local CLI / CI
 - **Implementation language**: TypeScript
@@ -3487,7 +3487,7 @@ The primary comparison is base versus head. Approved-baseline operation is an ad
 
 - `ci.yml` produces deterministic review artifacts for both required Bun versions.
 - `distribution-candidate.yml` builds helpers on matching `darwin-arm64`, `darwin-x64`, `linux-arm64`, and `linux-x64` GitHub-hosted runners, then assembles and verifies one candidate without registry-write or OIDC permission.
-- Node 22 and Node 24 install only the exact generated CLI/helper tarballs in isolated offline directories.
+- Node 22, Node 24, and Node 26 install only the exact generated CLI/helper tarballs in isolated offline directories.
 - Candidate generation binds every npm tarball and the deterministic Plugin archive by SHA-256, byte size, executable mode where applicable, and npm SHA-512 integrity.
 - `release.yml` requires an annotated version tag at the exact `main` commit, reruns the candidate, and confines trusted publication to the protected `release` environment. It publishes helpers before the CLI, accepts an existing immutable npm version only when integrity matches exactly, runs native published-package smoke, and exposes GitHub Release assets only after a draft upload completes.
 - CI and release preflight scan the selected public history for private local paths and secrets. Tag rules protect `refs/tags/v*` creation, update, and deletion.
@@ -3645,7 +3645,7 @@ Phases define implementation order, not a reduction of final scope.
 
 - English living canonical design;
 - synchronized English, Japanese, and Simplified Chinese READMEs;
-- locked Nix development shell with Node 24 and Bun;
+- locked Nix development shell with Node 26 and Bun;
 - The exact policy-pinned Safe-chain resolved from the standard user installation by the repository wrapper, without an absolute-path setting, and verified against a pinned official platform SHA-256 before its first execution;
 - monorepo scaffold;
 - JSON Schemas;
@@ -3854,7 +3854,7 @@ The v1 source implementation maps every item below to an automated gate or an ex
 20. Evidence links in Agent answers return to the original diff or view.
 21. Stale and orphaned states remain unambiguous after report updates.
 22. The English canonical design, release guide, and all three READMEs remain synchronized and reviewed in the pull request.
-23. Node 24, both required Bun versions, the exact policy-pinned Safe-chain, both hosts, and the release-candidate layout pass their full gates.
+23. Node 26, both required Bun versions, the exact policy-pinned Safe-chain, both hosts, and the release-candidate layout pass their full gates.
 
 Phase 6 adds executable coverage for all §46.25 fixtures, the three-item return-to-session acceptance scenario on both hosts, explicit unsupported-bridge fallback, localhost API boundaries, and independent review-state semantics. The synchronized `v0.3.0`, `v0.3.1`, and `v0.3.2` releases satisfied the public gates on 2026-08-21, 2026-08-24, and 2026-08-31 respectively: normal pull-request review, successful remote CI and multi-platform candidate evidence, protected GitHub configuration, OIDC registry publication, verified GitHub Release assets, promoted-Plugin verification, and isolated public Git installs on both hosts. Each later release requires the same separate authorizations and evidence.
 

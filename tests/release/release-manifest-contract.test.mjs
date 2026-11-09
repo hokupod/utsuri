@@ -266,12 +266,22 @@ describe("cross-job distribution transport", () => {
       "    steps:",
       "      - name: Install and verify Safe-chain trust anchor"
     ].join("\n");
-    const smokeErrors = (candidate) =>
-      publishedCliSmokeErrors("release.yml", candidate, {
-        nodeVersion: 24,
-        bunVersion: "1.3.14"
-      });
+    const toolchain = { nodeVersion: 24, bunVersion: "1.3.14" };
+    const smokeErrors = (candidate) => publishedCliSmokeErrors("release.yml", candidate, toolchain);
     assert.deepEqual(smokeErrors(workflow), []);
+    const node26Toolchain = { ...toolchain, nodeVersion: 26 };
+    assert.deepEqual(
+      publishedCliSmokeErrors(
+        "release.yml",
+        workflow.replace("          node-version: 24", "          node-version: 26"),
+        node26Toolchain
+      ),
+      []
+    );
+    assert.match(
+      publishedCliSmokeErrors("release.yml", workflow, node26Toolchain).join("\n"),
+      /wrong setup action or inputs/u
+    );
     assert.match(
       smokeErrors(workflow.replace("    runs-on: ubuntu-26.04", "    runs-on: ubuntu-24.04")).join(
         "\n"
