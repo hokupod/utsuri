@@ -1,9 +1,9 @@
 {
   "schemaVersion": 1,
   "node": {
-    "developmentMajor": 24,
+    "developmentMajor": 26,
     "packageEngine": ">=22",
-    "bundleCompatibilityMajors": [22, 24]
+    "bundleCompatibilityMajors": [22, 24, 26]
   },
   "bun": {
     "flake": "1.3.13",

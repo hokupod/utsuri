@@ -24,7 +24,7 @@
             pkgs.bun
             pkgs.gitleaks
             pkgs.lefthook
-            pkgs.nodejs_24
+            pkgs.nodejs_26
             pkgs.svelte-language-server
             pkgs.typescript-language-server
           ] ++ pkgs.lib.optionals pkgs.stdenv.isLinux [ pkgs.chromium ];
@@ -35,11 +35,11 @@
         toolchain = pkgs.runCommand "utsuri-toolchain-check" {
           nativeBuildInputs = [
             pkgs.bun
-            pkgs.nodejs_24
+            pkgs.nodejs_26
           ];
         } ''
           node_major="$(node --version | sed -E 's/^v([0-9]+).*/\1/')"
-          test "$node_major" = "24"
+          test "$node_major" = "26"
           test "$(bun --version)" = "1.3.13"
           touch "$out"
         '';
