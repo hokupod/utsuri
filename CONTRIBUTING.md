@@ -107,13 +107,16 @@ in place. No repository security policy is enabled by this file.
 Use the reviewed GitHub CLI extension tag in `renovate.json`:
 
 ```bash
-gh extension install github/gh-actions-lock --pin "$(jq -r '.constraints.ghActionsLock' renovate.json)"
-gh actions-lock --no-narrow
-gh actions-lock --verify --no-narrow
+gh extension install github/gh-actions-lock --force --pin "$(jq -r '.constraints.ghActionsLock' renovate.json)" &&
+  gh actions-lock --no-narrow &&
+  gh actions-lock --verify --no-narrow
 ```
 
-Check an already-installed extension's version before generating. `--no-narrow`
-preserves the full-SHA references; the resulting `sha-as-ref` warnings are expected.
+`--force --pin` installs the reviewed tag even when the extension is already
+installed; a matching version is left in place. The chained commands stop if
+installation fails, so an older extension cannot silently generate the lockfile.
+`--no-narrow` preserves the full-SHA references; the resulting `sha-as-ref` warnings
+are expected.
 The primary Bun CI job runs online provenance verification once. An optional local
 `--verify-local` check covers missing entries but does not verify upstream provenance.
 
