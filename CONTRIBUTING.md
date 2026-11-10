@@ -97,6 +97,45 @@ node scripts/safe-chain.mjs bun run deps:refresh
 
 This regenerates schemas, the production-scoped reviewed dependency baseline, bundled release inputs, SBOM and license inventories, build manifests, and shared fixture assets before validating the fixtures. It never installs dependencies or downloads external artifacts. Review every generated supply-chain and fixture diff; regeneration is not approval of changed third-party bytes.
 
+### GitHub Actions dependency lockfile
+
+`.github/workflows/actions.lock` records the verified source repository identities,
+release refs, and exact commits for workflow actions. Full-SHA `uses:` references,
+version comments, existing workflow permission checks, and release contracts remain
+in place. No repository security policy is enabled by this file.
+
+Use the reviewed GitHub CLI extension tag in `renovate.json`:
+
+```bash
+gh extension install github/gh-actions-lock --force --pin "$(jq -r '.constraints.ghActionsLock' renovate.json)" &&
+  gh actions-lock --no-narrow &&
+  gh actions-lock --verify --no-narrow
+```
+
+`--force --pin` installs the reviewed tag even when the extension is already
+installed; a matching version is left in place. The chained commands stop if
+installation fails, so an older extension cannot silently generate the lockfile.
+`--no-narrow` preserves the full-SHA references; the resulting `sha-as-ref` warnings
+are expected.
+The primary Bun CI job runs online provenance verification once. An optional local
+`--verify-local` check covers missing entries but does not verify upstream provenance.
+
+Renovate 44.24.0+ supports the lockfile as an experimental feature. Its native
+GitHub Actions manager regenerates existing entries when action refs change, using
+`--no-narrow` and `--no-onboard`; no custom update hook is needed. The
+`ghActionsLock` constraint pins the same generator for Renovate and CI. Self-hosted
+Renovate with `binarySource=global` must provision that version itself. Generate
+locally when adding workflows or new actions, then commit the workflow and lockfile
+together. The existing Bun writer constraint and maintenance policy are unchanged.
+
+Review upstream old/new commits, version comments, numeric owner/repository IDs,
+and any transitive dependencies in each update. Never hand-edit the generated file,
+delete it to suppress a failure, or use `--accept-moved` in automation. Investigate
+unexpected identity, tag, or ancestry changes before changing the lock.
+
+See [GitHub's lockfile guide](https://docs.github.com/en/actions/how-tos/secure-your-work/lock-workflow-dependencies)
+and [Renovate's manager documentation](https://docs.renovatebot.com/modules/manager/github-actions/).
+
 ### Bounded Renovate repair
 
 With explicit maintenance-write authorization, a maintainer or agent may complete a Renovate update instead of leaving a known generation failure pending:

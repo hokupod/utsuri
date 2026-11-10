@@ -30,6 +30,7 @@
 
 ## Dependency maintenance
 
+- Keep full-SHA workflow action references and version comments. After action changes, regenerate `.github/workflows/actions.lock` with `gh actions-lock --no-narrow` and verify it online with `gh actions-lock --verify --no-narrow`, using the extension tag pinned in `renovate.json`. See `CONTRIBUTING.md`; never hand-edit the generated lockfile or use `--accept-moved` in automation.
 - Follow `CONTRIBUTING.md` for bounded Renovate repair. A failed generated-artifact check may be repaired with the existing generators in an isolated checkout when maintenance writes are authorized.
 - Review the exact dependency update and every generated baseline, SBOM, license, bundle, and fixture diff before committing. Unexpected source, workflow, or authorization changes stop the repair.
 - Keep tool versions exactly pinned in canonical manifests/policy; do not duplicate their patch versions or digest values in contract tests.

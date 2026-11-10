@@ -4,7 +4,8 @@
   "labels": ["dependencies"],
   "minimumReleaseAge": "3 days",
   "constraints": {
-    "bun": "1.3.13"
+    "bun": "1.3.13",
+    "ghActionsLock": "v0.4.1"
   },
   "customManagers": [
     {
