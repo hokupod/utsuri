@@ -1,12 +1,12 @@
 {
   "schemaVersion": 1,
   "generator": "scripts/plugin-distribution.mjs",
-  "cliPackagePin": "@utsu-ri/cli@0.3.7",
+  "cliPackagePin": "@utsu-ri/cli@0.3.8",
   "canonicalSha256": "eb1097f17dc4e50fa231e732397416229b3e066ff4f7274111513ca3b31cc11b",
   "files": {
     "SKILL.md": {
       "sourceSha256": "dfa193569c947abfb4b9a81f3ae77511b904133aad8965af85f54306839aad3e",
-      "generatedSha256": "3bd19725f7e1a88d66d81bfc60d6a826c1f8db2ca8ccacc3cf4d7bbf2eaccd85"
+      "generatedSha256": "a5c0384ff73661cd301243f9fa8bf98a3acc6e99a3d2e9ab93ead21c68e19fec"
     },
     "agents/openai.yaml": {
       "sourceSha256": "cec07fd1b327d962f7f26ac944a7c099804d646180e637497e89728bd3898841",
@@ -14,11 +14,11 @@
     },
     "references/capture-modes.md": {
       "sourceSha256": "1f2ade08185b0ecd20162d49da15e9370b9e9c77213ab3d6a373ce5192d7cdca",
-      "generatedSha256": "d0f23a101f2139be47621bb679846db7a5176d65b0f5e8b85a5691b8408810ca"
+      "generatedSha256": "5f8ab19f9ac1eaf503e588b0b6b6487b4bc41d2e81bb5649a79a7c8ef8d410e2"
     },
     "references/cli-contract.md": {
       "sourceSha256": "c1ff0b52787323968f7bc6763cd7eaecb802f217db6578e61934624022ad169d",
-      "generatedSha256": "5fc81d0958dade47af64deffe9f709547e5e14338c2989cd2b7b1f44a9a6f282"
+      "generatedSha256": "d65881a68891c69aea1c5ce4e8ffb789f70416813af369b81fe2491aebfd02f8"
     },
     "references/distribution.md": {
       "sourceSha256": "9dbb0a25fd092e2d4eabad98a7c8139f17b7ab5141edb3d5496a2fd20a29507f",
@@ -30,11 +30,11 @@
     },
     "references/feedback.md": {
       "sourceSha256": "2eac33f41d27d9a8f9d59bb3c41b0ec5a48c01d65664922043ff4ecf4ae656df",
-      "generatedSha256": "c61840e95144200958f2858af04c5431abd482891da4c844fe4d86912dfca97f"
+      "generatedSha256": "b92d8aceecb7e3dbc11e8fada63979771686f49be70aaf8fd93d1e5c2195d34e"
     },
     "references/review-state.md": {
       "sourceSha256": "802687df68bea76e7b7f70229fe80c3906df5892a3aa6c83345b935842ec2a70",
-      "generatedSha256": "3a398edaf69a1ad273f2c212fe1eef8f26f7619a27922d196f2fdc0fe614c383"
+      "generatedSha256": "c81b6e14075f1f8eaeb54368ad3937bc20dcc8d9c12f519099b8ab99d2edf119"
     },
     "references/security.md": {
       "sourceSha256": "a622a6d53aaf5ff3ddccde5d18ddfb2b3738251a0c2424975be809f3c4168ba5",
