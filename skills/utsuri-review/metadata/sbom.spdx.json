@@ -5,7 +5,7 @@
     "creators": ["Tool: Utsuri SBOM generator 1"]
   },
   "dataLicense": "CC0-1.0",
-  "documentNamespace": "https://github.com/hokupod/utsuri/sbom/0.3.8/b6f435a8c076f5c3ac1564a7b49ba2bde515e4aa9e7d52d888fa040d0ff8e9c4",
+  "documentNamespace": "https://github.com/hokupod/utsuri/sbom/0.3.8/076f2b09f1d8a1cd66da039c4f7b59431efaa8d7c587bbf737e51b3fefc32a54",
   "name": "utsuri-0.3.8",
   "packages": [
     {
@@ -13,7 +13,7 @@
       "checksums": [
         {
           "algorithm": "SHA256",
-          "checksumValue": "2f760de0bffed941d2a81d80992f3fc1e1c8a1dc2b10c93c60cd627ca802dfa0"
+          "checksumValue": "e9eaa67ac6706bc26230688572653b596133e6e1ec1d739d4ef2e86a5c79f578"
         }
       ],
       "downloadLocation": "NOASSERTION",
@@ -168,11 +168,11 @@
       "versionInfo": "8.0.0"
     },
     {
-      "SPDXID": "SPDXRef-Package-playwright-core-1.65.0",
+      "SPDXID": "SPDXRef-Package-playwright-core-1.65.1",
       "checksums": [
         {
           "algorithm": "SHA512",
-          "checksumValue": "bcd48a807e98aad37b71d4ff2f7df8ce8d1af98c24ae989ccab1c995658f226fd0f8d9f64962278a5d35a13d266eef7a5381a0a11b426100fd0b3250823bbe94"
+          "checksumValue": "86a3e9cfb6e548c3f1595768784d728814b35ec2a254e77693e9230af994cb00f618f3b60ddf477dc5a7abd34dd061db3590c5819f497c116bf97e7f04ba34ab"
         }
       ],
       "downloadLocation": "NOASSERTION",
@@ -181,9 +181,9 @@
       "licenseDeclared": "Apache-2.0",
       "name": "playwright-core",
       "packageVerificationCode": {
-        "packageVerificationCodeValue": "ec818e54027d3f15f3580b402c08148964a887f5"
+        "packageVerificationCodeValue": "bb18fbc2a97f4812af8a7ab8e0ce754e6f156aed"
       },
-      "versionInfo": "1.65.0"
+      "versionInfo": "1.65.1"
     },
     {
       "SPDXID": "SPDXRef-Package-pngjs-7.0.0",
@@ -302,7 +302,7 @@
       "spdxElementId": "SPDXRef-Package-utsuri-workspace-0.3.8"
     },
     {
-      "relatedSpdxElement": "SPDXRef-Package-playwright-core-1.65.0",
+      "relatedSpdxElement": "SPDXRef-Package-playwright-core-1.65.1",
       "relationshipType": "DEPENDS_ON",
       "spdxElementId": "SPDXRef-Package-utsuri-workspace-0.3.8"
     },

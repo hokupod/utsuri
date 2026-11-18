@@ -54,9 +54,9 @@ var __toESM2 = (mod, isNodeMode, target) => (target = mod != null ? __create2(__
 ));
 var __toCommonJS2 = (mod) => __copyProps2(__defProp2({}, "__esModule", { value: true }), mod);
 
-// node_modules/.bun/playwright-core@1.65.0/node_modules/playwright-core/lib/bootstrap.js
+// node_modules/.bun/playwright-core@1.65.1/node_modules/playwright-core/lib/bootstrap.js
 var require_bootstrap = __commonJS2({
-  "node_modules/.bun/playwright-core@1.65.0/node_modules/playwright-core/lib/bootstrap.js"(exports2, module3) {
+  "node_modules/.bun/playwright-core@1.65.1/node_modules/playwright-core/lib/bootstrap.js"(exports2, module3) {
     "use strict";
     var __defProp3 = Object.defineProperty;
     var __getOwnPropDesc3 = Object.getOwnPropertyDescriptor;
@@ -226,9 +226,9 @@ var require_kerberos = __commonJS2({
   }
 });
 
-// node_modules/.bun/playwright-core@1.65.0/node_modules/playwright-core/lib/utilsBundle.js
+// node_modules/.bun/playwright-core@1.65.1/node_modules/playwright-core/lib/utilsBundle.js
 var require_utilsBundle = __commonJS2({
-  "node_modules/.bun/playwright-core@1.65.0/node_modules/playwright-core/lib/utilsBundle.js"(exports2, module3) {
+  "node_modules/.bun/playwright-core@1.65.1/node_modules/playwright-core/lib/utilsBundle.js"(exports2, module3) {
     "use strict";
     var __create3 = Object.create;
     var __defProp3 = Object.defineProperty;
@@ -91304,9 +91304,9 @@ var require_electron = __commonJS2({
   }
 });
 
-// node_modules/.bun/playwright-core@1.65.0/node_modules/playwright-core/lib/coreBundle.js
+// node_modules/.bun/playwright-core@1.65.1/node_modules/playwright-core/lib/coreBundle.js
 var require_coreBundle = __commonJS2({
-  "node_modules/.bun/playwright-core@1.65.0/node_modules/playwright-core/lib/coreBundle.js"(exports, module) {
+  "node_modules/.bun/playwright-core@1.65.1/node_modules/playwright-core/lib/coreBundle.js"(exports, module) {
     "use strict";
     var __create = Object.create;
     var __defProp = Object.defineProperty;
@@ -103563,7 +103563,7 @@ ${lines.join("\n")}`;
         "use strict";
         import_path8 = __toESM(__require("path"));
         packageRoot = __dirname;
-        packageJSON = Object.freeze({ "name": "playwright-core", "version": "1.65.0" });
+        packageJSON = Object.freeze({ "name": "playwright-core", "version": "1.65.1" });
         binPath = __dirname;
       }
     });
@@ -120165,7 +120165,7 @@ ${text2}`;
             defaultBrowserType: "webkit"
           },
           "Galaxy S5": {
-            userAgent: "Mozilla/5.0 (Linux; Android 5.0; SM-G900P Build/LRX21T) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/158.0.8127.18 Mobile Safari/537.36",
+            userAgent: "Mozilla/5.0 (Linux; Android 5.0; SM-G900P Build/LRX21T) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/159.0.8154.6 Mobile Safari/537.36",
             viewport: {
               width: 360,
               height: 640
@@ -120176,7 +120176,7 @@ ${text2}`;
             defaultBrowserType: "chromium"
           },
           "Galaxy S5 landscape": {
-            userAgent: "Mozilla/5.0 (Linux; Android 5.0; SM-G900P Build/LRX21T) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/158.0.8127.18 Mobile Safari/537.36",
+            userAgent: "Mozilla/5.0 (Linux; Android 5.0; SM-G900P Build/LRX21T) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/159.0.8154.6 Mobile Safari/537.36",
             viewport: {
               width: 640,
               height: 360
@@ -120187,7 +120187,7 @@ ${text2}`;
             defaultBrowserType: "chromium"
           },
           "Galaxy S8": {
-            userAgent: "Mozilla/5.0 (Linux; Android 7.0; SM-G950U Build/NRD90M) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/158.0.8127.18 Mobile Safari/537.36",
+            userAgent: "Mozilla/5.0 (Linux; Android 7.0; SM-G950U Build/NRD90M) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/159.0.8154.6 Mobile Safari/537.36",
             viewport: {
               width: 360,
               height: 740
@@ -120198,7 +120198,7 @@ ${text2}`;
             defaultBrowserType: "chromium"
           },
           "Galaxy S8 landscape": {
-            userAgent: "Mozilla/5.0 (Linux; Android 7.0; SM-G950U Build/NRD90M) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/158.0.8127.18 Mobile Safari/537.36",
+            userAgent: "Mozilla/5.0 (Linux; Android 7.0; SM-G950U Build/NRD90M) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/159.0.8154.6 Mobile Safari/537.36",
             viewport: {
               width: 740,
               height: 360
@@ -120209,7 +120209,7 @@ ${text2}`;
             defaultBrowserType: "chromium"
           },
           "Galaxy S9+": {
-            userAgent: "Mozilla/5.0 (Linux; Android 8.0.0; SM-G965U Build/R16NW) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/158.0.8127.18 Mobile Safari/537.36",
+            userAgent: "Mozilla/5.0 (Linux; Android 8.0.0; SM-G965U Build/R16NW) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/159.0.8154.6 Mobile Safari/537.36",
             viewport: {
               width: 320,
               height: 658
@@ -120220,7 +120220,7 @@ ${text2}`;
             defaultBrowserType: "chromium"
           },
           "Galaxy S9+ landscape": {
-            userAgent: "Mozilla/5.0 (Linux; Android 8.0.0; SM-G965U Build/R16NW) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/158.0.8127.18 Mobile Safari/537.36",
+            userAgent: "Mozilla/5.0 (Linux; Android 8.0.0; SM-G965U Build/R16NW) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/159.0.8154.6 Mobile Safari/537.36",
             viewport: {
               width: 658,
               height: 320
@@ -120231,7 +120231,7 @@ ${text2}`;
             defaultBrowserType: "chromium"
           },
           "Galaxy S24": {
-            userAgent: "Mozilla/5.0 (Linux; Android 14; SM-S921U) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/158.0.8127.18 Mobile Safari/537.36",
+            userAgent: "Mozilla/5.0 (Linux; Android 14; SM-S921U) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/159.0.8154.6 Mobile Safari/537.36",
             viewport: {
               width: 360,
               height: 780
@@ -120242,7 +120242,7 @@ ${text2}`;
             defaultBrowserType: "chromium"
           },
           "Galaxy S24 landscape": {
-            userAgent: "Mozilla/5.0 (Linux; Android 14; SM-S921U) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/158.0.8127.18 Mobile Safari/537.36",
+            userAgent: "Mozilla/5.0 (Linux; Android 14; SM-S921U) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/159.0.8154.6 Mobile Safari/537.36",
             viewport: {
               width: 780,
               height: 360
@@ -120253,7 +120253,7 @@ ${text2}`;
             defaultBrowserType: "chromium"
           },
           "Galaxy A55": {
-            userAgent: "Mozilla/5.0 (Linux; Android 14; SM-A556B) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/158.0.8127.18 Mobile Safari/537.36",
+            userAgent: "Mozilla/5.0 (Linux; Android 14; SM-A556B) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/159.0.8154.6 Mobile Safari/537.36",
             viewport: {
               width: 480,
               height: 1040
@@ -120264,7 +120264,7 @@ ${text2}`;
             defaultBrowserType: "chromium"
           },
           "Galaxy A55 landscape": {
-            userAgent: "Mozilla/5.0 (Linux; Android 14; SM-A556B) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/158.0.8127.18 Mobile Safari/537.36",
+            userAgent: "Mozilla/5.0 (Linux; Android 14; SM-A556B) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/159.0.8154.6 Mobile Safari/537.36",
             viewport: {
               width: 1040,
               height: 480
@@ -120275,7 +120275,7 @@ ${text2}`;
             defaultBrowserType: "chromium"
           },
           "Galaxy Tab S4": {
-            userAgent: "Mozilla/5.0 (Linux; Android 8.1.0; SM-T837A) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/158.0.8127.18 Safari/537.36",
+            userAgent: "Mozilla/5.0 (Linux; Android 8.1.0; SM-T837A) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/159.0.8154.6 Safari/537.36",
             viewport: {
               width: 712,
               height: 1138
@@ -120286,7 +120286,7 @@ ${text2}`;
             defaultBrowserType: "chromium"
           },
           "Galaxy Tab S4 landscape": {
-            userAgent: "Mozilla/5.0 (Linux; Android 8.1.0; SM-T837A) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/158.0.8127.18 Safari/537.36",
+            userAgent: "Mozilla/5.0 (Linux; Android 8.1.0; SM-T837A) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/159.0.8154.6 Safari/537.36",
             viewport: {
               width: 1138,
               height: 712
@@ -120297,7 +120297,7 @@ ${text2}`;
             defaultBrowserType: "chromium"
           },
           "Galaxy Tab S9": {
-            userAgent: "Mozilla/5.0 (Linux; Android 14; SM-X710) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/158.0.8127.18 Safari/537.36",
+            userAgent: "Mozilla/5.0 (Linux; Android 14; SM-X710) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/159.0.8154.6 Safari/537.36",
             viewport: {
               width: 640,
               height: 1024
@@ -120308,7 +120308,7 @@ ${text2}`;
             defaultBrowserType: "chromium"
           },
           "Galaxy Tab S9 landscape": {
-            userAgent: "Mozilla/5.0 (Linux; Android 14; SM-X710) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/158.0.8127.18 Safari/537.36",
+            userAgent: "Mozilla/5.0 (Linux; Android 14; SM-X710) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/159.0.8154.6 Safari/537.36",
             viewport: {
               width: 1024,
               height: 640
@@ -120319,7 +120319,7 @@ ${text2}`;
             defaultBrowserType: "chromium"
           },
           "Galaxy Z Fold 6": {
-            userAgent: "Mozilla/5.0 (Linux; Android 10; SM-F956U) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/158.0.8127.18 Mobile Safari/537.36",
+            userAgent: "Mozilla/5.0 (Linux; Android 10; SM-F956U) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/159.0.8154.6 Mobile Safari/537.36",
             screen: {
               width: 928,
               height: 1080
@@ -120334,7 +120334,7 @@ ${text2}`;
             defaultBrowserType: "chromium"
           },
           "Galaxy Z Fold 6 landscape": {
-            userAgent: "Mozilla/5.0 (Linux; Android 10; SM-F956U) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/158.0.8127.18 Mobile Safari/537.36",
+            userAgent: "Mozilla/5.0 (Linux; Android 10; SM-F956U) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/159.0.8154.6 Mobile Safari/537.36",
             screen: {
               width: 1080,
               height: 928
@@ -120349,7 +120349,7 @@ ${text2}`;
             defaultBrowserType: "chromium"
           },
           "Galaxy Z Fold 6 Cover": {
-            userAgent: "Mozilla/5.0 (Linux; Android 10; SM-F956U) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/158.0.8127.18 Mobile Safari/537.36",
+            userAgent: "Mozilla/5.0 (Linux; Android 10; SM-F956U) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/159.0.8154.6 Mobile Safari/537.36",
             screen: {
               width: 484,
               height: 1188
@@ -120364,7 +120364,7 @@ ${text2}`;
             defaultBrowserType: "chromium"
           },
           "Galaxy Z Fold 6 Cover landscape": {
-            userAgent: "Mozilla/5.0 (Linux; Android 10; SM-F956U) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/158.0.8127.18 Mobile Safari/537.36",
+            userAgent: "Mozilla/5.0 (Linux; Android 10; SM-F956U) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/159.0.8154.6 Mobile Safari/537.36",
             screen: {
               width: 1188,
               height: 484
@@ -120379,7 +120379,7 @@ ${text2}`;
             defaultBrowserType: "chromium"
           },
           "Galaxy Z Fold 7": {
-            userAgent: "Mozilla/5.0 (Linux; Android 10; SM-F966U) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/158.0.8127.18 Mobile Safari/537.36",
+            userAgent: "Mozilla/5.0 (Linux; Android 10; SM-F966U) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/159.0.8154.6 Mobile Safari/537.36",
             screen: {
               width: 984,
               height: 1092
@@ -120394,7 +120394,7 @@ ${text2}`;
             defaultBrowserType: "chromium"
           },
           "Galaxy Z Fold 7 landscape": {
-            userAgent: "Mozilla/5.0 (Linux; Android 10; SM-F966U) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/158.0.8127.18 Mobile Safari/537.36",
+            userAgent: "Mozilla/5.0 (Linux; Android 10; SM-F966U) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/159.0.8154.6 Mobile Safari/537.36",
             screen: {
               width: 1092,
               height: 984
@@ -120409,7 +120409,7 @@ ${text2}`;
             defaultBrowserType: "chromium"
           },
           "Galaxy Z Fold 7 Cover": {
-            userAgent: "Mozilla/5.0 (Linux; Android 10; SM-F966U) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/158.0.8127.18 Mobile Safari/537.36",
+            userAgent: "Mozilla/5.0 (Linux; Android 10; SM-F966U) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/159.0.8154.6 Mobile Safari/537.36",
             screen: {
               width: 360,
               height: 840
@@ -120424,7 +120424,7 @@ ${text2}`;
             defaultBrowserType: "chromium"
           },
           "Galaxy Z Fold 7 Cover landscape": {
-            userAgent: "Mozilla/5.0 (Linux; Android 10; SM-F966U) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/158.0.8127.18 Mobile Safari/537.36",
+            userAgent: "Mozilla/5.0 (Linux; Android 10; SM-F966U) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/159.0.8154.6 Mobile Safari/537.36",
             screen: {
               width: 840,
               height: 360
@@ -120439,7 +120439,7 @@ ${text2}`;
             defaultBrowserType: "chromium"
           },
           "Galaxy Z Flip 6": {
-            userAgent: "Mozilla/5.0 (Linux; Android 10; SM-F741U) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/158.0.8127.18 Mobile Safari/537.36",
+            userAgent: "Mozilla/5.0 (Linux; Android 10; SM-F741U) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/159.0.8154.6 Mobile Safari/537.36",
             screen: {
               width: 360,
               height: 880
@@ -120454,7 +120454,7 @@ ${text2}`;
             defaultBrowserType: "chromium"
           },
           "Galaxy Z Flip 6 landscape": {
-            userAgent: "Mozilla/5.0 (Linux; Android 10; SM-F741U) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/158.0.8127.18 Mobile Safari/537.36",
+            userAgent: "Mozilla/5.0 (Linux; Android 10; SM-F741U) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/159.0.8154.6 Mobile Safari/537.36",
             screen: {
               width: 880,
               height: 360
@@ -120469,7 +120469,7 @@ ${text2}`;
             defaultBrowserType: "chromium"
           },
           "Galaxy Z Flip 6 Cover": {
-            userAgent: "Mozilla/5.0 (Linux; Android 10; SM-F741U) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/158.0.8127.18 Mobile Safari/537.36",
+            userAgent: "Mozilla/5.0 (Linux; Android 10; SM-F741U) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/159.0.8154.6 Mobile Safari/537.36",
             screen: {
               width: 360,
               height: 374
@@ -120484,7 +120484,7 @@ ${text2}`;
             defaultBrowserType: "chromium"
           },
           "Galaxy Z Flip 6 Cover landscape": {
-            userAgent: "Mozilla/5.0 (Linux; Android 10; SM-F741U) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/158.0.8127.18 Mobile Safari/537.36",
+            userAgent: "Mozilla/5.0 (Linux; Android 10; SM-F741U) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/159.0.8154.6 Mobile Safari/537.36",
             screen: {
               width: 374,
               height: 360
@@ -120499,7 +120499,7 @@ ${text2}`;
             defaultBrowserType: "chromium"
           },
           "Galaxy Z Flip 7": {
-            userAgent: "Mozilla/5.0 (Linux; Android 10; SM-F761U) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/158.0.8127.18 Mobile Safari/537.36",
+            userAgent: "Mozilla/5.0 (Linux; Android 10; SM-F761U) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/159.0.8154.6 Mobile Safari/537.36",
             screen: {
               width: 360,
               height: 840
@@ -120514,7 +120514,7 @@ ${text2}`;
             defaultBrowserType: "chromium"
           },
           "Galaxy Z Flip 7 landscape": {
-            userAgent: "Mozilla/5.0 (Linux; Android 10; SM-F761U) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/158.0.8127.18 Mobile Safari/537.36",
+            userAgent: "Mozilla/5.0 (Linux; Android 10; SM-F761U) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/159.0.8154.6 Mobile Safari/537.36",
             screen: {
               width: 840,
               height: 360
@@ -120529,7 +120529,7 @@ ${text2}`;
             defaultBrowserType: "chromium"
           },
           "Galaxy Z Flip 7 Cover": {
-            userAgent: "Mozilla/5.0 (Linux; Android 10; SM-F761U) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/158.0.8127.18 Mobile Safari/537.36",
+            userAgent: "Mozilla/5.0 (Linux; Android 10; SM-F761U) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/159.0.8154.6 Mobile Safari/537.36",
             screen: {
               width: 474,
               height: 524
@@ -120544,7 +120544,7 @@ ${text2}`;
             defaultBrowserType: "chromium"
           },
           "Galaxy Z Flip 7 Cover landscape": {
-            userAgent: "Mozilla/5.0 (Linux; Android 10; SM-F761U) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/158.0.8127.18 Mobile Safari/537.36",
+            userAgent: "Mozilla/5.0 (Linux; Android 10; SM-F761U) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/159.0.8154.6 Mobile Safari/537.36",
             screen: {
               width: 524,
               height: 474
@@ -121803,7 +121803,7 @@ ${text2}`;
             defaultBrowserType: "webkit"
           },
           "LG Optimus L70": {
-            userAgent: "Mozilla/5.0 (Linux; U; Android 4.4.2; en-us; LGMS323 Build/KOT49I.MS32310c) AppleWebKit/537.36 (KHTML, like Gecko) Version/4.0 Chrome/158.0.8127.18 Mobile Safari/537.36",
+            userAgent: "Mozilla/5.0 (Linux; U; Android 4.4.2; en-us; LGMS323 Build/KOT49I.MS32310c) AppleWebKit/537.36 (KHTML, like Gecko) Version/4.0 Chrome/159.0.8154.6 Mobile Safari/537.36",
             viewport: {
               width: 384,
               height: 640
@@ -121814,7 +121814,7 @@ ${text2}`;
             defaultBrowserType: "chromium"
           },
           "LG Optimus L70 landscape": {
-            userAgent: "Mozilla/5.0 (Linux; U; Android 4.4.2; en-us; LGMS323 Build/KOT49I.MS32310c) AppleWebKit/537.36 (KHTML, like Gecko) Version/4.0 Chrome/158.0.8127.18 Mobile Safari/537.36",
+            userAgent: "Mozilla/5.0 (Linux; U; Android 4.4.2; en-us; LGMS323 Build/KOT49I.MS32310c) AppleWebKit/537.36 (KHTML, like Gecko) Version/4.0 Chrome/159.0.8154.6 Mobile Safari/537.36",
             viewport: {
               width: 640,
               height: 384
@@ -121825,7 +121825,7 @@ ${text2}`;
             defaultBrowserType: "chromium"
           },
           "Microsoft Lumia 550": {
-            userAgent: "Mozilla/5.0 (Windows Phone 10.0; Android 4.2.1; Microsoft; Lumia 550) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/158.0.8127.18 Mobile Safari/537.36 Edge/14.14263",
+            userAgent: "Mozilla/5.0 (Windows Phone 10.0; Android 4.2.1; Microsoft; Lumia 550) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/159.0.8154.6 Mobile Safari/537.36 Edge/14.14263",
             viewport: {
               width: 360,
               height: 640
@@ -121836,7 +121836,7 @@ ${text2}`;
             defaultBrowserType: "chromium"
           },
           "Microsoft Lumia 550 landscape": {
-            userAgent: "Mozilla/5.0 (Windows Phone 10.0; Android 4.2.1; Microsoft; Lumia 550) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/158.0.8127.18 Mobile Safari/537.36 Edge/14.14263",
+            userAgent: "Mozilla/5.0 (Windows Phone 10.0; Android 4.2.1; Microsoft; Lumia 550) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/159.0.8154.6 Mobile Safari/537.36 Edge/14.14263",
             viewport: {
               width: 640,
               height: 360
@@ -121847,7 +121847,7 @@ ${text2}`;
             defaultBrowserType: "chromium"
           },
           "Microsoft Lumia 950": {
-            userAgent: "Mozilla/5.0 (Windows Phone 10.0; Android 4.2.1; Microsoft; Lumia 950) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/158.0.8127.18 Mobile Safari/537.36 Edge/14.14263",
+            userAgent: "Mozilla/5.0 (Windows Phone 10.0; Android 4.2.1; Microsoft; Lumia 950) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/159.0.8154.6 Mobile Safari/537.36 Edge/14.14263",
             viewport: {
               width: 360,
               height: 640
@@ -121858,7 +121858,7 @@ ${text2}`;
             defaultBrowserType: "chromium"
           },
           "Microsoft Lumia 950 landscape": {
-            userAgent: "Mozilla/5.0 (Windows Phone 10.0; Android 4.2.1; Microsoft; Lumia 950) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/158.0.8127.18 Mobile Safari/537.36 Edge/14.14263",
+            userAgent: "Mozilla/5.0 (Windows Phone 10.0; Android 4.2.1; Microsoft; Lumia 950) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/159.0.8154.6 Mobile Safari/537.36 Edge/14.14263",
             viewport: {
               width: 640,
               height: 360
@@ -121869,7 +121869,7 @@ ${text2}`;
             defaultBrowserType: "chromium"
           },
           "Nexus 10": {
-            userAgent: "Mozilla/5.0 (Linux; Android 6.0.1; Nexus 10 Build/MOB31T) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/158.0.8127.18 Safari/537.36",
+            userAgent: "Mozilla/5.0 (Linux; Android 6.0.1; Nexus 10 Build/MOB31T) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/159.0.8154.6 Safari/537.36",
             viewport: {
               width: 800,
               height: 1280
@@ -121880,7 +121880,7 @@ ${text2}`;
             defaultBrowserType: "chromium"
           },
           "Nexus 10 landscape": {
-            userAgent: "Mozilla/5.0 (Linux; Android 6.0.1; Nexus 10 Build/MOB31T) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/158.0.8127.18 Safari/537.36",
+            userAgent: "Mozilla/5.0 (Linux; Android 6.0.1; Nexus 10 Build/MOB31T) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/159.0.8154.6 Safari/537.36",
             viewport: {
               width: 1280,
               height: 800
@@ -121891,7 +121891,7 @@ ${text2}`;
             defaultBrowserType: "chromium"
           },
           "Nexus 4": {
-            userAgent: "Mozilla/5.0 (Linux; Android 4.4.2; Nexus 4 Build/KOT49H) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/158.0.8127.18 Mobile Safari/537.36",
+            userAgent: "Mozilla/5.0 (Linux; Android 4.4.2; Nexus 4 Build/KOT49H) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/159.0.8154.6 Mobile Safari/537.36",
             viewport: {
               width: 384,
               height: 640
@@ -121902,7 +121902,7 @@ ${text2}`;
             defaultBrowserType: "chromium"
           },
           "Nexus 4 landscape": {
-            userAgent: "Mozilla/5.0 (Linux; Android 4.4.2; Nexus 4 Build/KOT49H) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/158.0.8127.18 Mobile Safari/537.36",
+            userAgent: "Mozilla/5.0 (Linux; Android 4.4.2; Nexus 4 Build/KOT49H) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/159.0.8154.6 Mobile Safari/537.36",
             viewport: {
               width: 640,
               height: 384
@@ -121913,7 +121913,7 @@ ${text2}`;
             defaultBrowserType: "chromium"
           },
           "Nexus 5": {
-            userAgent: "Mozilla/5.0 (Linux; Android 6.0; Nexus 5 Build/MRA58N) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/158.0.8127.18 Mobile Safari/537.36",
+            userAgent: "Mozilla/5.0 (Linux; Android 6.0; Nexus 5 Build/MRA58N) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/159.0.8154.6 Mobile Safari/537.36",
             viewport: {
               width: 360,
               height: 640
@@ -121924,7 +121924,7 @@ ${text2}`;
             defaultBrowserType: "chromium"
           },
           "Nexus 5 landscape": {
-            userAgent: "Mozilla/5.0 (Linux; Android 6.0; Nexus 5 Build/MRA58N) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/158.0.8127.18 Mobile Safari/537.36",
+            userAgent: "Mozilla/5.0 (Linux; Android 6.0; Nexus 5 Build/MRA58N) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/159.0.8154.6 Mobile Safari/537.36",
             viewport: {
               width: 640,
               height: 360
@@ -121935,7 +121935,7 @@ ${text2}`;
             defaultBrowserType: "chromium"
           },
           "Nexus 5X": {
-            userAgent: "Mozilla/5.0 (Linux; Android 8.0.0; Nexus 5X Build/OPR4.170623.006) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/158.0.8127.18 Mobile Safari/537.36",
+            userAgent: "Mozilla/5.0 (Linux; Android 8.0.0; Nexus 5X Build/OPR4.170623.006) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/159.0.8154.6 Mobile Safari/537.36",
             viewport: {
               width: 412,
               height: 732
@@ -121946,7 +121946,7 @@ ${text2}`;
             defaultBrowserType: "chromium"
           },
           "Nexus 5X landscape": {
-            userAgent: "Mozilla/5.0 (Linux; Android 8.0.0; Nexus 5X Build/OPR4.170623.006) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/158.0.8127.18 Mobile Safari/537.36",
+            userAgent: "Mozilla/5.0 (Linux; Android 8.0.0; Nexus 5X Build/OPR4.170623.006) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/159.0.8154.6 Mobile Safari/537.36",
             viewport: {
               width: 732,
               height: 412
@@ -121957,7 +121957,7 @@ ${text2}`;
             defaultBrowserType: "chromium"
           },
           "Nexus 6": {
-            userAgent: "Mozilla/5.0 (Linux; Android 7.1.1; Nexus 6 Build/N6F26U) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/158.0.8127.18 Mobile Safari/537.36",
+            userAgent: "Mozilla/5.0 (Linux; Android 7.1.1; Nexus 6 Build/N6F26U) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/159.0.8154.6 Mobile Safari/537.36",
             viewport: {
               width: 412,
               height: 732
@@ -121968,7 +121968,7 @@ ${text2}`;
             defaultBrowserType: "chromium"
           },
           "Nexus 6 landscape": {
-            userAgent: "Mozilla/5.0 (Linux; Android 7.1.1; Nexus 6 Build/N6F26U) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/158.0.8127.18 Mobile Safari/537.36",
+            userAgent: "Mozilla/5.0 (Linux; Android 7.1.1; Nexus 6 Build/N6F26U) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/159.0.8154.6 Mobile Safari/537.36",
             viewport: {
               width: 732,
               height: 412
@@ -121979,7 +121979,7 @@ ${text2}`;
             defaultBrowserType: "chromium"
           },
           "Nexus 6P": {
-            userAgent: "Mozilla/5.0 (Linux; Android 8.0.0; Nexus 6P Build/OPP3.170518.006) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/158.0.8127.18 Mobile Safari/537.36",
+            userAgent: "Mozilla/5.0 (Linux; Android 8.0.0; Nexus 6P Build/OPP3.170518.006) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/159.0.8154.6 Mobile Safari/537.36",
             viewport: {
               width: 412,
               height: 732
@@ -121990,7 +121990,7 @@ ${text2}`;
             defaultBrowserType: "chromium"
           },
           "Nexus 6P landscape": {
-            userAgent: "Mozilla/5.0 (Linux; Android 8.0.0; Nexus 6P Build/OPP3.170518.006) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/158.0.8127.18 Mobile Safari/537.36",
+            userAgent: "Mozilla/5.0 (Linux; Android 8.0.0; Nexus 6P Build/OPP3.170518.006) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/159.0.8154.6 Mobile Safari/537.36",
             viewport: {
               width: 732,
               height: 412
@@ -122001,7 +122001,7 @@ ${text2}`;
             defaultBrowserType: "chromium"
           },
           "Nexus 7": {
-            userAgent: "Mozilla/5.0 (Linux; Android 6.0.1; Nexus 7 Build/MOB30X) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/158.0.8127.18 Safari/537.36",
+            userAgent: "Mozilla/5.0 (Linux; Android 6.0.1; Nexus 7 Build/MOB30X) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/159.0.8154.6 Safari/537.36",
             viewport: {
               width: 600,
               height: 960
@@ -122012,7 +122012,7 @@ ${text2}`;
             defaultBrowserType: "chromium"
           },
           "Nexus 7 landscape": {
-            userAgent: "Mozilla/5.0 (Linux; Android 6.0.1; Nexus 7 Build/MOB30X) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/158.0.8127.18 Safari/537.36",
+            userAgent: "Mozilla/5.0 (Linux; Android 6.0.1; Nexus 7 Build/MOB30X) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/159.0.8154.6 Safari/537.36",
             viewport: {
               width: 960,
               height: 600
@@ -122067,7 +122067,7 @@ ${text2}`;
             defaultBrowserType: "webkit"
           },
           "Pixel 2": {
-            userAgent: "Mozilla/5.0 (Linux; Android 8.0; Pixel 2 Build/OPD3.170816.012) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/158.0.8127.18 Mobile Safari/537.36",
+            userAgent: "Mozilla/5.0 (Linux; Android 8.0; Pixel 2 Build/OPD3.170816.012) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/159.0.8154.6 Mobile Safari/537.36",
             viewport: {
               width: 411,
               height: 731
@@ -122078,7 +122078,7 @@ ${text2}`;
             defaultBrowserType: "chromium"
           },
           "Pixel 2 landscape": {
-            userAgent: "Mozilla/5.0 (Linux; Android 8.0; Pixel 2 Build/OPD3.170816.012) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/158.0.8127.18 Mobile Safari/537.36",
+            userAgent: "Mozilla/5.0 (Linux; Android 8.0; Pixel 2 Build/OPD3.170816.012) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/159.0.8154.6 Mobile Safari/537.36",
             viewport: {
               width: 731,
               height: 411
@@ -122089,7 +122089,7 @@ ${text2}`;
             defaultBrowserType: "chromium"
           },
           "Pixel 2 XL": {
-            userAgent: "Mozilla/5.0 (Linux; Android 8.0.0; Pixel 2 XL Build/OPD1.170816.004) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/158.0.8127.18 Mobile Safari/537.36",
+            userAgent: "Mozilla/5.0 (Linux; Android 8.0.0; Pixel 2 XL Build/OPD1.170816.004) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/159.0.8154.6 Mobile Safari/537.36",
             viewport: {
               width: 411,
               height: 823
@@ -122100,7 +122100,7 @@ ${text2}`;
             defaultBrowserType: "chromium"
           },
           "Pixel 2 XL landscape": {
-            userAgent: "Mozilla/5.0 (Linux; Android 8.0.0; Pixel 2 XL Build/OPD1.170816.004) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/158.0.8127.18 Mobile Safari/537.36",
+            userAgent: "Mozilla/5.0 (Linux; Android 8.0.0; Pixel 2 XL Build/OPD1.170816.004) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/159.0.8154.6 Mobile Safari/537.36",
             viewport: {
               width: 823,
               height: 411
@@ -122111,7 +122111,7 @@ ${text2}`;
             defaultBrowserType: "chromium"
           },
           "Pixel 3": {
-            userAgent: "Mozilla/5.0 (Linux; Android 9; Pixel 3 Build/PQ1A.181105.017.A1) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/158.0.8127.18 Mobile Safari/537.36",
+            userAgent: "Mozilla/5.0 (Linux; Android 9; Pixel 3 Build/PQ1A.181105.017.A1) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/159.0.8154.6 Mobile Safari/537.36",
             viewport: {
               width: 393,
               height: 786
@@ -122122,7 +122122,7 @@ ${text2}`;
             defaultBrowserType: "chromium"
           },
           "Pixel 3 landscape": {
-            userAgent: "Mozilla/5.0 (Linux; Android 9; Pixel 3 Build/PQ1A.181105.017.A1) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/158.0.8127.18 Mobile Safari/537.36",
+            userAgent: "Mozilla/5.0 (Linux; Android 9; Pixel 3 Build/PQ1A.181105.017.A1) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/159.0.8154.6 Mobile Safari/537.36",
             viewport: {
               width: 786,
               height: 393
@@ -122133,7 +122133,7 @@ ${text2}`;
             defaultBrowserType: "chromium"
           },
           "Pixel 4": {
-            userAgent: "Mozilla/5.0 (Linux; Android 10; Pixel 4) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/158.0.8127.18 Mobile Safari/537.36",
+            userAgent: "Mozilla/5.0 (Linux; Android 10; Pixel 4) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/159.0.8154.6 Mobile Safari/537.36",
             viewport: {
               width: 353,
               height: 745
@@ -122144,7 +122144,7 @@ ${text2}`;
             defaultBrowserType: "chromium"
           },
           "Pixel 4 landscape": {
-            userAgent: "Mozilla/5.0 (Linux; Android 10; Pixel 4) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/158.0.8127.18 Mobile Safari/537.36",
+            userAgent: "Mozilla/5.0 (Linux; Android 10; Pixel 4) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/159.0.8154.6 Mobile Safari/537.36",
             viewport: {
               width: 745,
               height: 353
@@ -122155,7 +122155,7 @@ ${text2}`;
             defaultBrowserType: "chromium"
           },
           "Pixel 4a (5G)": {
-            userAgent: "Mozilla/5.0 (Linux; Android 11; Pixel 4a (5G)) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/158.0.8127.18 Mobile Safari/537.36",
+            userAgent: "Mozilla/5.0 (Linux; Android 11; Pixel 4a (5G)) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/159.0.8154.6 Mobile Safari/537.36",
             screen: {
               width: 412,
               height: 892
@@ -122170,7 +122170,7 @@ ${text2}`;
             defaultBrowserType: "chromium"
           },
           "Pixel 4a (5G) landscape": {
-            userAgent: "Mozilla/5.0 (Linux; Android 11; Pixel 4a (5G)) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/158.0.8127.18 Mobile Safari/537.36",
+            userAgent: "Mozilla/5.0 (Linux; Android 11; Pixel 4a (5G)) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/159.0.8154.6 Mobile Safari/537.36",
             screen: {
               height: 892,
               width: 412
@@ -122185,7 +122185,7 @@ ${text2}`;
             defaultBrowserType: "chromium"
           },
           "Pixel 5": {
-            userAgent: "Mozilla/5.0 (Linux; Android 11; Pixel 5) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/158.0.8127.18 Mobile Safari/537.36",
+            userAgent: "Mozilla/5.0 (Linux; Android 11; Pixel 5) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/159.0.8154.6 Mobile Safari/537.36",
             screen: {
               width: 393,
               height: 851
@@ -122200,7 +122200,7 @@ ${text2}`;
             defaultBrowserType: "chromium"
           },
           "Pixel 5 landscape": {
-            userAgent: "Mozilla/5.0 (Linux; Android 11; Pixel 5) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/158.0.8127.18 Mobile Safari/537.36",
+            userAgent: "Mozilla/5.0 (Linux; Android 11; Pixel 5) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/159.0.8154.6 Mobile Safari/537.36",
             screen: {
               width: 851,
               height: 393
@@ -122215,7 +122215,7 @@ ${text2}`;
             defaultBrowserType: "chromium"
           },
           "Pixel 6": {
-            userAgent: "Mozilla/5.0 (Linux; Android 12; Pixel 6) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/158.0.8127.18 Mobile Safari/537.36",
+            userAgent: "Mozilla/5.0 (Linux; Android 12; Pixel 6) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/159.0.8154.6 Mobile Safari/537.36",
             screen: {
               width: 412,
               height: 915
@@ -122230,7 +122230,7 @@ ${text2}`;
             defaultBrowserType: "chromium"
           },
           "Pixel 6 landscape": {
-            userAgent: "Mozilla/5.0 (Linux; Android 12; Pixel 6) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/158.0.8127.18 Mobile Safari/537.36",
+            userAgent: "Mozilla/5.0 (Linux; Android 12; Pixel 6) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/159.0.8154.6 Mobile Safari/537.36",
             screen: {
               width: 915,
               height: 412
@@ -122245,7 +122245,7 @@ ${text2}`;
             defaultBrowserType: "chromium"
           },
           "Pixel 6 Pro": {
-            userAgent: "Mozilla/5.0 (Linux; Android 12; Pixel 6 Pro) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/158.0.8127.18 Mobile Safari/537.36",
+            userAgent: "Mozilla/5.0 (Linux; Android 12; Pixel 6 Pro) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/159.0.8154.6 Mobile Safari/537.36",
             screen: {
               width: 412,
               height: 892
@@ -122260,7 +122260,7 @@ ${text2}`;
             defaultBrowserType: "chromium"
           },
           "Pixel 6 Pro landscape": {
-            userAgent: "Mozilla/5.0 (Linux; Android 12; Pixel 6 Pro) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/158.0.8127.18 Mobile Safari/537.36",
+            userAgent: "Mozilla/5.0 (Linux; Android 12; Pixel 6 Pro) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/159.0.8154.6 Mobile Safari/537.36",
             screen: {
               width: 892,
               height: 412
@@ -122275,7 +122275,7 @@ ${text2}`;
             defaultBrowserType: "chromium"
           },
           "Pixel 6a": {
-            userAgent: "Mozilla/5.0 (Linux; Android 12; Pixel 6a) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/158.0.8127.18 Mobile Safari/537.36",
+            userAgent: "Mozilla/5.0 (Linux; Android 12; Pixel 6a) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/159.0.8154.6 Mobile Safari/537.36",
             screen: {
               width: 412,
               height: 915
@@ -122290,7 +122290,7 @@ ${text2}`;
             defaultBrowserType: "chromium"
           },
           "Pixel 6a landscape": {
-            userAgent: "Mozilla/5.0 (Linux; Android 12; Pixel 6a) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/158.0.8127.18 Mobile Safari/537.36",
+            userAgent: "Mozilla/5.0 (Linux; Android 12; Pixel 6a) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/159.0.8154.6 Mobile Safari/537.36",
             screen: {
               width: 915,
               height: 412
@@ -122305,7 +122305,7 @@ ${text2}`;
             defaultBrowserType: "chromium"
           },
           "Pixel 7": {
-            userAgent: "Mozilla/5.0 (Linux; Android 14; Pixel 7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/158.0.8127.18 Mobile Safari/537.36",
+            userAgent: "Mozilla/5.0 (Linux; Android 14; Pixel 7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/159.0.8154.6 Mobile Safari/537.36",
             screen: {
               width: 412,
               height: 915
@@ -122320,7 +122320,7 @@ ${text2}`;
             defaultBrowserType: "chromium"
           },
           "Pixel 7 landscape": {
-            userAgent: "Mozilla/5.0 (Linux; Android 14; Pixel 7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/158.0.8127.18 Mobile Safari/537.36",
+            userAgent: "Mozilla/5.0 (Linux; Android 14; Pixel 7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/159.0.8154.6 Mobile Safari/537.36",
             screen: {
               width: 915,
               height: 412
@@ -122335,7 +122335,7 @@ ${text2}`;
             defaultBrowserType: "chromium"
           },
           "Pixel 7 Pro": {
-            userAgent: "Mozilla/5.0 (Linux; Android 13; Pixel 7 Pro) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/158.0.8127.18 Mobile Safari/537.36",
+            userAgent: "Mozilla/5.0 (Linux; Android 13; Pixel 7 Pro) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/159.0.8154.6 Mobile Safari/537.36",
             screen: {
               width: 412,
               height: 892
@@ -122350,7 +122350,7 @@ ${text2}`;
             defaultBrowserType: "chromium"
           },
           "Pixel 7 Pro landscape": {
-            userAgent: "Mozilla/5.0 (Linux; Android 13; Pixel 7 Pro) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/158.0.8127.18 Mobile Safari/537.36",
+            userAgent: "Mozilla/5.0 (Linux; Android 13; Pixel 7 Pro) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/159.0.8154.6 Mobile Safari/537.36",
             screen: {
               width: 892,
               height: 412
@@ -122365,7 +122365,7 @@ ${text2}`;
             defaultBrowserType: "chromium"
           },
           "Pixel 7a": {
-            userAgent: "Mozilla/5.0 (Linux; Android 13; Pixel 7a) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/158.0.8127.18 Mobile Safari/537.36",
+            userAgent: "Mozilla/5.0 (Linux; Android 13; Pixel 7a) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/159.0.8154.6 Mobile Safari/537.36",
             screen: {
               width: 412,
               height: 915
@@ -122380,7 +122380,7 @@ ${text2}`;
             defaultBrowserType: "chromium"
           },
           "Pixel 7a landscape": {
-            userAgent: "Mozilla/5.0 (Linux; Android 13; Pixel 7a) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/158.0.8127.18 Mobile Safari/537.36",
+            userAgent: "Mozilla/5.0 (Linux; Android 13; Pixel 7a) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/159.0.8154.6 Mobile Safari/537.36",
             screen: {
               width: 915,
               height: 412
@@ -122395,7 +122395,7 @@ ${text2}`;
             defaultBrowserType: "chromium"
           },
           "Pixel 8": {
-            userAgent: "Mozilla/5.0 (Linux; Android 14; Pixel 8) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/158.0.8127.18 Mobile Safari/537.36",
+            userAgent: "Mozilla/5.0 (Linux; Android 14; Pixel 8) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/159.0.8154.6 Mobile Safari/537.36",
             screen: {
               width: 412,
               height: 915
@@ -122410,7 +122410,7 @@ ${text2}`;
             defaultBrowserType: "chromium"
           },
           "Pixel 8 landscape": {
-            userAgent: "Mozilla/5.0 (Linux; Android 14; Pixel 8) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/158.0.8127.18 Mobile Safari/537.36",
+            userAgent: "Mozilla/5.0 (Linux; Android 14; Pixel 8) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/159.0.8154.6 Mobile Safari/537.36",
             screen: {
               width: 915,
               height: 412
@@ -122425,7 +122425,7 @@ ${text2}`;
             defaultBrowserType: "chromium"
           },
           "Pixel 8 Pro": {
-            userAgent: "Mozilla/5.0 (Linux; Android 14; Pixel 8 Pro) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/158.0.8127.18 Mobile Safari/537.36",
+            userAgent: "Mozilla/5.0 (Linux; Android 14; Pixel 8 Pro) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/159.0.8154.6 Mobile Safari/537.36",
             screen: {
               width: 448,
               height: 997
@@ -122440,7 +122440,7 @@ ${text2}`;
             defaultBrowserType: "chromium"
           },
           "Pixel 8 Pro landscape": {
-            userAgent: "Mozilla/5.0 (Linux; Android 14; Pixel 8 Pro) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/158.0.8127.18 Mobile Safari/537.36",
+            userAgent: "Mozilla/5.0 (Linux; Android 14; Pixel 8 Pro) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/159.0.8154.6 Mobile Safari/537.36",
             screen: {
               width: 997,
               height: 448
@@ -122455,7 +122455,7 @@ ${text2}`;
             defaultBrowserType: "chromium"
           },
           "Pixel 8a": {
-            userAgent: "Mozilla/5.0 (Linux; Android 14; Pixel 8a) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/158.0.8127.18 Mobile Safari/537.36",
+            userAgent: "Mozilla/5.0 (Linux; Android 14; Pixel 8a) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/159.0.8154.6 Mobile Safari/537.36",
             screen: {
               width: 412,
               height: 915
@@ -122470,7 +122470,7 @@ ${text2}`;
             defaultBrowserType: "chromium"
           },
           "Pixel 8a landscape": {
-            userAgent: "Mozilla/5.0 (Linux; Android 14; Pixel 8a) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/158.0.8127.18 Mobile Safari/537.36",
+            userAgent: "Mozilla/5.0 (Linux; Android 14; Pixel 8a) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/159.0.8154.6 Mobile Safari/537.36",
             screen: {
               width: 915,
               height: 412
@@ -122485,7 +122485,7 @@ ${text2}`;
             defaultBrowserType: "chromium"
           },
           "Pixel 9": {
-            userAgent: "Mozilla/5.0 (Linux; Android 14; Pixel 9) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/158.0.8127.18 Mobile Safari/537.36",
+            userAgent: "Mozilla/5.0 (Linux; Android 14; Pixel 9) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/159.0.8154.6 Mobile Safari/537.36",
             screen: {
               width: 360,
               height: 808
@@ -122500,7 +122500,7 @@ ${text2}`;
             defaultBrowserType: "chromium"
           },
           "Pixel 9 landscape": {
-            userAgent: "Mozilla/5.0 (Linux; Android 14; Pixel 9) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/158.0.8127.18 Mobile Safari/537.36",
+            userAgent: "Mozilla/5.0 (Linux; Android 14; Pixel 9) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/159.0.8154.6 Mobile Safari/537.36",
             screen: {
               width: 808,
               height: 360
@@ -122515,7 +122515,7 @@ ${text2}`;
             defaultBrowserType: "chromium"
           },
           "Pixel 9 Pro": {
-            userAgent: "Mozilla/5.0 (Linux; Android 14; Pixel 9 Pro) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/158.0.8127.18 Mobile Safari/537.36",
+            userAgent: "Mozilla/5.0 (Linux; Android 14; Pixel 9 Pro) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/159.0.8154.6 Mobile Safari/537.36",
             screen: {
               width: 427,
               height: 952
@@ -122530,7 +122530,7 @@ ${text2}`;
             defaultBrowserType: "chromium"
           },
           "Pixel 9 Pro landscape": {
-            userAgent: "Mozilla/5.0 (Linux; Android 14; Pixel 9 Pro) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/158.0.8127.18 Mobile Safari/537.36",
+            userAgent: "Mozilla/5.0 (Linux; Android 14; Pixel 9 Pro) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/159.0.8154.6 Mobile Safari/537.36",
             screen: {
               width: 952,
               height: 427
@@ -122545,7 +122545,7 @@ ${text2}`;
             defaultBrowserType: "chromium"
           },
           "Pixel 9 Pro XL": {
-            userAgent: "Mozilla/5.0 (Linux; Android 14; Pixel 9 Pro XL) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/158.0.8127.18 Mobile Safari/537.36",
+            userAgent: "Mozilla/5.0 (Linux; Android 14; Pixel 9 Pro XL) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/159.0.8154.6 Mobile Safari/537.36",
             screen: {
               width: 448,
               height: 997
@@ -122560,7 +122560,7 @@ ${text2}`;
             defaultBrowserType: "chromium"
           },
           "Pixel 9 Pro XL landscape": {
-            userAgent: "Mozilla/5.0 (Linux; Android 14; Pixel 9 Pro XL) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/158.0.8127.18 Mobile Safari/537.36",
+            userAgent: "Mozilla/5.0 (Linux; Android 14; Pixel 9 Pro XL) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/159.0.8154.6 Mobile Safari/537.36",
             screen: {
               width: 997,
               height: 448
@@ -122575,7 +122575,7 @@ ${text2}`;
             defaultBrowserType: "chromium"
           },
           "Pixel 10": {
-            userAgent: "Mozilla/5.0 (Linux; Android 16; Pixel 10) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/158.0.8127.18 Mobile Safari/537.36",
+            userAgent: "Mozilla/5.0 (Linux; Android 16; Pixel 10) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/159.0.8154.6 Mobile Safari/537.36",
             screen: {
               width: 360,
               height: 808
@@ -122590,7 +122590,7 @@ ${text2}`;
             defaultBrowserType: "chromium"
           },
           "Pixel 10 landscape": {
-            userAgent: "Mozilla/5.0 (Linux; Android 16; Pixel 10) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/158.0.8127.18 Mobile Safari/537.36",
+            userAgent: "Mozilla/5.0 (Linux; Android 16; Pixel 10) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/159.0.8154.6 Mobile Safari/537.36",
             screen: {
               width: 808,
               height: 360
@@ -122605,7 +122605,7 @@ ${text2}`;
             defaultBrowserType: "chromium"
           },
           "Pixel 10 Pro": {
-            userAgent: "Mozilla/5.0 (Linux; Android 16; Pixel 10 Pro) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/158.0.8127.18 Mobile Safari/537.36",
+            userAgent: "Mozilla/5.0 (Linux; Android 16; Pixel 10 Pro) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/159.0.8154.6 Mobile Safari/537.36",
             screen: {
               width: 427,
               height: 952
@@ -122620,7 +122620,7 @@ ${text2}`;
             defaultBrowserType: "chromium"
           },
           "Pixel 10 Pro landscape": {
-            userAgent: "Mozilla/5.0 (Linux; Android 16; Pixel 10 Pro) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/158.0.8127.18 Mobile Safari/537.36",
+            userAgent: "Mozilla/5.0 (Linux; Android 16; Pixel 10 Pro) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/159.0.8154.6 Mobile Safari/537.36",
             screen: {
               width: 952,
               height: 427
@@ -122635,7 +122635,7 @@ ${text2}`;
             defaultBrowserType: "chromium"
           },
           "Pixel 10 Pro XL": {
-            userAgent: "Mozilla/5.0 (Linux; Android 16; Pixel 10 Pro XL) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/158.0.8127.18 Mobile Safari/537.36",
+            userAgent: "Mozilla/5.0 (Linux; Android 16; Pixel 10 Pro XL) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/159.0.8154.6 Mobile Safari/537.36",
             screen: {
               width: 448,
               height: 997
@@ -122650,7 +122650,7 @@ ${text2}`;
             defaultBrowserType: "chromium"
           },
           "Pixel 10 Pro XL landscape": {
-            userAgent: "Mozilla/5.0 (Linux; Android 16; Pixel 10 Pro XL) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/158.0.8127.18 Mobile Safari/537.36",
+            userAgent: "Mozilla/5.0 (Linux; Android 16; Pixel 10 Pro XL) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/159.0.8154.6 Mobile Safari/537.36",
             screen: {
               width: 997,
               height: 448
@@ -122665,7 +122665,7 @@ ${text2}`;
             defaultBrowserType: "chromium"
           },
           "Moto G4": {
-            userAgent: "Mozilla/5.0 (Linux; Android 7.0; Moto G (4)) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/158.0.8127.18 Mobile Safari/537.36",
+            userAgent: "Mozilla/5.0 (Linux; Android 7.0; Moto G (4)) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/159.0.8154.6 Mobile Safari/537.36",
             viewport: {
               width: 360,
               height: 640
@@ -122676,7 +122676,7 @@ ${text2}`;
             defaultBrowserType: "chromium"
           },
           "Moto G4 landscape": {
-            userAgent: "Mozilla/5.0 (Linux; Android 7.0; Moto G (4)) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/158.0.8127.18 Mobile Safari/537.36",
+            userAgent: "Mozilla/5.0 (Linux; Android 7.0; Moto G (4)) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/159.0.8154.6 Mobile Safari/537.36",
             viewport: {
               width: 640,
               height: 360
@@ -122687,7 +122687,7 @@ ${text2}`;
             defaultBrowserType: "chromium"
           },
           "Desktop Chrome HiDPI": {
-            userAgent: "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/158.0.8127.18 Safari/537.36",
+            userAgent: "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/159.0.8154.6 Safari/537.36",
             screen: {
               width: 1792,
               height: 1120
@@ -122702,7 +122702,7 @@ ${text2}`;
             defaultBrowserType: "chromium"
           },
           "Desktop Edge HiDPI": {
-            userAgent: "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/158.0.8127.18 Safari/537.36 Edg/158.0.8127.18",
+            userAgent: "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/159.0.8154.6 Safari/537.36 Edg/159.0.8154.6",
             screen: {
               width: 1792,
               height: 1120
@@ -122747,7 +122747,7 @@ ${text2}`;
             defaultBrowserType: "webkit"
           },
           "Desktop Chrome": {
-            userAgent: "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/158.0.8127.18 Safari/537.36",
+            userAgent: "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/159.0.8154.6 Safari/537.36",
             screen: {
               width: 1920,
               height: 1080
@@ -122762,7 +122762,7 @@ ${text2}`;
             defaultBrowserType: "chromium"
           },
           "Desktop Edge": {
-            userAgent: "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/158.0.8127.18 Safari/537.36 Edg/158.0.8127.18",
+            userAgent: "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/159.0.8154.6 Safari/537.36 Edg/159.0.8154.6",
             screen: {
               width: 1920,
               height: 1080
@@ -126939,7 +126939,7 @@ ${e.stack}`);
             return [...new Set(executables)];
           }
         };
-        registry = new Registry(Object.freeze({ "comment": "Do not edit this file, use utils/roll_browser.js", "browsers": [{ "name": "chromium", "revision": "1254", "installByDefault": true, "browserVersion": "158.0.8127.18", "title": "Chrome for Testing" }, { "name": "chromium-headless-shell", "revision": "1254", "installByDefault": true, "browserVersion": "158.0.8127.18", "title": "Chrome Headless Shell" }, { "name": "firefox", "revision": "1572", "installByDefault": true, "browserVersion": "159.0", "title": "Firefox" }, { "name": "webkit", "revision": "2388", "installByDefault": true, "revisionOverrides": { "mac14": "2251", "mac14-arm64": "2251" }, "browserVersion": "27.2", "title": "WebKit" }, { "name": "ffmpeg", "revision": "1013", "installByDefault": true }, { "name": "winldd", "revision": "1007", "installByDefault": false }, { "name": "android", "revision": "1001", "installByDefault": false }] }));
+        registry = new Registry(Object.freeze({ "comment": "Do not edit this file, use utils/roll_browser.js", "browsers": [{ "name": "chromium", "revision": "1255", "installByDefault": true, "browserVersion": "159.0.8154.6", "title": "Chrome for Testing" }, { "name": "chromium-headless-shell", "revision": "1255", "installByDefault": true, "browserVersion": "159.0.8154.6", "title": "Chrome Headless Shell" }, { "name": "firefox", "revision": "1572", "installByDefault": true, "browserVersion": "159.0", "title": "Firefox" }, { "name": "webkit", "revision": "2388", "installByDefault": true, "revisionOverrides": { "mac14": "2251", "mac14-arm64": "2251" }, "browserVersion": "27.2", "title": "WebKit" }, { "name": "ffmpeg", "revision": "1013", "installByDefault": true }, { "name": "winldd", "revision": "1007", "installByDefault": false }, { "name": "android", "revision": "1001", "installByDefault": false }] }));
       }
     });
     async function launchApp(browserType, options2) {
@@ -170313,15 +170313,15 @@ ${c.title}:`);
   }
 });
 
-// node_modules/.bun/playwright-core@1.65.0/node_modules/playwright-core/index.js
+// node_modules/.bun/playwright-core@1.65.1/node_modules/playwright-core/index.js
 var require_playwright_core = __commonJS2({
-  "node_modules/.bun/playwright-core@1.65.0/node_modules/playwright-core/index.js"(exports2, module3) {
+  "node_modules/.bun/playwright-core@1.65.1/node_modules/playwright-core/index.js"(exports2, module3) {
     require_bootstrap();
     module3.exports = require_coreBundle().inprocess.playwright;
   }
 });
 
-// node_modules/.bun/playwright-core@1.65.0/node_modules/playwright-core/index.mjs
+// node_modules/.bun/playwright-core@1.65.1/node_modules/playwright-core/index.mjs
 var playwright_core_exports = {};
 __export2(playwright_core_exports, {
   _android: () => _android,
@@ -170337,7 +170337,7 @@ __export2(playwright_core_exports, {
 });
 var import_index, chromium, firefox, webkit, selectors, devices, errors, request2, _electron, _android, playwright_core_default;
 var init_playwright_core = __esm2({
-  "node_modules/.bun/playwright-core@1.65.0/node_modules/playwright-core/index.mjs"() {
+  "node_modules/.bun/playwright-core@1.65.1/node_modules/playwright-core/index.mjs"() {
     import_index = __toESM2(require_playwright_core(), 1);
     chromium = import_index.default.chromium;
     firefox = import_index.default.firefox;
