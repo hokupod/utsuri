@@ -14,8 +14,8 @@
 - **Implementation language**: TypeScript
 - **Development environment**: Bun
 - **Report UI**: a static application built with Svelte
-- **Maintenance publication**: CLI/aggregate `v0.3.8` is a maintenance candidate. Verified public availability remains at `v0.3.7` until protected publication, post-publication Plugin promotion, and live installation verification complete.
-- **v4.2 changes**: prepare the reviewed dependency and toolchain updates while retaining the verified public Git Plugin and exact CLI pin through publication.
+- **Maintenance publication**: CLI/aggregate and Git Marketplace Plugin `v0.3.8` are published and verified through protected publication, post-publication promotion, and live public Git installation checks.
+- **v4.2 changes**: publish the reviewed dependency and toolchain updates through the two-phase release process, with both Git MCP pins fixed to the verified public CLI `@utsu-ri/cli@0.3.8`.
 
 ---
 

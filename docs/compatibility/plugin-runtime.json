@@ -10,14 +10,14 @@
     "mcpPackagePin": "@utsu-ri/cli@0.3.8"
   },
   "publicGitVerification": {
-    "verifiedAt": "2026-10-29",
+    "verifiedAt": "2026-11-18",
     "source": "hokupod/utsuri",
-    "sourceCommit": "7aca81a1f90cbef50fde2f51c7952f56cfa3f2f0",
-    "pluginVersion": "0.3.7",
-    "cliPackage": "@utsu-ri/cli@0.3.7",
+    "sourceCommit": "81b94d2b4240e6ed8383daefac36eeedd68a1105",
+    "pluginVersion": "0.3.8",
+    "cliPackage": "@utsu-ri/cli@0.3.8",
     "hosts": {
       "codex": {
-        "version": "0.165.0",
+        "version": "0.169.0",
         "contract": {
           "sourceCommitVerified": true,
           "packagePinned": true,
@@ -32,7 +32,7 @@
         }
       },
       "claude": {
-        "version": "2.1.312",
+        "version": "2.1.325",
         "contract": {
           "sourceCommitVerified": true,
           "packagePinned": true,

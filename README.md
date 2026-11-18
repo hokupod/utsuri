@@ -25,7 +25,7 @@ Use it when a code or UI change needs a durable report, a clear list of review g
 <!-- availability:git-marketplace-cli-and-plugin-public -->
 <!-- support-contract:macos-linux-windows-unsupported -->
 
-The published CLI and Git Plugin have passed public-source installation and MCP checks. The next maintenance release is being prepared separately. The release guide and runtime compatibility record retain the exact versions and verification scope.
+The current CLI and Git Plugin are published and have passed public-source installation, MCP, and lifecycle checks. The release guide and runtime compatibility record retain the exact source commits, host versions, and verification scope.
 
 CLI/aggregate publication and Git Marketplace Plugin updates are verified in separate stages. The Git Plugin stays pinned to its verified published CLI while the next candidate is prepared. See the [release guide](https://github.com/hokupod/utsuri/blob/main/docs/release.md) for current availability.
 

@@ -1,7 +1,7 @@
 # Utsuri release and distribution guide
 
-- **Current status**: CLI and aggregate Plugin `0.3.8` candidate; Git Marketplace Plugin `0.3.7` remains published and verified
-- **Public availability**: verified `0.3.7` npm packages, GitHub Release, public Git installation on Codex/Claude Code, and the installed Mac Codex Plugin
+- **Current status**: CLI, aggregate Plugin, and Git Marketplace Plugin `0.3.8` published and verified
+- **Public availability**: verified `0.3.8` npm packages, GitHub Release, and isolated public Git installation on Codex/Claude Code
 - **Version source**: root `package.json` for CLI/aggregate candidates; exact Git Plugin manifests and `distribution` identity for the public Git surface
 - **Publisher**: `hokupod`
 - **npm maintainer**: `hokupod-npm`
@@ -17,7 +17,7 @@ Dependency maintenance may repair reviewed generated artifacts using the bounded
 
 `.github/workflows/release.yml` runs only after an operator pushes an annotated `v*` tag. It requires the tag to match the root and CLI versions and to point to the exact `origin/main` commit. Registry writes are confined to its protected `release` environment and use GitHub OIDC trusted publishing without an npm token.
 
-All five package identities now exist publicly through `0.3.7`; release `0.3.7` was published only through the protected tag workflow. Tag creation and release-environment approval remain separate operator actions. A missing package identity or trusted-publisher configuration is release drift: stop and restore the protected configuration instead of falling back to a manual publish.
+All five package identities now exist publicly through `0.3.8`; release `0.3.8` was published only through the protected tag workflow. Tag creation and release-environment approval remain separate operator actions. A missing package identity or trusted-publisher configuration is release drift: stop and restore the protected configuration instead of falling back to a manual publish.
 
 ## Two distribution surfaces and authorization
 
@@ -32,7 +32,7 @@ The previous Git Plugin is checked against its own published canonical Skill and
 
 After the target CLI is publicly verified, the promotion workflow and local `plugin-promote.mjs --version VERSION --write` transaction verify that exact public version before changing Git Plugin manifests, pin, generated Skill, catalogs, and distribution identity together. The source-change PR requires fresh CI and another exact-public-pin smoke. Public Git verification then records the promoted source commit, which may follow the annotated CLI release tag. Final synchronized availability requires both phases and live installation verification; no source change alone authorizes publication or promotion.
 
-The CLI/root aggregate candidate is `0.3.8`. The tracked public Git Plugin remains `0.3.7`; both tracked MCP pins stay exactly `@utsu-ri/cli@0.3.7` until the new CLI is publicly verified. The previous `0.3.7` CLI publication and live Git installation are verified; the public Git record binds that promoted source commit separately from its immutable CLI release tag. Complete SemVer is mandatory; `latest`, tags, ranges, and workspace specifiers fail verification.
+The published CLI/root aggregate and tracked public Git Plugin are `0.3.8`; both tracked MCP pins are exactly `@utsu-ri/cli@0.3.8`. Protected CLI publication preceded Git Plugin promotion and live Git installation verification. The public Git record binds the promoted source commit separately from its immutable CLI release tag. Complete SemVer is mandatory; `latest`, tags, ranges, and workspace specifiers fail verification.
 
 ## Package identities
 
@@ -143,6 +143,16 @@ Ordinary `plugin:verify` validates the staged preimage against the recorded publ
 Commit, push, pull request, and merge remain further separate approvals. Only after the exact promoted source is merged and publicly reachable may an operator run live Git-source installation in isolated Codex and Claude configurations. Record the exact commit, host versions, package identity, and sanitized boolean results. Never copy raw session values, credentials, local paths, or support correspondence into repository evidence.
 
 No post-publication smoke may filter wrapper output to make invalid JSON appear valid.
+
+## Verified synchronized `0.3.8` release
+
+The 2026-11-18 CLI publication used annotated tag `v0.3.8` at source commit `e86dccad32f56bd60d2908e68a1892a4054b44b5`:
+
+- [Preparation PR #143](https://github.com/hokupod/utsuri/pull/143), [exact-main CI](https://github.com/hokupod/utsuri/actions/runs/44225687430), and the [four-platform candidate](https://github.com/hokupod/utsuri/actions/runs/44226236979) passed, including isolated exact-tarball installs under Node 22, 24, and 26. The release rebuild matched all 47 approved candidate files in bytes and modes.
+- The [protected Release workflow](https://github.com/hokupod/utsuri/actions/runs/44227049833) published all five packages through existing OIDC settings, passed native public `npx`/`bunx` JSON and MCP checks, and published [GitHub Release `v0.3.8`](https://github.com/hokupod/utsuri/releases/tag/v0.3.8). All five public tarballs matched the candidate, with verified registry signatures and Sigstore SLSA provenance bound to the tag, source, and workflow. All nine public Release assets also matched the candidate.
+- [Post-publication promotion verification](https://github.com/hokupod/utsuri/actions/runs/44229775178) passed. [Promotion PR #144](https://github.com/hokupod/utsuri/pull/144) was normally merged to `81b94d2b4240e6ed8383daefac36eeedd68a1105`; its [exact-main CI](https://github.com/hokupod/utsuri/actions/runs/44231930716) passed all required checks.
+- Isolated public Git-source installations at that promoted commit passed the recorded lifecycle contract on Codex `0.169.0` and Claude Code `2.1.325`. Installed Plugin files matched the public source in bytes and modes, both pins matched the public CLI, Codex discovered the new broker `0.3.8` and all six tools, and Claude connected to the MCP. Both hosts stopped exposing the MCP after disablement and removal. Codex disablement used the documented App Server configuration API only in the isolated profile. No model inference, paid API test, direct configuration-file edits, or database edits were used. These checks do not claim a model-driven conversation round trip.
+- The public macOS arm64 tarballs passed an offline isolated install, native-helper architecture/proof validation, exact version JSON, report finalization, and strict report validation. The test Plugins and marketplaces were removed through official host CLIs. Existing user configuration hashes were unchanged. Existing chats and MCP processes were not stopped.
 
 ## Verified synchronized `0.3.7` release
 
