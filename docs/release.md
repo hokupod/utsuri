@@ -1,6 +1,6 @@
 # Utsuri release and distribution guide
 
-- **Current status**: CLI, aggregate Plugin, and Git Marketplace Plugin `0.3.7` published and verified
+- **Current status**: CLI and aggregate Plugin `0.3.8` candidate; Git Marketplace Plugin `0.3.7` remains published and verified
 - **Public availability**: verified `0.3.7` npm packages, GitHub Release, public Git installation on Codex/Claude Code, and the installed Mac Codex Plugin
 - **Version source**: root `package.json` for CLI/aggregate candidates; exact Git Plugin manifests and `distribution` identity for the public Git surface
 - **Publisher**: `hokupod`
@@ -32,7 +32,7 @@ The previous Git Plugin is checked against its own published canonical Skill and
 
 After the target CLI is publicly verified, the promotion workflow and local `plugin-promote.mjs --version VERSION --write` transaction verify that exact public version before changing Git Plugin manifests, pin, generated Skill, catalogs, and distribution identity together. The source-change PR requires fresh CI and another exact-public-pin smoke. Public Git verification then records the promoted source commit, which may follow the annotated CLI release tag. Final synchronized availability requires both phases and live installation verification; no source change alone authorizes publication or promotion.
 
-The published CLI/root aggregate and tracked Git Plugin version are `0.3.7`; both tracked MCP pins are exactly `@utsu-ri/cli@0.3.7`. CLI publication and live Git installation are verified; the public Git record binds the promoted source commit separately from the immutable CLI release tag. Complete SemVer is mandatory; `latest`, tags, ranges, and workspace specifiers fail verification.
+The CLI/root aggregate candidate is `0.3.8`. The tracked public Git Plugin remains `0.3.7`; both tracked MCP pins stay exactly `@utsu-ri/cli@0.3.7` until the new CLI is publicly verified. The previous `0.3.7` CLI publication and live Git installation are verified; the public Git record binds that promoted source commit separately from its immutable CLI release tag. Complete SemVer is mandatory; `latest`, tags, ranges, and workspace specifiers fail verification.
 
 ## Package identities
 
@@ -116,8 +116,8 @@ Required repository configuration mirrors Kyoso:
 1. Merge the verified CLI/aggregate candidate to `main`, retaining the unchanged verified public Git Plugin, and require successful exact-main CI.
 2. Use the existing protected GitHub Actions OIDC publisher. Local npm login, a local token, and an authenticated trusted-publisher settings query are not prerequisites. Confirm the five package identities and target-version availability through public registry metadata; never change publisher permissions or fall back to a local publish when Actions rejects publication.
 3. Run the manual Distribution Candidate workflow on the exact `main` commit. Verify the exact run SHA and successful four-platform candidate before tagging.
-4. Confirm that none of the five `0.3.7` versions already exists. If one exists, reconcile its registry integrity against the approved candidate before continuing.
-5. Create annotated tag `v0.3.7` at the still-current exact `main` commit and push only that tag through the existing owner-authorized role.
+4. Confirm that none of the five `0.3.8` versions already exists. If one exists, reconcile its registry integrity against the approved candidate before continuing.
+5. Create annotated tag `v0.3.8` at the still-current exact `main` commit and push only that tag through the existing owner-authorized role.
 6. Approve the protected `release` environment. The workflow publishes the four helpers before the CLI, verifies every registry integrity, runs native `npx` and `bunx` smoke, and creates the immutable GitHub Release. An actual rejection stops publication; do not create credentials or use another route.
 7. Verify the published tag, five package integrities, provenance, and release assets. The Git Plugin continues to execute its previous verified public pin throughout this phase.
 8. Run post-publication promotion below, normally merge its separately verified source PR, then perform public Git-source installation and new-process runtime checks before declaring synchronized availability.

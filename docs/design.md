@@ -6,16 +6,16 @@
 - **Plugin name**: `utsuri`
 - **Skill name**: `utsuri-review`
 - **CLI name**: `utsuri`
-- **Document version**: 4.1
+- **Document version**: 4.2
 - **Created**: 2026-08-06
-- **Last updated**: 2026-11-09
+- **Last updated**: 2026-11-18
 - **Language**: English (canonical)
 - **Targets**: Codex / Claude Code / local CLI / CI
 - **Implementation language**: TypeScript
 - **Development environment**: Bun
 - **Report UI**: a static application built with Svelte
-- **Maintenance publication**: CLI/aggregate and Git Plugin `v0.3.7` are published and verified. Package bytes and provenance bind the immutable CLI tag; the public Git record binds the normally merged promotion source. Isolated Codex and Claude Code installation/lifecycle checks passed, and the existing Mac Codex Plugin reports the exact new version through a fresh MCP process.
-- **v4.1 changes**: complete a two-phase maintenance release with immutable previous public Git inputs and a required public-pin CI smoke; record CLI `v0.3.7` publication separately from the verified promoted Git source.
+- **Maintenance publication**: CLI/aggregate `v0.3.8` is a maintenance candidate. Verified public availability remains at `v0.3.7` until protected publication, post-publication Plugin promotion, and live installation verification complete.
+- **v4.2 changes**: prepare the reviewed dependency and toolchain updates while retaining the verified public Git Plugin and exact CLI pin through publication.
 
 ---
 
@@ -971,7 +971,7 @@ Development source lives under `packages/`. At release time, bundle it as one No
 ```json
 {
   "name": "utsuri",
-  "version": "0.3.7",
+  "version": "0.3.8",
   "description": "Evidence-based visual change review for Codex and Claude Code",
   "skills": "./skills/"
 }
@@ -983,7 +983,7 @@ Development source lives under `packages/`. At release time, bundle it as one No
 {
   "name": "utsuri",
   "displayName": "Utsuri",
-  "version": "0.3.7",
+  "version": "0.3.8",
   "description": "Evidence-based visual change review for Codex and Claude Code",
   "author": {
     "name": "hokupod",
@@ -4813,6 +4813,7 @@ The verified public CLI and Git Plugin version `0.3.6` satisfies this definition
 
 | Entry ID                                   | Version | Date       | Change                                                                                                                                                                                                                                                                                                                                                                                                                                                    |
 | ------------------------------------------ | ------: | ---------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| design-v4.2-v0.3.8-maintenance             |     4.2 | 2026-11-18 | Prepare reviewed runtime, report UI, and build-tool updates in a two-phase patch release while preserving the verified public Git Plugin.                                                                                                                                                                                                                                                                                                                 |
 | design-v4.1-v0.3.7-maintenance             |     4.1 | 2026-10-29 | Prepare reviewed dependency and toolchain updates with synchronized CLI, Plugin, and exact MCP pins; retain prior public availability until all release gates complete.                                                                                                                                                                                                                                                                                   |
 | design-v4.0-v0.3.6-public-release          |     4.0 | 2026-10-05 | Record protected publication, candidate-matching npm and GitHub assets, source-bound provenance, promoted aggregate Plugin, and isolated public Git installs on both hosts.                                                                                                                                                                                                                                                                               |
 | design-v3.9-v0.3.6-review-workflow         |     3.9 | 2026-10-05 | Prepare synchronized feedback, range-comment and verification-evidence release; retain prior verified availability until publication and live Plugin gates complete.                                                                                                                                                                                                                                                                                      |

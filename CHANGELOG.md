@@ -7,6 +7,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.3.8] - 2026-11-18
+
+### Changed
+
+- Update bundled Playwright to `1.65.0` and the report UI to Svelte `5.57.3`,
+  with reviewed dependency baselines, bundles, fixtures, SBOM, and license inventories.
+- Update Vite to `7.3.8` and refresh the reviewed lint, type-checking, and formatting tools.
+- Update Safe-chain to `1.5.27` with verified four-platform hashes. Use Node 26
+  in the development and release toolchain and Ubuntu 26 for Linux CI, while
+  retaining Node 22 and 24 CLI compatibility and the existing Linux binary baseline.
+- Verify full-SHA GitHub Actions references with the generated dependency lockfile.
+- Prepare the CLI and aggregate Plugin separately from the public Git Plugin,
+  whose exact published pin advances only after publication verification.
+
 ## [0.3.7] - 2026-10-29
 
 ### Changed
