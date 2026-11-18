@@ -6,16 +6,16 @@
 - **Plugin name**: `utsuri`
 - **Skill name**: `utsuri-review`
 - **CLI name**: `utsuri`
-- **Document version**: 4.1
+- **Document version**: 4.2
 - **Created**: 2026-08-06
-- **Last updated**: 2026-11-09
+- **Last updated**: 2026-11-18
 - **Language**: English (canonical)
 - **Targets**: Codex / Claude Code / local CLI / CI
 - **Implementation language**: TypeScript
 - **Development environment**: Bun
 - **Report UI**: a static application built with Svelte
-- **Maintenance publication**: CLI/aggregate and Git Plugin `v0.3.7` are published and verified. Package bytes and provenance bind the immutable CLI tag; the public Git record binds the normally merged promotion source. Isolated Codex and Claude Code installation/lifecycle checks passed, and the existing Mac Codex Plugin reports the exact new version through a fresh MCP process.
-- **v4.1 changes**: complete a two-phase maintenance release with immutable previous public Git inputs and a required public-pin CI smoke; record CLI `v0.3.7` publication separately from the verified promoted Git source.
+- **Maintenance publication**: CLI/aggregate `v0.3.8` is a maintenance candidate. Verified public availability remains at `v0.3.7` until protected publication, post-publication Plugin promotion, and live installation verification complete.
+- **v4.2 changes**: prepare the reviewed dependency and toolchain updates while retaining the verified public Git Plugin and exact CLI pin through publication.
 
 ---
 
@@ -971,7 +971,7 @@ Development source lives under `packages/`. At release time, bundle it as one No
 ```json
 {
   "name": "utsuri",
-  "version": "0.3.7",
+  "version": "0.3.8",
   "description": "Evidence-based visual change review for Codex and Claude Code",
   "skills": "./skills/"
 }
@@ -983,7 +983,7 @@ Development source lives under `packages/`. At release time, bundle it as one No
 {
   "name": "utsuri",
   "displayName": "Utsuri",
-  "version": "0.3.7",
+  "version": "0.3.8",
   "description": "Evidence-based visual change review for Codex and Claude Code",
   "author": {
     "name": "hokupod",
@@ -1091,7 +1091,9 @@ Utsuri has two deliberately isolated distribution surfaces:
 1. The **aggregate Plugin** under the root `.codex-plugin/`, `.claude-plugin/`, `assets/`, and `skills/` directories is a release artifact. It contains the product illustration, compiled CLI, report UI, schemas, metadata, and architecture-matched native helper.
 2. The **Git Marketplace Plugin** under `plugins/utsuri/` is source-distributed. It contains only host manifests, the single bounded product illustration, and a deterministic documentation-only Skill generated from the root canonical Skill. It must not contain compiled JavaScript, a native helper, report UI assets, schemas, SBOM files, absolute local paths, secrets, or any `ai/` path.
 
-`.agents/plugins/marketplace.json` and `.claude-plugin/marketplace.json` both resolve the relative source `./plugins/utsuri`. The Git Plugin, root aggregate, and CLI share one complete SemVer, and both host MCP manifests execute native `npx` with that exact `@utsu-ri/cli` version; a floating tag, range, independently versioned Plugin, or ambient Utsuri executable is invalid. CLI publication and Plugin promotion remain separately authorized operations even though their source versions match.
+`.agents/plugins/marketplace.json` and `.claude-plugin/marketplace.json` both resolve the relative source `./plugins/utsuri`. After publication and Plugin promotion, the Git Plugin, root aggregate, and CLI share one complete SemVer. Both host MCP manifests execute native `npx` with the Git Plugin's exact published `@utsu-ri/cli` version; a floating tag, range, independently versioned public Plugin, or ambient Utsuri executable is invalid.
+
+During CLI/aggregate candidate preparation, the entire Git Plugin, catalogs, both MCP pins, and public verification record remain at the previous verified public version. The verifier requires that surface to match the recorded published Git source in bytes and modes, follow its annotated release tag, and remain reachable from `origin/main`. Only post-publication promotion may synchronize the Git Plugin and pins to the verified new CLI. CLI publication and Plugin promotion remain separately authorized operations. See `docs/release.md`.
 
 Both Codex manifests bind `interface.composerIcon` and `interface.logo` to `./assets/utsuri.jpg`. The aggregate and Git Marketplace copies must exactly match the canonical product illustration under `docs/assets/`. Claude manifests intentionally omit image metadata because the current Claude Plugin manifest schema has no icon or logo field.
 
@@ -4813,6 +4815,7 @@ The verified public CLI and Git Plugin version `0.3.6` satisfies this definition
 
 | Entry ID                                   | Version | Date       | Change                                                                                                                                                                                                                                                                                                                                                                                                                                                    |
 | ------------------------------------------ | ------: | ---------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| design-v4.2-v0.3.8-maintenance             |     4.2 | 2026-11-18 | Prepare reviewed runtime, report UI, and build-tool updates in a two-phase patch release while preserving the verified public Git Plugin.                                                                                                                                                                                                                                                                                                                 |
 | design-v4.1-v0.3.7-maintenance             |     4.1 | 2026-10-29 | Prepare reviewed dependency and toolchain updates with synchronized CLI, Plugin, and exact MCP pins; retain prior public availability until all release gates complete.                                                                                                                                                                                                                                                                                   |
 | design-v4.0-v0.3.6-public-release          |     4.0 | 2026-10-05 | Record protected publication, candidate-matching npm and GitHub assets, source-bound provenance, promoted aggregate Plugin, and isolated public Git installs on both hosts.                                                                                                                                                                                                                                                                               |
 | design-v3.9-v0.3.6-review-workflow         |     3.9 | 2026-10-05 | Prepare synchronized feedback, range-comment and verification-evidence release; retain prior verified availability until publication and live Plugin gates complete.                                                                                                                                                                                                                                                                                      |
