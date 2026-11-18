@@ -25,7 +25,7 @@ Utsuri は Git の変更を、コード・ブラウザキャプチャ・構造�
 <!-- availability:git-marketplace-cli-and-plugin-public -->
 <!-- support-contract:macos-linux-windows-unsupported -->
 
-CLI と Git Plugin の `0.3.8` を公開し、公開 source からの導入、MCP、ライフサイクル動作を検証済みです。正確な source commit、ホストのバージョン、検証範囲は、リリースガイドと runtime compatibility record に記録しています。
+現在の CLI と Git Plugin を公開し、公開 source からの導入、MCP、ライフサイクル動作を検証済みです。正確な source commit、ホストのバージョン、検証範囲は、リリースガイドと runtime compatibility record に記録しています。
 
 CLI・aggregate Plugin の公開と Git Marketplace Plugin の更新は、別々の段階で検証します。Git Plugin は公開確認済みの CLI に固定され、次の候補版を準備している間もその版を利用します。公開状況は[リリースガイド](https://github.com/hokupod/utsuri/blob/main/docs/release.md)を確認してください。
 
