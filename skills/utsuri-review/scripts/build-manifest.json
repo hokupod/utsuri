@@ -86,8 +86,8 @@
     "schemas/review-state.schema.json": "27f9f98344a2b94b75f84fef9bba73978bbacca1e102ed11e459d247fbed7552",
     "schemas/review-thread.schema.json": "6c5957f14b964dfaf1601ac45870b7f3fae013209dd4964aa3831dd753f06fc1"
   },
-  "dependencyBaselineSha256": "6db28a2fc844c51fdd268d44c3dc5bf67b5c6d703f8380d458ec096551abd28a",
-  "dependencyHash": "2e4bfedb580f75de7bd77c2929b67b40f3aa81a48760f5d656712c612ed5044c",
+  "dependencyBaselineSha256": "bb8c9ad276bace9bad981c60c0a01bf3d8edfa34a131b062a077b1292cc87906",
+  "dependencyHash": "d44ef0681d408660d233957cf799d8f4f7dbef9fcfc5e446aacb8cbb98e2fb81",
   "dependencyHashes": {
     "ajv-formats@3.0.1/dist/formats.js": "b61693a26869970a92cc1fe832c931ccd3afe8b6d66802b19c48306349e84880",
     "ajv-formats@3.0.1/dist/index.js": "3f3014150293846086d11058bb8bf43e669e354a98b37adcf10281454d5e753b",
@@ -155,7 +155,7 @@
     "ajv@8.20.0/dist/vocabularies/validation/pattern.js": "86e84206bfc6a66ef18bf1fe43fbc56ebe7f7f4d57841197b6d044c529e0c195",
     "ajv@8.20.0/dist/vocabularies/validation/required.js": "b953bc18d94274bd73374dd5b4282d7a21159cec8c0e7a357e1eaf3f326b9054",
     "ajv@8.20.0/dist/vocabularies/validation/uniqueItems.js": "666d1a2aa25c0dfe3cf41312d0f9d40e9f99eb2c19be7469134ad89005aadd52",
-    "axe-core@4.14.0/axe.js": "aae0b8b36278089962105b2351ea64f4da7d3d440b54e162e21616d597aa0d6f",
+    "axe-core@4.14.1/axe.js": "fd334aa2da229d401b8f58a11644cd1ae520d8a2418a74905988f2db940ffd4b",
     "fast-deep-equal@3.1.3/index.js": "eb469e206280321a3878f2335ec98aa2104a155079d8ed83a23029098dccd215",
     "fast-uri@3.1.8/index.js": "62876e5094b43ba2ba90374613dab4576fd337063dad20b4b07cc5e3a7e2303b",
     "fast-uri@3.1.8/lib/schemes.js": "c2c61d3fd0bc63a587100928a399e75be8c420d210c439d75f7346da4aa4f3c3",
@@ -287,5 +287,5 @@
     "app.css": "e3a13751daed2f092852837659997d863ba24dfb7fc8e1f23dc82ec8b9762e2a",
     "app.js": "37560e12d1cd2bf7122f35faea55ad2d8b547c7174ccdda9bbb1b654bf360b1e"
   },
-  "bundleSha256": "0a45176a20a032b20595dcc34e75bdc03daea22d06f39a48ca79396600118f8b"
+  "bundleSha256": "0d225c64b0858757dd3a591f516f31e07319ccf5fe3881170d19f74a616728d6"
 }
