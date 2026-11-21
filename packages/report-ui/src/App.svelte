@@ -1645,14 +1645,14 @@
               : result.exitCode === 0
                 ? t.checkPassed
                 : t.checkFailed}
-            <span
-              >{result.provenance === "log-attached" ? t.logAttached : t.authorReported} · {result.shaMatch ===
+            <span>
+              {result.provenance === "log-attached" ? t.logAttached : t.authorReported} · {result.shaMatch ===
               "match"
                 ? t.shaMatch
                 : result.shaMatch === "mismatch"
                   ? t.shaMismatch
-                  : t.shaUnknown}</span
-            >
+                  : t.shaUnknown}
+            </span>
             <p>{result.environment}</p>
             <code>{result.command.join(" ")}</code>
             <dl>
@@ -1679,8 +1679,10 @@
                   ? result.logRef
                   : `./${result.logRef}`}
                 target="_blank"
-                rel="noopener noreferrer">{t.checkLog}</a
-              ><code>SHA-256: {result.logSha256}</code>{/if}
+                rel="noopener noreferrer"
+              >
+                {t.checkLog}
+              </a><code>SHA-256: {result.logSha256}</code>{/if}
           </li>{/each}
       </ol>
     {/if}
@@ -1722,9 +1724,9 @@
       </label>
 
       <p class="priority-help">{t.autoPriority}: {t.priorityHelp}</p>
-      <label class="viewed-control"
-        ><input type="checkbox" bind:checked={hideReviewed} /><span>{t.hideReviewed}</span></label
-      >
+      <label class="viewed-control">
+        <input type="checkbox" bind:checked={hideReviewed} /><span>{t.hideReviewed}</span>
+      </label>
       <nav aria-label={t.queue}>
         {#each ["action-required", "needs-confirmation", "no-issue"] as kind (kind)}
           <section class="queue-section" data-queue={kind}>
@@ -1749,17 +1751,14 @@
                       <strong>{change.title}</strong>
                       <span class="badges">
                         <span>{change.risk.level}</span>
-                        {#if change.verification.gaps.length > 0}<span
-                            >{change.verification.gaps.length} gaps</span
-                          >{/if}
+                        {#if change.verification.gaps.length > 0}<span>
+                            {change.verification.gaps.length} gaps
+                          </span>{/if}
                       </span>
                       <small class="priority-reason">{priorityReasons(change)}</small>
-                      <small class="human-status"
-                        >{t.humanJudgment}: {judgmentLabel(
-                          judgment(reviewStore, change.id),
-                          t
-                        )}</small
-                      >
+                      <small class="human-status">
+                        {t.humanJudgment}: {judgmentLabel(judgment(reviewStore, change.id), t)}
+                      </small>
                     </span>
                   </a>
                 </li>
@@ -1771,9 +1770,9 @@
         {#if report.unclassifiedHunkRefs.length > 0}
           <section class="queue-section unclassified">
             <h3>
-              <span>{t.unclassified}</span><span class="count"
-                >{report.unclassifiedHunkRefs.length}</span
-              >
+              <span>{t.unclassified}</span><span class="count">
+                {report.unclassifiedHunkRefs.length}
+              </span>
             </h3>
             <ol>
               {#each report.unclassifiedHunkRefs as reference, index (reference)}
@@ -1789,11 +1788,11 @@
                       }}
                     >
                       <span class="queue-index">U{index + 1}</span>
-                      <span class="queue-copy"
-                        ><strong>{hunk.path}</strong><span
-                          >@@ {hunk.oldStart} → {hunk.newStart}</span
-                        ></span
-                      >
+                      <span class="queue-copy">
+                        <strong>{hunk.path}</strong><span>
+                          @@ {hunk.oldStart} → {hunk.newStart}
+                        </span>
+                      </span>
                     </a>
                   </li>
                 {/if}
@@ -1920,16 +1919,14 @@
             {#each report.files as file (file.id)}
               <li>
                 <span class="file-status">{file.status}</span>
-                <code
-                  >{file.oldPath && file.newPath && file.oldPath !== file.newPath
+                <code>
+                  {file.oldPath && file.newPath && file.oldPath !== file.newPath
                     ? `${file.oldPath} → ${file.newPath}`
-                    : (file.newPath ?? file.oldPath)}</code
-                >
-                <span
-                  >{file.binary
-                    ? "binary"
-                    : `+${file.additions ?? 0} / −${file.deletions ?? 0}`}</span
-                >
+                    : (file.newPath ?? file.oldPath)}
+                </code>
+                <span>
+                  {file.binary ? "binary" : `+${file.additions ?? 0} / −${file.deletions ?? 0}`}
+                </span>
                 {#if reviewStore}
                   <label class="viewed-control compact-control">
                     <input
@@ -1962,9 +1959,9 @@
               <h2 id={domId("title", selectedChange.id)}>{selectedChange.title}</h2>
             </div>
             <div class="change-badges" aria-label="Change status">
-              <span title={priorityReasons(selectedChange)} data-queue={queueKind(selectedChange)}
-                >{t.autoPriority}: {queueLabel(queueKind(selectedChange), t)}</span
-              >
+              <span title={priorityReasons(selectedChange)} data-queue={queueKind(selectedChange)}>
+                {t.autoPriority}: {queueLabel(queueKind(selectedChange), t)}
+              </span>
               <span>{selectedChange.risk.level} risk</span>
               <span>{selectedChange.intent.source}</span>
             </div>
@@ -2001,13 +1998,17 @@
                 <button
                   type="button"
                   disabled={!reviewStore || reviewBusy}
-                  onclick={() => void exportReview()}>{t.exportReview}</button
+                  onclick={() => void exportReview()}
                 >
+                  {t.exportReview}
+                </button>
                 <button
                   type="button"
                   disabled={!reviewStore || reviewBusy || Boolean(interactiveToken)}
-                  onclick={() => reviewImportInput?.click()}>{t.importReview}</button
+                  onclick={() => reviewImportInput?.click()}
                 >
+                  {t.importReview}
+                </button>
                 <input
                   class="visually-hidden"
                   bind:this={reviewImportInput}
@@ -2053,8 +2054,9 @@
                   type="button"
                   disabled={reviewBusy}
                   onclick={() => void startComment(currentAnchor("change", selectedChange!.id))}
-                  >{t.comment}</button
                 >
+                  {t.comment}
+                </button>
               </div>
               <p class="local-only-note">{t.localOnly}</p>
             {/if}
@@ -2107,8 +2109,10 @@
                                 "verification-gap",
                                 `${selectedChange!.id}:gap:${index}`
                               )
-                            )}>{t.comment}</button
-                        >{/if}
+                            )}
+                        >
+                          {t.comment}
+                        </button>{/if}
                     </li>{/each}
                 </ul>
               </section>
@@ -2146,9 +2150,9 @@
                         {@const target = report.targets.find(
                           (entry) => entry.id === comparison.targetRef
                         )}
-                        <option value={comparison.id}
-                          >{target?.routeOrStory ?? comparison.targetRef} · {target?.viewport} · {target?.state}</option
-                        >
+                        <option value={comparison.id}>
+                          {target?.routeOrStory ?? comparison.targetRef} · {target?.viewport} · {target?.state}
+                        </option>
                       {/each}
                     </select>
                   </label>
@@ -2192,13 +2196,17 @@
                 <button
                   type="button"
                   aria-pressed={visualMode === "side-by-side"}
-                  onclick={() => setVisualMode("side-by-side")}>{t.sideBySide}</button
+                  onclick={() => setVisualMode("side-by-side")}
                 >
+                  {t.sideBySide}
+                </button>
                 <button
                   type="button"
                   aria-pressed={visualMode === "wipe"}
-                  onclick={() => setVisualMode("wipe")}>{t.wipe}</button
+                  onclick={() => setVisualMode("wipe")}
                 >
+                  {t.wipe}
+                </button>
                 <button
                   type="button"
                   aria-pressed={visualMode === "blink"}
@@ -2207,18 +2215,24 @@
                   onclick={() => {
                     if (visualMode === "blink") blinkRunning = !blinkRunning;
                     else setVisualMode("blink");
-                  }}>{visualMode === "blink" && blinkRunning ? t.stopBlink : t.blink}</button
+                  }}
                 >
+                  {visualMode === "blink" && blinkRunning ? t.stopBlink : t.blink}
+                </button>
                 <button
                   type="button"
                   aria-pressed={visualMode === "pixel-diff"}
-                  onclick={() => setVisualMode("pixel-diff")}>{t.pixelDiff}</button
+                  onclick={() => setVisualMode("pixel-diff")}
                 >
+                  {t.pixelDiff}
+                </button>
                 <button
                   type="button"
                   aria-pressed={visualMode === "after-only"}
-                  onclick={() => setVisualMode("after-only")}>{t.afterOnly}</button
+                  onclick={() => setVisualMode("after-only")}
                 >
+                  {t.afterOnly}
+                </button>
               </div>
 
               {#if activeComparison?.status === "incomplete"}
@@ -2284,8 +2298,9 @@
                               class="region-marker"
                               aria-hidden="true"
                               style={`left:${(region.x / activeImage.width) * 100}%;top:${(region.y / activeImage.height) * 100}%;width:${(region.width / activeImage.width) * 100}%;height:${(region.height / activeImage.height) * 100}%`}
-                              >{index + 1}</span
                             >
+                              {index + 1}
+                            </span>
                           {/each}
                           {#each activeVisualThreads as thread, index (thread.id)}
                             <button
@@ -2294,8 +2309,9 @@
                               style={visualPinStyle(thread.anchor)}
                               aria-label={`${t.comment} pin ${index + 1}: ${thread.state}`}
                               onclick={() => void focusElement(domId("thread", thread.id))}
-                              >{index + 1}</button
                             >
+                              {index + 1}
+                            </button>
                           {/each}
                         </div>
                       </div>
@@ -2327,8 +2343,9 @@
                             style={visualPinStyle(thread.anchor)}
                             aria-label={`${t.comment} pin ${index + 1}: ${thread.state}`}
                             onclick={() => void focusElement(domId("thread", thread.id))}
-                            >{index + 1}</button
                           >
+                            {index + 1}
+                          </button>
                         {/each}
                       </div>
                     </div>
@@ -2358,8 +2375,9 @@
                             style={visualPinStyle(thread.anchor)}
                             aria-label={`${t.comment} pin ${index + 1}: ${thread.state}`}
                             onclick={() => void focusElement(domId("thread", thread.id))}
-                            >{index + 1}</button
                           >
+                            {index + 1}
+                          </button>
                         {/each}
                       </div>
                     </div>
@@ -2380,8 +2398,9 @@
                             style={visualPinStyle(thread.anchor)}
                             aria-label={`${t.comment} pin ${index + 1}: ${thread.state}`}
                             onclick={() => void focusElement(domId("thread", thread.id))}
-                            >{index + 1}</button
                           >
+                            {index + 1}
+                          </button>
                         {/each}
                       </div>
                     </div>
@@ -2402,8 +2421,9 @@
                             class="region-marker"
                             aria-hidden="true"
                             style={`left:${(region.x / activeImage.width) * 100}%;top:${(region.y / activeImage.height) * 100}%;width:${(region.width / activeImage.width) * 100}%;height:${(region.height / activeImage.height) * 100}%`}
-                            >{index + 1}</span
                           >
+                            {index + 1}
+                          </span>
                         {/each}
                         {#each activeVisualThreads as thread, index (thread.id)}
                           <button
@@ -2412,8 +2432,9 @@
                             style={visualPinStyle(thread.anchor)}
                             aria-label={`${t.comment} pin ${index + 1}: ${thread.state}`}
                             onclick={() => void focusElement(domId("thread", thread.id))}
-                            >{index + 1}</button
                           >
+                            {index + 1}
+                          </button>
                         {/each}
                       </div>
                     </div>
@@ -2431,9 +2452,10 @@
                               type="button"
                               aria-current={activeRegionIndex === index ? "true" : undefined}
                               onclick={() => void jumpRegion(index)}
-                              >Region {index + 1} · {region.pixels} px · ({region.x}, {region.y}) {region.width}
-                              × {region.height}</button
                             >
+                              Region {index + 1} · {region.pixels} px · ({region.x}, {region.y}) {region.width}
+                              × {region.height}
+                            </button>
                             {#if reviewStore}<button
                                 type="button"
                                 disabled={reviewBusy}
@@ -2443,8 +2465,10 @@
                                       "visual-region",
                                       `${activeComparison!.id}:${activeImage!.id}:${region.id}`
                                     )
-                                  )}>{t.comment}</button
-                              >{/if}
+                                  )}
+                              >
+                                {t.comment}
+                              </button>{/if}
                           </div>
                         </li>
                       {/each}
@@ -2478,23 +2502,24 @@
                         class:active-finding={activeFindingIndex === index}
                       >
                         <div class="finding-badges">
-                          <span>{finding.state}</span><span>{finding.severity}</span><span
-                            >{finding.category}</span
-                          >
+                          <span>{finding.state}</span><span>{finding.severity}</span><span>
+                            {finding.category}
+                          </span>
                         </div>
                         <h5>{finding.title}</h5>
                         <p>{finding.description}</p>
                         {#if finding.hunkRefs[0]}
-                          <button type="button" onclick={() => openHunk(finding.hunkRefs[0]!)}
-                            >{t.viewCode}</button
-                          >
+                          <button type="button" onclick={() => openHunk(finding.hunkRefs[0]!)}>
+                            {t.viewCode}
+                          </button>
                         {/if}
                         {#if reviewStore}<button
                             type="button"
                             disabled={reviewBusy}
                             onclick={() => void startComment(currentAnchor("finding", finding.id))}
-                            >{t.comment}</button
-                          >{/if}
+                          >
+                            {t.comment}
+                          </button>{/if}
                       </article>
                     </li>
                   {/each}
@@ -2549,13 +2574,17 @@
                 <button
                   type="button"
                   aria-pressed={diffMode === "unified"}
-                  onclick={() => (diffMode = "unified")}>{t.unified}</button
+                  onclick={() => (diffMode = "unified")}
                 >
+                  {t.unified}
+                </button>
                 <button
                   type="button"
                   aria-pressed={diffMode === "split"}
-                  onclick={() => (diffMode = "split")}>{t.split}</button
+                  onclick={() => (diffMode = "split")}
                 >
+                  {t.split}
+                </button>
               </div>
             </div>
 
@@ -2593,14 +2622,17 @@
                         type="button"
                         disabled={reviewBusy}
                         onclick={() => void startComment(currentAnchor("hunk", hunk.id))}
-                        >{t.comment}</button
                       >
+                        {t.comment}
+                      </button>
                     {/if}
                     {#if rangeSelection?.hunkId === hunk.id}<button
                         type="button"
                         disabled={reviewBusy}
-                        onclick={() => void commentOnRange()}>{t.rangeComment}</button
-                      >{/if}
+                        onclick={() => void commentOnRange()}
+                      >
+                        {t.rangeComment}
+                      </button>{/if}
                     {#if selectedComparisons.length > 0}
                       <button type="button" onclick={openVisualEvidence}>{t.viewVisual}</button>
                     {/if}
@@ -2608,8 +2640,10 @@
                       type="button"
                       class="anchor-button"
                       aria-label={`Link to hunk in ${hunk.path}`}
-                      onclick={() => openHunk(hunk.id)}>#</button
+                      onclick={() => openHunk(hunk.id)}
                     >
+                      #
+                    </button>
                   </div>
                 </header>
                 {#if explanation}
@@ -2664,8 +2698,9 @@
                             )}
                             onclick={(event) =>
                               selectRangeLine(hunk, "before", row.line.oldLine!, event.shiftKey)}
-                            >{row.line.oldLine}</button
-                          >{:else}<span class="line-number"></span>{/if}
+                          >
+                            {row.line.oldLine}
+                          </button>{:else}<span class="line-number"></span>{/if}
                         {#if row.line.newLine}<button
                             type="button"
                             class="line-number range-line"
@@ -2684,28 +2719,33 @@
                             )}
                             onclick={(event) =>
                               selectRangeLine(hunk, "after", row.line.newLine!, event.shiftKey)}
-                            >{row.line.newLine}</button
-                          >{:else}<span class="line-number"></span>{/if}
-                        <span class="line-sign" aria-hidden="true"
-                          >{row.line.kind === "addition"
+                          >
+                            {row.line.newLine}
+                          </button>{:else}<span class="line-number"></span>{/if}
+                        <span class="line-sign" aria-hidden="true">
+                          {row.line.kind === "addition"
                             ? "+"
                             : row.line.kind === "deletion"
                               ? "−"
-                              : " "}</span
-                        >
-                        <code
-                          >{#each segments(hunk, row.index) as segment, segmentIndex (segmentIndex)}<span
-                              class:word-change={segment.changed}>{segment.text}</span
-                            >{/each}</code
-                        >
+                              : " "}
+                        </span>
+                        <code>
+                          {#each segments(hunk, row.index) as segment, segmentIndex (segmentIndex)}<span
+                              class:word-change={segment.changed}
+                            >
+                              {segment.text}
+                            </span>{/each}
+                        </code>
                         {#if reviewStore && reviewAnchor}<button
                             class="line-comment"
                             type="button"
                             disabled={reviewBusy}
                             aria-label={`${t.commentOn} ${hunk.path}:${reviewAnchor.startLine}`}
                             title={t.comment}
-                            onclick={() => void startComment(reviewAnchor)}>✎</button
-                          >{/if}
+                            onclick={() => void startComment(reviewAnchor)}
+                          >
+                            ✎
+                          </button>{/if}
                       </div>
                     {:else}
                       {@const reviewAnchor = lineReviewAnchor(hunk, row.index)}
@@ -2736,16 +2776,19 @@
                               )}
                               onclick={(event) =>
                                 selectRangeLine(hunk, "before", row.line.oldLine!, event.shiftKey)}
-                              >{row.line.oldLine}</button
-                            >{:else}<span class="line-number"></span>{/if}
-                          <span class="line-sign" aria-hidden="true"
-                            >{row.line.kind === "deletion" ? "−" : " "}</span
-                          >
-                          {#if row.line.kind !== "addition"}<code
-                              >{#each segments(hunk, row.index) as segment, segmentIndex (segmentIndex)}<span
-                                  class:word-change={segment.changed}>{segment.text}</span
-                                >{/each}</code
-                            >{/if}
+                            >
+                              {row.line.oldLine}
+                            </button>{:else}<span class="line-number"></span>{/if}
+                          <span class="line-sign" aria-hidden="true">
+                            {row.line.kind === "deletion" ? "−" : " "}
+                          </span>
+                          {#if row.line.kind !== "addition"}<code>
+                              {#each segments(hunk, row.index) as segment, segmentIndex (segmentIndex)}<span
+                                  class:word-change={segment.changed}
+                                >
+                                  {segment.text}
+                                </span>{/each}
+                            </code>{/if}
                         </div>
                         <div
                           class:empty-side={row.line.kind === "deletion"}
@@ -2769,16 +2812,19 @@
                               )}
                               onclick={(event) =>
                                 selectRangeLine(hunk, "after", row.line.newLine!, event.shiftKey)}
-                              >{row.line.newLine}</button
-                            >{:else}<span class="line-number"></span>{/if}
-                          <span class="line-sign" aria-hidden="true"
-                            >{row.line.kind === "addition" ? "+" : " "}</span
-                          >
-                          {#if row.line.kind !== "deletion"}<code
-                              >{#each segments(hunk, row.index) as segment, segmentIndex (segmentIndex)}<span
-                                  class:word-change={segment.changed}>{segment.text}</span
-                                >{/each}</code
-                            >{/if}
+                            >
+                              {row.line.newLine}
+                            </button>{:else}<span class="line-number"></span>{/if}
+                          <span class="line-sign" aria-hidden="true">
+                            {row.line.kind === "addition" ? "+" : " "}
+                          </span>
+                          {#if row.line.kind !== "deletion"}<code>
+                              {#each segments(hunk, row.index) as segment, segmentIndex (segmentIndex)}<span
+                                  class:word-change={segment.changed}
+                                >
+                                  {segment.text}
+                                </span>{/each}
+                            </code>{/if}
                         </div>
                         {#if reviewStore && reviewAnchor}<button
                             class="line-comment"
@@ -2786,8 +2832,10 @@
                             disabled={reviewBusy}
                             aria-label={`${t.commentOn} ${hunk.path}:${reviewAnchor.startLine}`}
                             title={t.comment}
-                            onclick={() => void startComment(reviewAnchor)}>✎</button
-                          >{/if}
+                            onclick={() => void startComment(reviewAnchor)}
+                          >
+                            ✎
+                          </button>{/if}
                       </div>
                     {/if}
                   {/each}
@@ -2795,8 +2843,10 @@
                 {#if activeHunkId === hunk.id}<button
                     class="back-link hunk-back"
                     type="button"
-                    onclick={backToChange}>← {t.backChange}</button
-                  >{/if}
+                    onclick={backToChange}
+                  >
+                    ← {t.backChange}
+                  </button>{/if}
               </section>
             {/each}
           </section>
@@ -2851,9 +2901,9 @@
                 </label>
                 <p>{t.localOnly}</p>
                 <div class="comment-actions">
-                  <button type="submit" disabled={reviewBusy || !commentBody.trim()}
-                    >{t.saveComment}</button
-                  >
+                  <button type="submit" disabled={reviewBusy || !commentBody.trim()}>
+                    {t.saveComment}
+                  </button>
                   <button
                     type="button"
                     disabled={reviewBusy}
@@ -2861,8 +2911,10 @@
                       commentAnchor = null;
                       commentBody = "";
                       commentAgentAttention = false;
-                    }}>{t.cancel}</button
+                    }}
                   >
+                    {t.cancel}
+                  </button>
                 </div>
               </form>
             {/if}
@@ -2906,10 +2958,9 @@
                                 !isAnswerUnread(message.feedbackItemId!),
                                 true
                               )}
-                            >{isAnswerUnread(message.feedbackItemId)
-                              ? t.markRead
-                              : t.markUnread}</button
                           >
+                            {isAnswerUnread(message.feedbackItemId) ? t.markRead : t.markUnread}
+                          </button>
                         </div>
                       {:else}<p>{message.body}</p>{/if}
                     {/each}
@@ -2931,8 +2982,10 @@
                       <button
                         type="button"
                         disabled={reviewBusy}
-                        onclick={() => void resolveComment(thread.id)}>{t.resolve}</button
+                        onclick={() => void resolveComment(thread.id)}
                       >
+                        {t.resolve}
+                      </button>
                     {/if}
                   </li>
                 {/each}
@@ -2967,8 +3020,9 @@
                       type="button"
                       disabled={reviewBusy}
                       onclick={() => void startComment(currentAnchor("hunk", hunk.id))}
-                      >{t.comment}</button
                     >
+                      {t.comment}
+                    </button>
                   </div>{/if}
               </header>
               <div class="diff-table">
@@ -2977,18 +3031,21 @@
                       class="context-fold"
                       type="button"
                       onclick={() => expandHunk(hunk.id)}
-                      >{t.context.replace("{count}", String(row.count))}</button
                     >
+                      {t.context.replace("{count}", String(row.count))}
+                    </button>
                   {:else}<div class={`diff-line ${row.line.kind}`}>
                       <span class="line-number">{row.line.oldLine ?? ""}</span><span
-                        class="line-number">{row.line.newLine ?? ""}</span
-                      ><span class="line-sign"
-                        >{row.line.kind === "addition"
+                        class="line-number"
+                      >
+                        {row.line.newLine ?? ""}
+                      </span><span class="line-sign">
+                        {row.line.kind === "addition"
                           ? "+"
                           : row.line.kind === "deletion"
                             ? "−"
-                            : " "}</span
-                      ><code>{row.line.content}</code>
+                            : " "}
+                      </span><code>{row.line.content}</code>
                     </div>{/if}
                 {/each}
               </div>
@@ -3009,9 +3066,9 @@
         <header>
           <div>
             <strong>{t.selectedItems}: {feedbackSyncPending ? "…" : pendingFeedbackCount}</strong>
-            <span class="unread-badge"
-              >{t.unreadAnswers}: {feedbackSyncPending ? "…" : unreadAnswerCount}</span
-            >
+            <span class="unread-badge">
+              {t.unreadAnswers}: {feedbackSyncPending ? "…" : unreadAnswerCount}
+            </span>
           </div>
           <button
             type="button"
@@ -3019,21 +3076,27 @@
             aria-controls="feedback-preview-panel"
             onclick={() => {
               feedbackCollapsed = !feedbackCollapsed;
-            }}>{feedbackCollapsed ? t.expandFeedback : t.collapseFeedback}</button
+            }}
           >
+            {feedbackCollapsed ? t.expandFeedback : t.collapseFeedback}
+          </button>
           {#if selectedAttentionCount > 0 && !feedbackCollapsed}
             <button
               type="button"
               disabled={feedbackBusy || reviewBusy || feedbackSyncPending}
-              onclick={() => void reviewFeedbackItems()}>{t.reviewItems}</button
+              onclick={() => void reviewFeedbackItems()}
             >
+              {t.reviewItems}
+            </button>
           {/if}
           {#if feedbackSyncPending && interactiveRefreshFailed}
             <button
               type="button"
               disabled={interactiveRefresh !== null}
-              onclick={() => void refreshNotifiedReview()}>{t.retryReviewUpdate}</button
+              onclick={() => void refreshNotifiedReview()}
             >
+              {t.retryReviewUpdate}
+            </button>
           {/if}
         </header>
         {#if feedbackPreview && !feedbackCollapsed}
@@ -3056,9 +3119,9 @@
                   <strong>{item.question}</strong>
                   <code>{item.anchor.type}: {anchorLabel(item.anchor)}</code>
                   <span>{feedbackSyncPending ? t.feedbackUpdating : item.state}</span>
-                  <button type="button" onclick={() => void viewFeedbackItem(item.threadId)}
-                    >{t.viewAnswer}</button
-                  >
+                  <button type="button" onclick={() => void viewFeedbackItem(item.threadId)}>
+                    {t.viewAnswer}
+                  </button>
                 </li>
               {/each}
             </ol>
@@ -3092,14 +3155,17 @@
                   type="button"
                   disabled={feedbackBusy}
                   onclick={() => void prepareFeedbackRequest()}
-                  >{interactiveToken ? t.returnConversation : t.prepareRequest}</button
                 >
+                  {interactiveToken ? t.returnConversation : t.prepareRequest}
+                </button>
                 {#if feedbackHandoff}
                   <button
                     type="button"
                     disabled={feedbackBusy}
-                    onclick={() => void copyFeedbackHandoff()}>{t.copyHandoff}</button
+                    onclick={() => void copyFeedbackHandoff()}
                   >
+                    {t.copyHandoff}
+                  </button>
                 {/if}
               </div>
               {#if feedbackHandoff}<pre>{feedbackHandoff}</pre>{/if}
