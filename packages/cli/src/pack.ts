@@ -1,5 +1,5 @@
 import { createHash } from "node:crypto";
-import { mkdir, realpath, writeFile } from "node:fs/promises";
+import { lstat, mkdir, realpath, writeFile } from "node:fs/promises";
 import path from "node:path";
 import { canonicalJson, ExitCode, sha256, UtsuriError } from "@utsu-ri/core";
 import { validateReportDirectory, type ReportManifest } from "@utsu-ri/report-builder";
@@ -14,6 +14,7 @@ import { parse } from "yaml";
 
 const maximumArchiveBytes = 512 * 1024 * 1024;
 const defaultSingleFileLimit = 8 * 1024 * 1024;
+const packagedReportDirectory = "report";
 const policyConditions = [
   "capture-incomplete",
   "new-critical-a11y",
@@ -42,6 +43,29 @@ export interface PackReportResult {
   data: Record<string, unknown>;
   human: string;
   exitCode: 0 | 10;
+}
+
+interface PackOptions {
+  config?: string;
+  singleFile: boolean;
+  maximumSingleFileBytes?: number;
+}
+
+type PreparedSingleFile =
+  | { kind: "not-requested"; maximumBytes: number }
+  | {
+      kind: "included" | "size-limit";
+      maximumBytes: number;
+      document: Buffer;
+      embeddedReferences: ReadonlySet<string>;
+    };
+
+interface PreparedPack {
+  reportDirectory: string;
+  loaded: LoadedReport;
+  policy: CiPolicyResult;
+  cacheKey: string;
+  singleFile: PreparedSingleFile;
 }
 
 function policyError(id: string, message: string): never {
@@ -269,14 +293,23 @@ function dataUri(filename: string, bytes: Buffer): string {
 
 function replaceAssetReferences(
   value: unknown,
-  replacements: ReadonlyMap<string, string>
+  replacements: ReadonlyMap<string, string>,
+  embeddedReferences: Set<string>
 ): unknown {
-  if (typeof value === "string") return replacements.get(value) ?? value;
+  if (typeof value === "string") {
+    const replacement = replacements.get(value);
+    if (replacement === undefined) return value;
+    embeddedReferences.add(value);
+    return replacement;
+  }
   if (Array.isArray(value))
-    return value.map((entry) => replaceAssetReferences(entry, replacements));
+    return value.map((entry) => replaceAssetReferences(entry, replacements, embeddedReferences));
   if (typeof value !== "object" || value === null) return value;
   return Object.fromEntries(
-    Object.entries(value).map(([key, entry]) => [key, replaceAssetReferences(entry, replacements)])
+    Object.entries(value).map(([key, entry]) => [
+      key,
+      replaceAssetReferences(entry, replacements, embeddedReferences)
+    ])
   );
 }
 
@@ -288,7 +321,10 @@ function cspHash(value: string): string {
   return createHash("sha256").update(value).digest("base64");
 }
 
-function singleFileDocument(loaded: LoadedReport): Buffer {
+function singleFileDocument(loaded: LoadedReport): {
+  document: Buffer;
+  embeddedReferences: ReadonlySet<string>;
+} {
   const css = loaded.files.get("assets/app.css")!.toString("utf8");
   const javascript = loaded.files.get("assets/app.js")!.toString("utf8");
   const language = loaded.report.language;
@@ -313,7 +349,10 @@ function singleFileDocument(loaded: LoadedReport): Buffer {
       replacements.set(name, dataUri(name, bytes));
     }
   }
-  const reportJson = scriptData(replaceAssetReferences(loaded.report, replacements));
+  const embeddedReferences = new Set<string>();
+  const reportJson = scriptData(
+    replaceAssetReferences(loaded.report, replacements, embeddedReferences)
+  );
   const manifestJson = scriptData(loaded.manifest);
   const hashes = [reportJson, manifestJson, javascript]
     .map((value) => `'sha256-${cspHash(value)}'`)
@@ -330,7 +369,7 @@ function singleFileDocument(loaded: LoadedReport): Buffer {
     `script-src ${hashes}`,
     `style-src 'sha256-${cspHash(css)}'`
   ].join("; ");
-  return Buffer.from(`<!doctype html>
+  const document = Buffer.from(`<!doctype html>
 <html lang="${language}">
 <head>
   <meta charset="utf-8">
@@ -352,18 +391,19 @@ function singleFileDocument(loaded: LoadedReport): Buffer {
 </body>
 </html>
 `);
+  return { document, embeddedReferences };
 }
 
 function archiveBytes(files: ReadonlyMap<string, Buffer>): Uint8Array {
   const archive: Zippable = {};
   const zipEpoch = new Date("1980-01-01T00:00:00.000Z");
   for (const [name, bytes] of [...files].sort(([left], [right]) => left.localeCompare(right))) {
-    archive[`report/${name}`] = [bytes, { level: 9, mtime: zipEpoch }];
+    archive[`${packagedReportDirectory}/${name}`] = [bytes, { level: 9, mtime: zipEpoch }];
   }
   return zipSync(archive, { level: 9, mtime: zipEpoch });
 }
 
-async function createOutputDirectory(
+async function resolveOutputDirectory(
   cwd: string,
   output: string,
   reportDirectory: string
@@ -379,16 +419,27 @@ async function createOutputDirectory(
       ExitCode.Arguments
     );
   }
+  return outputDirectory;
+}
+
+function outputExists(): never {
+  throw new UtsuriError(
+    "PACK_OUTPUT_EXISTS",
+    "Pack output directory already exists",
+    ExitCode.Arguments
+  );
+}
+
+async function createOutputDirectory(
+  cwd: string,
+  output: string,
+  reportDirectory: string
+): Promise<string> {
+  const outputDirectory = await resolveOutputDirectory(cwd, output, reportDirectory);
   try {
     await mkdir(outputDirectory, { mode: 0o700 });
   } catch (error) {
-    if ((error as NodeJS.ErrnoException).code === "EEXIST") {
-      throw new UtsuriError(
-        "PACK_OUTPUT_EXISTS",
-        "Pack output directory already exists",
-        ExitCode.Arguments
-      );
-    }
+    if ((error as NodeJS.ErrnoException).code === "EEXIST") outputExists();
     throw error;
   }
   return outputDirectory;
@@ -398,7 +449,7 @@ async function writePackagedReport(
   outputDirectory: string,
   files: ReadonlyMap<string, Buffer>
 ): Promise<void> {
-  const reportOutput = path.join(outputDirectory, "report");
+  const reportOutput = path.join(outputDirectory, packagedReportDirectory);
   await mkdir(reportOutput, { mode: 0o700 });
   for (const [name, bytes] of [...files].sort(([left], [right]) => left.localeCompare(right))) {
     const filename = path.join(reportOutput, ...name.split("/"));
@@ -407,12 +458,11 @@ async function writePackagedReport(
   }
 }
 
-export async function packReport(
+async function preparePack(
   cwd: string,
   reportValue: string,
-  output: string,
-  options: { config?: string; singleFile: boolean; maximumSingleFileBytes?: number }
-): Promise<PackReportResult> {
+  options: PackOptions
+): Promise<PreparedPack> {
   const reportDirectory = await resolveContainedPath(cwd, reportValue);
   const loaded = await loadReport(reportDirectory);
   const config = await loadConfig(cwd, options.config);
@@ -434,12 +484,123 @@ export async function packReport(
   const singleFileRequested = options.singleFile || config?.report.singleFile === true;
   const policy = evaluateCiPolicy(loaded.report, config?.policy ?? { failOn: [], warnOn: [] });
   const cacheKey = computeReportCacheKey(loaded.report, loaded.manifest, config);
-  const singleFile = singleFileRequested ? singleFileDocument(loaded) : null;
-  const singleFileIncluded = Boolean(singleFile && singleFile.byteLength <= maximumSingleFileBytes);
-  const fallbackReason =
-    singleFile && !singleFileIncluded
-      ? `Single-file report is ${singleFile.byteLength} bytes, above the ${maximumSingleFileBytes} byte limit; multi-file output was preserved.`
-      : null;
+  let singleFile: PreparedSingleFile = {
+    kind: "not-requested",
+    maximumBytes: maximumSingleFileBytes
+  };
+  if (singleFileRequested) {
+    const generated = singleFileDocument(loaded);
+    singleFile = {
+      kind: generated.document.byteLength <= maximumSingleFileBytes ? "included" : "size-limit",
+      maximumBytes: maximumSingleFileBytes,
+      ...generated
+    };
+  }
+  return { reportDirectory, loaded, policy, cacheKey, singleFile };
+}
+
+function singleFileSummary(singleFile: PreparedSingleFile) {
+  const actualBytes = singleFile.kind === "not-requested" ? null : singleFile.document.byteLength;
+  return {
+    requested: singleFile.kind !== "not-requested",
+    included: singleFile.kind === "included",
+    maximumBytes: singleFile.maximumBytes,
+    actualBytes,
+    fallbackReason:
+      singleFile.kind === "size-limit"
+        ? `Single-file report is ${actualBytes} bytes, above the ${singleFile.maximumBytes} byte limit; multi-file output was preserved.`
+        : null
+  };
+}
+
+export async function previewPackReport(
+  cwd: string,
+  reportValue: string,
+  options: PackOptions & { output?: string }
+): Promise<PackReportResult> {
+  const prepared = await preparePack(cwd, reportValue, options);
+  if (options.output !== undefined) {
+    const outputDirectory = await resolveOutputDirectory(
+      cwd,
+      options.output,
+      prepared.reportDirectory
+    );
+    try {
+      await lstat(outputDirectory);
+    } catch (error) {
+      if ((error as NodeJS.ErrnoException).code !== "ENOENT") throw error;
+      return packPreview(prepared);
+    }
+    outputExists();
+  }
+  return packPreview(prepared);
+}
+
+function packPreview({ loaded, singleFile, policy }: PreparedPack): PackReportResult {
+  const verificationLogs = [...loaded.files.keys()]
+    .filter((name) => name.startsWith("verification/"))
+    .sort()
+    .map((name) => ({
+      path: name,
+      directory: `${packagedReportDirectory}/${name}`,
+      zip: `${packagedReportDirectory}/${name}`,
+      singleFile:
+        singleFile.kind !== "included"
+          ? singleFile.kind
+          : singleFile.embeddedReferences.has(name)
+            ? "embedded"
+            : "reference-only"
+    }));
+  const summary = singleFileSummary(singleFile);
+  const omissionReason = singleFile.kind === "included" ? null : singleFile.kind;
+  const human = [
+    "Pack preview. No files written.",
+    ...(policy.exitCode === 10 ? ["CI policy failed."] : []),
+    ...(verificationLogs.length === 0 ? ["Verification logs: none."] : []),
+    ...verificationLogs.map(
+      (log) =>
+        `${log.path}\n  directory: ${log.directory}\n  ZIP: ${log.zip}\n  single HTML: ${log.singleFile}`
+    ),
+    "Standalone report.json keeps references only; it does not embed log text.",
+    singleFile.kind === "not-requested"
+      ? "Single-file HTML not requested."
+      : singleFile.kind === "size-limit"
+        ? `Single-file HTML omitted: ${summary.actualBytes} bytes exceeds the ${summary.maximumBytes} byte limit.`
+        : `Single-file HTML included: ${summary.actualBytes} bytes within the ${summary.maximumBytes} byte limit.`
+  ].join("\n");
+  return {
+    exitCode: policy.exitCode,
+    data: {
+      ok: policy.exitCode === 0,
+      command: "pack",
+      preview: true,
+      verificationLogs,
+      standaloneReportJson: "references-only",
+      singleFile: {
+        requested: summary.requested,
+        included: summary.included,
+        maximumBytes: summary.maximumBytes,
+        actualBytes: summary.actualBytes,
+        omissionReason
+      }
+    },
+    human
+  };
+}
+
+export async function packReport(
+  cwd: string,
+  reportValue: string,
+  output: string,
+  options: PackOptions
+): Promise<PackReportResult> {
+  const { reportDirectory, loaded, policy, cacheKey, singleFile } = await preparePack(
+    cwd,
+    reportValue,
+    options
+  );
+  const summarySingleFile = singleFileSummary(singleFile);
+  const fallbackReason = summarySingleFile.fallbackReason;
   const outputDirectory = await createOutputDirectory(cwd, output, reportDirectory);
   await writePackagedReport(outputDirectory, loaded.files);
   await writeFile(path.join(outputDirectory, "report.zip"), archiveBytes(loaded.files), {
@@ -450,8 +611,8 @@ export async function packReport(
     flag: "wx",
     mode: 0o600
   });
-  if (singleFileIncluded) {
-    await writeFile(path.join(outputDirectory, "report.single.html"), singleFile!, {
+  if (singleFile.kind === "included") {
+    await writeFile(path.join(outputDirectory, "report.single.html"), singleFile.document, {
       flag: "wx",
       mode: 0o600
     });
@@ -464,18 +625,12 @@ export async function packReport(
     semanticManifestHash: loaded.manifest.semanticHash,
     policy,
     artifacts: {
-      reportDirectory: "report",
+      reportDirectory: packagedReportDirectory,
       reportZip: "report.zip",
       reportJson: "report.json",
-      singleFile: singleFileIncluded ? "report.single.html" : null
+      singleFile: singleFile.kind === "included" ? "report.single.html" : null
     },
-    singleFile: {
-      requested: singleFileRequested,
-      included: singleFileIncluded,
-      maximumBytes: maximumSingleFileBytes,
-      actualBytes: singleFile?.byteLength ?? null,
-      fallbackReason
-    }
+    singleFile: summarySingleFile
   };
   await writeFile(
     path.join(outputDirectory, "ci-summary.json"),

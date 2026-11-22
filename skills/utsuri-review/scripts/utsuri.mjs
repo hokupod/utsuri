@@ -240071,6 +240071,7 @@ var booleanOptions2 = /* @__PURE__ */ new Set([
   "--interactive",
   "--json",
   "--open",
+  "--preview",
   "--reanchor",
   "--single-file",
   "--strict",
@@ -240447,7 +240448,7 @@ async function initializeConfig(cwd, output = "utsuri.yml") {
 
 // packages/cli/src/pack.ts
 import { createHash as createHash9 } from "node:crypto";
-import { mkdir as mkdir8, realpath as realpath14, writeFile as writeFile9 } from "node:fs/promises";
+import { lstat as lstat10, mkdir as mkdir8, realpath as realpath14, writeFile as writeFile9 } from "node:fs/promises";
 import path24 from "node:path";
 
 // node_modules/.bun/fflate@0.8.3/node_modules/fflate/esm/index.mjs
@@ -241170,6 +241171,7 @@ function zipSync(data, opts) {
 var import_yaml5 = __toESM2(require_dist2(), 1);
 var maximumArchiveBytes = 512 * 1024 * 1024;
 var defaultSingleFileLimit = 8 * 1024 * 1024;
+var packagedReportDirectory = "report";
 var policyConditions = [
   "capture-incomplete",
   "new-critical-a11y",
@@ -241354,13 +241356,21 @@ function dataUri(filename, bytes) {
   if (!contentType) throw new Error(`Unsupported embedded asset: ${filename}`);
   return `data:${contentType};base64,${bytes.toString("base64")}`;
 }
-function replaceAssetReferences(value2, replacements) {
-  if (typeof value2 === "string") return replacements.get(value2) ?? value2;
+function replaceAssetReferences(value2, replacements, embeddedReferences) {
+  if (typeof value2 === "string") {
+    const replacement = replacements.get(value2);
+    if (replacement === void 0) return value2;
+    embeddedReferences.add(value2);
+    return replacement;
+  }
   if (Array.isArray(value2))
-    return value2.map((entry) => replaceAssetReferences(entry, replacements));
+    return value2.map((entry) => replaceAssetReferences(entry, replacements, embeddedReferences));
   if (typeof value2 !== "object" || value2 === null) return value2;
   return Object.fromEntries(
-    Object.entries(value2).map(([key, entry]) => [key, replaceAssetReferences(entry, replacements)])
+    Object.entries(value2).map(([key, entry]) => [
+      key,
+      replaceAssetReferences(entry, replacements, embeddedReferences)
+    ])
   );
 }
 function scriptData(value2) {
@@ -241389,7 +241399,10 @@ function singleFileDocument(loaded) {
       replacements.set(name, dataUri(name, bytes));
     }
   }
-  const reportJson = scriptData(replaceAssetReferences(loaded.report, replacements));
+  const embeddedReferences = /* @__PURE__ */ new Set();
+  const reportJson = scriptData(
+    replaceAssetReferences(loaded.report, replacements, embeddedReferences)
+  );
   const manifestJson = scriptData(loaded.manifest);
   const hashes = [reportJson, manifestJson, javascript].map((value2) => `'sha256-${cspHash(value2)}'`).join(" ");
   const csp = [
@@ -241404,7 +241417,7 @@ function singleFileDocument(loaded) {
     `script-src ${hashes}`,
     `style-src 'sha256-${cspHash(css)}'`
   ].join("; ");
-  return Buffer.from(`<!doctype html>
+  const document2 = Buffer.from(`<!doctype html>
 <html lang="${language}">
 <head>
   <meta charset="utf-8">
@@ -241426,16 +241439,17 @@ function singleFileDocument(loaded) {
 </body>
 </html>
 `);
+  return { document: document2, embeddedReferences };
 }
 function archiveBytes(files) {
   const archive = {};
   const zipEpoch = /* @__PURE__ */ new Date("1980-01-01T00:00:00.000Z");
   for (const [name, bytes] of [...files].sort(([left], [right]) => left.localeCompare(right))) {
-    archive[`report/${name}`] = [bytes, { level: 9, mtime: zipEpoch }];
+    archive[`${packagedReportDirectory}/${name}`] = [bytes, { level: 9, mtime: zipEpoch }];
   }
   return zipSync(archive, { level: 9, mtime: zipEpoch });
 }
-async function createOutputDirectory(cwd, output, reportDirectory) {
+async function resolveOutputDirectory(cwd, output, reportDirectory) {
   const parentValue = path24.dirname(output);
   await resolveContainedPath(cwd, parentValue);
   const outputDirectory = await resolveContainedPath(cwd, output, { allowMissing: true });
@@ -241447,22 +241461,27 @@ async function createOutputDirectory(cwd, output, reportDirectory) {
       ExitCode.Arguments
     );
   }
+  return outputDirectory;
+}
+function outputExists() {
+  throw new UtsuriError(
+    "PACK_OUTPUT_EXISTS",
+    "Pack output directory already exists",
+    ExitCode.Arguments
+  );
+}
+async function createOutputDirectory(cwd, output, reportDirectory) {
+  const outputDirectory = await resolveOutputDirectory(cwd, output, reportDirectory);
   try {
     await mkdir8(outputDirectory, { mode: 448 });
   } catch (error) {
-    if (error.code === "EEXIST") {
-      throw new UtsuriError(
-        "PACK_OUTPUT_EXISTS",
-        "Pack output directory already exists",
-        ExitCode.Arguments
-      );
-    }
+    if (error.code === "EEXIST") outputExists();
     throw error;
   }
   return outputDirectory;
 }
 async function writePackagedReport(outputDirectory, files) {
-  const reportOutput = path24.join(outputDirectory, "report");
+  const reportOutput = path24.join(outputDirectory, packagedReportDirectory);
   await mkdir8(reportOutput, { mode: 448 });
   for (const [name, bytes] of [...files].sort(([left], [right]) => left.localeCompare(right))) {
     const filename = path24.join(reportOutput, ...name.split("/"));
@@ -241470,7 +241489,7 @@ async function writePackagedReport(outputDirectory, files) {
     await writeFile9(filename, bytes, { flag: "wx", mode: 384 });
   }
 }
-async function packReport(cwd, reportValue, output, options2) {
+async function preparePack(cwd, reportValue, options2) {
   const reportDirectory = await resolveContainedPath(cwd, reportValue);
   const loaded = await loadReport(reportDirectory);
   const config = await loadConfig2(cwd, options2.config);
@@ -241486,9 +241505,97 @@ async function packReport(cwd, reportValue, output, options2) {
   const singleFileRequested = options2.singleFile || config?.report.singleFile === true;
   const policy = evaluateCiPolicy(loaded.report, config?.policy ?? { failOn: [], warnOn: [] });
   const cacheKey = computeReportCacheKey(loaded.report, loaded.manifest, config);
-  const singleFile = singleFileRequested ? singleFileDocument(loaded) : null;
-  const singleFileIncluded = Boolean(singleFile && singleFile.byteLength <= maximumSingleFileBytes);
-  const fallbackReason = singleFile && !singleFileIncluded ? `Single-file report is ${singleFile.byteLength} bytes, above the ${maximumSingleFileBytes} byte limit; multi-file output was preserved.` : null;
+  let singleFile = {
+    kind: "not-requested",
+    maximumBytes: maximumSingleFileBytes
+  };
+  if (singleFileRequested) {
+    const generated = singleFileDocument(loaded);
+    singleFile = {
+      kind: generated.document.byteLength <= maximumSingleFileBytes ? "included" : "size-limit",
+      maximumBytes: maximumSingleFileBytes,
+      ...generated
+    };
+  }
+  return { reportDirectory, loaded, policy, cacheKey, singleFile };
+}
+function singleFileSummary(singleFile) {
+  const actualBytes = singleFile.kind === "not-requested" ? null : singleFile.document.byteLength;
+  return {
+    requested: singleFile.kind !== "not-requested",
+    included: singleFile.kind === "included",
+    maximumBytes: singleFile.maximumBytes,
+    actualBytes,
+    fallbackReason: singleFile.kind === "size-limit" ? `Single-file report is ${actualBytes} bytes, above the ${singleFile.maximumBytes} byte limit; multi-file output was preserved.` : null
+  };
+}
+async function previewPackReport(cwd, reportValue, options2) {
+  const prepared = await preparePack(cwd, reportValue, options2);
+  if (options2.output !== void 0) {
+    const outputDirectory = await resolveOutputDirectory(
+      cwd,
+      options2.output,
+      prepared.reportDirectory
+    );
+    try {
+      await lstat10(outputDirectory);
+    } catch (error) {
+      if (error.code !== "ENOENT") throw error;
+      return packPreview(prepared);
+    }
+    outputExists();
+  }
+  return packPreview(prepared);
+}
+function packPreview({ loaded, singleFile, policy }) {
+  const verificationLogs = [...loaded.files.keys()].filter((name) => name.startsWith("verification/")).sort().map((name) => ({
+    path: name,
+    directory: `${packagedReportDirectory}/${name}`,
+    zip: `${packagedReportDirectory}/${name}`,
+    singleFile: singleFile.kind !== "included" ? singleFile.kind : singleFile.embeddedReferences.has(name) ? "embedded" : "reference-only"
+  }));
+  const summary = singleFileSummary(singleFile);
+  const omissionReason = singleFile.kind === "included" ? null : singleFile.kind;
+  const human = [
+    "Pack preview. No files written.",
+    ...policy.exitCode === 10 ? ["CI policy failed."] : [],
+    ...verificationLogs.length === 0 ? ["Verification logs: none."] : [],
+    ...verificationLogs.map(
+      (log2) => `${log2.path}
+  directory: ${log2.directory}
+  ZIP: ${log2.zip}
+  single HTML: ${log2.singleFile}`
+    ),
+    "Standalone report.json keeps references only; it does not embed log text.",
+    singleFile.kind === "not-requested" ? "Single-file HTML not requested." : singleFile.kind === "size-limit" ? `Single-file HTML omitted: ${summary.actualBytes} bytes exceeds the ${summary.maximumBytes} byte limit.` : `Single-file HTML included: ${summary.actualBytes} bytes within the ${summary.maximumBytes} byte limit.`
+  ].join("\n");
+  return {
+    exitCode: policy.exitCode,
+    data: {
+      ok: policy.exitCode === 0,
+      command: "pack",
+      preview: true,
+      verificationLogs,
+      standaloneReportJson: "references-only",
+      singleFile: {
+        requested: summary.requested,
+        included: summary.included,
+        maximumBytes: summary.maximumBytes,
+        actualBytes: summary.actualBytes,
+        omissionReason
+      }
+    },
+    human
+  };
+}
+async function packReport(cwd, reportValue, output, options2) {
+  const { reportDirectory, loaded, policy, cacheKey, singleFile } = await preparePack(
+    cwd,
+    reportValue,
+    options2
+  );
+  const summarySingleFile = singleFileSummary(singleFile);
+  const fallbackReason = summarySingleFile.fallbackReason;
   const outputDirectory = await createOutputDirectory(cwd, output, reportDirectory);
   await writePackagedReport(outputDirectory, loaded.files);
   await writeFile9(path24.join(outputDirectory, "report.zip"), archiveBytes(loaded.files), {
@@ -241499,8 +241606,8 @@ async function packReport(cwd, reportValue, output, options2) {
     flag: "wx",
     mode: 384
   });
-  if (singleFileIncluded) {
-    await writeFile9(path24.join(outputDirectory, "report.single.html"), singleFile, {
+  if (singleFile.kind === "included") {
+    await writeFile9(path24.join(outputDirectory, "report.single.html"), singleFile.document, {
       flag: "wx",
       mode: 384
     });
@@ -241513,18 +241620,12 @@ async function packReport(cwd, reportValue, output, options2) {
     semanticManifestHash: loaded.manifest.semanticHash,
     policy,
     artifacts: {
-      reportDirectory: "report",
+      reportDirectory: packagedReportDirectory,
       reportZip: "report.zip",
       reportJson: "report.json",
-      singleFile: singleFileIncluded ? "report.single.html" : null
+      singleFile: singleFile.kind === "included" ? "report.single.html" : null
     },
-    singleFile: {
-      requested: singleFileRequested,
-      included: singleFileIncluded,
-      maximumBytes: maximumSingleFileBytes,
-      actualBytes: singleFile?.byteLength ?? null,
-      fallbackReason
-    }
+    singleFile: summarySingleFile
   };
   await writeFile9(
     path24.join(outputDirectory, "ci-summary.json"),
@@ -242847,6 +242948,7 @@ Commands:
   validate <report>      Validate report schema, CSP, assets, and hashes
   serve <report>         Serve a report on a random loopback port
   pack <report>          Create deterministic CI artifacts and apply policy
+                         --preview lists log destinations without writing
   review export          Export review state, comments, and event journal
   review import          Import review state with optional --reanchor
   feedback list          List pending Origin Session review batches
@@ -242863,9 +242965,19 @@ Global options:
 `;
 async function executeCli(argv2, cwd = process.cwd(), environment = process.env) {
   let json = argv2.includes("--json");
+  const previewRequested = argv2.some(
+    (argument) => argument === "--preview" || argument.startsWith("--preview=")
+  );
   try {
     const args = parseArguments(argv2);
     json = args.json;
+    if (args.options.has("--preview") && args.command !== "pack") {
+      throw new UtsuriError(
+        "CLI_PREVIEW_COMMAND",
+        "--preview is supported only by pack",
+        ExitCode.Arguments
+      );
+    }
     if (args.options.has("--version") || args.command === "version") {
       return {
         exitCode: 0,
@@ -243133,7 +243245,8 @@ async function executeCli(argv2, cwd = process.cwd(), environment = process.env)
     if (args.command === "pack") {
       const reportValue = args.positionals[0];
       const output = optionString(args, "--output");
-      if (!reportValue || args.positionals.length !== 1 || !output) {
+      const preview = args.options.has("--preview");
+      if (!reportValue || args.positionals.length !== 1 || !preview && !output) {
         throw new UtsuriError(
           "CLI_PACK_INPUT_REQUIRED",
           "pack requires exactly one report directory and --output",
@@ -243148,11 +243261,12 @@ async function executeCli(argv2, cwd = process.cwd(), environment = process.env)
           ExitCode.Arguments
         );
       }
-      const packed = await packReport(cwd, reportValue, output, {
+      const options2 = {
         config: optionString(args, "--config"),
         singleFile: args.options.has("--single-file"),
         maximumSingleFileBytes: maximumValue ? Number(maximumValue) : void 0
-      });
+      };
+      const packed = preview ? await previewPackReport(cwd, reportValue, { ...options2, output }) : await packReport(cwd, reportValue, output, options2);
       return { exitCode: packed.exitCode, data: packed.data, human: packed.human, json };
     }
     if (args.command === "review") {
@@ -243256,18 +243370,19 @@ async function executeCli(argv2, cwd = process.cwd(), environment = process.env)
     );
   } catch (error) {
     const normalized = toUtsuriError(error);
+    const message = previewRequested ? "Pack preview failed." : normalized.message;
     return {
       exitCode: normalized.exitCode,
       data: {
         ok: false,
         error: {
           id: normalized.diagnosticId,
-          message: normalized.message,
+          message,
           exitCode: normalized.exitCode,
-          details: normalized.details
+          ...previewRequested ? {} : { details: normalized.details }
         }
       },
-      human: `${normalized.diagnosticId}: ${normalized.message}`,
+      human: `${normalized.diagnosticId}: ${message}`,
       json
     };
   }
