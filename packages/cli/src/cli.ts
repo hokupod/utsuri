@@ -17,7 +17,7 @@ import {
 import { optionString, parseArguments } from "./arguments";
 import { doctor } from "./doctor";
 import { initializeConfig } from "./init";
-import { packReport } from "./pack";
+import { packReport, previewPackReport } from "./pack";
 import { reviewExport, reviewImport } from "./review";
 import { serveReport } from "./serve";
 import {
@@ -73,6 +73,7 @@ Commands:
   validate <report>      Validate report schema, CSP, assets, and hashes
   serve <report>         Serve a report on a random loopback port
   pack <report>          Create deterministic CI artifacts and apply policy
+                         --preview lists log destinations without writing
   review export          Export review state, comments, and event journal
   review import          Import review state with optional --reanchor
   feedback list          List pending Origin Session review batches
@@ -101,9 +102,19 @@ export async function executeCli(
   environment: NodeJS.ProcessEnv = process.env
 ): Promise<CliExecution> {
   let json = argv.includes("--json");
+  const previewRequested = argv.some(
+    (argument) => argument === "--preview" || argument.startsWith("--preview=")
+  );
   try {
     const args = parseArguments(argv);
     json = args.json;
+    if (args.options.has("--preview") && args.command !== "pack") {
+      throw new UtsuriError(
+        "CLI_PREVIEW_COMMAND",
+        "--preview is supported only by pack",
+        ExitCode.Arguments
+      );
+    }
     if (args.options.has("--version") || args.command === "version") {
       return {
         exitCode: 0,
@@ -387,7 +398,8 @@ export async function executeCli(
     if (args.command === "pack") {
       const reportValue = args.positionals[0];
       const output = optionString(args, "--output");
-      if (!reportValue || args.positionals.length !== 1 || !output) {
+      const preview = args.options.has("--preview");
+      if (!reportValue || args.positionals.length !== 1 || (!preview && !output)) {
         throw new UtsuriError(
           "CLI_PACK_INPUT_REQUIRED",
           "pack requires exactly one report directory and --output",
@@ -402,11 +414,14 @@ export async function executeCli(
           ExitCode.Arguments
         );
       }
-      const packed = await packReport(cwd, reportValue, output, {
+      const options = {
         config: optionString(args, "--config"),
         singleFile: args.options.has("--single-file"),
         maximumSingleFileBytes: maximumValue ? Number(maximumValue) : undefined
-      });
+      };
+      const packed = preview
+        ? await previewPackReport(cwd, reportValue, { ...options, output })
+        : await packReport(cwd, reportValue, output!, options);
       return { exitCode: packed.exitCode, data: packed.data, human: packed.human, json };
     }
 
@@ -515,18 +530,19 @@ export async function executeCli(
     );
   } catch (error) {
     const normalized = toUtsuriError(error);
+    const message = previewRequested ? "Pack preview failed." : normalized.message;
     return {
       exitCode: normalized.exitCode,
       data: {
         ok: false,
         error: {
           id: normalized.diagnosticId,
-          message: normalized.message,
+          message,
           exitCode: normalized.exitCode,
-          details: normalized.details
+          ...(previewRequested ? {} : { details: normalized.details })
         }
       },
-      human: `${normalized.diagnosticId}: ${normalized.message}`,
+      human: `${normalized.diagnosticId}: ${message}`,
       json
     };
   }

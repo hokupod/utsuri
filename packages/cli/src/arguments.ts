@@ -28,6 +28,7 @@ const booleanOptions = new Set([
   "--interactive",
   "--json",
   "--open",
+  "--preview",
   "--reanchor",
   "--single-file",
   "--strict",

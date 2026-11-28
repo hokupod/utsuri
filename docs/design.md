@@ -1431,6 +1431,10 @@ utsuri pack .artifacts/utsuri/run-001/report \
 - Include base/head content, configuration, browser, target, and tool version in the semantic cache key while excluding timestamps, temporary paths, and ports.
 - Apply `policy.failOn` and `policy.warnOn`; policy failures preserve artifacts and return exit code `10`.
 - Emit a single-file report only when requested and within the configured byte limit; otherwise preserve the multi-file report and state the fallback reason.
+- `pack REPORT --preview [--single-file] [--output OUTPUT] [--json]` validates and reads the same immutable assets, applies the same policy, and constructs the requested HTML without writing files. Its `verificationLogs` rows contain only relative `path`, `directory`, `zip`, and `singleFile` destinations. Standalone `report.json` retains references, not log text.
+- Preview derives `embedded` versus `reference-only` from the actual recursive exact-string substitutions. An unreferenced or invalid asset still fails strict validation. Its `singleFile` metadata reports actual whole-document bytes, the existing byte limit, and an `omissionReason` of `not-requested`, `size-limit`, or `null`. A policy failure retains exit `10` without preview artifacts.
+- Preview can omit `--output` to inspect content alone. A supplied output receives the normal containment, symlink, immutable-report, and existing-target checks without creating or reserving it. Later I/O, permissions, or races can still prevent a normal pack.
+- Preview JSON and human output omit log bodies, data URIs, absolute paths, command arguments, and configuration content. Preview errors retain the diagnostic ID and exit code but use a fixed message and omit free-form details. Normal pack output and error contracts are unchanged.
 
 ### 13.13 `feedback`
 

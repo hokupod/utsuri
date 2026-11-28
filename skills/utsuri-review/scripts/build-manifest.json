@@ -1,7 +1,7 @@
 {
   "schemaVersion": "1.1",
   "toolVersion": "0.3.8",
-  "sourceHash": "47b4bccab99e672e70b9259fa5f79d0bf0b08237d91aaec528e78676d09bab16",
+  "sourceHash": "ea7a3d4965de605773b19774f787746c9736bf5affb502805ef1bcf8c4a581d5",
   "sourceHashes": {
     "packages/adapters/generic/src/index.ts": "0fb851c88f14187773d97373b9d848e831abb629bb4b1834c4393f29917c4169",
     "packages/adapters/playwright/src/index.ts": "7714950f8fbcc160493e649a13e2c96d2843530307150357c30b9155c42b6081",
@@ -22,14 +22,14 @@
     "packages/capture/src/runtime/cleanup.ts": "52db4074dd47a789cd08843c6291392a68837961d47a84804e199e6400698294",
     "packages/capture/src/runtime/container.ts": "d6f53ec8d03dcf2f9774436c533fc0cd6dd72c85fe7f1d60f4f3daf5f3c18452",
     "packages/capture/src/server-runtime.ts": "8b4055dad80efa008548c9efcd502f80ca29abcfae062c63fa3cf701a41a0472",
-    "packages/cli/src/arguments.ts": "0ab06574a833531cb6084b555d11847d6deca4fd082fa3035c5e2a72a8870005",
-    "packages/cli/src/cli.ts": "1cfc09213b691f8a826ace90da2bfe6d025fd7a7d819aa9446eb23a8b23213ad",
+    "packages/cli/src/arguments.ts": "222b9384be965729cdcc0daea6133f1defb4fa8df9eb075c9e40e198f479452c",
+    "packages/cli/src/cli.ts": "1b9667fc0efddc374574a662c60df7760c57fa13db9fd0f65b86a01f3d87b8fb",
     "packages/cli/src/doctor.ts": "fdf26a40387b433878e257c3f857348e6bbe510e63b56a6a9623c1a5b6876287",
     "packages/cli/src/feedback.ts": "5c85a25385d488b8813edf10ab16f9a071128e67bd3c97aa792820ab54f68892",
     "packages/cli/src/init.ts": "5250d75ae8de6a7471bce58ff4f1b27b830cbf090bc55a8ec16c9125376cfb65",
     "packages/cli/src/main.ts": "d399e4b4a8a951cbb18fb6244ffa789dd3ed16cc49d6b7edb4f62078ab9a18fe",
     "packages/cli/src/mcp.ts": "e17e246038235d0983674109acf903856f8b8b4008bd06ca51ee91c5b94a75e8",
-    "packages/cli/src/pack.ts": "b2c616bffe4280ac49ed20a4330a91cdc2bad26559843d9b842139fe4d8d3c85",
+    "packages/cli/src/pack.ts": "ce7d82aa4775b760417dfed14ce3c5434817fcdb914c059b4a95e556539598b6",
     "packages/cli/src/review.ts": "6dd667da53cd5efae84899e23d2381ab3a04193b3ca0590a3c39802e69187709",
     "packages/cli/src/serve.ts": "0a3a302b5b2630354464b3fc6c15ac838649879a820a3a4db0df09f033e4cf88",
     "packages/clipboard-handoff/src/index.ts": "87e3bd52dee66181afadca1c36cd8cbb1472c2a21933a16b1a72721496aeca90",
@@ -287,5 +287,5 @@
     "app.css": "e3a13751daed2f092852837659997d863ba24dfb7fc8e1f23dc82ec8b9762e2a",
     "app.js": "c91de6166186f9c875aa111332d0e44bece0a627ff6d0bab12b55544e1effa58"
   },
-  "bundleSha256": "1c1fafaaa1c60767f942bbbe6ea26895582ed6b5b1164a7e95c5cf4d6def4af3"
+  "bundleSha256": "f9fc913498d5dad54cf5aa550bd79b7b4c709df07063867529febe9a87d6355a"
 }

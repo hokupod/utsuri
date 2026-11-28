@@ -126,6 +126,8 @@ The report preserves source identity, evidence hashes, and review gaps so anothe
 - **Feedback Batch** can be collapsed without changing review data. Saved previews follow ready/consumed/answered state, link to the corresponding answer, and stop offering a handoff after consumption. New answers start unread; a visible answer becomes read after 700 ms. Manual unread lasts until the answer leaves the viewport and is viewed again, or is reopened after navigation.
 - **Registered verification results** distinguish unit tests, typecheck, lint, build, application E2E and external services. Annotations can include SHA, argv, exit code, passed count, warnings, environment and hashed text logs. Logs under `verification/` become immutable report assets; author reports and log attachments remain distinguishable. Local or mock success never promotes visual coverage to `PASS`.
 
+- **Pack preview** is available in this source checkout; the pinned published CLI and Plugin are unchanged. It shows where verification logs would go before you share a report. Run `utsuri pack RUN/report --preview --single-file --json` to list relative log paths in the ZIP, report directory, and single HTML without writing files or showing log text. It reports actual HTML bytes and size-limit omissions; standalone `report.json` keeps references only. `--output` is optional for preview and checks a supplied destination without reserving it. A preview does not guarantee a later write will succeed.
+
 <a id="security-privacy"></a><!-- section:security-privacy -->
 
 ## Security and privacy

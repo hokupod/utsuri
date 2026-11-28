@@ -91,6 +91,42 @@ describe("CLI", () => {
     expect(errorId(result)).toBe("CLI_DUPLICATE_OPTION");
   });
 
+  test("limits preview to pack and preserves the normal required-output error", async () => {
+    const unsupported = await executeCli(["doctor", "--preview", "--json"]);
+    expect(unsupported.exitCode).toBe(2);
+    expect(unsupported.data).toEqual({
+      ok: false,
+      error: { id: "CLI_PREVIEW_COMMAND", message: "Pack preview failed.", exitCode: 2 }
+    });
+    const missing = await executeCli(["pack", "run/report", "--json"]);
+    expect(missing.data).toEqual({
+      ok: false,
+      error: {
+        id: "CLI_PACK_INPUT_REQUIRED",
+        message: "pack requires exactly one report directory and --output",
+        exitCode: 2,
+        details: {}
+      }
+    });
+  });
+
+  test("does not echo private preview arguments in parsing errors", async () => {
+    for (const args of [
+      ["pack", "--preview", "--SYNTHETIC_PRIVATE_PARSE_150", "--json"],
+      ["pack", "--preview=/sensitive/SYNTHETIC_PRIVATE_PARSE_150", "--json"]
+    ]) {
+      const result = await executeCli(args);
+      expect(result.exitCode).toBe(2);
+      expect((result.data as { error: { message: string } }).error.message).toBe(
+        "Pack preview failed."
+      );
+      expect(JSON.stringify(result.data) + result.human).not.toContain(
+        "SYNTHETIC_PRIVATE_PARSE_150"
+      );
+      expect(result.data).not.toHaveProperty("error.details");
+    }
+  });
+
   test("initializes a non-executable configuration proposal without overwriting", async () => {
     const root = await mkdtemp(path.join(tmpdir(), "utsuri-init-"));
     temporaryDirectories.push(root);

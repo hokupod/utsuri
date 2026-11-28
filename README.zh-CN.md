@@ -126,6 +126,8 @@ Utsuri 首先检查可用 capability，不会安装任何内容。未请求浏�
 - **Feedback Batch** 可折叠和展开而不修改数据。已保存的预览同步ready/consumed/answered，可跳转到回答，处理开始后不再提供交接操作。新回答为未读，正文进入视口700毫秒后变为已读。手动恢复未读后，离开视口并再次查看或导航后重新打开才会自动变为已读。
 - **登记的验证结果** 区分单元测试、类型检查、Lint、构建、应用E2E和外部服务。annotations可登记SHA、argv、退出码、成功数、警告、环境及带哈希的文本日志。`verification/`日志成为immutable report资产，作者报告与日志附件保持区别。本地或mock成功不会将画面覆盖率提升为`PASS`。
 
+- **Pack 预览** 可在此 source checkout 中使用，固定版本的已发布 CLI 和 Plugin 保持不变。预览可在共享报告前检查验证日志的打包位置。运行 `utsuri pack RUN/report --preview --single-file --json`，可查看 ZIP、report 目录和单个 HTML 中的相对日志路径，不写入文件，也不显示日志正文。预览报告实际 HTML 字节数及大小上限导致的省略，独立的 `report.json` 仅保留引用。预览可省略 `--output`；指定时只检查目标路径，不创建或预留目标。预览不保证后续写入一定成功。
+
 <a id="security-privacy"></a><!-- section:security-privacy -->
 
 ## 安全与隐私
